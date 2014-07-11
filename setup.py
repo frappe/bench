@@ -11,6 +11,6 @@ setup(
     ],
     entry_points='''
 [console_scripts]
-bench=bench.cli:bench
+bench=bench.cli:cli
 ''',
 )

@@ -5,12 +5,23 @@ from .utils import new_site as _new_site
 from .utils import setup_backups as _setup_backups
 from .utils import setup_auto_update as _setup_auto_update
 from .utils import setup_sudoers as _setup_sudoers
-from .utils import build_assets, patch_sites, exec_cmd, update_bench
+from .utils import build_assets, patch_sites, exec_cmd, update_bench, get_frappe
 from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps
 from .config import generate_config
 import os
+import sys
+
+def cli():
+	if sys.argv[1] == "frappe":
+		return frappe()
+	return bench()
+
+def frappe(bench='.'):
+	f = get_frappe(bench=bench)
+	os.chdir(os.path.join(bench, 'sites'))
+	os.execv(f, [f] + sys.argv[2:])
 
 @click.group()
 def bench():
@@ -109,3 +120,4 @@ bench.add_command(new_site)
 bench.add_command(setup)
 bench.add_command(update)
 bench.add_command(restart)
+
