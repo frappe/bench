@@ -25,7 +25,7 @@ def new_app(app, bench='.'):
 	install_app(app, bench=bench)
 
 def install_app(app, bench='.'):
-	exec_cmd("{pip} install -e {app}".format(pip=os.path.join(bench, 'env', 'bin', 'pip'), app=os.path.join('apps', app)))
+	exec_cmd("{pip} install -e {app}".format(pip=os.path.join(bench, 'env', 'bin', 'pip'), app=os.path.join(bench, 'apps', app)))
 	add_to_appstxt(app, bench=bench)
 
 def pull_all_apps(bench='.'):

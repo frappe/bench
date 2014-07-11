@@ -11,6 +11,7 @@ def get_frappe(bench='.'):
 	return frappe
 
 def init(path):
+	from .app import get_app
 	if os.path.exists(path):
 		print 'Directory {} already exists!'.format(path)
 		sys.exit(1)
@@ -19,6 +20,9 @@ def init(path):
 	for dirname in ('apps', 'sites', 'config', 'logs'):
 		os.mkdir(os.path.join(path, dirname))
 	setup_env(bench=path)
+	get_app('frappe', 'https://github.com/frappe/frappe.git', bench=path)
+	setup_backups(bench=path)
+	setup_auto_update(bench=path)
 
 def exec_cmd(cmd, cwd='.'):
 	try:
@@ -54,12 +58,12 @@ def get_bench_dir(bench='.'):
 	return os.path.abspath(bench)
 
 def setup_auto_update():
-	exec_cmd('echo \"`crontab -l`\" | uniq | sed -e \"a0 10 * * * cd {bench_dir} &&  {bench} update\" | grep -v "^$" | uniq | crontab'.format(bench_dir=get_bench_dir(),
-	bench=os.path.join(get_bench_dir(), 'env', 'bin', 'bench')))
+	exec_cmd('echo \"`crontab -l`\" | uniq | sed -e \"a0 10 * * * cd {bench_dir} &&  {bench} update\" | grep -v "^$" | uniq | crontab'.format(bench_dir=get_bench_dir(bench=bench),
+	bench=os.path.join(get_bench_dir(bench=bench), 'env', 'bin', 'bench')))
 
-def setup_backups():
-	exec_cmd('echo \"`crontab -l`\" | uniq | sed -e \"a0 */6 * * * cd {sites_dir} &&  {frappe} --backup all\" | grep -v "^$" | uniq | crontab'.format(sites_dir=get_sites_dir(),
-	frappe=get_frappe()))
+def setup_backups(bench='.'):
+	exec_cmd('echo \"`crontab -l`\" | uniq | sed -e \"a0 */6 * * * cd {sites_dir} &&  {frappe} --backup all\" | grep -v "^$" | uniq | crontab'.format(sites_dir=get_sites_dir(bench=bench),
+	frappe=get_frappe(bench=bench)))
 
 def update_bench():
 	cwd = os.path.dirname(os.path.abspath(__file__))
