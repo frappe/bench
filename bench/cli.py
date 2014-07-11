@@ -1,8 +1,11 @@
 import click
 from .utils import init as _init
 from .utils import setup_env as _setup_env
-from .utils import new_site as _new_site
-from .utils import build_assets, patch_sites, get_sites_dir, get_bench_dir, get_frappe, exec_cmd
+from .utils import new_site as _new_site 
+from .utils import setup_backups as _setup_backups
+from .utils import setup_auto_update as _setup_auto_update
+from .utils import setup_sudoers as _setup_sudoers
+from .utils import build_assets, patch_sites, exec_cmd, update_bench
 from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps
@@ -39,15 +42,22 @@ def new_site(site):
 @click.option('--pull', flag_value=True, type=bool)
 @click.option('--patch',flag_value=True, type=bool)
 @click.option('--build',flag_value=True, type=bool)
+@click.option('--bench',flag_value=True, type=bool)
 def update(pull=False, patch=False, build=False):
-	if not (pull or patch or build):
-		pull, patch, build = True, True, True
+	if not (pull or patch or build or bench):
+		pull, patch, build, bench = True, True, True, True
 	if pull:
 		pull_all_apps()
 	if patch:
 		patch_sites()
 	if build:
 		build_assets()
+	if bench:
+		update_bench()
+
+@click.command('restart')
+def restart():
+	exec_cmd("sudo supervisorctl restart frappe:")
 
 ## Setup
 @click.group()
@@ -56,7 +66,7 @@ def setup():
 	
 @click.command('sudoers')
 def setup_sudoers():
-	pass
+	_setup_sudoers()
 	
 @click.command('nginx')
 def setup_nginx():
@@ -68,13 +78,11 @@ def setup_supervisor():
 
 @click.command('auto-update')
 def setup_auto_update():
-	exec_cmd('echo \"`crontab -l`\" | uniq | sed -e \"a0 10 * * * cd {bench_dir} &&  {bench} update\" | grep -v "^$" | uniq | crontab'.format(bench_dir=get_bench_dir(),
-	bench=os.path.join(get_bench_dir(), 'env', 'bin', 'bench')))
+	_setup_auto_update()
 	
 @click.command('backups')
 def setup_backups():
-	exec_cmd('echo \"`crontab -l`\" | uniq | sed -e \"a0 */6 * * * cd {sites_dir} &&  {frappe} --backup all\" | grep -v "^$" | uniq | crontab'.format(sites_dir=get_sites_dir(),
-	frappe=get_frappe()))
+	_setup_backups()
 
 @click.command('dnsmasq')
 def setup_dnsmasq():
@@ -83,7 +91,6 @@ def setup_dnsmasq():
 @click.command('env')
 def setup_env():
 	_setup_env()
-	pass
 
 setup.add_command(setup_nginx)
 setup.add_command(setup_sudoers)
@@ -101,3 +108,4 @@ bench.add_command(new_app)
 bench.add_command(new_site)
 bench.add_command(setup)
 bench.add_command(update)
+bench.add_command(restart)
