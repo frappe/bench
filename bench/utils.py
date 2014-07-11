@@ -57,7 +57,7 @@ def get_sites_dir(bench='.'):
 def get_bench_dir(bench='.'):
 	return os.path.abspath(bench)
 
-def setup_auto_update():
+def setup_auto_update(bench='.'):
 	exec_cmd('echo \"`crontab -l`\" | uniq | sed -e \"a0 10 * * * cd {bench_dir} &&  {bench} update\" | grep -v "^$" | uniq | crontab'.format(bench_dir=get_bench_dir(bench=bench),
 	bench=os.path.join(get_bench_dir(bench=bench), 'env', 'bin', 'bench')))
 
