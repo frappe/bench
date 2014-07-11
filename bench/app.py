@@ -1,6 +1,9 @@
 import os
 from .utils import exec_cmd, get_frappe
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 def get_apps(bench='.'):
 	try:
@@ -17,14 +20,17 @@ def add_to_appstxt(app, bench='.'):
 			return f.write('\n'.join(apps))
 
 def get_app(app, git_url, bench='.'):
+	logger.info('getting app {}'.format(app))
 	exec_cmd("git clone {} --origin upstream {}".format(git_url, app), cwd=os.path.join(bench, 'apps'))
 	install_app(app, bench=bench)
 
 def new_app(app, bench='.'):
+	logger.info('creating new app {}'.format(app))
 	exec_cmd("{frappe} --make_app {apps}".format(frappe=get_frappe(bench=bench), apps=os.path.join(bench, 'apps')))
 	install_app(app, bench=bench)
 
 def install_app(app, bench='.'):
+	logger.info('installing {}'.format(app))
 	exec_cmd("{pip} install -e {app}".format(pip=os.path.join(bench, 'env', 'bin', 'pip'), app=os.path.join(bench, 'apps', app)))
 	add_to_appstxt(app, bench=bench)
 
@@ -34,4 +40,5 @@ def pull_all_apps(bench='.'):
 	for app in apps:
 		app_dir = os.path.join(apps_dir, app)
 		if os.path.exists(os.path.join(app_dir, '.git')):
+			logger.info('pulling {}'.format(app))
 			exec_cmd("git pull --rebase upstream HEAD", cwd=app_dir)
