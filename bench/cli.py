@@ -43,17 +43,17 @@ def new_site(site):
 @click.option('--patch',flag_value=True, type=bool)
 @click.option('--build',flag_value=True, type=bool)
 @click.option('--bench',flag_value=True, type=bool)
-def update(pull=False, patch=False, build=False):
+def update(pull=False, patch=False, build=False, bench=False):
 	if not (pull or patch or build or bench):
 		pull, patch, build, bench = True, True, True, True
+	if bench:
+		update_bench()
 	if pull:
 		pull_all_apps()
 	if patch:
 		patch_sites()
 	if build:
 		build_assets()
-	if bench:
-		update_bench()
 
 @click.command('restart')
 def restart():
