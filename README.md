@@ -1,3 +1,9 @@
+Bench
+=====
+
+The bench allows you to setup Frappe apps on your local machine or a production
+server. You can use the bench to serve multi tenant frappe sites.
+
 Installation
 ============
 
@@ -22,7 +28,10 @@ Install pre-requisites,
 	
 Install bench,
 
-		sudo pip install git+https://github.com/frappe/bench
+		git clone https://github.com/frappe/bench
+		sudo pip install -e bench
+
+Note: Please do not remove the bench directory the above commands will create
 
 
 Basic Usage
@@ -30,19 +39,32 @@ Basic Usage
 
 * Create a new bench
 
+	The init command will create a bench directory with frappe frameowork
+	installed. It will be setup for periodic backups and auto updates once
+	a day.
+
 		bench init erpnext-bench && cd erpnext-bench
 
 * Add apps
 
-		bench get-app erpnext https://github.com/frappe/erpenxt
+	The get-app command gets and installs frappe apps. Examples include
+	(erpnext)[https://github.com/frappe/erpnext] and
+	(shopping-cart)[https://github.com/frappe/shopping-cart]
+
+		bench get-app erpnext https://github.com/frappe/erpnext
 
 * Add site
 
+	Frappe apps are run by frappe sites and you will have to create at least one
+	site. The new-site command allows you to do that.
+
 		bench new-site site1.local
 
-* Serve site
+* Start bench
 
-		bench frappe --serve
+	To start using the bench, use the `bench start` command
+
+		bench start
 
 
 Production Deployment
