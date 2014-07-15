@@ -28,12 +28,14 @@ def frappe(bench='.'):
 
 @click.group()
 def bench(bench='.'):
+	"Bench manager for Frappe"
 	# TODO add bench path context
 	setup_logging(bench=bench)
 
 @click.command()
 @click.argument('path')
 def init(path):
+	"Create a new bench"
 	_init(path)
 	click.echo('Bench {} initialized'.format(path))
 
@@ -41,26 +43,30 @@ def init(path):
 @click.argument('name')
 @click.argument('git-url')
 def get_app(name, git_url):
+	"clone an app from the internet and set it up in your bench"
 	_get_app(name, git_url)
 	
 @click.command('new-app')
 @click.argument('app-name')
 def new_app(app_name):
+	"start a new app"
 	_new_app(app_name)
 	
 @click.command('new-site')
 @click.argument('site')
 def new_site(site):
+	"Create a new site in the bench"
 	_new_site(site)
 	
 @click.command('update')
-@click.option('--pull', flag_value=True, type=bool)
-@click.option('--patch',flag_value=True, type=bool)
-@click.option('--build',flag_value=True, type=bool)
-@click.option('--bench',flag_value=True, type=bool)
-@click.option('--restart-supervisor',flag_value=True, type=bool)
+@click.option('--pull', flag_value=True, type=bool, help="Pull changes in all the apps in bench")
+@click.option('--patch',flag_value=True, type=bool, help="Run migrations for all sites in the bench")
+@click.option('--build',flag_value=True, type=bool, help="Build JS and CSS artifacts for the bench")
+@click.option('--bench',flag_value=True, type=bool, help="Update bench")
+@click.option('--restart-supervisor',flag_value=True, type=bool, help="restart supervisor processes after update")
 @click.option('--auto',flag_value=True, type=bool)
 def update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False):
+	"Update bench"
 	if not (pull or patch or build or bench):
 		pull, patch, build, bench = True, True, True, True
 
@@ -80,31 +86,38 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 
 @click.command('restart')
 def restart():
+	"Restart supervisor processes"
 	exec_cmd("sudo supervisorctl restart frappe:")
 
 ## Setup
 @click.group()
 def setup():
+	"Setup bench"
 	pass
 	
 @click.command('sudoers')
 def setup_sudoers():
+	"Add commands to sudoers list for execution without password"
 	_setup_sudoers()
 	
 @click.command('nginx')
 def setup_nginx():
+	"generate config for nginx"
 	generate_config('nginx', 'nginx.conf')
 	
 @click.command('supervisor')
 def setup_supervisor():
+	"generate config for supervisor"
 	generate_config('supervisor', 'supervisor.conf')
 
 @click.command('auto-update')
 def setup_auto_update():
+	"Add cronjob for bench auto update"
 	_setup_auto_update()
 	
 @click.command('backups')
 def setup_backups():
+	"Add cronjob for bench backups"
 	_setup_backups()
 
 @click.command('dnsmasq')
@@ -113,6 +126,7 @@ def setup_dnsmasq():
 
 @click.command('env')
 def setup_env():
+	"Setup virtualenv for bench"
 	_setup_env()
 
 setup.add_command(setup_nginx)
@@ -127,23 +141,27 @@ setup.add_command(setup_env)
 ## Not DRY
 @click.group()
 def config():
+	"change bench configuration"
 	pass
 
 @click.command('auto_update')
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_auto_update(state):
+	"Enable/Disable auto update for bench"
 	state = True if state == 'on' else False
 	update_config({'auto_update': state})
 
 @click.command('restart_supervisor_on_update')
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_restart_supervisor_on_update(state):
+	"Enable/Disable auto restart of supervisor processes"
 	state = True if state == 'on' else False
 	update_config({'restart_supervisor_on_update': state})
 
 @click.command('update_bench_on_update')
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_update_bench_on_update(state):
+	"Enable/Disable bench updates on running bench update"
 	state = True if state == 'on' else False
 	update_config({'update_bench_on_update': state})
 
