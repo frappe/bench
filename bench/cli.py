@@ -5,7 +5,7 @@ from .utils import new_site as _new_site
 from .utils import setup_backups as _setup_backups
 from .utils import setup_auto_update as _setup_auto_update
 from .utils import setup_sudoers as _setup_sudoers
-from .utils import build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging, get_config
+from .utils import build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging, get_config, update_config
 from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps
@@ -17,7 +17,7 @@ import logging
 logger = logging.getLogger('bench')
 
 def cli():
-	if sys.argv[1] == "frappe":
+	if len(sys.argv) > 2 and sys.argv[1] == "frappe":
 		return frappe()
 	return bench()
 
@@ -58,10 +58,16 @@ def new_site(site):
 @click.option('--patch',flag_value=True, type=bool)
 @click.option('--build',flag_value=True, type=bool)
 @click.option('--bench',flag_value=True, type=bool)
-def update(pull=False, patch=False, build=False, bench=False):
+@click.option('--restart-supervisor',flag_value=True, type=bool)
+@click.option('--auto',flag_value=True, type=bool)
+def update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False):
 	if not (pull or patch or build or bench):
 		pull, patch, build, bench = True, True, True, True
-	if bench and get_config().get('update_bench_on_update'):
+
+	conf = get_config()
+	if auto and not conf.get('auto_update'):
+		sys.exit(1)
+	if bench and conf.get('update_bench_on_update'):
 		update_bench()
 	if pull:
 		pull_all_apps()
@@ -69,6 +75,8 @@ def update(pull=False, patch=False, build=False, bench=False):
 		patch_sites()
 	if build:
 		build_assets()
+	if restart_supervisor or conf.get('restart_supervisor_on_update'):
+		restart()
 
 @click.command('restart')
 def restart():
@@ -115,6 +123,34 @@ setup.add_command(setup_dnsmasq)
 setup.add_command(setup_backups)
 setup.add_command(setup_env)
 
+## Config
+## Not DRY
+@click.group()
+def config():
+	pass
+
+@click.command('auto_update')
+@click.argument('state', type=click.Choice(['on', 'off']))
+def config_auto_update(state):
+	state = True if state == 'on' else False
+	update_config({'auto_update': state})
+
+@click.command('restart_supervisor_on_update')
+@click.argument('state', type=click.Choice(['on', 'off']))
+def config_restart_supervisor_on_update(state):
+	state = True if state == 'on' else False
+	update_config({'restart_supervisor_on_update': state})
+
+@click.command('update_bench_on_update')
+@click.argument('state', type=click.Choice(['on', 'off']))
+def config_update_bench_on_update(state):
+	state = True if state == 'on' else False
+	update_config({'update_bench_on_update': state})
+
+config.add_command(config_auto_update)
+config.add_command(config_update_bench_on_update)
+config.add_command(config_restart_supervisor_on_update)
+
 #Bench commands
 
 bench.add_command(init)
@@ -124,4 +160,5 @@ bench.add_command(new_site)
 bench.add_command(setup)
 bench.add_command(update)
 bench.add_command(restart)
+bench.add_command(config)
 

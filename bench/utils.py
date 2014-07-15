@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 default_config = {
 	'restart_supervisor_on_update': True,
+	'auto_update': True,
 	'update_bench_on_update': True
 }
 
@@ -73,7 +74,7 @@ def get_bench_dir(bench='.'):
 
 def setup_auto_update(bench='.'):
 	logger.info('setting up auto update')
-	exec_cmd('echo \"`crontab -l`\" | uniq | sed -e \"a0 10 * * * cd {bench_dir} &&  {bench} update\" | grep -v "^$" | uniq | crontab'.format(bench_dir=get_bench_dir(bench=bench),
+	exec_cmd('echo \"`crontab -l`\" | uniq | sed -e \"a0 10 * * * cd {bench_dir} &&  {bench} update --auto\" | grep -v "^$" | uniq | crontab'.format(bench_dir=get_bench_dir(bench=bench),
 	bench=os.path.join(get_bench_dir(bench=bench), 'env', 'bin', 'bench')))
 
 def setup_backups(bench='.'):
@@ -109,3 +110,8 @@ def get_config(bench='.'):
 def put_config(config, bench='.'):
 	with open(os.path.join(bench, 'config.json'), 'w') as f:
 		return json.dump(config, f)
+
+def update_config(new_config, bench='.'):
+	config = get_config(bench=bench)
+	config.update(new_config)
+	put_config(config, bench=bench)
