@@ -5,6 +5,8 @@ from .utils import new_site as _new_site
 from .utils import setup_backups as _setup_backups
 from .utils import setup_auto_update as _setup_auto_update
 from .utils import setup_sudoers as _setup_sudoers
+from .utils import start as _start
+from .utils import setup_procfile as _setup_procfile
 from .utils import build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging, get_config, update_config
 from .app import get_app as _get_app
 from .app import new_app as _new_app
@@ -89,6 +91,11 @@ def restart():
 	"Restart supervisor processes"
 	exec_cmd("sudo supervisorctl restart frappe:")
 
+@click.command('start')
+def start():
+	"Start Frappe development processes"
+	_start()
+
 ## Setup
 @click.group()
 def setup():
@@ -129,6 +136,11 @@ def setup_env():
 	"Setup virtualenv for bench"
 	_setup_env()
 
+@click.command('procfile')
+def setup_procfile():
+	"Setup Procfile for bench start"
+	_setup_procfile()
+
 setup.add_command(setup_nginx)
 setup.add_command(setup_sudoers)
 setup.add_command(setup_supervisor)
@@ -136,6 +148,7 @@ setup.add_command(setup_auto_update)
 setup.add_command(setup_dnsmasq)
 setup.add_command(setup_backups)
 setup.add_command(setup_env)
+setup.add_command(setup_procfile)
 
 ## Config
 ## Not DRY
@@ -179,4 +192,5 @@ bench.add_command(setup)
 bench.add_command(update)
 bench.add_command(restart)
 bench.add_command(config)
+bench.add_command(start)
 

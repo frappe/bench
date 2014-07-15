@@ -4,6 +4,7 @@ import subprocess
 import getpass
 import logging
 import json
+from distutils.spawn import find_executable
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,7 @@ def init(path):
 	setup_env(bench=path)
 	put_config(default_config, bench=path)
 	get_app('frappe', 'https://github.com/frappe/frappe.git', bench=path)
+	setup_procfile(bench=path)
 	setup_backups(bench=path)
 	setup_auto_update(bench=path)
 
@@ -47,6 +49,12 @@ def exec_cmd(cmd, cwd='.'):
 
 def setup_env(bench='.'):
 	exec_cmd('virtualenv {} -p {}'.format('env', sys.executable), cwd=bench)
+
+def setup_procfile(bench='.'):
+	with open(os.path.join(bench, 'Procfile'), 'w') as f:
+		f.write("""web: ./env/bin/frappe --serve --sites_path sites
+worker: sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app worker'
+workerbeat: sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app beat -s scheduler.schedule'""")
 
 def new_site(site, bench='.'):
 	logger.info('creating new site {}'.format(site))
@@ -115,3 +123,25 @@ def update_config(new_config, bench='.'):
 	config = get_config(bench=bench)
 	config.update(new_config)
 	put_config(config, bench=bench)
+
+def get_process_manager():
+	programs = ['foreman', 'forego', 'honcho']
+	program = None
+	for p in programs:
+		program = find_executable(p)
+		if program:
+			break
+	return program
+
+def start():
+	program = get_process_manager()
+	if not program:
+		raise Exception("No process manager found")
+	os.execv(program, [program, 'start'])
+
+def check_cmd(cmd, cwd='.'):
+	try:
+		subprocess.check_call(cmd, cwd=cwd, shell=True)
+		return True
+	except subprocess.CalledProcessError, e:
+		return False
