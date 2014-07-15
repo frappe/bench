@@ -108,7 +108,7 @@ add_user() {
 		chmod o+r /home/frappe
 		export FRAPPE_USER="frappe"
 	else
-		export FRAPPE_USER=`getent passwd | awk -F: '$3 == $SUDO_UID { print $1 }'`
+		export FRAPPE_USER="$SUDO_USER"
 	fi
 }
 
