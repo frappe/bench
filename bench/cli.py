@@ -5,7 +5,7 @@ from .utils import new_site as _new_site
 from .utils import setup_backups as _setup_backups
 from .utils import setup_auto_update as _setup_auto_update
 from .utils import setup_sudoers as _setup_sudoers
-from .utils import build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging
+from .utils import build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging, get_config
 from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps
@@ -61,7 +61,7 @@ def new_site(site):
 def update(pull=False, patch=False, build=False, bench=False):
 	if not (pull or patch or build or bench):
 		pull, patch, build, bench = True, True, True, True
-	if bench:
+	if bench and get_config().get('update_bench_on_update'):
 		update_bench()
 	if pull:
 		pull_all_apps()

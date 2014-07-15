@@ -3,8 +3,14 @@ import sys
 import subprocess
 import getpass
 import logging
+import json
 
 logger = logging.getLogger(__name__)
+
+default_config = {
+	'restart_supervisor_on_update': True,
+	'update_bench_on_update': True
+}
 
 def get_frappe(bench='.'):
 	frappe = os.path.abspath(os.path.join(bench, 'env', 'bin', 'frappe'))
@@ -26,6 +32,7 @@ def init(path):
 	setup_logging()
 
 	setup_env(bench=path)
+	put_config(default_config, bench=path)
 	get_app('frappe', 'https://github.com/frappe/frappe.git', bench=path)
 	setup_backups(bench=path)
 	setup_auto_update(bench=path)
@@ -94,3 +101,11 @@ def setup_logging(bench='.'):
 		hdlr.setFormatter(formatter)
 		logger.addHandler(hdlr)
 		logger.setLevel(logging.DEBUG)
+
+def get_config(bench='.'):
+	with open(os.path.join(bench, 'config.json')) as f:
+		return json.load(f)
+
+def put_config(config, bench='.'):
+	with open(os.path.join(bench, 'config.json'), 'w') as f:
+		return json.dump(config, f)
