@@ -48,7 +48,7 @@ Basic Usage
 
 * Add apps
 
-	The get-app command gets and installs frappe apps. Examples include
+	The get-app command fetches and installs frappe apps. Examples include
 	(erpnext)[https://github.com/frappe/erpnext] and
 	(shopping-cart)[https://github.com/frappe/shopping-cart]
 
@@ -57,7 +57,7 @@ Basic Usage
 * Add site
 
 	Frappe apps are run by frappe sites and you will have to create at least one
-	site. The new-site command allows you to do that.
+	site. The new-site command allows you to do just that.
 
 		bench new-site site1.local
 
@@ -176,7 +176,7 @@ bench setup supervisor
 sudo ln -s `pwd`/config/nginx.conf /etc/nginx/conf.d/frappe.conf
 ```
 
-Note: When you restart nginx after the configuration change, it might fail if
+Note: When you restart nginx after a configuration change, it might fail if
 you have another configuration with server block as default for port 80 (in most
 cases for the nginx welcome page). You will have to disable this config.  Most
 probable places for it to exist are `/etc/nginx/conf.d/default.conf` and
