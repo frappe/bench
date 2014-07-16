@@ -11,7 +11,8 @@ logger = logging.getLogger(__name__)
 default_config = {
 	'restart_supervisor_on_update': True,
 	'auto_update': True,
-	'update_bench_on_update': True
+	'update_bench_on_update': True,
+	'shallow_clone': True
 }
 
 def get_frappe(bench='.'):
@@ -117,7 +118,7 @@ def get_config(bench='.'):
 
 def put_config(config, bench='.'):
 	with open(os.path.join(bench, 'config.json'), 'w') as f:
-		return json.dump(config, f)
+		return json.dump(config, f, indent=1)
 
 def update_config(new_config, bench='.'):
 	config = get_config(bench=bench)
@@ -145,3 +146,20 @@ def check_cmd(cmd, cwd='.'):
 		return True
 	except subprocess.CalledProcessError, e:
 		return False
+
+def get_git_version():
+	version = get_cmd_output("git --version")
+	return version.strip().split()[-1]
+
+def check_git_for_shallow_clone():
+	git_version = get_git_version()
+	if '1.9' in git_version or '2.0' in git_version:
+		return True
+	return False
+
+def get_cmd_output(cmd, cwd='.'):
+	try:
+		return subprocess.check_output(cmd, cwd=cwd, shell=True)
+	except subprocess.CalledProcessError, e:
+		print "Error:", e.output
+		raise

@@ -1,5 +1,5 @@
 import os
-from .utils import exec_cmd, get_frappe
+from .utils import exec_cmd, get_frappe, check_git_for_shallow_clone, get_config
 
 import logging
 
@@ -21,7 +21,8 @@ def add_to_appstxt(app, bench='.'):
 
 def get_app(app, git_url, bench='.'):
 	logger.info('getting app {}'.format(app))
-	exec_cmd("git clone {} --origin upstream {}".format(git_url, app), cwd=os.path.join(bench, 'apps'))
+	shallow_clone = '--depth 1' if check_git_for_shallow_clone() and get_config().get('shallow_clone') else ''
+	exec_cmd("git clone {git_url} {shallow_clone} --origin upstream {app}".format(git_url=git_url, app=app, shallow_clone=shallow_clone), cwd=os.path.join(bench, 'apps'))
 	install_app(app, bench=bench)
 
 def new_app(app, bench='.'):
