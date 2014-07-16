@@ -163,3 +163,6 @@ def get_cmd_output(cmd, cwd='.'):
 	except subprocess.CalledProcessError, e:
 		print "Error:", e.output
 		raise
+
+def restart_supervisor_processes():
+	exec_cmd("sudo supervisorctl restart frappe:")

@@ -7,7 +7,7 @@ from .utils import setup_auto_update as _setup_auto_update
 from .utils import setup_sudoers as _setup_sudoers
 from .utils import start as _start
 from .utils import setup_procfile as _setup_procfile
-from .utils import build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging, get_config, update_config
+from .utils import build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging, get_config, update_config, restart_supervisor_processes
 from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps
@@ -84,12 +84,12 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 	if build:
 		build_assets()
 	if restart_supervisor or conf.get('restart_supervisor_on_update'):
-		restart()
+		restart_supervisor_processes()
 
 @click.command('restart')
 def restart():
 	"Restart supervisor processes"
-	exec_cmd("sudo supervisorctl restart frappe:")
+	restart_supervisor_processes()
 
 @click.command('start')
 def start():
