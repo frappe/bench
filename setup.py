@@ -11,7 +11,8 @@ setup(
 	install_requires=[
 		'Click',
 		'jinja2',
-		'virtualenv'
+		'virtualenv',
+		'honcho'
     ],
 	entry_points='''
 [console_scripts]
