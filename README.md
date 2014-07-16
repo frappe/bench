@@ -40,7 +40,7 @@ Basic Usage
 
 * Create a new bench
 
-	The init command will create a bench directory with frappe frameowork
+	The init command will create a bench directory with frappe framework
 	installed. It will be setup for periodic backups and auto updates once
 	a day.
 
@@ -48,7 +48,7 @@ Basic Usage
 
 * Add apps
 
-	The get-app command gets and installs frappe apps. Examples include
+	The get-app command fetches and installs frappe apps. Examples include
 	(erpnext)[https://github.com/frappe/erpnext] and
 	(shopping-cart)[https://github.com/frappe/shopping-cart]
 
@@ -57,7 +57,7 @@ Basic Usage
 * Add site
 
 	Frappe apps are run by frappe sites and you will have to create at least one
-	site. The new-site command allows you to do that.
+	site. The new-site command allows you to do just that.
 
 		bench new-site site1.local
 
@@ -71,7 +71,7 @@ Basic Usage
 Updating
 ========
 
-On initializing a new bench, a cronjob is add to automatically update the bench
+On initializing a new bench, a cronjob is added to automatically update the bench
 at 1000hrs (as per the time on your machine). You can disable this by running
 `bench config auto_update off` and run `bench config auto_update on` to switch
 it on again. To change the time of update, you will have to edit the cronjob
@@ -117,19 +117,19 @@ Frappe Processes
 	* The WSGI server is responsible for responding to the HTTP requests to
 	frappe. In development scenario (`frappe --serve` or `bench start`), the
 	Werkzeug WSGI server is used and in production, gunicorn (automatically
-	configured in supervisor) in used.
+	configured in supervisor) is used.
 
 * Celery Worker Processes
 
-	* The Celery worker proceses execute background jobs in the Frappe system.
+	* The Celery worker processes execute background jobs in the Frappe system.
 	These processes are automatically started when `bench start` is run and
-	for production are conifgured in supervisor configuration.
+	for production are configured in supervisor configuration.
 
 * Celery Worker Beat Process
 
-	* The Celery worker beat process schedules enqueing of scheduled jobs in the
+	* The Celery worker beat process schedules enqeueing of scheduled jobs in the
 	Frappe system. This process is automatically started when `bench start` is
-	run and for production are conifgured in supervisor configuration.
+	run and for production are configured in supervisor configuration.
 
 
 Production Deployment
@@ -176,8 +176,8 @@ bench setup supervisor
 sudo ln -s `pwd`/config/nginx.conf /etc/nginx/conf.d/frappe.conf
 ```
 
-Note: When you restart nginx after the configuration change, it might fail if
+Note: When you restart nginx after a configuration change, it might fail if
 you have another configuration with server block as default for port 80 (in most
-cases for the nginx welcome page). You will have disable this config.  Most
+cases for the nginx welcome page). You will have to disable this config.  Most
 probable places for it to exist are `/etc/nginx/conf.d/default.conf` and
 `/etc/nginx/conf.d/default`.
