@@ -127,7 +127,10 @@ def setup_logging(bench='.'):
 		logger.setLevel(logging.DEBUG)
 
 def get_config(bench='.'):
-	with open(os.path.join(bench, 'config.json')) as f:
+	config_path = os.path.join(bench, 'config.json')
+	if not os.path.exists(config_path):
+		return {}
+	with open(config_path) as f:
 		return json.load(f)
 
 def put_config(config, bench='.'):
