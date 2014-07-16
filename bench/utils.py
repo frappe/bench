@@ -98,8 +98,8 @@ def update_bench():
 def setup_sudoers():
 	with open('/etc/sudoers.d/frappe', 'w') as f:
 		f.write("{user} ALL=(ALL) NOPASSWD: {supervisorctl} restart frappe\:\n".format(
-					user=getpass.getuser()),
-					supervisorctl=subprocess.check_output('which supervisorctl', shell=True).strip())
+					user=getpass.getuser(),
+					supervisorctl=subprocess.check_output('which supervisorctl', shell=True).strip()))
 
 def setup_logging(bench='.'):
 	if os.path.exists(os.path.join(bench, 'logs')):
