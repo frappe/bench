@@ -83,13 +83,27 @@ def get_bench_dir(bench='.'):
 
 def setup_auto_update(bench='.'):
 	logger.info('setting up auto update')
-	exec_cmd('echo \"`crontab -l`\" | uniq | sed -e \"a0 10 * * * cd {bench_dir} &&  {bench} update --auto\" | grep -v "^$" | uniq | crontab'.format(bench_dir=get_bench_dir(bench=bench),
-	bench=os.path.join(get_bench_dir(bench=bench), 'env', 'bin', 'bench')))
+	add_to_crontab('0 10 * * * cd {bench_dir} &&  {bench} update --auto'.format(bench_dir=get_bench_dir(bench=bench),
+		bench=os.path.join(get_bench_dir(bench=bench), 'env', 'bin', 'bench')))
 
 def setup_backups(bench='.'):
 	logger.info('setting up backups')
-	exec_cmd('echo \"`crontab -l`\" | uniq | sed -e \"a0 */6 * * * cd {sites_dir} &&  {frappe} --backup all\" | grep -v "^$" | uniq | crontab'.format(sites_dir=get_sites_dir(bench=bench),
-	frappe=get_frappe(bench=bench)))
+	add_to_crontab('0 */6 * * * cd {sites_dir} &&  {frappe} --backup all'.format(sites_dir=get_sites_dir(bench=bench),
+		frappe=get_frappe(bench=bench)))
+
+def add_to_crontab(line):
+	current_crontab = read_crontab()
+	if not line in current_crontab:
+		s = subprocess.Popen("crontab", stdin=subprocess.PIPE)
+		s.stdin.write(current_crontab)
+		s.stdin.write(line + '\n')
+		s.stdin.close()
+
+def read_crontab():
+	s = subprocess.Popen(["crontab", "-l"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+	out = s.stdout.read()
+	s.stdout.close()
+	return out
 
 def update_bench():
 	logger.info('setting up sudoers')
