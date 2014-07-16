@@ -83,8 +83,11 @@ patches, build JS and CSS files and restart supervisor (if configured to).
 You can also run the parts of the bench selectively.
 
 `bench update --pull` will only pull changes in the apps
+
 `bench update --patch` will only run database migrations in the apps
+
 `bench update --build` will only build JS and CSS files for the bench
+
 `bench update --bench` will only update the bench utility (this project)
 
 Running the bench
@@ -93,6 +96,7 @@ Running the bench
 To run the bench,
 
 *For development*: `bench start`
+
 *For production*: Configure supervisor and nginx
 
 To run the bench, a few services need to be running apart from the processes.
@@ -154,9 +158,7 @@ sudo ln -s `pwd`/config/supervisor.conf /etc/supervisor/conf.d/frappe.conf
 
 The bench will also need to restart the processes managed by supervisor when you
 update the apps. To automate this, you will have to setup sudoers using the
-command
-
-`sudo bench setup sudoers`
+command, `sudo bench setup sudoers`.
 
 Nginx
 -----
