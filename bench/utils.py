@@ -40,6 +40,7 @@ def init(path):
 	setup_procfile(bench=path)
 	setup_backups(bench=path)
 	setup_auto_update(bench=path)
+	exec_cmd("{frappe} --build".format(frappe=get_frappe(bench=path)), cwd=os.path.join(path, 'sites'))
 
 def exec_cmd(cmd, cwd='.'):
 	try:
