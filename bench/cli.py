@@ -128,6 +128,7 @@ def setup_nginx():
 def setup_supervisor():
 	"generate config for supervisor"
 	generate_config('supervisor', 'supervisor.conf')
+	update_config({'restart_supervisor_on_update': True})
 
 @click.command('auto-update')
 def setup_auto_update():

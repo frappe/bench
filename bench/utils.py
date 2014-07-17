@@ -9,7 +9,7 @@ from distutils.spawn import find_executable
 logger = logging.getLogger(__name__)
 
 default_config = {
-	'restart_supervisor_on_update': True,
+	'restart_supervisor_on_update': False,
 	'auto_update': True,
 	'update_bench_on_update': True,
 	'shallow_clone': True
