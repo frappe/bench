@@ -69,6 +69,7 @@ def new_site(site):
 @click.option('--auto',flag_value=True, type=bool)
 def update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False):
 	"Update bench"
+
 	if not (pull or patch or build or bench):
 		pull, patch, build, bench = True, True, True, True
 
@@ -83,8 +84,12 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 		patch_sites()
 	if build:
 		build_assets()
-	if restart_supervisor or conf.get('restart_supervisor_on_update'):
-		restart_supervisor_processes()
+	# if restart_supervisor or conf.get('restart_supervisor_on_update'):
+	# 	restart_supervisor_processes()
+
+	print "_"*80
+	print "https://frappe.io/buy - Donate to help make better free and open source tools"
+	print
 
 @click.command('restart')
 def restart():
