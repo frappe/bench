@@ -12,6 +12,7 @@ from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps
 from .config import generate_config
+from .migrate3to4 import main as _migrate_3to4
 import os
 import sys
 import logging
@@ -100,6 +101,12 @@ def restart():
 def start():
 	"Start Frappe development processes"
 	_start()
+
+@click.command('migrate-3to4')
+@click.argument('path')
+def migrate_3to4(path):
+	"Migrate from ERPNext v3.x"
+	_migrate_3to4(path)
 
 ## Setup
 @click.group()
@@ -198,4 +205,5 @@ bench.add_command(update)
 bench.add_command(restart)
 bench.add_command(config)
 bench.add_command(start)
+bench.add_command(migrate_3to4)
 
