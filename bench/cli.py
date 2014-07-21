@@ -38,9 +38,10 @@ def bench(bench='.'):
 
 @click.command()
 @click.argument('path')
-def init(path):
+@click.option('--apps_path', default=None, help="path to json files with apps to install after init")
+def init(path, apps_path):
 	"Create a new bench"
-	_init(path)
+	_init(path, apps_path=apps_path)
 	click.echo('Bench {} initialized'.format(path))
 
 @click.command('get-app')

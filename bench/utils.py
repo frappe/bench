@@ -22,8 +22,8 @@ def get_frappe(bench='.'):
 		print 'bench get-app frappe https://github.com/frappe/frappe.git'
 	return frappe
 
-def init(path):
-	from .app import get_app
+def init(path, apps_path=None):
+	from .app import get_app, install_apps_from_path
 	if os.path.exists(path):
 		print 'Directory {} already exists!'.format(path)
 		sys.exit(1)
@@ -41,6 +41,8 @@ def init(path):
 	setup_backups(bench=path)
 	setup_auto_update(bench=path)
 	exec_cmd("{frappe} --build".format(frappe=get_frappe(bench=path)), cwd=os.path.join(path, 'sites'))
+	if apps_path:
+		install_apps_from_path(apps_path, bench=path)
 
 def exec_cmd(cmd, cwd='.'):
 	try:

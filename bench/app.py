@@ -2,6 +2,8 @@ import os
 from .utils import exec_cmd, get_frappe, check_git_for_shallow_clone, get_config
 
 import logging
+import requests
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -43,3 +45,16 @@ def pull_all_apps(bench='.'):
 		if os.path.exists(os.path.join(app_dir, '.git')):
 			logger.info('pulling {}'.format(app))
 			exec_cmd("git pull --rebase upstream HEAD", cwd=app_dir)
+
+def install_apps_from_path(path, bench='.'):
+	apps = get_apps_dict(path)
+	for app, url in apps.items():
+		get_app(app, url, bench=bench)
+
+def get_apps_dict(path):
+	if path.startswith('http'):
+		r = requests.get(path)
+		return r.json()
+	else:
+		with open(path) as f:
+			return json.load(f)
