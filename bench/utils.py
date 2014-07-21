@@ -208,3 +208,9 @@ def set_nginx_port(site, port, bench='.'):
 	if site not in get_sites(bench=bench):
 		raise Exception("No such site")
 	update_site_config(site, {"nginx_port": port}, bench=bench)
+
+def set_default_site(site, bench='.'):
+	if not site in get_sites(bench=bench):
+		raise Exception("Site not in bench")
+	exec_cmd("{frappe} --use {site}".format(frappe=get_frappe(bench=bench), site=site),
+			cwd=os.path.join(bench, 'sites'))

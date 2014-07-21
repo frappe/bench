@@ -8,6 +8,7 @@ from .utils import setup_sudoers as _setup_sudoers
 from .utils import start as _start
 from .utils import setup_procfile as _setup_procfile
 from .utils import set_nginx_port as _set_nginx_port
+from .utils import set_default_site as _set_default_site
 from .utils import build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging, get_config, update_config, restart_supervisor_processes
 from .app import get_app as _get_app
 from .app import new_app as _new_app
@@ -117,6 +118,12 @@ def set_nginx_port(site, port):
 	"Set nginx port for site"
 	_set_nginx_port(site, port)
 
+@click.command('set-default-site')
+@click.argument('site')
+def set_default_site(site):
+	"Set default site for bench"
+	_set_default_site(site)
+
 ## Setup
 @click.group()
 def setup():
@@ -224,5 +231,5 @@ bench.add_command(restart)
 bench.add_command(config)
 bench.add_command(start)
 bench.add_command(set_nginx_port)
+bench.add_command(set_default_site)
 bench.add_command(migrate_3to4)
-
