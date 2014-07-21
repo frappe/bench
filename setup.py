@@ -12,6 +12,7 @@ setup(
 		'Click',
 		'jinja2',
 		'virtualenv',
+		'requests',
 		'honcho'
     ],
 	entry_points='''
