@@ -9,7 +9,7 @@ from .utils import start as _start
 from .utils import setup_procfile as _setup_procfile
 from .utils import set_nginx_port as _set_nginx_port
 from .utils import set_default_site as _set_default_site
-from .utils import build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging, get_config, update_config, restart_supervisor_processes
+from .utils import build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging, get_config, update_config, restart_supervisor_processes, put_config, default_config
 from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps
@@ -170,6 +170,11 @@ def setup_procfile():
 	"Setup Procfile for bench start"
 	_setup_procfile()
 
+@click.command('config')
+def setup_config():
+	"overwrite or make config.json"
+	put_config(default_config)
+
 setup.add_command(setup_nginx)
 setup.add_command(setup_sudoers)
 setup.add_command(setup_supervisor)
@@ -178,6 +183,7 @@ setup.add_command(setup_dnsmasq)
 setup.add_command(setup_backups)
 setup.add_command(setup_env)
 setup.add_command(setup_procfile)
+setup.add_command(setup_config)
 
 ## Config
 ## Not DRY

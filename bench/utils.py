@@ -214,3 +214,4 @@ def set_default_site(site, bench='.'):
 		raise Exception("Site not in bench")
 	exec_cmd("{frappe} --use {site}".format(frappe=get_frappe(bench=bench), site=site),
 			cwd=os.path.join(bench, 'sites'))
+
