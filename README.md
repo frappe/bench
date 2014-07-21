@@ -34,6 +34,11 @@ Install bench,
 
 Note: Please do not remove the bench directory the above commands will create
 
+Migrating from old bench
+------------------------
+
+Follow the instructions here, https://github.com/frappe/bench/wiki/Migrating-from-old-bench
+
 
 Basic Usage
 ===========
