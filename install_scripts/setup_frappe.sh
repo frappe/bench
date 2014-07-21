@@ -116,7 +116,8 @@ configure_mariadb_centos() {
 	# Required only for CentOS, Ubuntu and Debian will show dpkg configure screen to set the password
 	if [ $OS == "centos" ]; then
 		echo Enter mysql root password to set:
-		read -s MSQ_PASS
+		read -t 1 -n 10000 discard
+		read -p "Enter mysql root password to set:" -s MSQ_PASS
 		mysqladmin -u root password $MSQ_PASS
 	fi
 }
