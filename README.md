@@ -186,3 +186,8 @@ you have another configuration with server block as default for port 80 (in most
 cases for the nginx welcome page). You will have to disable this config.  Most
 probable places for it to exist are `/etc/nginx/conf.d/default.conf` and
 `/etc/nginx/conf.d/default`.
+
+Multitenant setup
+=================
+
+Follow https://github.com/frappe/bench/wiki/Multitenant-Setup
