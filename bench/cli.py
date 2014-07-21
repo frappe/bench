@@ -14,7 +14,6 @@ from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps
 from .config import generate_nginx_config, generate_supervisor_config
-from .migrate3to4 import main as _migrate_3to4
 import os
 import sys
 import logging
@@ -109,7 +108,10 @@ def start():
 @click.argument('path')
 def migrate_3to4(path):
 	"Migrate from ERPNext v3.x"
-	_migrate_3to4(path)
+	exec_cmd("{python} {migrate_3to4} {site}".format(
+			python=os.path.join('env', 'bin', 'python'),
+			migrate_3to4=os.path.join(os.path.dirname(__file__), 'migrate3to4.py'),
+			site=path))
 
 @click.command('set-nginx-port')
 @click.argument('site')

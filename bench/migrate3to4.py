@@ -66,3 +66,8 @@ def module_to_json(module_path, indent=None, keys=None):
 	module = {x:getattr(module, x) for x in json_keys}
 	return json.dumps(module, indent=indent)
 
+if __name__ == '__main__':
+	parser = argparse.ArgumentParser()
+	parser.add_argument('site')
+	args = parser.parse_args()
+	main(args.site)
