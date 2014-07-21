@@ -7,11 +7,12 @@ from .utils import setup_auto_update as _setup_auto_update
 from .utils import setup_sudoers as _setup_sudoers
 from .utils import start as _start
 from .utils import setup_procfile as _setup_procfile
+from .utils import set_nginx_port as _set_nginx_port
 from .utils import build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging, get_config, update_config, restart_supervisor_processes
 from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps
-from .config import generate_config
+from .config import generate_nginx_config, generate_supervisor_config
 from .migrate3to4 import main as _migrate_3to4
 import os
 import sys
@@ -108,6 +109,13 @@ def migrate_3to4(path):
 	"Migrate from ERPNext v3.x"
 	_migrate_3to4(path)
 
+@click.command('set-nginx-port')
+@click.argument('site')
+@click.argument('port', type=int)
+def set_nginx_port(site, port):
+	"Set nginx port for site"
+	_set_nginx_port(site, port)
+
 ## Setup
 @click.group()
 def setup():
@@ -122,12 +130,12 @@ def setup_sudoers():
 @click.command('nginx')
 def setup_nginx():
 	"generate config for nginx"
-	generate_config('nginx', 'nginx.conf')
+	generate_nginx_config()
 	
 @click.command('supervisor')
 def setup_supervisor():
 	"generate config for supervisor"
-	generate_config('supervisor', 'supervisor.conf')
+	generate_supervisor_config()
 	update_config({'restart_supervisor_on_update': True})
 
 @click.command('auto-update')
@@ -191,9 +199,17 @@ def config_update_bench_on_update(state):
 	state = True if state == 'on' else False
 	update_config({'update_bench_on_update': state})
 
+@click.command('dns_multitenant')
+@click.argument('state', type=click.Choice(['on', 'off']))
+def config_dns_multitenant(state):
+	"Enable/Disable bench updates on running bench update"
+	state = True if state == 'on' else False
+	update_config({'dns_multitenant': state})
+
 config.add_command(config_auto_update)
 config.add_command(config_update_bench_on_update)
 config.add_command(config_restart_supervisor_on_update)
+config.add_command(config_dns_multitenant)
 
 #Bench commands
 
@@ -206,5 +222,6 @@ bench.add_command(update)
 bench.add_command(restart)
 bench.add_command(config)
 bench.add_command(start)
+bench.add_command(set_nginx_port)
 bench.add_command(migrate_3to4)
 

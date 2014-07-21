@@ -184,3 +184,25 @@ def get_cmd_output(cmd, cwd='.'):
 
 def restart_supervisor_processes():
 	exec_cmd("sudo supervisorctl restart frappe:")
+
+def get_site_config(site, bench='.'):
+	config_path = os.path.join(bench, 'sites', site, 'site_config.json')
+	if not os.path.exists(config_path):
+		return {}
+	with open(config_path) as f:
+		return json.load(f)
+
+def put_site_config(site, config, bench='.'):
+	config_path = os.path.join(bench, 'sites', site, 'site_config.json')
+	with open(config_path, 'w') as f:
+		return json.dump(config, f, indent=1)
+
+def update_site_config(site, new_config, bench='.'):
+	config = get_site_config(site, bench=bench)
+	config.update(new_config)
+	put_site_config(site, config, bench=bench)
+
+def set_nginx_port(site, port, bench='.'):
+	if site not in get_sites(bench=bench):
+		raise Exception("No such site")
+	update_site_config(site, {"nginx_port": port}, bench=bench)
