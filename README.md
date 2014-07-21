@@ -12,7 +12,7 @@ Easy way
 
 Supported for CentOS 6, Debian 7 and Ubuntu 12.04+
 
-`curl https://https://raw.githubusercontent.com/frappe/bench/master/install_scripts/setup_frappe.sh | bash`
+`curl https://raw.githubusercontent.com/frappe/bench/master/install_scripts/setup_frappe.sh | sudo bash`
 
 This script should install the pre-requisites and add a bench command.
 
