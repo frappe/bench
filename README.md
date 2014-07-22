@@ -29,7 +29,7 @@ Install pre-requisites,
 	
 Install bench,
 
-		git clone https://github.com/frappe/bench-repo
+		git clone https://github.com/frappe/bench bench-repo
 		sudo pip install -e bench-repo
 
 Note: Please do not remove the bench directory the above commands will create
