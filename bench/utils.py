@@ -215,3 +215,10 @@ def set_default_site(site, bench='.'):
 	exec_cmd("{frappe} --use {site}".format(frappe=get_frappe(bench=bench), site=site),
 			cwd=os.path.join(bench, 'sites'))
 
+def update_requirements(bench='.'):
+	pip = os.path.join(bench, 'env', 'bin', 'pip')
+	apps_dir = os.path.join(bench, 'apps')
+	for app in os.listdir(apps_dir):
+		req_file = os.path.join(apps_dir, app, 'requirements.txt')
+		if os.path.exists(req_file):
+			exec_cmd("{pip} install -r {req_file}".format(pip=pip, req_file=req_file))

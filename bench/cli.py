@@ -9,7 +9,7 @@ from .utils import start as _start
 from .utils import setup_procfile as _setup_procfile
 from .utils import set_nginx_port as _set_nginx_port
 from .utils import set_default_site as _set_default_site
-from .utils import build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging, get_config, update_config, restart_supervisor_processes, put_config, default_config
+from .utils import build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging, get_config, update_config, restart_supervisor_processes, put_config, default_config, update_requirements
 from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps
@@ -68,13 +68,14 @@ def new_site(site):
 @click.option('--patch',flag_value=True, type=bool, help="Run migrations for all sites in the bench")
 @click.option('--build',flag_value=True, type=bool, help="Build JS and CSS artifacts for the bench")
 @click.option('--bench',flag_value=True, type=bool, help="Update bench")
+@click.option('--requirements',flag_value=True, type=bool, help="Update requirements")
 @click.option('--restart-supervisor',flag_value=True, type=bool, help="restart supervisor processes after update")
 @click.option('--auto',flag_value=True, type=bool)
-def update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False):
+def update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, requirements=False):
 	"Update bench"
 
-	if not (pull or patch or build or bench):
-		pull, patch, build, bench = True, True, True, True
+	if not (pull or patch or build or bench or requirements):
+		pull, patch, build, bench, requirements = True, True, True, True, True
 
 	conf = get_config()
 	if auto and not conf.get('auto_update'):
@@ -83,12 +84,14 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 		update_bench()
 	if pull:
 		pull_all_apps()
+	if requirements:
+		update_requirements()
 	if patch:
 		patch_sites()
 	if build:
 		build_assets()
-	# if restart_supervisor or conf.get('restart_supervisor_on_update'):
-	# 	restart_supervisor_processes()
+	if restart_supervisor or conf.get('restart_supervisor_on_update'):
+		restart_supervisor_processes()
 
 	print "_"*80
 	print "https://frappe.io/buy - Donate to help make better free and open source tools"
