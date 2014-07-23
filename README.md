@@ -34,6 +34,8 @@ Install bench,
 
 Note: Please do not remove the bench directory the above commands will create
 
+If you're here to setup ERPNext, continue with [ERPNext setup](https://github.com/frappe/bench#setting-up-erpnext)
+
 Migrating from old bench
 ------------------------
 
@@ -54,8 +56,8 @@ Basic Usage
 * Add apps
 
 	The get-app command gets and installs frappe apps. Examples include
-	(erpnext)[https://github.com/frappe/erpnext] and
-	(shopping-cart)[https://github.com/frappe/shopping-cart]
+	[erpnext](https://github.com/frappe/erpnext) and
+	[shopping-cart](https://github.com/frappe/shopping-cart)
 
 		bench get-app erpnext https://github.com/frappe/erpnext
 
