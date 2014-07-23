@@ -125,7 +125,7 @@ bench frappe --install_app erpnext site1.local						# Install ERPNext for the si
 bench frappe --install_app shopping_cart site1.local				# Install Shopping cart for the site
 ```
 
-You can now either use `bench start` or setup the bench for production use.
+You can now either use `bench start` or setup the bench for [production use](https://github.com/frappe/bench#production-deployment).
 
 External services
 -----------------
