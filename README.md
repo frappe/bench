@@ -84,6 +84,25 @@ Basic Usage
 		bench start
 
 
+Setting Up ERPNext
+==================
+
+To setup a bench that runs ERPNext, run the following commands
+
+```
+cd ~
+bench init frappe-bench
+cd frappe-bench
+bench get-app erpnext https://github.com/frappe/erpnext				# Add ERPNext to your bench apps
+bench get-app shopping_cart https://github.com/frappe/shopping-cart	# Add Shopping cart to your bench apps
+bench new-site site1.local											# Create a new site
+bench frappe --install_app erpnext site1.local						# Install ERPNext for the site
+bench frappe --install_app shopping_cart site1.local				# Install Shopping cart for the site
+```
+
+You can now either use `bench start` or setup the bench for production use.
+
+
 Updating
 ========
 
@@ -116,25 +135,6 @@ To run the bench,
 *For production*: Configure supervisor and nginx
 
 To run the bench, a few services need to be running apart from the processes.
-
-
-Setting Up ERPNext
-==================
-
-To setup a bench that runs ERPNext, run the following commands
-
-```
-cd ~
-bench init frappe-bench
-cd frappe-bench
-bench get-app erpnext https://github.com/frappe/erpnext				# Add ERPNext to your bench apps
-bench get-app shopping_cart https://github.com/frappe/shopping-cart	# Add Shopping cart to your bench apps
-bench new-site site1.local											# Create a new site
-bench frappe --install_app erpnext site1.local						# Install ERPNext for the site
-bench frappe --install_app shopping_cart site1.local				# Install Shopping cart for the site
-```
-
-You can now either use `bench start` or setup the bench for [production use](https://github.com/frappe/bench#production-deployment).
 
 External services
 -----------------
