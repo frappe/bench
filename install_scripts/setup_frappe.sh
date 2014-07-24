@@ -165,7 +165,7 @@ add_ius_repo() {
 }
 
 install_bench() {
-	sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER && git clone --branch develop https://github.com/frappe/bench bench-repo"
+	sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER && git clone https://github.com/frappe/bench bench-repo"
 	if hash pip-2.7; then
 		PIP="pip-2.7"
 	elif hash pip2.7; then
