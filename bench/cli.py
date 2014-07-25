@@ -227,15 +227,23 @@ def config_dns_multitenant(state):
 
 @click.command('serve_default_site')
 @click.argument('state', type=click.Choice(['on', 'off']))
-def config_dns_multitenant(state):
+def config_serve_default_site(state):
 	"Configure nginx to serve the default site on port 80"
 	state = True if state == 'on' else False
 	update_config({'serve_default_site': state})
+
+@click.command('rebase_on_pull')
+@click.argument('state', type=click.Choice(['on', 'off']))
+def config_rebase_on_pull(state):
+	"Rebase repositories on pulling"
+	state = True if state == 'on' else False
+	update_config({'rebase_on_pull': state})
 
 config.add_command(config_auto_update)
 config.add_command(config_update_bench_on_update)
 config.add_command(config_restart_supervisor_on_update)
 config.add_command(config_dns_multitenant)
+config.add_command(config_serve_default_site)
 
 #Bench commands
 

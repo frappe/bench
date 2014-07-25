@@ -12,6 +12,7 @@ default_config = {
 	'restart_supervisor_on_update': False,
 	'auto_update': True,
 	'serve_default_site': True,
+	'rebase_on_pull': False,
 	'update_bench_on_update': True,
 	'shallow_clone': True
 }

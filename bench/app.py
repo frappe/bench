@@ -40,11 +40,12 @@ def install_app(app, bench='.'):
 def pull_all_apps(bench='.'):
 	apps_dir = os.path.join(bench, 'apps')
 	apps = [app for app in os.listdir(apps_dir) if os.path.isdir(os.path.join(apps_dir, app))]
+	rebase = '--rebase' if get_config().get('rebase_on_pull') else ''
 	for app in apps:
 		app_dir = os.path.join(apps_dir, app)
 		if os.path.exists(os.path.join(app_dir, '.git')):
 			logger.info('pulling {}'.format(app))
-			exec_cmd("git pull --rebase upstream HEAD", cwd=app_dir)
+			exec_cmd("git pull {rebase} upstream HEAD".format(rebase=rebase), cwd=app_dir)
 
 def install_apps_from_path(path, bench='.'):
 	apps = get_apps_dict(path)
