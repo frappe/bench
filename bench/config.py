@@ -12,8 +12,6 @@ def generate_supervisor_config(bench='.'):
 	sites_dir = os.path.join(bench_dir, "sites")
 	sites = get_sites(bench=bench)
 	user = getpass.getuser()
-	with open("sites/currentsite.txt") as f:
-		default_site = f.read().strip()
 
 	config = template.render(**{
 		"bench_dir": bench_dir,
@@ -40,11 +38,15 @@ def generate_nginx_config(bench='.'):
 	sites_dir = os.path.join(bench_dir, "sites")
 	sites = get_sites_with_config(bench=bench)
 	user = getpass.getuser()
-	with open("sites/currentsite.txt") as f:
-		default_site = f.read().strip()
-	default_site = {
-		'name': default_site
-	}
+
+	if get_config().get('serve_default_site'):
+		try:
+			with open("sites/currentsite.txt") as f:
+				default_site = {'name': f.read().strip()}
+		except IOError:
+			default_site = None
+	else:
+		default_site = None
 
 	config = template.render(**{
 		"sites_dir": sites_dir,

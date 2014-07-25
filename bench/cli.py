@@ -225,6 +225,13 @@ def config_dns_multitenant(state):
 	state = True if state == 'on' else False
 	update_config({'dns_multitenant': state})
 
+@click.command('serve_default_site')
+@click.argument('state', type=click.Choice(['on', 'off']))
+def config_dns_multitenant(state):
+	"Configure nginx to serve the default site on port 80"
+	state = True if state == 'on' else False
+	update_config({'serve_default_site': state})
+
 config.add_command(config_auto_update)
 config.add_command(config_update_bench_on_update)
 config.add_command(config_restart_supervisor_on_update)
