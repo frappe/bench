@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 default_config = {
 	'restart_supervisor_on_update': False,
 	'auto_update': True,
+	'serve_default_site': True,
 	'update_bench_on_update': True,
 	'shallow_clone': True
 }
@@ -204,10 +205,13 @@ def update_site_config(site, new_config, bench='.'):
 	config.update(new_config)
 	put_site_config(site, config, bench=bench)
 
-def set_nginx_port(site, port, bench='.'):
+def set_nginx_port(site, port, bench='.', gen_config=True):
+	from .config import generate_nginx_config
 	if site not in get_sites(bench=bench):
 		raise Exception("No such site")
 	update_site_config(site, {"nginx_port": port}, bench=bench)
+	if gen_config:
+		generate_nginx_config()
 
 def set_default_site(site, bench='.'):
 	if not site in get_sites(bench=bench):
