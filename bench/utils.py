@@ -87,13 +87,15 @@ def get_bench_dir(bench='.'):
 
 def setup_auto_update(bench='.'):
 	logger.info('setting up auto update')
-	add_to_crontab('0 10 * * * cd {bench_dir} &&  {bench} update --auto'.format(bench_dir=get_bench_dir(bench=bench),
-		bench=os.path.join(get_bench_dir(bench=bench), 'env', 'bin', 'bench')))
+	add_to_crontab('0 10 * * * cd {bench_dir} &&  {bench} update --auto >> {logfile} 2>&1'.format(bench_dir=get_bench_dir(bench=bench),
+		bench=os.path.join(get_bench_dir(bench=bench), 'env', 'bin', 'bench'),
+		logfile=os.path.join(get_bench_dir(bench=bench), 'logs', 'auto_update_log.log')))
 
 def setup_backups(bench='.'):
 	logger.info('setting up backups')
-	add_to_crontab('0 */6 * * * cd {sites_dir} &&  {frappe} --backup all'.format(sites_dir=get_sites_dir(bench=bench),
-		frappe=get_frappe(bench=bench)))
+	add_to_crontab('0 */6 * * * cd {sites_dir} &&  {frappe} --backup all >> {logfile} 2>&1'.format(sites_dir=get_sites_dir(bench=bench),
+		frappe=get_frappe(bench=bench),
+		logfile=os.path.join(get_bench_dir(bench=bench), 'logs', 'backup.log')))
 
 def add_to_crontab(line):
 	current_crontab = read_crontab()
