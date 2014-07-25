@@ -45,15 +45,12 @@ Installing ERPNext
 If you're here to setup ERPNext, continue with [ERPNext setup](https://github.com/frappe/bench#setting-up-erpnext)
 
 
-Migrating from old bench
-------------------------
+Migrating from existing installation
+------------------------------------
 
-Follow the instructions here, https://github.com/frappe/bench/wiki/Migrating-from-ERPNext-version-3
+If want to migrate from ERPNext version 3, follow the instructions here, https://github.com/frappe/bench/wiki/Migrating-from-ERPNext-version-3
 
-Migrating from ERPNext Version 3
---------------------------------
-
-Follow the instructions here, https://github.com/frappe/bench/wiki/Migrating-from-old-bench
+If want to migrate from the old bench, follow the instructions here, https://github.com/frappe/bench/wiki/Migrating-from-old-bench
 
 
 Basic Usage
