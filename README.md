@@ -1,8 +1,11 @@
 Bench
 =====
 
-The bench allows you to setup Frappe apps on your local machine or a production
-server. You can use the bench to serve multi tenant frappe sites.
+The bench allows you to setup Frappe / ERPNext apps on your local Linux (CentOS 6, Debian 7 or Ubuntu) machine or a production server. You can use the bench to serve multiple frappe sites.
+
+To do this install, you must have basic information on how Linux works and should be able to use the command-line. If you are looking easier ways to get started and evaluate ERPNext, [download the Virtual Machine or take a free trial at FrappeCloud.com](https://erpnext.com/use).
+
+For questions, please join the [developer forum](https://groups.google.com/group/erpnext-developer-forum).
 
 Installation
 ============
@@ -11,6 +14,8 @@ Easy way
 --------
 
 Supported for CentOS 6, Debian 7 and Ubuntu 12.04+
+
+Open your Terminal and enter:
 
 `curl https://raw.githubusercontent.com/frappe/bench/master/install_scripts/setup_frappe.sh | sudo bash`
 
@@ -34,7 +39,11 @@ Install bench,
 
 Note: Please do not remove the bench directory the above commands will create
 
+Installing ERPNext
+------------------
+
 If you're here to setup ERPNext, continue with [ERPNext setup](https://github.com/frappe/bench#setting-up-erpnext)
+
 
 Migrating from old bench
 ------------------------
