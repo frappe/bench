@@ -42,7 +42,6 @@ def init(path, apps_path=None):
 	setup_procfile(bench=path)
 	setup_backups(bench=path)
 	setup_auto_update(bench=path)
-	exec_cmd("{frappe} --build".format(frappe=get_frappe(bench=path)), cwd=os.path.join(path, 'sites'))
 	if apps_path:
 		install_apps_from_path(apps_path, bench=path)
 

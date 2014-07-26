@@ -1,5 +1,5 @@
 import os
-from .utils import exec_cmd, get_frappe, check_git_for_shallow_clone, get_config
+from .utils import exec_cmd, get_frappe, check_git_for_shallow_clone, get_config, build_assets
 
 import logging
 import requests
@@ -26,6 +26,7 @@ def get_app(app, git_url, bench='.'):
 	shallow_clone = '--depth 1' if check_git_for_shallow_clone() and get_config().get('shallow_clone') else ''
 	exec_cmd("git clone {git_url} {shallow_clone} --origin upstream {app}".format(git_url=git_url, app=app, shallow_clone=shallow_clone), cwd=os.path.join(bench, 'apps'))
 	install_app(app, bench=bench)
+	build_assets(bench=bench)
 
 def new_app(app, bench='.'):
 	logger.info('creating new app {}'.format(app))
