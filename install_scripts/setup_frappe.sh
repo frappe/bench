@@ -102,7 +102,7 @@ add_user() {
 # Check if script is running as root and is not running as sudo. We want to skip
 # this step if the user is already running this script with sudo as a non root
 # user
-	if [ -z $SUDO_UID ] && [ $EUID -eq 0 ]; then
+	if [ -z $SUDO_UID ] && [ $EUID -eq "0" ]; then
 		useradd -m -d /home/frappe -s $SHELL frappe
 		chmod o+x /home/frappe
 		chmod o+r /home/frappe
