@@ -17,7 +17,10 @@ Supported for CentOS 6, Debian 7 and Ubuntu 12.04+
 
 Open your Terminal and enter:
 
-`curl https://raw.githubusercontent.com/frappe/bench/master/install_scripts/setup_frappe.sh | sudo bash`
+```
+wget https://raw.githubusercontent.com/frappe/bench/master/install_scripts/setup_frappe.sh
+sudo bash setup_frappe.sh
+```
 
 This script should install the pre-requisites and add a bench command.
 
