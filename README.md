@@ -25,8 +25,8 @@ sudo bash setup_frappe.sh
 This script should install the pre-requisites and add a bench command.
 
 
-Hard Way
---------
+Manual Install
+--------------
 
 Install pre-requisites,
 
@@ -36,7 +36,7 @@ Install pre-requisites,
 * wkhtmltopdf (optional, required for pdf generation)
 * Memcached
 	
-Install bench,
+Install bench as a *non root* user,
 
 		git clone https://github.com/frappe/bench bench-repo
 		sudo pip install -e bench-repo
