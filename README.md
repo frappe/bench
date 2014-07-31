@@ -34,6 +34,7 @@ Install pre-requisites,
 * MariaDB
 * Redis
 * wkhtmltopdf (optional, required for pdf generation)
+* Memcached
 	
 Install bench,
 
