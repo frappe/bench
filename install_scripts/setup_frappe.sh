@@ -178,7 +178,7 @@ install_bench() {
 		echo PIP not installed
 		exit 1
 	fi
-	sudo $PIP install /home/$FRAPPE_USER/bench-repo
+	sudo $PIP install -e /home/$FRAPPE_USER/bench-repo
 }
 
 get_distro
