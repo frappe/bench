@@ -49,11 +49,11 @@ def pull_all_apps(bench='.'):
 			exec_cmd("git pull {rebase} upstream HEAD".format(rebase=rebase), cwd=app_dir)
 
 def install_apps_from_path(path, bench='.'):
-	apps = get_apps_dict(path)
-	for app, url in apps.items():
-		get_app(app, url, bench=bench)
+	apps = get_apps_json(path)
+	for app in apps:
+		get_app(app['name'], app['url'], bench=bench)
 
-def get_apps_dict(path):
+def get_apps_json(path):
 	if path.startswith('http'):
 		r = requests.get(path)
 		return r.json()
