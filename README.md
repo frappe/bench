@@ -213,7 +213,7 @@ directory and reload it for it to take effect.
 eg,
 
 ```
-bench setup supervisor
+bench setup nginx
 sudo ln -s `pwd`/config/nginx.conf /etc/nginx/conf.d/frappe.conf
 ```
 
