@@ -80,7 +80,7 @@ install_packages() {
 		sudo yum install wget -y
 		add_ius_repo
 		sudo yum groupinstall -y "Development tools"
-		sudo yum install -y sudo yum install MariaDB-server MariaDB-client MariaDB-compat python-setuptools nginx zlib-devel bzip2-devel openssl-devel memcached postfix python27-devel python27 libxml2 libxml2-devel libxslt libxslt-devel redis MariaDB-devel libXrender libXext python27-setuptools
+		sudo yum install -y sudo yum install MariaDB-server MariaDB-client MariaDB-compat python-setuptools nginx zlib-devel bzip2-devel openssl-devel memcached postfix python27-devel python27 libxml2 libxml2-devel libxslt libxslt-devel redis MariaDB-devel libXrender libXext python27-setuptools python-pip python-devel
 		wget http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.1/wkhtmltox-0.12.1_linux-centos6-amd64.rpm
 		sudo rpm -Uvh wkhtmltox-0.12.1_linux-centos6-amd64.rpm
 		easy_install-2.7 -U pip
