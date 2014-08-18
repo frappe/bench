@@ -33,7 +33,7 @@ Install pre-requisites,
 * Python 2.7
 * MariaDB
 * Redis
-* wkhtmltopdf (optional, required for pdf generation)
+* [wkhtmltopdf](http://wkhtmltopdf.org/downloads.html) (optional, required for pdf generation)
 * Memcached
 	
 Install bench as a *non root* user,
