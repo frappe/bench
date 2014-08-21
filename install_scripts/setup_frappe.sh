@@ -158,9 +158,9 @@ add_ius_repo() {
 	fi 
 	if [ $OS_VER -eq "6" ]; then
 	wget http://dl.iuscommunity.org/pub/ius/stable/CentOS/$OS_VER/$T_ARCH/epel-release-6-5.noarch.rpm
-	wget http://dl.iuscommunity.org/pub/ius/stable/CentOS/$OS_VER/$T_ARCH/ius-release-1.0-11.ius.centos6.noarch.rpm
+	wget http://dl.iuscommunity.org/pub/ius/stable/CentOS/$OS_VER/$T_ARCH/ius-release-1.0-13.ius.centos6.noarch.rpm
 	rpm -Uvh epel-release-6-5.noarch.rpm
-	rpm -Uvh ius-release-1.0-11.ius.centos6.noarch.rpm
+	rpm -Uvh ius-release-1.0-13.ius.centos6.noarch.rpm
 	fi
 }
 
