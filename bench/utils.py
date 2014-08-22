@@ -55,7 +55,7 @@ def exec_cmd(cmd, cwd='.'):
 	try:
 		subprocess.check_call(cmd, cwd=cwd, shell=True)
 	except subprocess.CalledProcessError, e:
-		print "Error:", e.output
+		print "Error:", getattr(e, "output", None) or getattr(e, "error", None)
 		raise
 
 def setup_env(bench='.'):
