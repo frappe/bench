@@ -1,6 +1,7 @@
 from frappe.installer import add_to_installed_apps
-from frappe.cli import latest
+from frappe.cli import latest, backup
 from frappe.modules.patch_handler import executed
+from frappe.installer import make_site_dirs
 import frappe
 import argparse
 import os
@@ -43,6 +44,7 @@ def copy_site(path):
 	site = os.path.basename(path)
 	site_path = os.path.join(sites_path, site)
 	confpy_path = os.path.join(path, 'conf.py')
+	confjson_path = os.path.join(path, 'site_config.json')
 	if os.path.exists(site_path):
 		raise Exception("Site already exists")
 
@@ -56,11 +58,16 @@ def copy_site(path):
 	if os.path.exists(confpy_path):
 		with open(os.path.join(site_path, 'site_config.json'), 'w') as f:
 			f.write(module_to_json(confpy_path, indent=1))
+	if os.path.exists(confjson_path):
+		shutil.copy(confjson_path, os.path.join(site_path, 'site_config.json'))
 	if len(get_sites()) == 1:
 		exec_cmd("{frappe} --use {site}".format(frappe=get_frappe(), site=site), cwd='sites')
 	return site
 
 def validate(site):
+        frappe.init(site=site, sites_path=sites_path)
+        make_site_dirs()
+        backup()
         frappe.init(site=site, sites_path=sites_path)
         frappe.connect()
         if not executed(last_3_patch):
@@ -70,7 +77,8 @@ def validate(site):
 
 def migrate(site):
         validate(site)
-        frappe.init(site=site, sites_path=sites_path)
+        os.chdir(sites_path)
+        frappe.init(site=site)
         frappe.connect()
         add_to_installed_apps('frappe', rebuild_website=False)
         add_to_installed_apps('erpnext', rebuild_website=False)
