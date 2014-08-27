@@ -17,6 +17,7 @@ from .config import generate_nginx_config, generate_supervisor_config
 import os
 import sys
 import logging
+import copy
 
 logger = logging.getLogger('bench')
 
@@ -29,6 +30,20 @@ def frappe(bench='.'):
 	f = get_frappe(bench=bench)
 	os.chdir(os.path.join(bench, 'sites'))
 	os.execv(f, [f] + sys.argv[2:])
+
+@click.command()
+def shell(bench='.'):
+	if not os.environ.get('SHELL'):
+		print "Cannot get shell"
+		sys.exit(1)
+	if not os.path.exists('sites'):
+		print "sites dir doesn't exist"
+		sys.exit(1)
+	env = copy.copy(os.environ)
+	env['PS1'] = '(' + os.path.basename(os.path.dirname(os.path.abspath(__file__))) + ')' + env.get('PS1', '')
+	env['PATH'] = os.path.dirname(os.path.abspath(os.path.join('env','bin')) + ':' + env['PATH'])
+	os.chdir('sites')
+	os.execve(env['SHELL'], [env['SHELL']], env)
 
 @click.group()
 def bench(bench='.'):
@@ -265,3 +280,4 @@ bench.add_command(start)
 bench.add_command(set_nginx_port)
 bench.add_command(set_default_site)
 bench.add_command(migrate_3to4)
+bench.add_command(shell)
