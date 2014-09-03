@@ -199,7 +199,7 @@ sudo ln -s `pwd`/config/supervisor.conf /etc/supervisor/conf.d/frappe.conf
 
 The bench will also need to restart the processes managed by supervisor when you
 update the apps. To automate this, you will have to setup sudoers using the
-command, `sudo bench setup sudoers`.
+command, `sudo bench setup sudoers $(whoami)`.
 
 Nginx
 -----
