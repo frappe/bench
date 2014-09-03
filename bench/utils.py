@@ -122,10 +122,10 @@ def update_bench():
 	cwd = os.path.dirname(os.path.abspath(__file__))
 	exec_cmd("git pull", cwd=cwd)
 
-def setup_sudoers():
+def setup_sudoers(user):
 	with open('/etc/sudoers.d/frappe', 'w') as f:
 		f.write("{user} ALL=(ALL) NOPASSWD: {supervisorctl} restart frappe\:\n".format(
-					user=getpass.getuser(),
+					user=user,
 					supervisorctl=subprocess.check_output('which supervisorctl', shell=True).strip()))
 
 def setup_logging(bench='.'):

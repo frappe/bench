@@ -157,9 +157,10 @@ def setup():
 	pass
 	
 @click.command('sudoers')
-def setup_sudoers():
+@click.argument('user')
+def setup_sudoers(user):
 	"Add commands to sudoers list for execution without password"
-	_setup_sudoers()
+	_setup_sudoers(user)
 	
 @click.command('nginx')
 def setup_nginx():
