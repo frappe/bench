@@ -9,7 +9,9 @@ from .utils import start as _start
 from .utils import setup_procfile as _setup_procfile
 from .utils import set_nginx_port as _set_nginx_port
 from .utils import set_default_site as _set_default_site
-from .utils import build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging, get_config, update_config, restart_supervisor_processes, put_config, default_config, update_requirements
+from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging,
+		get_config, update_config, restart_supervisor_processes, put_config, default_config, update_requirements,
+		backup_all_sites, backup_site, get_sites)
 from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps
@@ -150,6 +152,20 @@ def set_default_site(site):
 	"Set default site for bench"
 	_set_default_site(site)
 
+@click.command('backup')
+@click.argument('site')
+def _backup_site(site):
+	"backup site"
+	if not site in get_sites(bench='.'):
+		print 'site not found'
+		sys.exit(1)
+	backup_site(site, bench='.')
+
+@click.command('backup-all-sites')
+def _backup_all_sites():
+	"backup all sites"
+	backup_all_sites(bench='.')
+
 ## Setup
 @click.group()
 def setup():
@@ -282,3 +298,5 @@ bench.add_command(set_nginx_port)
 bench.add_command(set_default_site)
 bench.add_command(migrate_3to4)
 bench.add_command(shell)
+bench.add_command(_backup_all_sites)
+bench.add_command(_backup_site)
