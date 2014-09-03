@@ -94,7 +94,8 @@ def new_site(site):
 @click.option('--requirements',flag_value=True, type=bool, help="Update requirements")
 @click.option('--restart-supervisor',flag_value=True, type=bool, help="restart supervisor processes after update")
 @click.option('--auto',flag_value=True, type=bool)
-def update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, requirements=False):
+@click.option('--no-backup',flag_value=True, type=bool)
+def update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, requirements=False, no_backup=False):
 	"Update bench"
 
 	if not (pull or patch or build or bench or requirements):
@@ -110,6 +111,8 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 	if requirements:
 		update_requirements()
 	if patch:
+		if not no_backup:
+			backup_all_sites()
 		patch_sites()
 	if build:
 		build_assets()
