@@ -193,8 +193,10 @@ def get_cmd_output(cmd, cwd='.'):
 		print "Error:", e.output
 		raise
 
-def restart_supervisor_processes():
-	exec_cmd("sudo supervisorctl restart frappe:")
+def restart_supervisor_processes(bench='.'):
+	conf = get_config(bench=bench)
+	cmd = conf.get('supervisor_restart_cmd', 'sudo supervisorctl restart frappe:')
+	exec_cmd(cmd, cwd=bench)
 
 def get_site_config(site, bench='.'):
 	config_path = os.path.join(bench, 'sites', site, 'site_config.json')
