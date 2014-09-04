@@ -35,7 +35,12 @@ def new_app(app, bench='.'):
 
 def install_app(app, bench='.'):
 	logger.info('installing {}'.format(app))
-	exec_cmd("{pip} install -e {app}".format(pip=os.path.join(bench, 'env', 'bin', 'pip'), app=os.path.join(bench, 'apps', app)))
+	conf = get_config()
+	find_links = '--find-links={}'.format(conf.get('wheel_cache_dir')) if conf.get('wheel_cache_dir') else ''
+	exec_cmd("{pip} install {find_links} -e {app}".format(
+				pip=os.path.join(bench, 'env', 'bin', 'pip'),
+				app=os.path.join(bench, 'apps', app),
+				find_links=find_links))
 	add_to_appstxt(app, bench=bench)
 
 def pull_all_apps(bench='.'):

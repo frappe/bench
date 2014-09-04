@@ -25,7 +25,7 @@ def get_frappe(bench='.'):
 	return frappe
 
 def init(path, apps_path=None, no_procfile=False, no_backups=False,
-		no_auto_update=False, frappe_path=None):
+		no_auto_update=False, frappe_path=None, wheel_cache_dir=None):
 	from .app import get_app, install_apps_from_path
 	if os.path.exists(path):
 		print 'Directory {} already exists!'.format(path)
@@ -39,6 +39,9 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	setup_env(bench=path)
 	put_config(default_config, bench=path)
+	if wheel_cache_dir:
+		update_config({"wheel_cache_dir":wheel_cache_dir}, bench=path)
+		prime_wheel_cache(bench=path)
 	if not frappe_path:
 		frappe_path = 'https://github.com/frappe/frappe.git'
 	get_app('frappe', frappe_path, bench=path)
@@ -60,6 +63,7 @@ def exec_cmd(cmd, cwd='.'):
 
 def setup_env(bench='.'):
 	exec_cmd('virtualenv {} -p {}'.format('env', sys.executable), cwd=bench)
+	exec_cmd('./env/bin/pip install wheel', cwd=bench)
 
 def setup_procfile(bench='.'):
 	with open(os.path.join(bench, 'Procfile'), 'w') as f:
@@ -244,3 +248,15 @@ def backup_site(site, bench='.'):
 def backup_all_sites(bench='.'):
 	for site in get_sites(bench=bench):
 		backup_site(site, bench=bench)
+
+def prime_wheel_cache(bench='.'):
+	conf = get_config(bench=bench)
+	wheel_cache_dir = conf.get('wheel_cache_dir')
+	if not wheel_cache_dir:
+		raise Exception("Wheel cache dir not configured")
+	requirements = os.path.join(os.path.dirname(__file__), 'templates', 'cached_requirements.txt')
+	cmd =  "{pip} wheel --find-links {wheelhouse} --wheel-dir {wheelhouse} -r {requirements}".format(
+				pip=os.path.join(bench, 'env', 'bin', 'pip'),
+				wheelhouse=wheel_cache_dir,
+				requirements=requirements)
+	exec_cmd(cmd)

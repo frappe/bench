@@ -11,7 +11,7 @@ from .utils import set_nginx_port as _set_nginx_port
 from .utils import set_default_site as _set_default_site
 from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging,
 		get_config, update_config, restart_supervisor_processes, put_config, default_config, update_requirements,
-		backup_all_sites, backup_site, get_sites)
+		backup_all_sites, backup_site, get_sites, prime_wheel_cache)
 from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps
@@ -169,6 +169,11 @@ def _backup_all_sites():
 	"backup all sites"
 	backup_all_sites(bench='.')
 
+@click.command('prime-wheel-cache')
+def _prime_wheel_cache():
+	"Update wheel cache"
+	prime_wheel_cache(bench='.')
+
 ## Setup
 @click.group()
 def setup():
@@ -303,3 +308,4 @@ bench.add_command(migrate_3to4)
 bench.add_command(shell)
 bench.add_command(_backup_all_sites)
 bench.add_command(_backup_site)
+bench.add_command(_prime_wheel_cache)
