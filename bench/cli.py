@@ -294,11 +294,18 @@ def config_rebase_on_pull(state):
 	state = True if state == 'on' else False
 	update_config({'rebase_on_pull': state})
 
+@click.command('http_timeout')
+@click.argument('seconds', type=int)
+def config_http_timeout(seconds):
+	"set http timeout"
+	update_config({'http_timeout': seconds})
+
 config.add_command(config_auto_update)
 config.add_command(config_update_bench_on_update)
 config.add_command(config_restart_supervisor_on_update)
 config.add_command(config_dns_multitenant)
 config.add_command(config_serve_default_site)
+config.add_command(config_http_timeout)
 
 #Bench commands
 

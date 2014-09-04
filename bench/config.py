@@ -12,11 +12,13 @@ def generate_supervisor_config(bench='.'):
 	sites_dir = os.path.join(bench_dir, "sites")
 	sites = get_sites(bench=bench)
 	user = getpass.getuser()
+	config = get_config()
 
 	config = template.render(**{
 		"bench_dir": bench_dir,
 		"sites_dir": sites_dir,
 		"user": user,
+		"http_timeout": config.get("http_timeout", 120),
 	})
 	with open("config/supervisor.conf", 'w') as f:
 		f.write(config)
@@ -50,6 +52,7 @@ def generate_nginx_config(bench='.'):
 
 	config = template.render(**{
 		"sites_dir": sites_dir,
+		"http_timeout": get_config().get("http_timeout", 120),
 		"default_site": default_site,
 		"dns_multitenant": get_config().get('dns_multitenant'),
 		"sites": sites
