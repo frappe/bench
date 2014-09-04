@@ -44,6 +44,7 @@ def create_github_release(owner, repo, tag_name, log, gh_username=None, gh_passw
 			raise Exception, "No credentials"
 		gh_username = github_username
 		gh_password = github_password
+	repo = repo_map[os.path.basename(repo)]
 	data = {
 		'tag_name': tag_name,
 		'target_commitish': 'master',
