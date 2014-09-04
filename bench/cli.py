@@ -16,6 +16,7 @@ from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps
 from .config import generate_nginx_config, generate_supervisor_config
+from .release import release
 import os
 import sys
 import logging
@@ -174,6 +175,14 @@ def _prime_wheel_cache():
 	"Update wheel cache"
 	prime_wheel_cache(bench='.')
 
+@click.command('release')
+@click.argument('app', type=click.Choice(['frappe', 'erpnext', 'shopping_cart']))
+@click.argument('bump-type', type=click.Choice(['major', 'minor', 'patch']))
+def _release(app, bump_type):
+	"Release app (internal to the Frappe team)"
+	repo = os.path.join('apps', app)
+	release(repo, bump_type)
+
 ## Setup
 @click.group()
 def setup():
@@ -309,3 +318,4 @@ bench.add_command(shell)
 bench.add_command(_backup_all_sites)
 bench.add_command(_backup_site)
 bench.add_command(_prime_wheel_cache)
+bench.add_command(_release)
