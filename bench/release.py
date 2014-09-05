@@ -149,8 +149,8 @@ def bump(repo, bump_type):
 	new_version = bump_repo(repo, bump_type)
 	commit_changes(repo, new_version)
 	tag_name = create_release(repo, new_version)
-	#push_release(repo)
-	#create_github_release('frappe', repo, tag_name, '')
+	push_release(repo)
+	create_github_release('frappe', repo, tag_name, '')
 	print 'Released {tag} for {repo}'.format(tag=tag_name, repo=repo)
 
 def release(repo, bump_type):
