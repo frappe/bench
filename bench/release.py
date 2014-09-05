@@ -1,6 +1,7 @@
 #! env python
 import json
 import os
+import sys
 import semantic_version
 import git
 import json
@@ -11,6 +12,7 @@ import re
 from requests.auth import HTTPBasicAuth
 import requests.exceptions
 from time import sleep
+from .utils import get_config
 
 github_username = None
 github_password = None
@@ -154,6 +156,9 @@ def bump(repo, bump_type):
 	print 'Released {tag} for {repo}'.format(tag=tag_name, repo=repo)
 
 def release(repo, bump_type):
+	if not get_config().get('release_bench'):
+		print 'bench not configured to release'
+		sys.exit(1)
 	global github_username, github_password
 	github_username = raw_input('username:')
 	github_password = getpass.getpass()
