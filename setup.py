@@ -13,7 +13,9 @@ setup(
 		'jinja2',
 		'virtualenv',
 		'requests',
-		'honcho'
+		'honcho',
+		'semantic_version',
+		'GitPython==0.3.2'
     ],
 	entry_points='''
 [console_scripts]
