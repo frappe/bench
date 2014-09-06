@@ -15,7 +15,7 @@ setup(
 		'requests',
 		'honcho',
 		'semantic_version',
-		'GitPython==0.3.2'
+		'GitPython==0.3.2.RC1'
     ],
 	entry_points='''
 [console_scripts]
