@@ -1,5 +1,5 @@
 import os
-from .utils import exec_cmd, get_frappe, check_git_for_shallow_clone, get_config, build_assets
+from .utils import exec_cmd, get_frappe, check_git_for_shallow_clone, get_config, build_assets, restart_supervisor_processes
 
 import logging
 import requests
@@ -27,6 +27,9 @@ def get_app(app, git_url, bench='.'):
 	exec_cmd("git clone {git_url} {shallow_clone} --origin upstream {app}".format(git_url=git_url, app=app, shallow_clone=shallow_clone), cwd=os.path.join(bench, 'apps'))
 	install_app(app, bench=bench)
 	build_assets(bench=bench)
+	conf = get_config()
+	if conf.get('restart_supervisor_on_update'):
+		restart_supervisor_on_update(bench=bench)
 
 def new_app(app, bench='.'):
 	logger.info('creating new app {}'.format(app))
