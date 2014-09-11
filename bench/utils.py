@@ -186,7 +186,7 @@ def get_git_version():
 
 def check_git_for_shallow_clone():
 	git_version = get_git_version()
-	if '1.9' in git_version or '2.0' in git_version:
+	if git_version.startswith('1.9') or git_version.startswith('2'):
 		return True
 	return False
 
