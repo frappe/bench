@@ -57,22 +57,24 @@ def bench(bench='.'):
 @click.argument('path')
 @click.option('--apps_path', default=None, help="path to json files with apps to install after init")
 @click.option('--frappe-path', default=None, help="path to frappe repo")
+@click.option('--frappe-branch', default=None, help="path to frappe repo")
 @click.option('--no-procfile', flag_value=True, type=bool, help="Pull changes in all the apps in bench")
 @click.option('--no-backups',flag_value=True, type=bool, help="Run migrations for all sites in the bench")
 @click.option('--no-auto-update',flag_value=True, type=bool, help="Build JS and CSS artifacts for the bench")
-def init(path, apps_path, frappe_path, no_procfile, no_backups,
+def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups,
 		no_auto_update):
 	"Create a new bench"
 	_init(path, apps_path=apps_path, no_procfile=no_procfile, no_backups=no_backups,
-			no_auto_update=no_auto_update, frappe_path=frappe_path)
+			no_auto_update=no_auto_update, frappe_path=frappe_path, frappe_branch=frappe_branch)
 	click.echo('Bench {} initialized'.format(path))
 
 @click.command('get-app')
 @click.argument('name')
 @click.argument('git-url')
-def get_app(name, git_url):
+@click.option('--branch', default=None, help="branch to checkout")
+def get_app(name, git_url, branch):
 	"clone an app from the internet and set it up in your bench"
-	_get_app(name, git_url)
+	_get_app(name, git_url, branch=branch)
 	
 @click.command('new-app')
 @click.argument('app-name')

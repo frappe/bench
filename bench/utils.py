@@ -25,7 +25,7 @@ def get_frappe(bench='.'):
 	return frappe
 
 def init(path, apps_path=None, no_procfile=False, no_backups=False,
-		no_auto_update=False, frappe_path=None, wheel_cache_dir=None):
+		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None):
 	from .app import get_app, install_apps_from_path
 	if os.path.exists(path):
 		print 'Directory {} already exists!'.format(path)
@@ -44,7 +44,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		prime_wheel_cache(bench=path)
 	if not frappe_path:
 		frappe_path = 'https://github.com/frappe/frappe.git'
-	get_app('frappe', frappe_path, bench=path)
+	get_app('frappe', frappe_path, branch=frappe_branch, bench=path)
 	if not no_procfile:
 		setup_procfile(bench=path)
 	if not no_backups:

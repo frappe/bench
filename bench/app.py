@@ -21,10 +21,16 @@ def add_to_appstxt(app, bench='.'):
 		with open(os.path.join(bench, 'sites', 'apps.txt'), 'w') as f:
 			return f.write('\n'.join(apps))
 
-def get_app(app, git_url, bench='.'):
+def get_app(app, git_url, branch=None, bench='.'):
 	logger.info('getting app {}'.format(app))
 	shallow_clone = '--depth 1' if check_git_for_shallow_clone() and get_config().get('shallow_clone') else ''
-	exec_cmd("git clone {git_url} {shallow_clone} --origin upstream {app}".format(git_url=git_url, app=app, shallow_clone=shallow_clone), cwd=os.path.join(bench, 'apps'))
+	branch = '--branch {branch}'.format(branch=branch) if branch else ''
+	exec_cmd("git clone {git_url} {branch} {shallow_clone} --origin upstream {app}".format(
+				git_url=git_url,
+				app=app,
+				shallow_clone=shallow_clone,
+				branch=branch),
+			cwd=os.path.join(bench, 'apps'))
 	install_app(app, bench=bench)
 	build_assets(bench=bench)
 	conf = get_config()
@@ -59,7 +65,7 @@ def pull_all_apps(bench='.'):
 def install_apps_from_path(path, bench='.'):
 	apps = get_apps_json(path)
 	for app in apps:
-		get_app(app['name'], app['url'], bench=bench)
+		get_app(app['name'], app['url'], branch=app.get('branch'), bench=bench)
 
 def get_apps_json(path):
 	if path.startswith('http'):
