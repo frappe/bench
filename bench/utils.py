@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 default_config = {
 	'restart_supervisor_on_update': False,
-	'auto_update': True,
+	'auto_update': False,
 	'serve_default_site': True,
 	'rebase_on_pull': False,
 	'update_bench_on_update': True,
@@ -96,6 +96,8 @@ def get_bench_dir(bench='.'):
 	return os.path.abspath(bench)
 
 def setup_auto_update(bench='.'):
+	# disabling auto update till Frappe version 5 is stable
+	return
 	logger.info('setting up auto update')
 	add_to_crontab('0 10 * * * cd {bench_dir} &&  {bench} update --auto >> {logfile} 2>&1'.format(bench_dir=get_bench_dir(bench=bench),
 		bench=os.path.join(get_bench_dir(bench=bench), 'env', 'bin', 'bench'),
