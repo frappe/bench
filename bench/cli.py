@@ -88,6 +88,7 @@ def new_site(site):
 	"Create a new site in the bench"
 	_new_site(site)
 	
+#TODO: Not DRY
 @click.command('update')
 @click.option('--pull', flag_value=True, type=bool, help="Pull changes in all the apps in bench")
 @click.option('--patch',flag_value=True, type=bool, help="Run migrations for all sites in the bench")
@@ -111,6 +112,14 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 		sys.exit(1)
 	if bench and conf.get('update_bench_on_update'):
 		update_bench()
+		restart_update({
+				'pull': pull,
+				'patch': patch,
+				'build': build,
+				'requirements': requirements,
+				'no-backup': no_backup,
+				'restart-supervisor': restart_supervisor
+		})
 	if pull:
 		pull_all_apps()
 	if requirements:
@@ -127,6 +136,11 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 	print "_"*80
 	print "https://frappe.io/buy - Donate to help make better free and open source tools"
 	print
+
+def restart_update(kwargs):
+	args = ['--'+k for k, v in kwargs.items() if v]
+	print 'restarting '
+	os.execv(sys.argv[0], sys.argv[:2] + args)
 
 @click.command('restart')
 def restart():
