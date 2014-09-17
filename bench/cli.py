@@ -108,7 +108,7 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 	if conf.get('release_bench'):
 		print 'Release bench, cannot update'
 		sys.exit(1)
-	if auto and not conf.get('auto_update'):
+	if auto:
 		sys.exit(1)
 	if bench and conf.get('update_bench_on_update'):
 		update_bench()
