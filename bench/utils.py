@@ -62,8 +62,8 @@ def exec_cmd(cmd, cwd='.'):
 		raise
 
 def setup_env(bench='.'):
-	exec_cmd('virtualenv {} -p {}'.format('env', sys.executable), cwd=bench)
-	exec_cmd('./env/bin/pip install wheel', cwd=bench)
+	exec_cmd('virtualenv -q {} -p {}'.format('env', sys.executable), cwd=bench)
+	exec_cmd('./env/bin/pip -q install wheel', cwd=bench)
 
 def setup_procfile(bench='.'):
 	with open(os.path.join(bench, 'Procfile'), 'w') as f:
@@ -241,7 +241,7 @@ def update_requirements(bench='.'):
 	for app in os.listdir(apps_dir):
 		req_file = os.path.join(apps_dir, app, 'requirements.txt')
 		if os.path.exists(req_file):
-			exec_cmd("{pip} install -r {req_file}".format(pip=pip, req_file=req_file))
+			exec_cmd("{pip} install -q -r {req_file}".format(pip=pip, req_file=req_file))
 
 def backup_site(site, bench='.'):
 	exec_cmd("{frappe} --backup {site}".format(frappe=get_frappe(bench=bench), site=site),

@@ -31,6 +31,7 @@ def get_app(app, git_url, branch=None, bench='.'):
 				shallow_clone=shallow_clone,
 				branch=branch),
 			cwd=os.path.join(bench, 'apps'))
+	print 'installing', app
 	install_app(app, bench=bench)
 	build_assets(bench=bench)
 	conf = get_config()
@@ -46,7 +47,7 @@ def install_app(app, bench='.'):
 	logger.info('installing {}'.format(app))
 	conf = get_config()
 	find_links = '--find-links={}'.format(conf.get('wheel_cache_dir')) if conf.get('wheel_cache_dir') else ''
-	exec_cmd("{pip} install {find_links} -e {app}".format(
+	exec_cmd("{pip} install -q {find_links} -e {app}".format(
 				pip=os.path.join(bench, 'env', 'bin', 'pip'),
 				app=os.path.join(bench, 'apps', app),
 				find_links=find_links))
