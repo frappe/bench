@@ -197,6 +197,12 @@ bench setup supervisor
 sudo ln -s `pwd`/config/supervisor.conf /etc/supervisor/conf.d/frappe.conf
 ```
 
+Note: For CentOS 7, the extension should be `ini`, thus the command becomes
+```
+bench setup supervisor 
+sudo ln -s `pwd`/config/supervisor.conf /etc/supervisor/conf.d/frappe.ini #for CentOS 7 only
+```
+
 The bench will also need to restart the processes managed by supervisor when you
 update the apps. To automate this, you will have to setup sudoers using the
 command, `sudo bench setup sudoers $(whoami)`.
