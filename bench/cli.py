@@ -334,7 +334,8 @@ def patch():
 @click.command('mariadb-config')
 def _patch_mariadb_config():
 	"patch MariaDB 5.5.40"
-	exec_cmd(os.path.join(os.path.dirname(__file__), 'patches', 'fix-mariadb.sh'))
+	repo_dir = os.path.dirname(__file__)
+	exec_cmd(os.path.join(repo_dir, 'patches', 'fix-mariadb.sh'), cwd=os.path.join(repo_dir, 'patches'))
 
 patch.add_command(_patch_mariadb_config)
 
