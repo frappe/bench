@@ -4,7 +4,7 @@ get_distro() {
 	ARCH=$(uname -m | sed 's/x86_/amd/;s/i[3-6]86/x86/') 
 	if [ -f /etc/redhat-release ]; then
 		OS="centos"
-		OS_VER=`cat /etc/redhat-release | cut -d" " -f3 | cut -d "." -f1`
+		OS_VER=`cat /etc/redhat-release | sed 's/Linux\ //g' | cut -d" " -f3 | cut -d. -f1`
 
 	elif [ -f /etc/lsb-release ]; then
 		. /etc/lsb-release
@@ -76,11 +76,20 @@ add_maria_db_repo() {
 }
 
 install_packages() {
-	if [ $OS == "centos" ]; then
+	if [ $OS == "centos" ] && [ $OS_VER == "6" ]; then
 		sudo yum install wget -y
 		add_ius_repo
 		sudo yum groupinstall -y "Development tools"
 		sudo yum install -y git MariaDB-server MariaDB-client MariaDB-compat python-setuptools nginx zlib-devel bzip2-devel openssl-devel memcached postfix python27-devel python27 libxml2 libxml2-devel libxslt libxslt-devel redis MariaDB-devel libXrender libXext python27-setuptools
+		wget http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.1/wkhtmltox-0.12.1_linux-centos6-amd64.rpm
+		sudo rpm -Uvh wkhtmltox-0.12.1_linux-centos6-amd64.rpm
+		easy_install-2.7 -U pip
+	
+	elif [ $OS == "centos" ] && [ $OS_VER == "7" ]; then
+		sudo yum install wget -y
+		add_epel_centos7
+		sudo yum groupinstall -y "Development tools"
+		sudo yum install -y git mariadb-server mariadb-server mariadb-devel python-setuptools nginx zlib-devel bzip2-devel openssl-devel memcached postfix python-devel libxml2 libxml2-devel libxslt libxslt-devel redis libXrender libXext supervisor
 		wget http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.1/wkhtmltox-0.12.1_linux-centos6-amd64.rpm
 		sudo rpm -Uvh wkhtmltox-0.12.1_linux-centos6-amd64.rpm
 		easy_install-2.7 -U pip
@@ -142,6 +151,13 @@ start_services_centos() {
 	service memcached start
 }
 
+start_services_centos7() {
+	systemctl start nginx
+	systemctl start mariadb
+	systemctl start redis
+	systemctl start supervisord
+}
+
 configure_services_centos() {
 	chkconfig --add supervisord
 	chkconfig redis on
@@ -149,6 +165,14 @@ configure_services_centos() {
 	chkconfig nginx on
 	chkconfig supervisord on
 }
+
+configure_services_centos7() {
+	systemctl enable nginx
+	systemctl enable mariadb
+	systemctl enable redis
+	systemctl enable supervisord
+}
+
 
 add_ius_repo() {
 	if [ $ARCH == "amd64" ]; then
@@ -162,6 +186,10 @@ add_ius_repo() {
 	rpm -Uvh epel-release-6-5.noarch.rpm
 	rpm -Uvh ius-release-1.0-13.ius.centos6.noarch.rpm
 	fi
+}
+
+add_epel_centos7() {
+	yum install -y epel-release
 }
 
 install_bench() {
@@ -187,10 +215,15 @@ get_distro
 add_maria_db_repo
 install_packages
 add_user
-if [ $OS == "centos" ]; then
+if [ $OS == "centos" ] && [ $OS_VER == "6"]; then
 	install_supervisor_centos
 	configure_services_centos
 	start_services_centos
+	configure_mariadb_centos
+fi
+if [ $OS == "centos" ] && [ $OS_VER == "7"]; then
+	configure_services_centos7
+	start_services_centos7
 	configure_mariadb_centos
 fi
 install_bench
