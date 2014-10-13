@@ -326,6 +326,18 @@ config.add_command(config_dns_multitenant)
 config.add_command(config_serve_default_site)
 config.add_command(config_http_timeout)
 
+
+@click.group()
+def patch():
+	pass
+
+@click.command('mariadb-config')
+def _patch_mariadb_config():
+	"patch MariaDB 5.5.40"
+	exec_cmd(os.path.join(os.path.dirname(__file__), 'patches', 'fix-mariadb.sh'))
+
+patch.add_command(_patch_mariadb_config)
+
 #Bench commands
 
 bench.add_command(init)
@@ -345,3 +357,4 @@ bench.add_command(_backup_all_sites)
 bench.add_command(_backup_site)
 bench.add_command(_prime_wheel_cache)
 bench.add_command(_release)
+bench.add_command(patch)
