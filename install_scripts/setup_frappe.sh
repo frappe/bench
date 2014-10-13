@@ -87,11 +87,11 @@ install_packages() {
 	
 	elif [ $OS == "debian" ]; then 
 		sudo apt-get update
-		sudo apt-get install python-dev python-setuptools build-essential python-mysqldb git memcached ntp vim screen htop mariadb-server mariadb-common libmariadbclient-dev  libxslt1.1 libxslt1-dev redis-server libssl-dev libcrypto++-dev postfix nginx supervisor python-pip -y 
+		sudo apt-get install python-dev python-setuptools build-essential python-mysqldb git memcached ntp vim screen htop mariadb-server mariadb-common libmariadbclient-dev  libxslt1.1 libxslt1-dev redis-server libssl-dev libcrypto++-dev postfix nginx supervisor python-pip fontconfig libxrender1 -y
 
 	elif [ $OS == "Ubuntu" ]; then 
 		sudo apt-get update
-		sudo apt-get install python-dev python-setuptools build-essential python-mysqldb git memcached ntp vim screen htop mariadb-server mariadb-common libmariadbclient-dev  libxslt1.1 libxslt1-dev redis-server libssl-dev libcrypto++-dev postfix nginx supervisor python-pip -y 
+		sudo apt-get install python-dev python-setuptools build-essential python-mysqldb git memcached ntp vim screen htop mariadb-server mariadb-common libmariadbclient-dev  libxslt1.1 libxslt1-dev redis-server libssl-dev libcrypto++-dev postfix nginx supervisor python-pip fontconfig libxrender1 -y
 	else
 		echo Unsupported Distribution
 		exit 1
@@ -102,7 +102,7 @@ add_user() {
 # Check if script is running as root and is not running as sudo. We want to skip
 # this step if the user is already running this script with sudo as a non root
 # user
-	if [ -z $SUDO_UID ] && [ $EUID -eq "0" ]; then
+	if [ $SUDO_UID -eq 0 ] && [ $EUID -eq 0 ]; then
 		useradd -m -d /home/frappe -s $SHELL frappe
 		chmod o+x /home/frappe
 		chmod o+r /home/frappe
