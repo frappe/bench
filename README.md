@@ -13,7 +13,7 @@ Installation
 Easy way
 --------
 
-Supported for CentOS 6, Debian 7 and Ubuntu 12.04+
+Supported for CentOS 6, CentOS 7, Debian 7 and Ubuntu 12.04+
 
 Open your Terminal and enter:
 
