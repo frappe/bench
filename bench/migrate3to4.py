@@ -11,7 +11,7 @@ import shutil
 import subprocess
 
 sites_path = os.environ.get('SITES_PATH', 'sites')
-last_3_patch = 'patches.1401.fix_planned_qty'
+last_3_patch = 'patches.1401.fix_pos_outstanding'
 
 
 def get_frappe(bench='.'):
