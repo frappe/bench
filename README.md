@@ -89,6 +89,10 @@ Basic Usage
 
 		bench start
 
+	To login to Frappe / ERPNext, open your browser and go to `localhost:8000`
+	
+	The default user name is "Administrator" and password is what you set when you created the new site.
+
 
 Setting Up ERPNext
 ==================
