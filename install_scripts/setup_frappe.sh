@@ -179,18 +179,26 @@ install_supervisor_centos6() {
 ### config
 
 get_mariadb_password() {
+	get_password "MariaDB root" MSQ_PASS
+}
+
+get_site_admin_password() {
+	get_password "Admin password" ADMIN_PASS
+}
+
+get_password() {
 	if [ -z "$MSQ_PASS" ]; then
 		read -t 1 -n 10000 discard  || true
 		echo
-		read -p "Enter mysql root password to set:" -s MSQ_PASS1
+		read -p "Enter $1 password to set:" -s TMP_PASS1
 		echo
-		read -p "Re enter mysql root password to set:" -s MSQ_PASS2
+		read -p "Re enter $1 password to set:" -s TMP_PASS2
 		echo
-		if [ $MSQ_PASS1 == $MSQ_PASS2 ]; then
-			export MSQ_PASS=$MSQ_PASS1
+		if [ $TMP_PASS1 == $TMP_PASS2 ]; then
+			export $2=$TMp_PASS1
 		else
 			echo Passwords do not match
-			get_mariadb_password
+			get_password $1 $2
 		fi
 	fi
 }
@@ -260,9 +268,11 @@ install_bench() {
 setup_bench() {
 	echo Installing frappe-bench
 	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER && bench init frappe-bench --apps_path https://raw.githubusercontent.com/frappe/bench/master/install_scripts/erpnext-apps.json"
-	sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench new-site site1.local"
-	sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench frappe --install_app erpnext"
-	sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench frappe --install_app shopping_cart"
+	echo Setting up first site
+	get_site_admin_password
+	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench new-site site1.local --root-password $MSQ_PASS --admin_password $ADMIN_PASS"
+	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench frappe --install_app erpnext"
+	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench frappe --install_app shopping_cart"
 }
 
 add_user() {

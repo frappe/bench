@@ -71,9 +71,16 @@ def setup_procfile(bench='.'):
 worker: sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app worker'
 workerbeat: sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app beat -s scheduler.schedule'""")
 
-def new_site(site, bench='.'):
+def new_site(site, mariadb_root_password=None, admin_password=None, bench='.'):
 	logger.info('creating new site {}'.format(site))
-	exec_cmd("{frappe} --install {site} {site}".format(frappe=get_frappe(bench=bench), site=site), cwd=os.path.join(bench, 'sites'))
+	mariadb_root_password_fragment = '--root_password {}'.format(mariadb_root_password) if mariadb_root_password else ''
+	admin_password_fragment = '--admin_password {}'.format(admin_password) if admin_password else ''
+	exec_cmd("{frappe} --install {site} {site} {mariadb_root_password_fragment} {admin_password_fragment}".format(
+				frappe=get_frappe(bench=bench),
+				site=site,
+				mariadb_root_password_fragment=mariadb_root_password_fragment,
+				admin_password_fragment=admin_password_fragment
+			), cwd=os.path.join(bench, 'sites'))
 	if len(get_sites(bench=bench)) == 1:
 		exec_cmd("{frappe} --use {site}".format(frappe=get_frappe(bench=bench), site=site), cwd=os.path.join(bench, 'sites'))
 

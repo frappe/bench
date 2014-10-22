@@ -83,10 +83,12 @@ def new_app(app_name):
 	_new_app(app_name)
 	
 @click.command('new-site')
+@click.option('--mariadb-root-password', help="MariaDB root password")
+@click.option('--admin-password', help="admin password to set for site")
 @click.argument('site')
-def new_site(site):
+def new_site(site, mariadb_root_password=None, admin_password=None):
 	"Create a new site in the bench"
-	_new_site(site)
+	_new_site(site, mariadb_root_password=mariadb_root_password, admin_password=admin_password)
 	
 #TODO: Not DRY
 @click.command('update')
