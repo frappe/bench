@@ -1,4 +1,33 @@
+#!/bin/bash
+
 set -e
+
+
+## Utils
+
+set_opts () {
+	OPTS=`getopt -o v --long verbose,mysql-root-password:,frappe-user:,setup-production,help -n 'parse-options' -- "$@"`
+	 
+	if [ $? != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
+	 
+	eval set -- "$OPTS"
+	 
+	VERBOSE=false
+	HELP=false
+	FRAPPE_USER=false
+	 
+	while true; do
+	case "$1" in
+	-v | --verbose ) VERBOSE=true; shift ;;
+	-h | --help ) HELP=true; shift ;;
+	--mysql-root-password ) MSQ_PASS="$2"; shift; shift ;;
+	--frappe-user ) FRAPPE_USER="$2"; shift; shift ;;
+	--setup-production ) SETUP_PROD=true; shift;;
+	-- ) shift; break ;;
+	* ) break ;;
+	esac
+	done
+}
 
 get_distro() {
 	ARCH=$(uname -m | sed 's/x86_/amd/;s/i[3-6]86/x86/') 
@@ -23,7 +52,18 @@ get_distro() {
 	echo DEBUG $OS $OS_VER $ARCH
 }
 
-add_centos_mariadb_repo() {
+run_cmd() {
+	if $VERBOSE; then
+		"$@"
+	else
+		# $@ 
+		"$@" > /tmp/cmdoutput.txt 2>&1 || (cat /tmp/cmdoutput.txt && exit 1)
+	fi
+}
+
+## add repos
+
+add_centos6_mariadb_repo() {
 	echo "
 [mariadb]
 name = MariaDB
@@ -32,12 +72,13 @@ gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
 gpgcheck=1
 " > /etc/yum.repos.d/mariadb.repo
 }
+ 
 
 add_ubuntu_mariadb_repo() {
-	sudo apt-get update
-	sudo apt-get install -y python-software-properties
-	sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xcbcb082a1bb943db
-	sudo add-apt-repository "deb http://ams2.mirrors.digitalocean.com/mariadb/repo/5.5/ubuntu $OS_VER main"
+	run_cmd sudo apt-get update
+	run_cmd sudo apt-get install -y python-software-properties
+	run_cmd sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xcbcb082a1bb943db
+	run_cmd sudo add-apt-repository "deb http://ams2.mirrors.digitalocean.com/mariadb/repo/5.5/ubuntu $OS_VER main"
 }
 
 add_debian_mariadb_repo() {
@@ -51,128 +92,11 @@ add_debian_mariadb_repo() {
 		exit 1
 	fi
 
-	sudo apt-get update
-	sudo apt-get install -y python-software-properties
-	sudo apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 0xcbcb082a1bb943db
-	sudo add-apt-repository "deb http://ams2.mirrors.digitalocean.com/mariadb/repo/5.5/debian $CODENAME main"
+	run_cmd sudo apt-get update
+	run_cmd sudo apt-get install -y python-software-properties
+	run_cmd sudo apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 0xcbcb082a1bb943db
+	run_cmd sudo add-apt-repository "deb http://ams2.mirrors.digitalocean.com/mariadb/repo/5.5/debian $CODENAME main"
 }
-
-add_maria_db_repo() {
-	if [ "$OS" == "centos" ]; then
-		echo DEBUG adding centos mariadb repo
-		add_centos_mariadb_repo
-	
-	elif [ "$OS" == "debian" ]; then 
-		echo DEBUG adding debian mariadb repo
-		add_debian_mariadb_repo
-
-	elif [ "$OS" == "Ubuntu" ]; then 
-		echo DEBUG adding debian mariadb repo
-		add_ubuntu_mariadb_repo
-	else
-		echo Unsupported Distribution
-		exit 1
-	fi
-}
-
-install_packages() {
-	if [ $OS == "centos" ] && [ $OS_VER == "6" ]; then
-		sudo yum install wget -y
-		add_ius_repo
-		sudo yum groupinstall -y "Development tools"
-		sudo yum install -y git MariaDB-server MariaDB-client MariaDB-compat python-setuptools nginx zlib-devel bzip2-devel openssl-devel memcached postfix python27-devel python27 libxml2 libxml2-devel libxslt libxslt-devel redis MariaDB-devel libXrender libXext python27-setuptools
-		wget http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.1/wkhtmltox-0.12.1_linux-centos6-amd64.rpm
-		sudo rpm -Uvh wkhtmltox-0.12.1_linux-centos6-amd64.rpm
-		easy_install-2.7 -U pip
-	
-	elif [ $OS == "centos" ] && [ $OS_VER == "7" ]; then
-		sudo yum install wget -y
-		add_epel_centos7
-		sudo yum groupinstall -y "Development tools"
-		sudo yum install -y git mariadb-server mariadb-server mariadb-devel python-setuptools nginx zlib-devel bzip2-devel openssl-devel memcached postfix python-devel libxml2 libxml2-devel libxslt libxslt-devel redis libXrender libXext supervisor
-		wget http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.1/wkhtmltox-0.12.1_linux-centos6-amd64.rpm
-		sudo rpm -Uvh wkhtmltox-0.12.1_linux-centos6-amd64.rpm
-		easy_install-2.7 -U pip
-	
-	elif [ $OS == "debian" ]; then 
-		sudo apt-get update
-		sudo apt-get install python-dev python-setuptools build-essential python-mysqldb git memcached ntp vim screen htop mariadb-server mariadb-common libmariadbclient-dev  libxslt1.1 libxslt1-dev redis-server libssl-dev libcrypto++-dev postfix nginx supervisor python-pip fontconfig libxrender1 -y
-
-	elif [ $OS == "Ubuntu" ]; then 
-		sudo apt-get update
-		sudo apt-get install python-dev python-setuptools build-essential python-mysqldb git memcached ntp vim screen htop mariadb-server mariadb-common libmariadbclient-dev  libxslt1.1 libxslt1-dev redis-server libssl-dev libcrypto++-dev postfix nginx supervisor python-pip fontconfig libxrender1 -y
-	else
-		echo Unsupported Distribution
-		exit 1
-	fi
-}
-
-add_user() {
-# Check if script is running as root and is not running as sudo. We want to skip
-# this step if the user is already running this script with sudo as a non root
-# user
-	if [ $SUDO_UID -eq 0 ] && [ $EUID -eq 0 ]; then
-		useradd -m -d /home/frappe -s $SHELL frappe
-		chmod o+x /home/frappe
-		chmod o+r /home/frappe
-		export FRAPPE_USER="frappe"
-	else
-		export FRAPPE_USER="$SUDO_USER"
-	fi
-}
-
-configure_mariadb_centos() {
-	# Required only for CentOS, Ubuntu and Debian will show dpkg configure screen to set the password
-	if [ $OS == "centos" ]; then
-		echo Enter mysql root password to set:
-		read -t 1 -n 10000 discard  || true
-		read -p "Enter mysql root password to set:" -s MSQ_PASS
-		mysqladmin -u root password $MSQ_PASS
-	fi
-}
-
-install_supervisor_centos() {
-	# Required only for CentOS, Ubuntu and Debian have them in repositories
-		easy_install supervisor
-		curl https://raw.githubusercontent.com/pdvyas/supervisor-initscripts/master/redhat-init-jkoppe > /etc/init.d/supervisord
-		curl https://raw.githubusercontent.com/pdvyas/supervisor-initscripts/master/redhat-sysconfig-jkoppe > /etc/sysconfig/supervisord
-		curl https://raw.githubusercontent.com/pdvyas/supervisor-initscripts/master/supervisord.conf > /etc/supervisord.conf
-		mkdir /etc/supervisor.d
-		chmod +x /etc/init.d/supervisord
-		bash -c "service supervisord start || true"
-}
-
-
-start_services_centos() {
-	service mysql start
-	service redis start
-	service postfix start
-	service nginx start
-	service memcached start
-}
-
-start_services_centos7() {
-	systemctl start nginx
-	systemctl start mariadb
-	systemctl start redis
-	systemctl start supervisord
-}
-
-configure_services_centos() {
-	chkconfig --add supervisord
-	chkconfig redis on
-	chkconfig mysql on
-	chkconfig nginx on
-	chkconfig supervisord on
-}
-
-configure_services_centos7() {
-	systemctl enable nginx
-	systemctl enable mariadb
-	systemctl enable redis
-	systemctl enable supervisord
-}
-
 
 add_ius_repo() {
 	if [ $ARCH == "amd64" ]; then
@@ -192,6 +116,128 @@ add_epel_centos7() {
 	yum install -y epel-release
 }
 
+add_maria_db_repo() {
+	if [ "$OS" == "centos" ]; then
+		echo DEBUG adding centos mariadb repo
+		add_centos6_mariadb_repo
+	
+	elif [ "$OS" == "debian" ]; then 
+		echo DEBUG adding debian mariadb repo
+		add_debian_mariadb_repo
+
+	elif [ "$OS" == "Ubuntu" ]; then 
+		echo DEBUG adding debian mariadb repo
+		add_ubuntu_mariadb_repo
+	else
+		echo Unsupported Distribution
+		exit 1
+	fi
+}
+
+## install 
+
+install_packages() {
+	if [ $OS == "centos" ]; then
+		run_cmd sudo yum install wget -y
+		run_cmd sudo yum groupinstall -y "Development tools"
+		if [ $OS_VER == "6" ]; then 
+			run_cmd add_ius_repo
+			run_cmd sudo yum install -y git MariaDB-server MariaDB-client MariaDB-compat python-setuptools nginx zlib-devel bzip2-devel openssl-devel memcached postfix python27-devel python27 libxml2 libxml2-devel libxslt libxslt-devel redis MariaDB-devel libXrender libXext python27-setuptools
+		elif [ $OS_VER == "7" ]; then
+			run_cmd add_epel_centos7
+			run_cmd sudo yum install -y git mariadb-server mariadb-server mariadb-devel python-setuptools nginx zlib-devel bzip2-devel openssl-devel memcached postfix python-devel libxml2 libxml2-devel libxslt libxslt-devel redis libXrender libXext supervisor
+		fi
+		run_cmd wget http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.1/wkhtmltox-0.12.1_linux-centos6-amd64.rpm
+		run_cmd sudo rpm -Uvh wkhtmltox-0.12.1_linux-centos6-amd64.rpm
+		run_cmd easy_install-2.7 -U pip
+	
+	
+	elif [ $OS == "debian" ] || [ $OS == "Ubuntu" ]; then 
+		export DEBIAN_FRONTEND=noninteractive
+		get_mariadb_password
+		setup_debconf
+		run_cmd sudo apt-get update
+		run_cmd sudo apt-get install python-dev python-setuptools build-essential python-mysqldb git memcached ntp vim screen htop mariadb-server mariadb-common libmariadbclient-dev  libxslt1.1 libxslt1-dev redis-server libssl-dev libcrypto++-dev postfix nginx supervisor python-pip fontconfig libxrender1 -y
+
+	else
+		echo Unsupported Distribution
+		exit 1
+	fi
+}
+
+
+install_supervisor_centos6() {
+		run_cmd easy_install supervisor
+		run_cmd curl https://raw.githubusercontent.com/pdvyas/supervisor-initscripts/master/redhat-init-jkoppe > /etc/init.d/supervisord
+		run_cmd curl https://raw.githubusercontent.com/pdvyas/supervisor-initscripts/master/redhat-sysconfig-jkoppe > /etc/sysconfig/supervisord
+		run_cmd curl https://raw.githubusercontent.com/pdvyas/supervisor-initscripts/master/supervisord.conf > /etc/supervisord.conf
+		run_cmd mkdir /etc/supervisor.d
+		run_cmd chmod +x /etc/init.d/supervisord
+		bash -c "service supervisord start || true"
+}
+
+### config
+
+get_mariadb_password() {
+	if [ -z "$MSQ_PASS" ]; then
+		read -t 1 -n 10000 discard  || true
+		echo
+		read -p "Enter mysql root password to set:" -s MSQ_PASS1
+		echo
+		read -p "Re enter mysql root password to set:" -s MSQ_PASS2
+		echo
+		if [ $MSQ_PASS1 == $MSQ_PASS2 ]; then
+			export MSQ_PASS=$MSQ_PASS1
+		else
+			echo Passwords do not match
+			get_mariadb_password
+		fi
+	fi
+}
+
+configure_mariadb_centos() {
+	# Required only for CentOS, Ubuntu and Debian will show dpkg configure screen to set the password
+	if [ $OS == "centos" ]; then
+		mysqladmin -u root password $MSQ_PASS
+	fi
+}
+
+start_services_centos() {
+	run_cmd systemctl start nginx
+	run_cmd systemctl start mariadb
+	run_cmd systemctl start redis
+	run_cmd systemctl start supervisord
+}
+
+configure_services_centos6() {
+	run_cmd chkconfig --add supervisord
+	run_cmd chkconfig redis on
+	run_cmd chkconfig mysql on
+	run_cmd chkconfig nginx on
+	run_cmd chkconfig supervisord on
+}
+
+configure_services_centos7() {
+	run_cmd systemctl enable nginx
+	run_cmd systemctl enable mariadb
+	run_cmd systemctl enable redis
+	run_cmd systemctl enable supervisord
+}
+
+start_services_centos7() {
+	run_cmd systemctl start nginx
+	run_cmd systemctl start mariadb
+	run_cmd systemctl start redis
+	run_cmd systemctl start supervisord
+}
+
+setup_debconf() {
+	debconf-set-selections <<< "postfix postfix/mailname string `hostname`"
+	debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Internet Site'"
+	debconf-set-selections <<< "mariadb-server-5.5 mysql-server/root_password password $MSQ_PASS"
+	debconf-set-selections <<< "mariadb-server-5.5 mysql-server/root_password_again password $MSQ_PASS"
+}
+
 install_bench() {
 	sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER && git clone https://github.com/frappe/bench bench-repo"
 	if hash pip-2.7; then
@@ -206,24 +252,63 @@ install_bench() {
 		echo PIP not installed
 		exit 1
 	fi
-	sudo $PIP install -e /home/$FRAPPE_USER/bench-repo
+	run_cmd sudo $PIP install -e /home/$FRAPPE_USER/bench-repo
 	# temp MariaDB fix
 	sudo bench patch mariadb-config
 }
 
+setup_bench() {
+	echo Installing frappe-bench
+	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER && bench init frappe-bench --apps_path https://raw.githubusercontent.com/frappe/bench/master/install_scripts/erpnext-apps.json"
+	sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench new-site site1.local"
+	sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench frappe --install_app erpnext"
+	sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench frappe --install_app shopping_cart"
+}
+
+add_user() {
+# Check if script is running as root and is not running as sudo. We want to skip
+# this step if the user is already running this script with sudo as a non root
+# user
+	if [ "$FRAPPE_USER" == "false" ]; then
+		if [ $SUDO_UID -eq 0 ] && [ $EUID -eq 0 ]; then
+			export FRAPPE_USER="frappe"
+		else
+			export FRAPPE_USER="$SUDO_USER"
+		fi
+	fi
+
+	USER_EXISTS=`bash -c "id $FRAPPE_USER > /dev/null 2>&1  && echo true || (echo false && exit 0)"`
+
+	if [ $USER_EXISTS == "false" ]; then
+		useradd -m -d /home/$FRAPPE_USER -s $SHELL $FRAPPE_USER
+		chmod o+x /home/$FRAPPE_USER
+		chmod o+r /home/$FRAPPE_USER
+	fi
+}
+
+set_opts $@
 get_distro
 add_maria_db_repo
+echo Installing packages for $OS\. This might take time...
 install_packages
+if [ $OS == "centos" ]; then
+	if [ $OS_VER == "6" ]; then
+		echo "Installing supervisor"
+		install_supervisor_centos6
+		echo "Configuring CentOS services"
+		configure_services_centos6
+		echo "Starting services"
+		start_services_centos6
+	elif [ $OS_VER == "7" ]; then
+		echo "Configuring CentOS services"
+		configure_services_centos7
+		echo "Starting services"
+		start_services_centos7
+	fi
+fi
+echo "Adding frappe user"
+get_mariadb_password
+configure_mariadb_centos
 add_user
-if [ $OS == "centos" ] && [ $OS_VER == "6"]; then
-	install_supervisor_centos
-	configure_services_centos
-	start_services_centos
-	configure_mariadb_centos
-fi
-if [ $OS == "centos" ] && [ $OS_VER == "7"]; then
-	configure_services_centos7
-	start_services_centos7
-	configure_mariadb_centos
-fi
 install_bench
+setup_bench
