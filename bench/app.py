@@ -1,5 +1,5 @@
 import os
-from .utils import exec_cmd, get_frappe, check_git_for_shallow_clone, get_config, build_assets, restart_supervisor_processes
+from .utils import exec_cmd, get_frappe, check_git_for_shallow_clone, get_config, build_assets, restart_supervisor_processes, get_cmd_output
 
 import logging
 import requests
@@ -61,7 +61,10 @@ def pull_all_apps(bench='.'):
 		app_dir = os.path.join(apps_dir, app)
 		if os.path.exists(os.path.join(app_dir, '.git')):
 			logger.info('pulling {0}'.format(app))
-			exec_cmd("git pull {rebase} upstream HEAD".format(rebase=rebase), cwd=app_dir)
+			exec_cmd("git pull {rebase} upstream {branch}".format(rebase=rebase, branch=get_current_branch(app_dir)), cwd=app_dir)
+
+def get_current_branch(repo_dir):
+	return get_cmd_output("basename $(git symbolic-ref -q HEAD)", cwd=repo_dir)
 
 def install_apps_from_path(path, bench='.'):
 	apps = get_apps_json(path)
