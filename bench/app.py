@@ -36,7 +36,7 @@ def get_app(app, git_url, branch=None, bench='.'):
 	build_assets(bench=bench)
 	conf = get_config()
 	if conf.get('restart_supervisor_on_update'):
-		restart_supervisor_on_update(bench=bench)
+		restart_supervisor_processes(bench=bench)
 
 def new_app(app, bench='.'):
 	logger.info('creating new app {}'.format(app))
