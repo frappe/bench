@@ -270,6 +270,7 @@ setup.add_command(setup_backups)
 setup.add_command(setup_env)
 setup.add_command(setup_procfile)
 setup.add_command(setup_config)
+setup.add_command(setup_production)
 
 ## Config
 ## Not DRY
