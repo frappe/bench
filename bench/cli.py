@@ -230,7 +230,7 @@ def setup_supervisor():
 @click.command('production')
 def setup_production():
 	"setup bench for production"
-	_setup_production
+	_setup_production()
 
 @click.command('auto-update')
 def setup_auto_update():

@@ -12,7 +12,7 @@ def restart_service(service):
 		exec_cmd("{prog} {service} restart ".format(prog=program, service=service))
 
 def get_supervisor_confdir():
-	possiblities = ('/etc/supervisor/conf.d', '/etc/supervisor.d/', '/etc/supervisord/conf.d')
+	possiblities = ('/etc/supervisor/conf.d', '/etc/supervisor.d/', '/etc/supervisord/conf.d', '/etc/supervisord.d')
 	for possiblity in possiblities:
 		if os.path.exists(possiblity):
 			return possiblity
@@ -35,6 +35,6 @@ def setup_production(bench='.'):
 		supervisor_conf_filename = 'frappe.conf'
 
 	os.symlink(os.path.abspath(os.path.join(bench, 'config', 'supervisor.conf')), os.path.join(get_supervisor_confdir(), supervisor_conf_filename))
-	os.symlink(os.path.abspath(os.path.join(bench, 'config', 'supervisor.conf')), '/etc/nginx/conf.d/frappe.conf')
+	os.symlink(os.path.abspath(os.path.join(bench, 'config', 'nginx.conf')), '/etc/nginx/conf.d/frappe.conf')
 	exec_cmd('supervisorctl reload')
 	restart_service('nginx')
