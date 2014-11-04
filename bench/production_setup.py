@@ -6,9 +6,9 @@ def restart_service(service):
 	program = get_program(['systemctl', 'service'])
 	if not program:
 		raise Exception, 'No service manager found'
-	elif program == 'systemctl':
+	elif os.path.basename(program) == 'systemctl':
 		exec_cmd("{prog} restart {service}".format(prog=program, service=service))
-	elif program == 'service':
+	elif os.path.basename(program) == 'service':
 		exec_cmd("{prog} {service} restart ".format(prog=program, service=service))
 
 def get_supervisor_confdir():
