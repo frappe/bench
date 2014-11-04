@@ -29,7 +29,7 @@ def setup_production(bench='.'):
 	generate_nginx_config(bench=bench)
 	remove_default_nginx_configs()
 
-	if os.path.exists('/etc/redhat-release') and get_cmd_output("cat /etc/redhat-release | sed 's/Linux\ //g' | cut -d" " -f3 | cut -d. -f1") == '7':
+	if os.path.exists('/etc/redhat-release') and get_cmd_output("cat /etc/redhat-release | sed 's/Linux\ //g' | cut -d' ' -f3 | cut -d. -f1") == '7':
 		supervisor_conf_filename = 'frappe.ini'
 	else:
 		supervisor_conf_filename = 'frappe.conf'
