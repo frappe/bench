@@ -2,7 +2,7 @@ import os
 import getpass
 import json
 from jinja2 import Environment, PackageLoader
-from .utils import get_sites, get_config
+from .utils import get_sites, get_config, update_config
 
 env = Environment(loader=PackageLoader('bench', 'templates'), trim_blocks=True)
 
@@ -22,6 +22,7 @@ def generate_supervisor_config(bench='.'):
 	})
 	with open("config/supervisor.conf", 'w') as f:
 		f.write(config)
+	update_config({'restart_supervisor_on_update': True})
 
 def get_site_config(site, bench='.'):
 	with open(os.path.join(bench, 'sites', site, 'site_config.json')) as f:

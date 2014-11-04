@@ -16,6 +16,7 @@ from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps
 from .config import generate_nginx_config, generate_supervisor_config
+from .production_setup import setup_production as _setup_production
 import os
 import sys
 import logging
@@ -225,7 +226,11 @@ def setup_nginx():
 def setup_supervisor():
 	"generate config for supervisor"
 	generate_supervisor_config()
-	update_config({'restart_supervisor_on_update': True})
+	
+@click.command('production')
+def setup_production():
+	"setup bench for production"
+	_setup_production
 
 @click.command('auto-update')
 def setup_auto_update():

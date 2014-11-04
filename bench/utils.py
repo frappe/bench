@@ -136,10 +136,12 @@ def update_bench():
 	exec_cmd("git pull", cwd=cwd)
 
 def setup_sudoers(user):
-	with open('/etc/sudoers.d/frappe', 'w') as f:
+	sudoers_file = '/etc/sudoers.d/frappe'
+	with open(sudoers_file, 'w') as f:
 		f.write("{user} ALL=(ALL) NOPASSWD: {supervisorctl} restart frappe\:\n".format(
 					user=user,
 					supervisorctl=subprocess.check_output('which supervisorctl', shell=True).strip()))
+	os.chmod(sudoers_file, 0440)
 
 def setup_logging(bench='.'):
 	if os.path.exists(os.path.join(bench, 'logs')):
@@ -167,8 +169,7 @@ def update_config(new_config, bench='.'):
 	config.update(new_config)
 	put_config(config, bench=bench)
 
-def get_process_manager():
-	programs = ['foreman', 'forego', 'honcho']
+def get_program(programs):
 	program = None
 	for p in programs:
 		program = find_executable(p)
@@ -176,6 +177,9 @@ def get_process_manager():
 			break
 	return program
 
+def get_process_manager():
+	return get_program(['foreman', 'forego', 'honcho'])
+    
 def start():
 	program = get_process_manager()
 	if not program:
@@ -269,3 +273,6 @@ def prime_wheel_cache(bench='.'):
 				wheelhouse=wheel_cache_dir,
 				requirements=requirements)
 	exec_cmd(cmd)
+
+def is_root():
+	pass
