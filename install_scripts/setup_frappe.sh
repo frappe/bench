@@ -5,6 +5,17 @@ set -e
 
 ## Utils
 
+print_msg() {
+	echo "Frappe/ERPNext is installed successfully."
+	echo "Frappe password: $FRAPPE_USER_PASS"
+	echo "MariaDB root password: $MSQ_PASS"
+	echo "Administrator password: $ADMIN_PASS"
+}
+
+get_passwd() {
+	echo `cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1`
+}
+
 set_opts () {
 	OPTS=`getopt -o v --long verbose,mysql-root-password:,frappe-user:,setup-production,help -n 'parse-options' -- "$@"`
 	 
@@ -15,6 +26,10 @@ set_opts () {
 	VERBOSE=false
 	HELP=false
 	FRAPPE_USER=false
+	FRAPPE_USER_PASS=`get_passwd`
+	MSQ_PASS=`get_passwd`
+	ADMIN_PASS=`get_passwd`
+	SETUP_PROD=false
 	 
 	while true; do
 	case "$1" in
@@ -145,7 +160,7 @@ install_packages() {
 			run_cmd sudo yum install -y git MariaDB-server MariaDB-client MariaDB-compat python-setuptools nginx zlib-devel bzip2-devel openssl-devel memcached postfix python27-devel python27 libxml2 libxml2-devel libxslt libxslt-devel redis MariaDB-devel libXrender libXext python27-setuptools
 		elif [ $OS_VER == "7" ]; then
 			run_cmd add_epel_centos7
-			run_cmd sudo yum install -y git mariadb-server mariadb-server mariadb-devel python-setuptools nginx zlib-devel bzip2-devel openssl-devel memcached postfix python-devel libxml2 libxml2-devel libxslt libxslt-devel redis libXrender libXext supervisor
+			run_cmd sudo yum install -y git mariadb-server mariadb-devel python-setuptools nginx zlib-devel bzip2-devel openssl-devel memcached postfix python-devel libxml2 libxml2-devel libxslt libxslt-devel redis libXrender libXext supervisor
 		fi
 		run_cmd wget http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.1/wkhtmltox-0.12.1_linux-centos6-amd64.rpm
 		run_cmd sudo rpm -Uvh wkhtmltox-0.12.1_linux-centos6-amd64.rpm
@@ -154,7 +169,6 @@ install_packages() {
 	
 	elif [ $OS == "debian" ] || [ $OS == "Ubuntu" ]; then 
 		export DEBIAN_FRONTEND=noninteractive
-		get_mariadb_password
 		setup_debconf
 		run_cmd sudo apt-get update
 		run_cmd sudo apt-get install python-dev python-setuptools build-essential python-mysqldb git memcached ntp vim screen htop mariadb-server mariadb-common libmariadbclient-dev  libxslt1.1 libxslt1-dev redis-server libssl-dev libcrypto++-dev postfix nginx supervisor python-pip fontconfig libxrender1 -y
@@ -187,7 +201,7 @@ get_site_admin_password() {
 }
 
 get_password() {
-	if [ -z "$MSQ_PASS" ]; then
+	if [ -z "$2" ]; then
 		read -t 1 -n 10000 discard  || true
 		echo
 		read -p "Enter $1 password to set:" -s TMP_PASS1
@@ -230,6 +244,7 @@ configure_services_centos7() {
 	run_cmd systemctl enable mariadb
 	run_cmd systemctl enable redis
 	run_cmd systemctl enable supervisord
+	run_cmd systemctl enable memcached
 }
 
 start_services_centos7() {
@@ -237,6 +252,7 @@ start_services_centos7() {
 	run_cmd systemctl start mariadb
 	run_cmd systemctl start redis
 	run_cmd systemctl start supervisord
+	run_cmd systemctl start memcached
 }
 
 setup_debconf() {
@@ -247,7 +263,8 @@ setup_debconf() {
 }
 
 install_bench() {
-	sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER && git clone https://github.com/frappe/bench bench-repo"
+	echo WARNING BENCH INSTALLING FROM ANOTHER BRANCH
+	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER && git clone https://github.com/frappe/bench --branch v0.9wip bench-repo"
 	if hash pip-2.7; then
 		PIP="pip-2.7"
 	elif hash pip2.7; then
@@ -269,10 +286,13 @@ setup_bench() {
 	echo Installing frappe-bench
 	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER && bench init frappe-bench --apps_path https://raw.githubusercontent.com/frappe/bench/master/install_scripts/erpnext-apps.json"
 	echo Setting up first site
-	get_site_admin_password
-	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench new-site site1.local --root-password $MSQ_PASS --admin_password $ADMIN_PASS"
+	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench new-site site1.local --mariadb-root-password $MSQ_PASS --admin-password $ADMIN_PASS"
 	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench frappe --install_app erpnext"
 	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench frappe --install_app shopping_cart"
+	run_cmd bash -c "cd /home/$FRAPPE_USER/frappe-bench && bench setup sudoers $FRAPPE_USER"
+	if $SETUP_PROD; then
+		run_cmd bash -c "cd /home/$FRAPPE_USER/frappe-bench && bench setup production"
+	fi
 }
 
 add_user() {
@@ -280,7 +300,7 @@ add_user() {
 # this step if the user is already running this script with sudo as a non root
 # user
 	if [ "$FRAPPE_USER" == "false" ]; then
-		if [ $SUDO_UID -eq 0 ] && [ $EUID -eq 0 ]; then
+		if [[ $SUDO_UID -eq 0 ]] && [[ $EUID -eq 0 ]]; then
 			export FRAPPE_USER="frappe"
 		else
 			export FRAPPE_USER="$SUDO_USER"
@@ -291,34 +311,38 @@ add_user() {
 
 	if [ $USER_EXISTS == "false" ]; then
 		useradd -m -d /home/$FRAPPE_USER -s $SHELL $FRAPPE_USER
+		echo $FRAPPE_USER:$FRAPPE_USER_PASS | chpasswd
 		chmod o+x /home/$FRAPPE_USER
 		chmod o+r /home/$FRAPPE_USER
 	fi
 }
 
-set_opts $@
-get_distro
-add_maria_db_repo
-echo Installing packages for $OS\. This might take time...
-install_packages
-if [ $OS == "centos" ]; then
-	if [ $OS_VER == "6" ]; then
-		echo "Installing supervisor"
-		install_supervisor_centos6
-		echo "Configuring CentOS services"
-		configure_services_centos6
-		echo "Starting services"
-		start_services_centos6
-	elif [ $OS_VER == "7" ]; then
-		echo "Configuring CentOS services"
-		configure_services_centos7
-		echo "Starting services"
-		start_services_centos7
+main() {
+	set_opts $@
+	get_distro
+	add_maria_db_repo
+	echo Installing packages for $OS\. This might take time...
+	install_packages
+	if [ $OS == "centos" ]; then
+		if [ $OS_VER == "6" ]; then
+			echo "Installing supervisor"
+			install_supervisor_centos6
+			echo "Configuring CentOS services"
+			configure_services_centos6
+			echo "Starting services"
+			start_services_centos6
+		elif [ $OS_VER == "7" ]; then
+			echo "Configuring CentOS services"
+			configure_services_centos7
+			echo "Starting services"
+			start_services_centos7
+		fi
 	fi
-fi
-echo "Adding frappe user"
-get_mariadb_password
-configure_mariadb_centos
-add_user
-install_bench
-setup_bench
+	echo "Adding frappe user"
+	add_user
+	install_bench
+	setup_bench
+	print_msg
+}
+
+main
