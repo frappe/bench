@@ -18,7 +18,7 @@ def get_supervisor_confdir():
 			return possiblity
 
 def remove_default_nginx_configs():
-	default_nginx_configs = ['/etc/nginx/conf.d/default.conf', '/etc/nginx/sites-available/default.conf']
+	default_nginx_configs = ['/etc/nginx/conf.d/default.conf', '/etc/nginx/sites-enabled/default']
 
 	for conf_file in default_nginx_configs:
 		if os.path.exists(conf_file):
