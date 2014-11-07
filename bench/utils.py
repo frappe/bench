@@ -275,4 +275,6 @@ def prime_wheel_cache(bench='.'):
 	exec_cmd(cmd)
 
 def is_root():
-	pass
+	if os.getuid() == 0:
+		return True
+	return False

@@ -11,7 +11,7 @@ from .utils import set_nginx_port as _set_nginx_port
 from .utils import set_default_site as _set_default_site
 from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging,
 		get_config, update_config, restart_supervisor_processes, put_config, default_config, update_requirements,
-		backup_all_sites, backup_site, get_sites, prime_wheel_cache)
+		backup_all_sites, backup_site, get_sites, prime_wheel_cache, is_root)
 from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps
@@ -215,6 +215,9 @@ def setup():
 @click.argument('user')
 def setup_sudoers(user):
 	"Add commands to sudoers list for execution without password"
+	if not is_root():
+		print 'superuser privileges required for this command'
+		sys.exit(1)
 	_setup_sudoers(user)
 	
 @click.command('nginx')
@@ -230,6 +233,9 @@ def setup_supervisor():
 @click.command('production')
 def setup_production():
 	"setup bench for production"
+	if not is_root():
+		print 'superuser privileges required for this command'
+		sys.exit(1)
 	_setup_production()
 
 @click.command('auto-update')
