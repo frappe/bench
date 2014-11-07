@@ -14,6 +14,7 @@ default_config = {
 	'serve_default_site': True,
 	'rebase_on_pull': False,
 	'update_bench_on_update': True,
+	'frappe_user': getpass.getuser(),
 	'shallow_clone': True
 }
 

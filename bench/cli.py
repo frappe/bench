@@ -21,13 +21,38 @@ import os
 import sys
 import logging
 import copy
+import pwd
 
 logger = logging.getLogger('bench')
 
 def cli():
+	check_uid()
+	change_dir()
+	change_uid()
 	if len(sys.argv) > 2 and sys.argv[1] == "frappe":
 		return frappe()
 	return bench()
+
+def check_uid():
+	if len(sys.argv) > 3 and sys.argv[2] in ('production', 'sudoers') and not is_root():
+		print 'superuser privileges required for this command'
+		sys.exit(1)
+
+def change_uid():
+	if is_root():
+		frappe_user = get_config().get('frappe_user')
+		if frappe_user:
+			os.setuid(pwd.getpwnam(frappe_user).pw_uid)
+		else:
+			print 'You should not run this command as root'
+			sys.exit(1)
+
+def change_dir():
+	dir_path_file = '/etc/frappe_bench_dir'
+	if os.path.exists(dir_path_file):
+		with open(dir_path_file) as f:
+			dir_path = f.read().strip()
+		os.chdir(dir_path)
 
 def frappe(bench='.'):
 	f = get_frappe(bench=bench)
@@ -215,9 +240,6 @@ def setup():
 @click.argument('user')
 def setup_sudoers(user):
 	"Add commands to sudoers list for execution without password"
-	if not is_root():
-		print 'superuser privileges required for this command'
-		sys.exit(1)
 	_setup_sudoers(user)
 	
 @click.command('nginx')
@@ -233,9 +255,6 @@ def setup_supervisor():
 @click.command('production')
 def setup_production():
 	"setup bench for production"
-	if not is_root():
-		print 'superuser privileges required for this command'
-		sys.exit(1)
 	_setup_production()
 
 @click.command('auto-update')
