@@ -8,10 +8,11 @@ from .utils import setup_sudoers as _setup_sudoers
 from .utils import start as _start
 from .utils import setup_procfile as _setup_procfile
 from .utils import set_nginx_port as _set_nginx_port
+from .utils import set_nginx_port as _set_nginx_port
 from .utils import set_default_site as _set_default_site
 from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging,
 		get_config, update_config, restart_supervisor_processes, put_config, default_config, update_requirements,
-		backup_all_sites, backup_site, get_sites, prime_wheel_cache, is_root)
+		backup_all_sites, backup_site, get_sites, prime_wheel_cache, is_root, set_mariadb_host)
 from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps
@@ -195,6 +196,12 @@ def migrate_3to4(path):
 def set_nginx_port(site, port):
 	"Set nginx port for site"
 	_set_nginx_port(site, port)
+
+@click.command('set-mariadb-host')
+@click.argument('host')
+def _set_mariadb_host(host):
+	"Set MariaDB host for bench"
+	set_mariadb_host(host)
 
 @click.command('set-default-site')
 @click.argument('site')
@@ -384,6 +391,7 @@ bench.add_command(restart)
 bench.add_command(config)
 bench.add_command(start)
 bench.add_command(set_nginx_port)
+bench.add_command(_set_mariadb_host)
 bench.add_command(set_default_site)
 bench.add_command(migrate_3to4)
 bench.add_command(shell)

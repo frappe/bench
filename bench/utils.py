@@ -279,3 +279,17 @@ def is_root():
 	if os.getuid() == 0:
 		return True
 	return False
+
+def set_mariadb_host(host, bench='.'):
+	update_common_site_config({'db_host': host}, bench=bench)
+
+def update_common_site_config(ddict, bench='.'):
+	update_json_file(os.path.join(bench, 'sites', 'common_site_config.json'), ddict)
+
+def update_json_file(filename, ddict):
+	with open(filename, 'r') as f:
+		content = json.load(f)
+	content.update(ddict)
+	with open(filename, 'w') as f:
+		content = json.dump(content, f, indent=1)
+
