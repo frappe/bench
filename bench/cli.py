@@ -34,13 +34,20 @@ def cli():
 		return frappe()
 	return bench()
 
+def cmd_requires_root():
+	print sys.argv
+	if len(sys.argv) > 3 and sys.argv[2] in ('production', 'sudoers'):
+	    return True
+	if len(sys.argv) > 2 and sys.argv[1] in ('patch',):
+	    return True
+
 def check_uid():
-	if len(sys.argv) > 3 and sys.argv[2] in ('production', 'sudoers') and not is_root():
+	if cmd_requires_root() and not is_root():
 		print 'superuser privileges required for this command'
 		sys.exit(1)
 
 def change_uid():
-	if is_root():
+	if is_root() and not cmd_requires_root():
 		frappe_user = get_config().get('frappe_user')
 		if frappe_user:
 			os.setuid(pwd.getpwnam(frappe_user).pw_uid)
