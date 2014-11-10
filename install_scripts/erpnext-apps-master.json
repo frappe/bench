@@ -1,0 +1,12 @@
+[
+	{
+		"url":"https://github.com/frappe/erpnext",
+		"name":"erpnext",
+		"branch": "master"
+	},
+	{
+		"url":"https://github.com/frappe/shopping-cart",
+		"name":"shopping_cart",
+		"branch": "master"
+	}
+]
