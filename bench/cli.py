@@ -35,7 +35,7 @@ def cli():
 	return bench()
 
 def cmd_requires_root():
-	if len(sys.argv) > 3 and sys.argv[2] in ('production', 'sudoers'):
+	if len(sys.argv) > 2 and sys.argv[2] in ('production', 'sudoers'):
 	    return True
 	if len(sys.argv) > 2 and sys.argv[1] in ('patch',):
 	    return True
