@@ -11,8 +11,8 @@ from .utils import set_nginx_port as _set_nginx_port
 from .utils import set_nginx_port as _set_nginx_port
 from .utils import set_default_site as _set_default_site
 from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging,
-		get_config, update_config, restart_supervisor_processes, put_config, default_config, update_requirements,
-		backup_all_sites, backup_site, get_sites, prime_wheel_cache, is_root, set_mariadb_host)
+					get_config, update_config, restart_supervisor_processes, put_config, default_config, update_requirements,
+					backup_all_sites, backup_site, get_sites, prime_wheel_cache, is_root, set_mariadb_host, drop_privileges)
 from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps
@@ -49,7 +49,7 @@ def change_uid():
 	if is_root() and not cmd_requires_root():
 		frappe_user = get_config().get('frappe_user')
 		if frappe_user:
-			os.seteuid(pwd.getpwnam(frappe_user).pw_uid)
+			drop_privileges(uid_name=frappe_user, gid_name=frappe_user)
 			os.environ['HOME'] = pwd.getpwnam(frappe_user).pw_dir
 		else:
 			print 'You should not run this command as root'
