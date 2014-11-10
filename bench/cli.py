@@ -35,7 +35,6 @@ def cli():
 	return bench()
 
 def cmd_requires_root():
-	print sys.argv
 	if len(sys.argv) > 3 and sys.argv[2] in ('production', 'sudoers'):
 	    return True
 	if len(sys.argv) > 2 and sys.argv[1] in ('patch',):
@@ -50,7 +49,8 @@ def change_uid():
 	if is_root() and not cmd_requires_root():
 		frappe_user = get_config().get('frappe_user')
 		if frappe_user:
-			os.setuid(pwd.getpwnam(frappe_user).pw_uid)
+			os.seteuid(pwd.getpwnam(frappe_user).pw_uid)
+			os.environ['HOME'] = pwd.getpwnam(frappe_user).pw_dir
 		else:
 			print 'You should not run this command as root'
 			sys.exit(1)
