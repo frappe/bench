@@ -294,8 +294,7 @@ setup_debconf() {
 }
 
 install_bench() {
-	echo WARNING BENCH INSTALLING FROM ANOTHER BRANCH
-	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER && git clone https://github.com/frappe/bench --branch v0.9wip bench-repo"
+	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER && git clone https://github.com/frappe/bench bench-repo"
 	if hash pip-2.7; then
 		PIP="pip-2.7"
 	elif hash pip2.7; then
