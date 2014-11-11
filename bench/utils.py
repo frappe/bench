@@ -5,6 +5,7 @@ import getpass
 import logging
 import json
 from distutils.spawn import find_executable
+import pwd, grp
 
 logger = logging.getLogger(__name__)
 
