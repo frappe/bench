@@ -1,6 +1,8 @@
 from .utils import get_program, exec_cmd, get_cmd_output
 from .config import generate_nginx_config, generate_supervisor_config
+from jinja2 import Environment, PackageLoader
 import os
+import shutil
 
 def restart_service(service):
 	program = get_program(['systemctl', 'service'])
@@ -24,12 +26,20 @@ def remove_default_nginx_configs():
 		if os.path.exists(conf_file):
 			os.unlink(conf_file)
 
+
+def is_centos7():
+	return os.path.exists('/etc/redhat-release') and get_cmd_output("cat /etc/redhat-release | sed 's/Linux\ //g' | cut -d' ' -f3 | cut -d. -f1").strip() == '7'
+			
+
+def copy_default_nginx_config():
+	shutil.copy(os.path.join(os.path.dirname(__file__), 'templates', 'nginx_default.conf'), '/etc/nginx/nginx.conf')
+
 def setup_production(bench='.'):
 	generate_supervisor_config(bench=bench)
 	generate_nginx_config(bench=bench)
 	remove_default_nginx_configs()
 
-	if os.path.exists('/etc/redhat-release') and get_cmd_output("cat /etc/redhat-release | sed 's/Linux\ //g' | cut -d' ' -f3 | cut -d. -f1").strip() == '7':
+	if is_centos7():
 		supervisor_conf_filename = 'frappe.ini'
 	else:
 		supervisor_conf_filename = 'frappe.conf'
