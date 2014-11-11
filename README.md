@@ -19,10 +19,12 @@ Open your Terminal and enter:
 
 ```
 wget https://raw.githubusercontent.com/frappe/bench/master/install_scripts/setup_frappe.sh
-sudo bash setup_frappe.sh
+sudo bash setup_frappe.sh --setup-production
 ```
 
-This script should install the pre-requisites and add a bench command.
+This script should install the pre-requisites, install bench and setup an ERPNext site.
+
+If you want to develop ERPNext or any Frappe App, you can omit the "--setup-production" part from the command.
 
 
 Manual Install
@@ -181,8 +183,10 @@ Production Deployment
 =====================
 
 
-You can setup the bench for production use by configuring two programs,
-Supervisor and nginx.
+You can setup the bench for production use by configuring two programs
+, Supervisor and nginx. These steps are automated if you pass
+`--setup-production` to the easy install script or run `sudo bench
+setup production`
 
 Supervisor
 ----------
