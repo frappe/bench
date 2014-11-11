@@ -8,25 +8,59 @@ from .utils import setup_sudoers as _setup_sudoers
 from .utils import start as _start
 from .utils import setup_procfile as _setup_procfile
 from .utils import set_nginx_port as _set_nginx_port
+from .utils import set_nginx_port as _set_nginx_port
 from .utils import set_default_site as _set_default_site
 from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging,
-		get_config, update_config, restart_supervisor_processes, put_config, default_config, update_requirements,
-		backup_all_sites, backup_site, get_sites, prime_wheel_cache)
+					get_config, update_config, restart_supervisor_processes, put_config, default_config, update_requirements,
+					backup_all_sites, backup_site, get_sites, prime_wheel_cache, is_root, set_mariadb_host, drop_privileges)
 from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps
 from .config import generate_nginx_config, generate_supervisor_config
+from .production_setup import setup_production as _setup_production
 import os
 import sys
 import logging
 import copy
+import pwd
 
 logger = logging.getLogger('bench')
 
 def cli():
+	check_uid()
+	change_dir()
+	change_uid()
 	if len(sys.argv) > 2 and sys.argv[1] == "frappe":
 		return frappe()
 	return bench()
+
+def cmd_requires_root():
+	if len(sys.argv) > 2 and sys.argv[2] in ('production', 'sudoers'):
+	    return True
+	if len(sys.argv) > 2 and sys.argv[1] in ('patch',):
+	    return True
+
+def check_uid():
+	if cmd_requires_root() and not is_root():
+		print 'superuser privileges required for this command'
+		sys.exit(1)
+
+def change_uid():
+	if is_root() and not cmd_requires_root():
+		frappe_user = get_config().get('frappe_user')
+		if frappe_user:
+			drop_privileges(uid_name=frappe_user, gid_name=frappe_user)
+			os.environ['HOME'] = pwd.getpwnam(frappe_user).pw_dir
+		else:
+			print 'You should not run this command as root'
+			sys.exit(1)
+
+def change_dir():
+	dir_path_file = '/etc/frappe_bench_dir'
+	if os.path.exists(dir_path_file):
+		with open(dir_path_file) as f:
+			dir_path = f.read().strip()
+		os.chdir(dir_path)
 
 def frappe(bench='.'):
 	f = get_frappe(bench=bench)
@@ -83,10 +117,12 @@ def new_app(app_name):
 	_new_app(app_name)
 	
 @click.command('new-site')
+@click.option('--mariadb-root-password', help="MariaDB root password")
+@click.option('--admin-password', help="admin password to set for site")
 @click.argument('site')
-def new_site(site):
+def new_site(site, mariadb_root_password=None, admin_password=None):
 	"Create a new site in the bench"
-	_new_site(site)
+	_new_site(site, mariadb_root_password=mariadb_root_password, admin_password=admin_password)
 	
 #TODO: Not DRY
 @click.command('update')
@@ -168,6 +204,12 @@ def set_nginx_port(site, port):
 	"Set nginx port for site"
 	_set_nginx_port(site, port)
 
+@click.command('set-mariadb-host')
+@click.argument('host')
+def _set_mariadb_host(host):
+	"Set MariaDB host for bench"
+	set_mariadb_host(host)
+
 @click.command('set-default-site')
 @click.argument('site')
 def set_default_site(site):
@@ -223,7 +265,11 @@ def setup_nginx():
 def setup_supervisor():
 	"generate config for supervisor"
 	generate_supervisor_config()
-	update_config({'restart_supervisor_on_update': True})
+	
+@click.command('production')
+def setup_production():
+	"setup bench for production"
+	_setup_production()
 
 @click.command('auto-update')
 def setup_auto_update():
@@ -263,6 +309,7 @@ setup.add_command(setup_backups)
 setup.add_command(setup_env)
 setup.add_command(setup_procfile)
 setup.add_command(setup_config)
+setup.add_command(setup_production)
 
 ## Config
 ## Not DRY
@@ -351,6 +398,7 @@ bench.add_command(restart)
 bench.add_command(config)
 bench.add_command(start)
 bench.add_command(set_nginx_port)
+bench.add_command(_set_mariadb_host)
 bench.add_command(set_default_site)
 bench.add_command(migrate_3to4)
 bench.add_command(shell)

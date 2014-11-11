@@ -5,6 +5,7 @@ import getpass
 import logging
 import json
 from distutils.spawn import find_executable
+import pwd, grp
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +15,7 @@ default_config = {
 	'serve_default_site': True,
 	'rebase_on_pull': False,
 	'update_bench_on_update': True,
+	'frappe_user': getpass.getuser(),
 	'shallow_clone': True
 }
 
@@ -71,9 +73,16 @@ def setup_procfile(bench='.'):
 worker: sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app worker'
 workerbeat: sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app beat -s scheduler.schedule'""")
 
-def new_site(site, bench='.'):
+def new_site(site, mariadb_root_password=None, admin_password=None, bench='.'):
 	logger.info('creating new site {}'.format(site))
-	exec_cmd("{frappe} --install {site} {site}".format(frappe=get_frappe(bench=bench), site=site), cwd=os.path.join(bench, 'sites'))
+	mariadb_root_password_fragment = '--root_password {}'.format(mariadb_root_password) if mariadb_root_password else ''
+	admin_password_fragment = '--admin_password {}'.format(admin_password) if admin_password else ''
+	exec_cmd("{frappe} --install {site} {site} {mariadb_root_password_fragment} {admin_password_fragment}".format(
+				frappe=get_frappe(bench=bench),
+				site=site,
+				mariadb_root_password_fragment=mariadb_root_password_fragment,
+				admin_password_fragment=admin_password_fragment
+			), cwd=os.path.join(bench, 'sites'))
 	if len(get_sites(bench=bench)) == 1:
 		exec_cmd("{frappe} --use {site}".format(frappe=get_frappe(bench=bench), site=site), cwd=os.path.join(bench, 'sites'))
 
@@ -129,10 +138,12 @@ def update_bench():
 	exec_cmd("git pull", cwd=cwd)
 
 def setup_sudoers(user):
-	with open('/etc/sudoers.d/frappe', 'w') as f:
+	sudoers_file = '/etc/sudoers.d/frappe'
+	with open(sudoers_file, 'w') as f:
 		f.write("{user} ALL=(ALL) NOPASSWD: {supervisorctl} restart frappe\:\n".format(
 					user=user,
 					supervisorctl=subprocess.check_output('which supervisorctl', shell=True).strip()))
+	os.chmod(sudoers_file, 0440)
 
 def setup_logging(bench='.'):
 	if os.path.exists(os.path.join(bench, 'logs')):
@@ -160,8 +171,7 @@ def update_config(new_config, bench='.'):
 	config.update(new_config)
 	put_config(config, bench=bench)
 
-def get_process_manager():
-	programs = ['foreman', 'forego', 'honcho']
+def get_program(programs):
 	program = None
 	for p in programs:
 		program = find_executable(p)
@@ -169,6 +179,9 @@ def get_process_manager():
 			break
 	return program
 
+def get_process_manager():
+	return get_program(['foreman', 'forego', 'honcho'])
+    
 def start():
 	program = get_process_manager()
 	if not program:
@@ -262,3 +275,41 @@ def prime_wheel_cache(bench='.'):
 				wheelhouse=wheel_cache_dir,
 				requirements=requirements)
 	exec_cmd(cmd)
+
+def is_root():
+	if os.getuid() == 0:
+		return True
+	return False
+
+def set_mariadb_host(host, bench='.'):
+	update_common_site_config({'db_host': host}, bench=bench)
+
+def update_common_site_config(ddict, bench='.'):
+	update_json_file(os.path.join(bench, 'sites', 'common_site_config.json'), ddict)
+
+def update_json_file(filename, ddict):
+	with open(filename, 'r') as f:
+		content = json.load(f)
+	content.update(ddict)
+	with open(filename, 'w') as f:
+		content = json.dump(content, f, indent=1)
+
+def drop_privileges(uid_name='nobody', gid_name='nogroup'):
+	# from http://stackoverflow.com/a/2699996
+	if os.getuid() != 0:
+		# We're not root so, like, whatever dude
+		return
+
+	# Get the uid/gid from the name
+	running_uid = pwd.getpwnam(uid_name).pw_uid
+	running_gid = grp.getgrnam(gid_name).gr_gid
+
+	# Remove group privileges
+	os.setgroups([])
+
+	# Try setting the new uid/gid
+	os.setgid(running_gid)
+	os.setuid(running_uid)
+
+	# Ensure a very conservative umask
+	old_umask = os.umask(077)
