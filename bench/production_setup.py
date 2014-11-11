@@ -41,6 +41,7 @@ def setup_production(bench='.'):
 
 	if is_centos7():
 		supervisor_conf_filename = 'frappe.ini'
+		copy_default_nginx_config()
 	else:
 		supervisor_conf_filename = 'frappe.conf'
 
