@@ -101,7 +101,7 @@ gpgcheck=1
 
 add_ubuntu_mariadb_repo() {
 	run_cmd sudo apt-get update
-	run_cmd sudo apt-get install -y python-software-properties
+	run_cmd sudo apt-get install -y software-properties-common python-software-properties
 	run_cmd sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xcbcb082a1bb943db
 	run_cmd sudo add-apt-repository "deb http://ams2.mirrors.digitalocean.com/mariadb/repo/5.5/ubuntu $OS_VER main"
 }
