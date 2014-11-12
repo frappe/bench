@@ -22,7 +22,7 @@ wget https://raw.githubusercontent.com/frappe/bench/master/install_scripts/setup
 sudo bash setup_frappe.sh --setup-production
 ```
 
-This script should install the pre-requisites, install bench and setup an ERPNext site.
+This script should install the pre-requisites, install bench and setup an ERPNext site. You can then login as Administrator with the Administrator password printed.
 
 If you want to develop ERPNext or any Frappe App, you can omit the "--setup-production" part from the command.
 
