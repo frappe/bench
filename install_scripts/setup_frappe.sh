@@ -74,7 +74,8 @@ get_distro() {
 	export ARCH=$ARCH
 	export T_ARCH=$T_ARCH
 	export WK_ARCH=$WK_ARCH
-	echo DEBUG $OS $OS_VER $ARCH $WK_ARCH
+	echo Installing for $OS $OS_VER $ARCH 
+	echo "In case you encounter an error, you can post on https://discuss.frappe.io"
 }
 
 run_cmd() {
@@ -383,7 +384,11 @@ main() {
 	setup_bench
 
 	echo
-	echo "Frappe/ERPNext is installed successfully."
+	RUNNING=""
+	if $SETUP_PROD; then
+		RUNNING=" and is running on port 80"
+	fi
+	echo "Frappe/ERPNext is installed successfully$RUNNING."
 	print_msg > ~/frappe_passwords.txt
 	print_msg
 	echo
