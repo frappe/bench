@@ -76,6 +76,7 @@ get_distro() {
 	export WK_ARCH=$WK_ARCH
 	echo Installing for $OS $OS_VER $ARCH 
 	echo "In case you encounter an error, you can post on https://discuss.frappe.io"
+	echo
 }
 
 run_cmd() {
