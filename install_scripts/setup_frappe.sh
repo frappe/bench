@@ -243,7 +243,7 @@ get_password() {
 		read -p "Re enter $1 password to set:" -s TMP_PASS2
 		echo
 		if [ $TMP_PASS1 == $TMP_PASS2 ]; then
-			export $2=$TMp_PASS1
+			export $2=$TMP_PASS1
 		else
 			echo Passwords do not match
 			get_password $1 $2
