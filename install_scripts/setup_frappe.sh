@@ -290,7 +290,7 @@ start_services_centos7() {
 
 start_services_debian_ubuntu() {
 	run_cmd service nginx start
-	run_cmd service mariadb start
+	run_cmd service mysql start
 	run_cmd service redis start
 	run_cmd service supervisord start
 	run_cmd service memcached start
