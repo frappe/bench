@@ -288,6 +288,14 @@ start_services_centos7() {
 	run_cmd systemctl start memcached
 }
 
+start_services_debian_ubuntu() {
+	run_cmd service nginx start
+	run_cmd service mariadb start
+	run_cmd service redis start
+	run_cmd service supervisord start
+	run_cmd service memcached start
+}
+
 setup_debconf() {
 	debconf-set-selections <<< "postfix postfix/mailname string `hostname`"
 	debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Internet Site'"
@@ -378,7 +386,11 @@ main() {
 			start_services_centos7
 		fi
 		configure_mariadb_centos
+	elif [ $OS == "debian" ] || [ $OS == "Ubuntu" ]; then
+		echo "Starting debian/ubuntu services"
+		start_services_debian_ubuntu
 	fi
+
 	echo "Adding frappe user"
 	add_user
 	install_bench
