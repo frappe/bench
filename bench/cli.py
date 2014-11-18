@@ -23,6 +23,7 @@ import sys
 import logging
 import copy
 import pwd
+import grp
 
 logger = logging.getLogger('bench')
 
@@ -385,7 +386,41 @@ def _patch_mariadb_config():
 	repo_dir = os.path.dirname(__file__)
 	exec_cmd(os.path.join(repo_dir, 'patches', 'fix-mariadb.sh'), cwd=os.path.join(repo_dir, 'patches'))
 
+@click.command('fix-perms')
+def _fix_perms():
+	if os.path.exists("config/supervisor.conf"):
+		exec_cmd("supervisorctl stop frappe:")
+
+	"Fix permissions if supervisor processes were run as root"
+	files = [
+	"logs/web.error.log",
+	"logs/web.log",
+	"logs/workerbeat.error.log",
+	"logs/workerbeat.log",
+	"logs/worker.error.log",
+	"logs/worker.log",
+	"config/nginx.conf",
+	"config/supervisor.conf",
+	]
+
+	frappe_user = get_config().get('frappe_user')
+	if not frappe_user:
+		print "frappe user not set"
+		sys.exit(1)
+
+	for path in files:
+		if os.path.exists(path):
+			uid = pwd.getpwnam(frappe_user).pw_uid
+			gid = grp.getgrnam(frappe_user).gr_gid
+			os.chown(path, uid, gid)
+
+	if os.path.exists("config/supervisor.conf"):
+		exec_cmd("{bench} setup supervisor".format(bench=sys.argv[0]))
+		exec_cmd("supervisorctl reload")
+
+
 patch.add_command(_patch_mariadb_config)
+patch.add_command(_fix_perms)
 
 #Bench commands
 
