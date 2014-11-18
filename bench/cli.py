@@ -267,9 +267,10 @@ def setup_supervisor():
 	generate_supervisor_config()
 	
 @click.command('production')
-def setup_production():
+@click.argument('user')
+def setup_production(user):
 	"setup bench for production"
-	_setup_production()
+	_setup_production(user=user)
 
 @click.command('auto-update')
 def setup_auto_update():

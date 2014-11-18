@@ -6,12 +6,13 @@ from .utils import get_sites, get_config, update_config
 
 env = Environment(loader=PackageLoader('bench', 'templates'), trim_blocks=True)
 
-def generate_supervisor_config(bench='.'):
+def generate_supervisor_config(bench='.', user=None):
 	template = env.get_template('supervisor.conf')
 	bench_dir = os.path.abspath(bench)
 	sites_dir = os.path.join(bench_dir, "sites")
 	sites = get_sites(bench=bench)
-	user = getpass.getuser()
+	if not user:
+		user = getpass.getuser()
 	config = get_config()
 
 	config = template.render(**{

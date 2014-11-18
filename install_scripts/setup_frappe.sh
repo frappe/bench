@@ -331,7 +331,7 @@ setup_bench() {
 	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench frappe --install_app shopping_cart"
 	run_cmd bash -c "cd /home/$FRAPPE_USER/frappe-bench && bench setup sudoers $FRAPPE_USER"
 	if $SETUP_PROD; then
-		run_cmd bash -c "cd /home/$FRAPPE_USER/frappe-bench && bench setup production"
+		run_cmd bash -c "cd /home/$FRAPPE_USER/frappe-bench && bench setup production $FRAPPE_USER"
 	fi
 }
 
