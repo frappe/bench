@@ -66,6 +66,7 @@ def exec_cmd(cmd, cwd='.'):
 def setup_env(bench='.'):
 	exec_cmd('virtualenv -q {} -p {}'.format('env', sys.executable), cwd=bench)
 	exec_cmd('./env/bin/pip -q install wheel', cwd=bench)
+	exec_cmd('./env/bin/pip -q install https://github.com/frappe/MySQLdb1/archive/MySQLdb-1.2.5-patched.tar.gz', cwd=bench)
 
 def setup_procfile(bench='.'):
 	with open(os.path.join(bench, 'Procfile'), 'w') as f:
