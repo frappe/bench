@@ -310,8 +310,6 @@ install_bench() {
 		exit 1
 	fi
 	run_cmd sudo $PIP install -e /home/$FRAPPE_USER/bench-repo
-	# temp MariaDB fix
-	sudo bench patch mariadb-config
 }
 
 setup_bench() {
