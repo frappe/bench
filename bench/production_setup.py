@@ -34,7 +34,7 @@ def is_centos7():
 def copy_default_nginx_config():
 	shutil.copy(os.path.join(os.path.dirname(__file__), 'templates', 'nginx_default.conf'), '/etc/nginx/nginx.conf')
 
-def setup_production(bench='.', user):
+def setup_production(user, bench='.'):
 	generate_supervisor_config(bench=bench, user=user)
 	generate_nginx_config(bench=bench)
 	remove_default_nginx_configs()
