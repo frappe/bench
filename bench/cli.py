@@ -388,6 +388,9 @@ def _patch_mariadb_config():
 
 @click.command('fix-perms')
 def _fix_perms():
+	if os.path.exists("config/supervisor.conf"):
+		exec_cmd("supervisorctl stop frappe:")
+
 	"Fix permissions if supervisor processes were run as root"
 	files = [
 	"logs/web.error.log",
@@ -397,7 +400,7 @@ def _fix_perms():
 	"logs/worker.error.log",
 	"logs/worker.log",
 	"config/nginx.conf",
-	"logs/supervisor.conf",
+	"config/supervisor.conf",
 	]
 
 	frappe_user = get_config().get('frappe_user')
@@ -411,7 +414,10 @@ def _fix_perms():
 			gid = grp.getgrnam(frappe_user).gr_gid
 			os.chown(path, uid, gid)
 
-	exec_cmd("{bench} setup supervisor".format(bench=sys.argv[0]))
+	if os.path.exists("config/supervisor.conf"):
+		exec_cmd("{bench} setup supervisor".format(bench=sys.argv[0]))
+		exec_cmd("supervisorctl reload")
+
 
 patch.add_command(_patch_mariadb_config)
 patch.add_command(_fix_perms)
