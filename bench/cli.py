@@ -380,12 +380,6 @@ config.add_command(config_http_timeout)
 def patch():
 	pass
 
-@click.command('mariadb-config')
-def _patch_mariadb_config():
-	"patch MariaDB 5.5.40"
-	repo_dir = os.path.dirname(__file__)
-	exec_cmd(os.path.join(repo_dir, 'patches', 'fix-mariadb.sh'), cwd=os.path.join(repo_dir, 'patches'))
-
 @click.command('fix-perms')
 def _fix_perms():
 	if os.path.exists("config/supervisor.conf"):
@@ -419,7 +413,6 @@ def _fix_perms():
 		exec_cmd("supervisorctl reload")
 
 
-patch.add_command(_patch_mariadb_config)
 patch.add_command(_fix_perms)
 
 #Bench commands
