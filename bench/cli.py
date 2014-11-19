@@ -8,7 +8,7 @@ from .utils import setup_sudoers as _setup_sudoers
 from .utils import start as _start
 from .utils import setup_procfile as _setup_procfile
 from .utils import set_nginx_port as _set_nginx_port
-from .utils import set_nginx_port as _set_nginx_port
+from .utils import set_url_root as _set_url_root
 from .utils import set_default_site as _set_default_site
 from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging,
 					get_config, update_config, restart_supervisor_processes, put_config, default_config, update_requirements,
@@ -204,6 +204,13 @@ def migrate_3to4(path):
 def set_nginx_port(site, port):
 	"Set nginx port for site"
 	_set_nginx_port(site, port)
+
+@click.command('set-url-root')
+@click.argument('site')
+@click.argument('url-root')
+def set_url_root(site, url_root):
+	"Set url root for site"
+	_set_url_root(site, port)
 
 @click.command('set-mariadb-host')
 @click.argument('host')
@@ -436,3 +443,4 @@ bench.add_command(_backup_site)
 bench.add_command(_prime_wheel_cache)
 bench.add_command(_release)
 bench.add_command(patch)
+bench.add_command(set_url_root)

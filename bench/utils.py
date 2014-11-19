@@ -243,6 +243,9 @@ def set_nginx_port(site, port, bench='.', gen_config=True):
 	if gen_config:
 		generate_nginx_config()
 
+def set_url_root(site, url_root, bench='.'):
+	update_site_config(site, {"host_name": url_root}, bench=bench)
+
 def set_default_site(site, bench='.'):
 	if not site in get_sites(bench=bench):
 		raise Exception("Site not in bench")
