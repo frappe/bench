@@ -210,7 +210,7 @@ def set_nginx_port(site, port):
 @click.argument('url-root')
 def set_url_root(site, url_root):
 	"Set url root for site"
-	_set_url_root(site, port)
+	_set_url_root(site, url_root)
 
 @click.command('set-mariadb-host')
 @click.argument('host')
