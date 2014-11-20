@@ -18,6 +18,7 @@ from .app import new_app as _new_app
 from .app import pull_all_apps
 from .config import generate_nginx_config, generate_supervisor_config
 from .production_setup import setup_production as _setup_production
+from .migrate_to_v5 import migrate_to_v5
 import os
 import sys
 import logging
@@ -176,7 +177,6 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 
 def restart_update(kwargs):
 	args = ['--'+k for k, v in kwargs.items() if v]
-	print 'restarting '
 	os.execv(sys.argv[0], sys.argv[:2] + args)
 
 @click.command('restart')
@@ -197,6 +197,11 @@ def migrate_3to4(path):
 			python=os.path.join('env', 'bin', 'python'),
 			migrate_3to4=os.path.join(os.path.dirname(__file__), 'migrate3to4.py'),
 			site=path))
+
+@click.command('migrate-to-v5')
+def _migrate_to_v5(bench='.'):
+	"Migrate to Version 5"
+	migrate_to_v5(bench=bench)
 
 @click.command('set-nginx-port')
 @click.argument('site')
@@ -444,3 +449,4 @@ bench.add_command(_prime_wheel_cache)
 bench.add_command(_release)
 bench.add_command(patch)
 bench.add_command(set_url_root)
+bench.add_command(_migrate_to_v5)
