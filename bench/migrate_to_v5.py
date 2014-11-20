@@ -1,16 +1,16 @@
 from .utils import exec_cmd, get_frappe
 import os
+import shutil
 from .release import get_current_version
 
 repos = ('frappe', 'erpnext')
 
 def migrate_to_v5(bench='.'):
-	.cli import restart_update
+	from .cli import restart_update
 	validate_v4(bench=bench)
 	for repo in repos:
 		checkout_v5(repo, bench=bench)
-	exec_cmd("{pip} --no-input uninstall -y shopping_cart".format(pip=os.path.join(bench, 'env', 'bin', 'pip')))
-	exec_cmd("{frappe} --remove_from_installed_apps shopping_cart".format(frappe=get_frappe(bench=bench)))
+	remove_shopping_cart(bench=bench)
 	restart_update({
 			'patch': True,
 			'build': True,
@@ -18,6 +18,14 @@ def migrate_to_v5(bench='.'):
 			'restart-supervisor': True
 	})
 
+def remove_shopping_cart(bench='.'):
+	exec_cmd("{pip} --no-input uninstall -y shopping_cart".format(pip=os.path.join(bench, 'env', 'bin', 'pip')))
+	exec_cmd("{frappe} all --remove_from_installed_apps shopping_cart".format(frappe=get_frappe(bench=bench)))
+	archived_apps_dir = os.path.join(bench, 'archived_apps')
+	shopping_cart_dir = os.path.join(bench, 'apps', 'shopping_cart')
+	if not os.path.exists(archived_apps_dir):
+		os.mkdir(archived_apps_dir)
+	shutil.move(shopping_cart_dir, archived_apps_dir)
 
 def validate_v4(bench='.'):
 	for repo in repos:
