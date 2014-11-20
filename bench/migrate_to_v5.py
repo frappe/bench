@@ -1,7 +1,8 @@
 from .utils import exec_cmd, get_frappe
+from .release import get_current_version
+from .app import remove_from_appstxt
 import os
 import shutil
-from .release import get_current_version
 
 repos = ('frappe', 'erpnext')
 
@@ -20,7 +21,11 @@ def migrate_to_v5(bench='.'):
 
 def remove_shopping_cart(bench='.'):
 	exec_cmd("{pip} --no-input uninstall -y shopping_cart".format(pip=os.path.join(bench, 'env', 'bin', 'pip')))
-	exec_cmd("{frappe} all --remove_from_installed_apps shopping_cart".format(frappe=get_frappe(bench=bench)))
+	exec_cmd("{frappe} all --remove_from_installed_apps shopping_cart".format(
+			frappe=get_frappe(bench=bench)),
+			cwd=os.path.join(bench, 'sites'))
+	remove_from_appstxt('shopping_cart', bench=bench)
+
 	archived_apps_dir = os.path.join(bench, 'archived_apps')
 	shopping_cart_dir = os.path.join(bench, 'apps', 'shopping_cart')
 	if not os.path.exists(archived_apps_dir):
