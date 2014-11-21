@@ -18,8 +18,17 @@ def add_to_appstxt(app, bench='.'):
 	apps = get_apps(bench=bench)
 	if app not in apps:
 		apps.append(app)
-		with open(os.path.join(bench, 'sites', 'apps.txt'), 'w') as f:
-			return f.write('\n'.join(apps))
+		return write_appstxt(apps, bench=bench)
+
+def remove_from_appstxt(app, bench='.'):
+	apps = get_apps(bench=bench)
+	if app in apps:
+		apps.remove(app)
+		return write_appstxt(apps, bench=bench)
+
+def write_appstxt(apps, bench='.'):
+	with open(os.path.join(bench, 'sites', 'apps.txt'), 'w') as f:
+		return f.write('\n'.join(apps))
 
 def get_app(app, git_url, branch=None, bench='.'):
 	logger.info('getting app {}'.format(app))
