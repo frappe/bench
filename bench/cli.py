@@ -201,7 +201,9 @@ def migrate_3to4(path):
 @click.command('migrate-to-v5')
 def _migrate_to_v5(bench='.'):
 	"Migrate to Version 5"
-	migrate_to_v5(bench=bench)
+	click.echo("This will migrate all sites in the bench to version 5.")
+	if click.confirm("This is irreversible. Do you want to continue?", abort=True):
+		migrate_to_v5(bench=bench)
 
 @click.command('set-nginx-port')
 @click.argument('site')
