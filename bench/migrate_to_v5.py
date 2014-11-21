@@ -31,13 +31,15 @@ def remove_shopping_cart(bench='.'):
 def validate_v4(bench='.'):
 	for repo in repos:
 		path = os.path.join(bench, 'apps', repo)
-		current_version = get_current_version(path)
-		if not current_version.startswith('4'):
-			raise Exception("{} is not on v4.x.x".format(repo))
+		if os.path.exists(path):
+			current_version = get_current_version(path)
+			if not current_version.startswith('4'):
+				raise Exception("{} is not on v4.x.x".format(repo))
 
 def checkout_v5(repo, bench='.'):
 	cwd = os.path.join(bench, 'apps', repo)
-	exec_cmd("git fetch upstream", cwd=cwd)
-	exec_cmd("git checkout v5.0", cwd=cwd)
-	exec_cmd("git clean -df", cwd=cwd)
+	if os.path.exists(cwd):
+		exec_cmd("git fetch upstream", cwd=cwd)
+		exec_cmd("git checkout v5.0", cwd=cwd)
+		exec_cmd("git clean -df", cwd=cwd)
 
