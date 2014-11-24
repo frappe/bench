@@ -5,13 +5,12 @@ import os
 import shutil
 
 def restart_service(service):
-	program = get_program(['systemctl', 'service'])
-	if not program:
+	if os.path.basename(get_program(['systemctl'])) == 'systemctl' and is_running_systemd():
+		exec_cmd("{prog} restart {service}".format(prog='systemctl', service=service))
+	elif os.path.basename(get_program(['service'])) == 'service':
+		exec_cmd("{prog} {service} restart ".format(prog='service', service=service))
+	else:
 		raise Exception, 'No service manager found'
-	elif os.path.basename(program) == 'service':
-		exec_cmd("{prog} {service} restart ".format(prog=program, service=service))
-	elif os.path.basename(program) == 'systemctl' and is_running_systemd():
-		exec_cmd("{prog} restart {service}".format(prog=program, service=service))
 
 def get_supervisor_confdir():
 	possiblities = ('/etc/supervisor/conf.d', '/etc/supervisor.d/', '/etc/supervisord/conf.d', '/etc/supervisord.d')
