@@ -139,7 +139,9 @@ add_epel_centos7() {
 }
 
 add_maria_db_repo() {
-	if [ "$OS" == "centos" ]; then
+	if [ "$OS" == "Ubuntu" ] && [ $VER=="utopic" ]; then 
+		return
+	elif [ "$OS" == "centos" ]; then
 		echo Adding centos mariadb repo
 		add_centos6_mariadb_repo
 	
