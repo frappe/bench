@@ -8,10 +8,10 @@ def restart_service(service):
 	program = get_program(['systemctl', 'service'])
 	if not program:
 		raise Exception, 'No service manager found'
-	elif os.path.basename(program) == 'systemctl':
-		exec_cmd("{prog} restart {service}".format(prog=program, service=service))
 	elif os.path.basename(program) == 'service':
 		exec_cmd("{prog} {service} restart ".format(prog=program, service=service))
+	elif os.path.basename(program) == 'systemctl' and is_running_systemd():
+		exec_cmd("{prog} restart {service}".format(prog=program, service=service))
 
 def get_supervisor_confdir():
 	possiblities = ('/etc/supervisor/conf.d', '/etc/supervisor.d/', '/etc/supervisord/conf.d', '/etc/supervisord.d')
@@ -30,6 +30,14 @@ def remove_default_nginx_configs():
 def is_centos7():
 	return os.path.exists('/etc/redhat-release') and get_cmd_output("cat /etc/redhat-release | sed 's/Linux\ //g' | cut -d' ' -f3 | cut -d. -f1").strip() == '7'
 			
+def is_running_systemd():
+	with open('/proc/1/comm') as f:
+		comm = f.read().strip()
+	if comm == "init":
+		return False
+	elif comm == "systemd":
+		return True
+	return False
 
 def copy_default_nginx_config():
 	shutil.copy(os.path.join(os.path.dirname(__file__), 'templates', 'nginx_default.conf'), '/etc/nginx/nginx.conf')
