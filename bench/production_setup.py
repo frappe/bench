@@ -5,9 +5,9 @@ import os
 import shutil
 
 def restart_service(service):
-	if os.path.basename(get_program(['systemctl'])) == 'systemctl' and is_running_systemd():
+	if os.path.basename(get_program(['systemctl']) or '') == 'systemctl' and is_running_systemd():
 		exec_cmd("{prog} restart {service}".format(prog='systemctl', service=service))
-	elif os.path.basename(get_program(['service'])) == 'service':
+	elif os.path.basename(get_program(['service']) or '') == 'service':
 		exec_cmd("{prog} {service} restart ".format(prog='service', service=service))
 	else:
 		raise Exception, 'No service manager found'

@@ -299,13 +299,13 @@ setup_debconf() {
 
 install_bench() {
 	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER && git clone https://github.com/frappe/bench bench-repo"
-	if hash pip-2.7; then
+	if hash pip-2.7 &> /dev/null; then
 		PIP="pip-2.7"
-	elif hash pip2.7; then
+	elif hash pip2.7 &> /dev/null; then
 		PIP="pip2.7"
-	elif hash pip2; then
+	elif hash pip2 &> /dev/null; then
 		PIP="pip2"
-	elif hash pip; then
+	elif hash pip &> /dev/null; then
 		PIP="pip"
 	else
 		echo PIP not installed
