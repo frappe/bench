@@ -12,7 +12,8 @@ from .utils import set_url_root as _set_url_root
 from .utils import set_default_site as _set_default_site
 from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging,
 					get_config, update_config, restart_supervisor_processes, put_config, default_config, update_requirements,
-					backup_all_sites, backup_site, get_sites, prime_wheel_cache, is_root, set_mariadb_host, drop_privileges)
+					backup_all_sites, backup_site, get_sites, prime_wheel_cache, is_root, set_mariadb_host, drop_privileges,
+					fix_file_perms)
 from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps
@@ -396,31 +397,11 @@ def patch():
 
 @click.command('fix-perms')
 def _fix_perms():
+	"Fix permissions if supervisor processes were run as root"
 	if os.path.exists("config/supervisor.conf"):
 		exec_cmd("supervisorctl stop frappe:")
 
-	"Fix permissions if supervisor processes were run as root"
-	files = [
-	"logs/web.error.log",
-	"logs/web.log",
-	"logs/workerbeat.error.log",
-	"logs/workerbeat.log",
-	"logs/worker.error.log",
-	"logs/worker.log",
-	"config/nginx.conf",
-	"config/supervisor.conf",
-	]
-
-	frappe_user = get_config().get('frappe_user')
-	if not frappe_user:
-		print "frappe user not set"
-		sys.exit(1)
-
-	for path in files:
-		if os.path.exists(path):
-			uid = pwd.getpwnam(frappe_user).pw_uid
-			gid = grp.getgrnam(frappe_user).gr_gid
-			os.chown(path, uid, gid)
+	fix_file_perms()
 
 	if os.path.exists("config/supervisor.conf"):
 		exec_cmd("{bench} setup supervisor".format(bench=sys.argv[0]))

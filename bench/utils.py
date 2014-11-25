@@ -317,3 +317,28 @@ def drop_privileges(uid_name='nobody', gid_name='nogroup'):
 
 	# Ensure a very conservative umask
 	old_umask = os.umask(077)
+
+def fix_file_perms(frappe_user=None):
+	files = [
+	"logs/web.error.log",
+	"logs/web.log",
+	"logs/workerbeat.error.log",
+	"logs/workerbeat.log",
+	"logs/worker.error.log",
+	"logs/worker.log",
+	"config/nginx.conf",
+	"config/supervisor.conf",
+	]
+
+	if not frappe_user:
+		frappe_user = get_config().get('frappe_user')
+
+	if not frappe_user:
+		print "frappe user not set"
+		sys.exit(1)
+
+	for path in files:
+		if os.path.exists(path):
+			uid = pwd.getpwnam(frappe_user).pw_uid
+			gid = grp.getgrnam(frappe_user).gr_gid
+			os.chown(path, uid, gid)
