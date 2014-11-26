@@ -25,6 +25,7 @@ set_opts () {
 	VERBOSE=false
 	HELP=false
 	FRAPPE_USER=false
+	BENCH_BRANCH="master"
 	FRAPPE_USER_PASS=`get_passwd`
 	MSQ_PASS=`get_passwd`
 	ADMIN_PASS=`get_passwd`
@@ -37,6 +38,7 @@ set_opts () {
 	--mysql-root-password ) MSQ_PASS="$2"; shift; shift ;;
 	--frappe-user ) FRAPPE_USER="$2"; shift; shift ;;
 	--setup-production ) SETUP_PROD=true; shift;;
+	--bench-branch ) BENCH_BRANCH="$2"; shift;;
 	-- ) shift; break ;;
 	* ) break ;;
 	esac
@@ -298,7 +300,7 @@ setup_debconf() {
 }
 
 install_bench() {
-	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER && git clone https://github.com/frappe/bench bench-repo"
+	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER && git clone https://github.com/frappe/bench --branch $BENCH_BRANCH bench-repo"
 	if hash pip-2.7 &> /dev/null; then
 		PIP="pip-2.7"
 	elif hash pip2.7 &> /dev/null; then

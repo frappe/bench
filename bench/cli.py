@@ -13,7 +13,7 @@ from .utils import set_default_site as _set_default_site
 from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging,
 					get_config, update_config, restart_supervisor_processes, put_config, default_config, update_requirements,
 					backup_all_sites, backup_site, get_sites, prime_wheel_cache, is_root, set_mariadb_host, drop_privileges,
-					fix_file_perms)
+					fix_file_perms, set_ssl_certificate, set_ssl_certificate_key)
 from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps
@@ -212,6 +212,20 @@ def _migrate_to_v5(bench='.'):
 def set_nginx_port(site, port):
 	"Set nginx port for site"
 	_set_nginx_port(site, port)
+
+@click.command('set-ssl-certificate')
+@click.argument('site')
+@click.argument('ssl-certificate-path')
+def _set_ssl_certificate(site, ssl_certificate_path):
+	"Set ssl certificate path for site"
+	set_ssl_certificate(site, ssl_certificate_path)
+
+@click.command('set-ssl-key')
+@click.argument('site')
+@click.argument('ssl-certificate-key-path')
+def _set_ssl_certificate_key(site, ssl_certificate_key_path):
+	"Set ssl certificate private key path for site"
+	set_ssl_certificate_key(site, ssl_certificate_key_path)
 
 @click.command('set-url-root')
 @click.argument('site')
@@ -422,6 +436,8 @@ bench.add_command(restart)
 bench.add_command(config)
 bench.add_command(start)
 bench.add_command(set_nginx_port)
+bench.add_command(_set_ssl_certificate)
+bench.add_command(_set_ssl_certificate_key)
 bench.add_command(_set_mariadb_host)
 bench.add_command(set_default_site)
 bench.add_command(migrate_3to4)

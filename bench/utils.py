@@ -236,10 +236,22 @@ def update_site_config(site, new_config, bench='.'):
 	put_site_config(site, config, bench=bench)
 
 def set_nginx_port(site, port, bench='.', gen_config=True):
+	set_site_config_nginx_property(site, {"nginx_port": port}, bench=bench)
+
+def set_ssl_certificate(site, ssl_certificate, bench='.', gen_config=True):
+	set_site_config_nginx_property(site, {"ssl_certificate": ssl_certificate}, bench=bench)
+
+def set_ssl_certificate_key(site, ssl_certificate_key, bench='.', gen_config=True):
+	set_site_config_nginx_property(site, {"ssl_certificate_key": ssl_certificate_key}, bench=bench)
+
+def set_nginx_port(site, port, bench='.', gen_config=True):
+	set_site_config_nginx_property(site, {"nginx_port": port}, bench=bench)
+
+def set_site_config_nginx_property(site, config, bench='.', gen_config=True):
 	from .config import generate_nginx_config
 	if site not in get_sites(bench=bench):
 		raise Exception("No such site")
-	update_site_config(site, {"nginx_port": port}, bench=bench)
+	update_site_config(site, config, bench=bench)
 	if gen_config:
 		generate_nginx_config()
 

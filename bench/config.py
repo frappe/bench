@@ -31,10 +31,16 @@ def get_site_config(site, bench='.'):
 
 def get_sites_with_config(bench='.'):
 	sites = get_sites()
-	return [{
-		"name": site, 
-		"port": get_site_config(site, bench=bench).get('nginx_port')
-	} for site in sites]
+	ret = []
+	for site in sites:
+		site_config = get_site_config(site, bench=bench)
+		ret.append({
+			"name": site,
+			"port": site_config.get('nginx_port'),
+			"ssl_certificate": site_config.get('ssl_certificate'),
+			"ssl_certificate_key": site_config.get('ssl_certificate_key')
+		})
+	return ret
 
 def generate_nginx_config(bench='.'):
 	template = env.get_template('nginx.conf')
