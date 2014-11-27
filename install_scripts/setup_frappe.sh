@@ -194,7 +194,7 @@ install_packages() {
 
 install_wkhtmltopdf_centos () {
 
-	if [[ $OS == "centos" && $OS_VER == "7" && $T_ARCH="i386" ]]; then
+	if [[ $OS == "centos" && $OS_VER == "7" && $T_ARCH == "i386" ]]; then
 		echo "Cannot install wkhtmltodpdf. Skipping..."
 		return 0
 	fi
