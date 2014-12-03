@@ -30,7 +30,7 @@ def write_appstxt(apps, bench='.'):
 	with open(os.path.join(bench, 'sites', 'apps.txt'), 'w') as f:
 		return f.write('\n'.join(apps))
 
-def get_app(app, git_url, branch=None, bench='.', build_assets=True):
+def get_app(app, git_url, branch=None, bench='.', build_asset_files=True):
 	logger.info('getting app {}'.format(app))
 	shallow_clone = '--depth 1' if check_git_for_shallow_clone() and get_config().get('shallow_clone') else ''
 	branch = '--branch {branch}'.format(branch=branch) if branch else ''
@@ -42,7 +42,7 @@ def get_app(app, git_url, branch=None, bench='.', build_assets=True):
 			cwd=os.path.join(bench, 'apps'))
 	print 'installing', app
 	install_app(app, bench=bench)
-	if build_assets:
+	if build_asset_files:
 		build_assets(bench=bench)
 	conf = get_config()
 	if conf.get('restart_supervisor_on_update'):
@@ -79,7 +79,7 @@ def get_current_branch(repo_dir):
 def install_apps_from_path(path, bench='.'):
 	apps = get_apps_json(path)
 	for app in apps:
-		get_app(app['name'], app['url'], branch=app.get('branch'), bench=bench, build_assets=False)
+		get_app(app['name'], app['url'], branch=app.get('branch'), bench=bench, build_asset_files=False)
 	build_assets(bench=bench)
 
 def get_apps_json(path):
