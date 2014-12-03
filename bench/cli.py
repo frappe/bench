@@ -63,7 +63,8 @@ def change_dir():
 	if os.path.exists(dir_path_file):
 		with open(dir_path_file) as f:
 			dir_path = f.read().strip()
-		os.chdir(dir_path)
+		if os.path.exists(dir_path):
+			os.chdir(dir_path)
 
 def frappe(bench='.'):
 	f = get_frappe(bench=bench)
