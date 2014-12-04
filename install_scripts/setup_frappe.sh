@@ -141,7 +141,7 @@ add_epel_centos7() {
 }
 
 add_maria_db_repo() {
-	if [ "$OS" == "Ubuntu" ] && [ $VER=="utopic" ]; then 
+	if [ "$OS" == "Ubuntu" ] && [ $OS_VER == "utopic" ]; then
 		return
 	elif [ "$OS" == "centos" ]; then
 		echo Adding centos mariadb repo
@@ -152,7 +152,7 @@ add_maria_db_repo() {
 		add_debian_mariadb_repo
 
 	elif [ "$OS" == "Ubuntu" ]; then 
-		echo Adding debian mariadb repo
+		echo Adding ubuntu mariadb repo
 		add_ubuntu_mariadb_repo
 	else
 		echo Unsupported Distribution
