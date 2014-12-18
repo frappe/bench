@@ -16,14 +16,18 @@ def migrate_to_v5(bench='.'):
 	exec_cmd("{bench} update".format(bench=sys.argv[0]))
 
 def remove_shopping_cart(bench='.'):
+	archived_apps_dir = os.path.join(bench, 'archived_apps')
+	shopping_cart_dir = os.path.join(bench, 'apps', 'shopping_cart')
+
+	if not os.path.exists(shopping_cart_dir):
+		return
+
 	exec_cmd("{frappe} all --remove_from_installed_apps shopping_cart".format(
 			frappe=get_frappe(bench=bench)),
 			cwd=os.path.join(bench, 'sites'))
 	remove_from_appstxt('shopping_cart', bench=bench)
 	exec_cmd("{pip} --no-input uninstall -y shopping_cart".format(pip=os.path.join(bench, 'env', 'bin', 'pip')))
 
-	archived_apps_dir = os.path.join(bench, 'archived_apps')
-	shopping_cart_dir = os.path.join(bench, 'apps', 'shopping_cart')
 	if not os.path.exists(archived_apps_dir):
 		os.mkdir(archived_apps_dir)
 	shutil.move(shopping_cart_dir, archived_apps_dir)
