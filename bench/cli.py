@@ -203,7 +203,7 @@ def migrate_3to4(path):
 @click.command('migrate-to-v5')
 def _migrate_to_v5(bench='.'):
 	"Migrate to Version 5"
-	click.echo("This will migrate all sites in the bench to version 5.")
+	click.echo("This will migrate all sites in the bench to version 5. Version 5 is still work in progress and NOT STABLE.")
 	if click.confirm("This is irreversible. Do you want to continue?", abort=True):
 		migrate_to_v5(bench=bench)
 
