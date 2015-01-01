@@ -16,7 +16,7 @@ get_passwd() {
 }
 
 set_opts () {
-	OPTS=`getopt -o v --long verbose,mysql-root-password:,frappe-user:,setup-production,help -n 'parse-options' -- "$@"`
+	OPTS=`getopt -o v --long verbose,mysql-root-password:,frappe-user:,setup-production,skip-setup-bench,help -n 'parse-options' -- "$@"`
 	 
 	if [ $? != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
 	 
@@ -30,6 +30,7 @@ set_opts () {
 	MSQ_PASS=`get_passwd`
 	ADMIN_PASS=`get_passwd`
 	SETUP_PROD=false
+	SETUP_BENCH=true
 	 
 	while true; do
 	case "$1" in
@@ -39,6 +40,7 @@ set_opts () {
 	--frappe-user ) FRAPPE_USER="$2"; shift; shift ;;
 	--setup-production ) SETUP_PROD=true; shift;;
 	--bench-branch ) BENCH_BRANCH="$2"; shift;;
+	--skip-setup-bench ) SETUP_BENCH=false; shift;;
 	-- ) shift; break ;;
 	* ) break ;;
 	esac
@@ -384,7 +386,9 @@ main() {
 	echo "Adding frappe user"
 	add_user
 	install_bench
-	setup_bench
+	if $SETUP_BENCH; then
+		setup_bench
+	fi
 
 	echo
 	RUNNING=""
