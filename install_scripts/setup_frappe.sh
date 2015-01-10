@@ -280,7 +280,7 @@ configure_services_centos6() {
 
 configure_services_centos7() {
 	run_cmd systemctl enable nginx
-	run_cmd systemctl enable mariadb
+	run_cmd systemctl enable mysql
 	run_cmd systemctl enable redis
 	run_cmd systemctl enable supervisord
 	run_cmd systemctl enable memcached
@@ -288,7 +288,7 @@ configure_services_centos7() {
 
 start_services_centos7() {
 	run_cmd systemctl start nginx
-	run_cmd systemctl start mariadb
+	run_cmd systemctl start mysql
 	run_cmd systemctl start redis
 	run_cmd systemctl start supervisord
 	run_cmd systemctl start memcached
