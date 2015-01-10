@@ -200,8 +200,8 @@ install_wkhtmltopdf_centos () {
 		echo "Cannot install wkhtmltodpdf. Skipping..."
 		return 0
 	fi
-	RPM="wkhtmltox-0.12.1_linux-$OS$OS_VER-$WK_ARCH.rpm"
-	run_cmd wget http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.1/$RPM
+	RPM="wkhtmltox-0.12.2_linux-$OS$OS_VER-$WK_ARCH.rpm"
+	run_cmd wget http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.2/$RPM
 	rpm --quiet -q wkhtmltox || run_cmd rpm -Uvh $RPM
 }
 
@@ -215,8 +215,8 @@ install_wkhtmltopdf_deb () {
 	else
 		WK_VER=$OS_VER
 	fi
-	run_cmd wget http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.1/wkhtmltox-0.12.1_linux-$WK_VER-$WK_ARCH.deb
-	run_cmd dpkg -i wkhtmltox-0.12.1_linux-$WK_VER-$WK_ARCH.deb
+	run_cmd wget http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.2/wkhtmltox-0.12.2_linux-$WK_VER-$WK_ARCH.deb
+	run_cmd dpkg -i wkhtmltox-0.12.2_linux-$WK_VER-$WK_ARCH.deb
 }
 
 
