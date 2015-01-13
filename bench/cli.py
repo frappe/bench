@@ -10,13 +10,13 @@ from .utils import setup_procfile as _setup_procfile
 from .utils import set_nginx_port as _set_nginx_port
 from .utils import set_url_root as _set_url_root
 from .utils import set_default_site as _set_default_site
-from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging,
+from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_env_cmd, get_frappe, setup_logging,
 					get_config, update_config, restart_supervisor_processes, put_config, default_config, update_requirements,
 					backup_all_sites, backup_site, get_sites, prime_wheel_cache, is_root, set_mariadb_host, drop_privileges,
 					fix_file_perms, fix_prod_setup_perms, set_ssl_certificate, set_ssl_certificate_key)
 from .app import get_app as _get_app
 from .app import new_app as _new_app
-from .app import pull_all_apps, MajorVersionUpgradeException
+from .app import pull_all_apps, get_apps, MajorVersionUpgradeException
 from .config import generate_nginx_config, generate_supervisor_config, generate_redis_config
 from .production_setup import setup_production as _setup_production
 from .migrate_to_v5 import migrate_to_v5
@@ -35,6 +35,8 @@ def cli():
 	change_uid()
 	if len(sys.argv) > 2 and sys.argv[1] == "frappe":
 		return frappe()
+	if len(sys.argv) > 1 and sys.argv[1] in get_apps():
+		return app_cmd()
 	return bench()
 
 def cmd_requires_root():
@@ -72,6 +74,11 @@ def frappe(bench='.'):
 	f = get_frappe(bench=bench)
 	os.chdir(os.path.join(bench, 'sites'))
 	os.execv(f, [f] + sys.argv[2:])
+
+def app_cmd(bench='.'):
+	f = get_env_cmd('python', bench=bench)
+	os.chdir(os.path.join(bench, 'sites'))
+	os.execv(f, [f] + ['-m', 'frappe.utils.bench_helper'] + sys.argv[1:])
 
 @click.command()
 def shell(bench='.'):

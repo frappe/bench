@@ -21,11 +21,14 @@ default_config = {
 }
 
 def get_frappe(bench='.'):
-	frappe = os.path.abspath(os.path.join(bench, 'env', 'bin', 'frappe'))
+	frappe = get_env_cmd('frappe', bench=bench)
 	if not os.path.exists(frappe):
 		print 'frappe app is not installed. Run the following command to install frappe'
 		print 'bench get-app frappe https://github.com/frappe/frappe.git'
 	return frappe
+
+def get_env_cmd(cmd, bench='.'):
+	return os.path.abspath(os.path.join(bench, 'env', 'bin', cmd))
 
 def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None):
