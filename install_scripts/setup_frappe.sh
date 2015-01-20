@@ -200,8 +200,8 @@ install_wkhtmltopdf_centos () {
 		echo "Cannot install wkhtmltodpdf. Skipping..."
 		return 0
 	fi
-	RPM="wkhtmltox-0.12.2_linux-$OS$OS_VER-$WK_ARCH.rpm"
-	run_cmd wget http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.2/$RPM
+	RPM="wkhtmltox-0.12.2.1_linux-$OS$OS_VER-$WK_ARCH.rpm"
+	run_cmd wget http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.2.1/$RPM
 	rpm --quiet -q wkhtmltox || run_cmd rpm -Uvh $RPM
 }
 
@@ -215,8 +215,8 @@ install_wkhtmltopdf_deb () {
 	else
 		WK_VER=$OS_VER
 	fi
-	run_cmd wget http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.2/wkhtmltox-0.12.2_linux-$WK_VER-$WK_ARCH.deb
-	run_cmd dpkg -i wkhtmltox-0.12.2_linux-$WK_VER-$WK_ARCH.deb
+	run_cmd wget http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.2.1/wkhtmltox-0.12.2.1_linux-$WK_VER-$WK_ARCH.deb
+	run_cmd dpkg -i wkhtmltox-0.12.2.1_linux-$WK_VER-$WK_ARCH.deb
 }
 
 
@@ -271,6 +271,8 @@ start_services_centos6() {
 }
 
 configure_services_centos6() {
+	# bind memcached only on localhost
+	sed -i 's/OPTIONS=""/OPTIONS="-l 127.0.0.1"/g' /etc/sysconfig/memcached
 	run_cmd chkconfig --add supervisord
 	run_cmd chkconfig redis on
 	run_cmd chkconfig mysql on
@@ -279,6 +281,8 @@ configure_services_centos6() {
 }
 
 configure_services_centos7() {
+	# bind memcached only on localhost
+	sed -i 's/OPTIONS=""/OPTIONS="-l 127.0.0.1"/g' /etc/sysconfig/memcached
 	run_cmd systemctl enable nginx
 	run_cmd systemctl enable mysql
 	run_cmd systemctl enable redis
