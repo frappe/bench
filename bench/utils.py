@@ -328,7 +328,7 @@ def drop_privileges(uid_name='nobody', gid_name='nogroup'):
 	os.setuid(running_uid)
 
 	# Ensure a very conservative umask
-	old_umask = os.umask(077)
+	old_umask = os.umask(022)
 
 def fix_file_perms(frappe_user=None):
 	files = [
