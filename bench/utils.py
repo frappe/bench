@@ -330,7 +330,7 @@ def drop_privileges(uid_name='nobody', gid_name='nogroup'):
 	# Ensure a very conservative umask
 	old_umask = os.umask(022)
 
-def fix_file_perms(frappe_user=None):
+def fix_prod_setup_perms(frappe_user=None):
 	files = [
 	"logs/web.error.log",
 	"logs/web.log",
@@ -354,3 +354,10 @@ def fix_file_perms(frappe_user=None):
 			uid = pwd.getpwnam(frappe_user).pw_uid
 			gid = grp.getgrnam(frappe_user).gr_gid
 			os.chown(path, uid, gid)
+
+def fix_file_perms():
+	for dir_path, dirs, files in os.walk('.'):
+		for _dir in dirs:
+			os.chmod(os.path.join(dir_path, _dir), 0755)
+		for _file in files:
+			os.chmod(os.path.join(dir_path, _file), 0644)

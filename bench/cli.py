@@ -13,7 +13,7 @@ from .utils import set_default_site as _set_default_site
 from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_frappe, setup_logging,
 					get_config, update_config, restart_supervisor_processes, put_config, default_config, update_requirements,
 					backup_all_sites, backup_site, get_sites, prime_wheel_cache, is_root, set_mariadb_host, drop_privileges,
-					fix_file_perms, set_ssl_certificate, set_ssl_certificate_key)
+					fix_file_perms, fix_prod_setup_perms, set_ssl_certificate, set_ssl_certificate_key)
 from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps
@@ -59,6 +59,8 @@ def change_uid():
 			sys.exit(1)
 
 def change_dir():
+	if os.path.exists('config.json'):
+		return
 	dir_path_file = '/etc/frappe_bench_dir'
 	if os.path.exists(dir_path_file):
 		with open(dir_path_file) as f:
@@ -410,20 +412,26 @@ config.add_command(config_http_timeout)
 def patch():
 	pass
 
-@click.command('fix-perms')
-def _fix_perms():
+@click.command('fix-prod-perms')
+def _fix_prod_perms():
 	"Fix permissions if supervisor processes were run as root"
 	if os.path.exists("config/supervisor.conf"):
 		exec_cmd("supervisorctl stop frappe:")
 
-	fix_file_perms()
+	fix_prod_setup_perms()
 
 	if os.path.exists("config/supervisor.conf"):
 		exec_cmd("{bench} setup supervisor".format(bench=sys.argv[0]))
 		exec_cmd("supervisorctl reload")
 
 
-patch.add_command(_fix_perms)
+@click.command('fix-file-perms')
+def _fix_file_perms():
+	"Fix file permissions"
+	fix_file_perms()
+
+patch.add_command(_fix_file_perms)
+patch.add_command(_fix_prod_perms)
 
 #Bench commands
 
