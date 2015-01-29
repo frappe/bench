@@ -1,4 +1,4 @@
-from .utils import get_program, exec_cmd, get_cmd_output, fix_file_perms
+from .utils import get_program, exec_cmd, get_cmd_output, fix_prod_setup_perms
 from .config import generate_nginx_config, generate_supervisor_config
 from jinja2 import Environment, PackageLoader
 import os
@@ -44,7 +44,7 @@ def copy_default_nginx_config():
 def setup_production(user, bench='.'):
 	generate_supervisor_config(bench=bench, user=user)
 	generate_nginx_config(bench=bench)
-	fix_file_perms(frappe_user=user)
+	fix_prod_setup_perms(frappe_user=user)
 	remove_default_nginx_configs()
 
 	if is_centos7():
