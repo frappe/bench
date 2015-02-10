@@ -50,7 +50,8 @@ def get_app(app, git_url, branch=None, bench='.', build_asset_files=True):
 
 def new_app(app, bench='.'):
 	logger.info('creating new app {}'.format(app))
-	exec_cmd("{frappe} --make_app {apps}".format(frappe=get_frappe(bench=bench), apps=os.path.join(bench, 'apps')))
+	exec_cmd("{frappe} --make_app {apps} {app}".format(frappe=get_frappe(bench=bench),
+		apps=os.path.join(bench, 'apps'), app=app))
 	install_app(app, bench=bench)
 
 def install_app(app, bench='.'):

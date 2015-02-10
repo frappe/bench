@@ -75,12 +75,14 @@ worker: sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app worker'
 workerbeat: sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app beat -s scheduler.schedule'""")
 
 def new_site(site, mariadb_root_password=None, admin_password=None, bench='.'):
+	import hashlib
 	logger.info('creating new site {}'.format(site))
 	mariadb_root_password_fragment = '--root_password {}'.format(mariadb_root_password) if mariadb_root_password else ''
 	admin_password_fragment = '--admin_password {}'.format(admin_password) if admin_password else ''
-	exec_cmd("{frappe} --install {site} {site} {mariadb_root_password_fragment} {admin_password_fragment}".format(
+	exec_cmd("{frappe} {site} --install {db_name} {mariadb_root_password_fragment} {admin_password_fragment}".format(
 				frappe=get_frappe(bench=bench),
 				site=site,
+				db_name = hashlib.sha1(site).hexdigest()[:10],
 				mariadb_root_password_fragment=mariadb_root_password_fragment,
 				admin_password_fragment=admin_password_fragment
 			), cwd=os.path.join(bench, 'sites'))
@@ -95,7 +97,7 @@ def build_assets(bench='.'):
 
 def get_sites(bench='.'):
 	sites_dir = os.path.join(bench, "sites")
-	sites = [site for site in os.listdir(sites_dir) 
+	sites = [site for site in os.listdir(sites_dir)
 		if os.path.isdir(os.path.join(sites_dir, site)) and site not in ('assets',)]
 	return sites
 
@@ -182,7 +184,7 @@ def get_program(programs):
 
 def get_process_manager():
 	return get_program(['foreman', 'forego', 'honcho'])
-    
+
 def start():
 	program = get_process_manager()
 	if not program:
