@@ -363,3 +363,8 @@ def fix_file_perms():
 			os.chmod(os.path.join(dir_path, _dir), 0755)
 		for _file in files:
 			os.chmod(os.path.join(dir_path, _file), 0644)
+	bin_dir = './env/bin'
+	if os.path.exists(bin_dir):
+		for _file in os.listdir(bin_dir):
+			if not _file.startswith('activate'):
+				os.chmod(os.path.join(bin_dir, _file), 0755)
