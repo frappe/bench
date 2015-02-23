@@ -170,7 +170,7 @@ install_packages() {
 		run_cmd sudo yum groupinstall -y "Development tools"
 		if [ $OS_VER == "6" ]; then 
 			run_cmd add_ius_repo
-			run_cmd sudo yum install -y git MariaDB-server MariaDB-client MariaDB-compat python-setuptools nginx zlib-devel bzip2-devel openssl-devel memcached postfix python27-devel python27 libxml2 libxml2-devel libxslt libxslt-devel redis MariaDB-devel libXrender libXext python27-setuptools cronie sudo whichx org-x11-fonts-Type1 xorg-x11-fonts-75dpi
+			run_cmd sudo yum install -y git MariaDB-server MariaDB-client MariaDB-compat python-setuptools nginx zlib-devel bzip2-devel openssl-devel memcached postfix python27-devel python27 libxml2 libxml2-devel libxslt libxslt-devel redis MariaDB-devel libXrender libXext python27-setuptools cronie sudo which xorg-x11-fonts-Type1 xorg-x11-fonts-75dpi
 		elif [ $OS_VER == "7" ]; then
 			run_cmd add_epel_centos7
 			run_cmd sudo yum install -y git mariadb-server mariadb-devel python-setuptools nginx zlib-devel bzip2-devel openssl-devel memcached postfix python-devel libxml2 libxml2-devel libxslt libxslt-devel redis libXrender libXext supervisor cronie sudo which xorg-x11-fonts-75dpi xorg-x11-fonts-Type1
