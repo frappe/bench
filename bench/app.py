@@ -105,6 +105,12 @@ def check_version_upgrade(bench='.'):
 	if upstream_version - local_version  > 0:
 		raise MajorVersionUpgradeException("Major Upgrade", upstream_version, local_version)
 
+def get_current_frappe_version(bench='.'):
+	apps_dir = os.path.join(bench, 'apps')
+	frappe_dir = os.path.join(apps_dir, 'frappe')
+
+	return get_major_version(get_current_version(frappe_dir))
+
 def get_current_branch(repo_dir):
 	return get_cmd_output("basename $(git symbolic-ref -q HEAD)", cwd=repo_dir)
 

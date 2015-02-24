@@ -307,7 +307,7 @@ def setup_supervisor():
 	generate_supervisor_config()
 	
 @click.command('redis-cache')
-def setup_supervisor():
+def setup_redis_cache():
 	"generate config for redis cache"
 	generate_redis_config()
 	
@@ -349,6 +349,7 @@ def setup_config():
 setup.add_command(setup_nginx)
 setup.add_command(setup_sudoers)
 setup.add_command(setup_supervisor)
+setup.add_command(setup_redis_cache)
 setup.add_command(setup_auto_update)
 setup.add_command(setup_dnsmasq)
 setup.add_command(setup_backups)

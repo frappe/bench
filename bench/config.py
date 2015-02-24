@@ -1,12 +1,14 @@
 import os
 import getpass
 import json
+import subprocess
 from jinja2 import Environment, PackageLoader
-from .utils import get_sites, get_config, update_config
+from .utils import get_sites, get_config, update_config, get_redis_version
 
 env = Environment(loader=PackageLoader('bench', 'templates'), trim_blocks=True)
 
 def generate_supervisor_config(bench='.', user=None):
+	from .app import get_current_frappe_version
 	template = env.get_template('supervisor.conf')
 	bench_dir = os.path.abspath(bench)
 	sites_dir = os.path.join(bench_dir, "sites")
@@ -20,6 +22,9 @@ def generate_supervisor_config(bench='.', user=None):
 		"sites_dir": sites_dir,
 		"user": user,
 		"http_timeout": config.get("http_timeout", 120),
+		"redis_server": subprocess.check_output('which redis-server', shell=True).strip(),
+		"redis_config": os.path.join(bench_dir, 'config', 'redis.conf'),
+		"frappe_version": get_current_frappe_version()
 	})
 	with open("config/supervisor.conf", 'w') as f:
 		f.write(config)
@@ -66,4 +71,15 @@ def generate_nginx_config(bench='.'):
 		"sites": sites
 	})
 	with open("config/nginx.conf", 'w') as f:
+		f.write(config)
+
+def generate_redis_config(bench='.'):
+	template = env.get_template('redis.conf')
+	conf = {
+		"maxmemory": get_config().get('cache_maxmemory', '50'),
+		"port": get_config().get('redis_cache_port', '11311'),
+		"redis_version": get_redis_version()
+	}
+	config = template.render(**conf)
+	with open("config/redis.conf", 'w') as f:
 		f.write(config)

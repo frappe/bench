@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import subprocess
 import getpass
@@ -29,6 +30,7 @@ def get_frappe(bench='.'):
 def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None):
 	from .app import get_app, install_apps_from_path
+	from .config import generate_redis_config
 	if os.path.exists(path):
 		print 'Directory {} already exists!'.format(path)
 		sys.exit(1)
@@ -55,6 +57,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		setup_auto_update(bench=path)
 	if apps_path:
 		install_apps_from_path(apps_path, bench=path)
+	generate_redis_config()
 
 def exec_cmd(cmd, cwd='.'):
 	try:
@@ -69,10 +72,20 @@ def setup_env(bench='.'):
 	exec_cmd('./env/bin/pip -q install https://github.com/frappe/MySQLdb1/archive/MySQLdb-1.2.5-patched.tar.gz', cwd=bench)
 
 def setup_procfile(bench='.'):
+	from .app import get_current_frappe_version
+	frappe_version = get_current_frappe_version()
+	procfile_contents = {
+		'web': "./env/bin/frappe --serve --sites_path sites",
+		'worker': "sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app worker'",
+		'workerbeat': "sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app beat -s scheduler.schedule'"
+	}
+	if frappe_version > 4:
+		procfile_contents['redis_cache'] = "redis-server config/redis.conf"
+	
+	procfile = '\n'.join(["{0}: {1}".format(k, v) for k, v in procfile_contents.items()])
+
 	with open(os.path.join(bench, 'Procfile'), 'w') as f:
-		f.write("""web: ./env/bin/frappe --serve --sites_path sites
-worker: sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app worker'
-workerbeat: sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app beat -s scheduler.schedule'""")
+		f.write(procfile)
 
 def new_site(site, mariadb_root_password=None, admin_password=None, bench='.'):
 	import hashlib
@@ -210,7 +223,7 @@ def check_git_for_shallow_clone():
 
 def get_cmd_output(cmd, cwd='.'):
 	try:
-		return subprocess.check_output(cmd, cwd=cwd, shell=True)
+		return subprocess.check_output(cmd, cwd=cwd, shell=True).strip()
 	except subprocess.CalledProcessError, e:
 		print "Error:", e.output
 		raise
@@ -368,3 +381,12 @@ def fix_file_perms():
 		for _file in os.listdir(bin_dir):
 			if not _file.startswith('activate'):
 				os.chmod(os.path.join(bin_dir, _file), 0755)
+
+def get_redis_version():
+	version_string = subprocess.check_output('redis-server --version', shell=True).strip()
+	if re.search("Redis server version 2.4", version_string):
+		return "2.4"
+	if re.search("Redis server v=2.6", version_string):
+		return "2.6"
+	if re.search("Redis server v=2.8", version_string):
+		return "2.8"
