@@ -16,8 +16,8 @@ from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_frapp
 					fix_file_perms, fix_prod_setup_perms, set_ssl_certificate, set_ssl_certificate_key)
 from .app import get_app as _get_app
 from .app import new_app as _new_app
-from .app import pull_all_apps
-from .config import generate_nginx_config, generate_supervisor_config
+from .app import pull_all_apps, MajorVersionUpgradeException
+from .config import generate_nginx_config, generate_supervisor_config, generate_redis_config
 from .production_setup import setup_production as _setup_production
 from .migrate_to_v5 import migrate_to_v5
 import os
@@ -139,8 +139,9 @@ def new_site(site, mariadb_root_password=None, admin_password=None):
 @click.option('--requirements',flag_value=True, type=bool, help="Update requirements")
 @click.option('--restart-supervisor',flag_value=True, type=bool, help="restart supervisor processes after update")
 @click.option('--auto',flag_value=True, type=bool)
+@click.option('--upgrade',flag_value=True, type=bool)
 @click.option('--no-backup',flag_value=True, type=bool)
-def update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, requirements=False, no_backup=False):
+def update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, requirements=False, no_backup=False, upgrade=False):
 	"Update bench"
 
 	if not (pull or patch or build or bench or requirements):
@@ -160,10 +161,16 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 				'build': build,
 				'requirements': requirements,
 				'no-backup': no_backup,
-				'restart-supervisor': restart_supervisor
+				'restart-supervisor': restart_supervisor,
+				'upgrade': upgrade
 		})
 	if pull:
-		pull_all_apps()
+		try: 
+			pull_all_apps(upgrade=upgrade)
+		except MajorVersionUpgradeException, e:
+			print "This update will cause a major version change in Frappe/ERPNext from v{0} to v{1}.".format(e.local_version, e.upstream_version)
+			print "This would take significant time to migrate and might break custom apps. Please use --upgrade to confirm."
+			sys.exit(1)
 	if requirements:
 		update_requirements()
 	if patch:
@@ -298,6 +305,11 @@ def setup_nginx():
 def setup_supervisor():
 	"generate config for supervisor"
 	generate_supervisor_config()
+	
+@click.command('redis-cache')
+def setup_supervisor():
+	"generate config for redis cache"
+	generate_redis_config()
 	
 @click.command('production')
 @click.argument('user')

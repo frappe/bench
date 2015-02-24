@@ -3,9 +3,19 @@ from .utils import exec_cmd, get_frappe, check_git_for_shallow_clone, get_config
 
 import logging
 import requests
+import semantic_version
 import json
+import re
+import subprocess
+
 
 logger = logging.getLogger(__name__)
+
+class MajorVersionUpgradeException(Exception):
+	def __init__(self, message, upstream_version, local_version):
+		super(MajorVersionUpgradeException, self).__init__(message)
+		self.upstream_version = upstream_version
+		self.local_version = local_version
 
 def get_apps(bench='.'):
 	try:
@@ -64,18 +74,64 @@ def install_app(app, bench='.'):
 				find_links=find_links))
 	add_to_appstxt(app, bench=bench)
 
-def pull_all_apps(bench='.'):
+def pull_all_apps(bench='.', upgrade=False):
 	apps_dir = os.path.join(bench, 'apps')
 	apps = [app for app in os.listdir(apps_dir) if os.path.isdir(os.path.join(apps_dir, app))]
 	rebase = '--rebase' if get_config().get('rebase_on_pull') else ''
+	frappe_dir = os.path.join(apps_dir, 'frappe')
+
+	if not upgrade:
+		check_version_upgrade()
+
 	for app in apps:
 		app_dir = os.path.join(apps_dir, app)
 		if os.path.exists(os.path.join(app_dir, '.git')):
 			logger.info('pulling {0}'.format(app))
 			exec_cmd("git pull {rebase} upstream {branch}".format(rebase=rebase, branch=get_current_branch(app_dir)), cwd=app_dir)
 
+def check_version_upgrade(bench='.'):
+	apps_dir = os.path.join(bench, 'apps')
+	frappe_dir = os.path.join(apps_dir, 'frappe')
+
+	fetch_upstream(frappe_dir)
+	upstream_version = get_upstream_version(frappe_dir)
+
+	if not upstream_version:
+		raise Exception("Current branch not in upstream")
+
+	local_version = get_major_version(get_current_version(frappe_dir))
+	upstream_version = get_major_version(upstream_version)
+
+	if upstream_version - local_version  > 0:
+		raise MajorVersionUpgradeException("Major Upgrade", upstream_version, local_version)
+
 def get_current_branch(repo_dir):
 	return get_cmd_output("basename $(git symbolic-ref -q HEAD)", cwd=repo_dir)
+
+def fetch_upstream(repo_dir):
+	return exec_cmd("git fetch upstream", cwd=repo_dir)
+
+def get_current_version(repo_dir):
+	with open(os.path.join(repo_dir, 'setup.py')) as f:
+		return get_version_from_string(f.read())
+
+def get_upstream_version(repo_dir):
+	try:
+		contents = subprocess.check_output(['git', 'show', 'upstream/{branch}:setup.py'.format(branch=get_current_branch(repo_dir))], cwd=repo_dir, stderr=subprocess.STDOUT)
+	except subprocess.CalledProcessError, e:
+		if "Invalid object" in e.output:
+			return None
+		else:
+			raise
+	return get_version_from_string(contents)
+
+def get_version_from_string(contents):
+	match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % 'version',
+			contents)
+	return match.group(2)
+
+def get_major_version(version):
+	return semantic_version.Version(version).major
 
 def install_apps_from_path(path, bench='.'):
 	apps = get_apps_json(path)
