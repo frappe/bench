@@ -13,7 +13,7 @@ from .utils import set_default_site as _set_default_site
 from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_env_cmd, get_frappe, setup_logging,
 					get_config, update_config, restart_supervisor_processes, put_config, default_config, update_requirements,
 					backup_all_sites, backup_site, get_sites, prime_wheel_cache, is_root, set_mariadb_host, drop_privileges,
-					fix_file_perms, fix_prod_setup_perms, set_ssl_certificate, set_ssl_certificate_key)
+					fix_file_perms, fix_prod_setup_perms, set_ssl_certificate, set_ssl_certificate_key, get_cmd_output)
 from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps, get_apps, MajorVersionUpgradeException
@@ -24,8 +24,10 @@ import os
 import sys
 import logging
 import copy
+import json
 import pwd
 import grp
+import subprocess
 
 logger = logging.getLogger('bench')
 
@@ -34,10 +36,20 @@ def cli():
 	change_dir()
 	change_uid()
 	if len(sys.argv) > 2 and sys.argv[1] == "frappe":
-		return frappe()
-	if len(sys.argv) > 1 and sys.argv[1] in get_apps():
+		return old_frappe_cli()
+	elif len(sys.argv) > 1 and sys.argv[1] in get_frappe_commands():
+		return frappe_cmd()
+	elif len(sys.argv) > 1 and sys.argv[1] in ("--site", "--verbose", "--force"):
+		return frappe_cmd()
+	elif len(sys.argv) > 1 and sys.argv[1]=="--help":
+		print click.Context(bench).get_help()
+		print
+		print get_frappe_help()
+		return 
+	elif len(sys.argv) > 1 and sys.argv[1] in get_apps():
 		return app_cmd()
-	return bench()
+	else:
+		bench()
 
 def cmd_requires_root():
 	if len(sys.argv) > 2 and sys.argv[2] in ('production', 'sudoers'):
@@ -70,7 +82,7 @@ def change_dir():
 		if os.path.exists(dir_path):
 			os.chdir(dir_path)
 
-def frappe(bench='.'):
+def old_frappe_cli(bench='.'):
 	f = get_frappe(bench=bench)
 	os.chdir(os.path.join(bench, 'sites'))
 	os.execv(f, [f] + sys.argv[2:])
@@ -79,6 +91,28 @@ def app_cmd(bench='.'):
 	f = get_env_cmd('python', bench=bench)
 	os.chdir(os.path.join(bench, 'sites'))
 	os.execv(f, [f] + ['-m', 'frappe.utils.bench_helper'] + sys.argv[1:])
+
+def frappe_cmd(bench='.'):
+	f = get_env_cmd('python', bench=bench)
+	os.chdir(os.path.join(bench, 'sites'))
+	os.execv(f, [f] + ['-m', 'frappe.utils.bench_helper', 'frappe'] + sys.argv[1:])
+
+def get_frappe_commands(bench='.'):
+	python = get_env_cmd('python', bench=bench)
+	sites_path = os.path.join(bench, 'sites')
+	try:
+		return json.loads(get_cmd_output("{python} -m frappe.utils.bench_helper get-frappe-commands".format(python=python), cwd=sites_path))
+	except subprocess.CalledProcessError:
+		return []
+
+def get_frappe_help(bench='.'):
+	python = get_env_cmd('python', bench=bench)
+	sites_path = os.path.join(bench, 'sites')
+	try:
+		out = get_cmd_output("{python} -m frappe.utils.bench_helper get-frappe-help".format(python=python), cwd=sites_path)
+		return "Framework commands:\n" + out.split('Commands:')[1]
+	except subprocess.CalledProcessError:
+		return ""
 
 @click.command()
 def shell(bench='.'):
