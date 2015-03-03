@@ -110,13 +110,13 @@ def patch_sites(bench='.'):
 	if FRAPPE_VERSION == '4':
 		exec_cmd("{frappe} --latest all".format(frappe=get_frappe(bench=bench)), cwd=os.path.join(bench, 'sites'))
 	else:
-		run_frappe_cmd('--site', 'all', 'migrate')
+		run_frappe_cmd('--site', 'all', 'migrate', bench=bench)
 
 def build_assets(bench='.'):
 	if FRAPPE_VERSION == '4':
 		exec_cmd("{frappe} --build".format(frappe=get_frappe(bench=bench)), cwd=os.path.join(bench, 'sites'))
 	else:
-		run_frappe_cmd('build')
+		run_frappe_cmd('build', bench=bench)
 
 def get_sites(bench='.'):
 	sites_dir = os.path.join(bench, "sites")
@@ -411,8 +411,8 @@ def get_current_frappe_version():
 	from .app import get_current_frappe_version as fv
 	return fv()
 
-def run_frappe_cmd(*args):
-	bench = '.'
+def run_frappe_cmd(*args, **kwargs):
+	bench = kwargs.get('bench', '.')
 	f = get_env_cmd('python', bench=bench)
 	sites_dir = os.path.join(bench, 'sites')
 	subprocess.check_call((f, '-m', 'frappe.utils.bench_helper', 'frappe') + args, cwd=sites_dir)

@@ -65,7 +65,7 @@ def new_app(app, bench='.'):
 		exec_cmd("{frappe} --make_app {apps} {app}".format(frappe=get_frappe(bench=bench),
 			apps=apps, app=app))
 	else:
-		run_frappe_cmd('make-app', apps, app)
+		run_frappe_cmd('make-app', apps, app, bench=bench)
 	install_app(app, bench=bench)
 
 def install_app(app, bench='.'):
