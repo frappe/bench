@@ -107,13 +107,13 @@ def new_site(site, mariadb_root_password=None, admin_password=None, bench='.'):
 		exec_cmd("{frappe} --use {site}".format(frappe=get_frappe(bench=bench), site=site), cwd=os.path.join(bench, 'sites'))
 
 def patch_sites(bench='.'):
-	if FRAPPE_VERSION == '4':
+	if FRAPPE_VERSION == 4:
 		exec_cmd("{frappe} --latest all".format(frappe=get_frappe(bench=bench)), cwd=os.path.join(bench, 'sites'))
 	else:
 		run_frappe_cmd('--site', 'all', 'migrate', bench=bench)
 
 def build_assets(bench='.'):
-	if FRAPPE_VERSION == '4':
+	if FRAPPE_VERSION == 4:
 		exec_cmd("{frappe} --build".format(frappe=get_frappe(bench=bench)), cwd=os.path.join(bench, 'sites'))
 	else:
 		run_frappe_cmd('build', bench=bench)
@@ -141,7 +141,7 @@ def setup_auto_update(bench='.'):
 def setup_backups(bench='.'):
 	logger.info('setting up backups')
 	bench_dir = get_bench_dir(bench=bench)
-	if FRAPPE_VERSION == '4':
+	if FRAPPE_VERSION == 4:
 		backup_command = "cd {sites_dir} && {frappe} --backup all".format(frappe=get_frappe(bench=bench),)
 	else:
 		backup_command = "cd {bench_dir} && {bench} --site all backup".format(bench_dir=bench_dir, bench=sys.argv[0])
