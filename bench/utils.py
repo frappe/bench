@@ -414,7 +414,7 @@ def get_current_frappe_version():
 def run_frappe_cmd(*args):
 	bench = '.'
 	f = get_env_cmd('python', bench=bench)
-	os.chdir(os.path.join(bench, 'sites'))
-	subprocess.check_call((f, '-m', 'frappe.utils.bench_helper', 'frappe') + args)
+	sites_dir = os.path.join(bench, 'sites')
+	subprocess.check_call((f, '-m', 'frappe.utils.bench_helper', 'frappe') + args, cwd=sites_dir)
 
 FRAPPE_VERSION = get_current_frappe_version()
