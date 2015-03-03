@@ -16,7 +16,7 @@ from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_env_c
 					fix_file_perms, fix_prod_setup_perms, set_ssl_certificate, set_ssl_certificate_key, get_cmd_output)
 from .app import get_app as _get_app
 from .app import new_app as _new_app
-from .app import pull_all_apps, get_apps, MajorVersionUpgradeException
+from .app import pull_all_apps, get_apps, MajorVersionUpgradeException, get_current_frappe_version
 from .config import generate_nginx_config, generate_supervisor_config, generate_redis_config
 from .production_setup import setup_production as _setup_production
 from .migrate_to_v5 import migrate_to_v5
@@ -30,6 +30,8 @@ import grp
 import subprocess
 
 logger = logging.getLogger('bench')
+
+global FRAPPE_VERSION
 
 def cli():
 	check_uid()
@@ -132,6 +134,8 @@ def shell(bench='.'):
 def bench(bench='.'):
 	"Bench manager for Frappe"
 	# TODO add bench path context
+	global FRAPPE_VERSION
+	FRAPPE_VERSION = get_current_frappe_version()
 	setup_logging(bench=bench)
 
 @click.command()
@@ -210,7 +214,7 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 			pull_all_apps(upgrade=upgrade)
 		except MajorVersionUpgradeException, e:
 			print "This update will cause a major version change in Frappe/ERPNext from v{0} to v{1}.".format(e.local_version, e.upstream_version)
-			print "This would take significant time to migrate and might break custom apps. Please use --upgrade to confirm."
+			print "This would take significant time to migrate and might break custom apps. Please run `bench update --upgrade` to confirm."
 			sys.exit(1)
 	if requirements:
 		update_requirements()

@@ -10,6 +10,7 @@ import pwd, grp
 
 logger = logging.getLogger(__name__)
 
+
 default_config = {
 	'restart_supervisor_on_update': False,
 	'auto_update': False,
@@ -106,10 +107,16 @@ def new_site(site, mariadb_root_password=None, admin_password=None, bench='.'):
 		exec_cmd("{frappe} --use {site}".format(frappe=get_frappe(bench=bench), site=site), cwd=os.path.join(bench, 'sites'))
 
 def patch_sites(bench='.'):
-	exec_cmd("{frappe} --latest all".format(frappe=get_frappe(bench=bench)), cwd=os.path.join(bench, 'sites'))
+	if FRAPPE_VERSION == '4':
+		exec_cmd("{frappe} --latest all".format(frappe=get_frappe(bench=bench)), cwd=os.path.join(bench, 'sites'))
+	else:
+		run_frappe_cmd('--site', 'all', 'migrate')
 
 def build_assets(bench='.'):
-	exec_cmd("{frappe} --build".format(frappe=get_frappe(bench=bench)), cwd=os.path.join(bench, 'sites'))
+	if FRAPPE_VERSION == '4':
+		exec_cmd("{frappe} --build".format(frappe=get_frappe(bench=bench)), cwd=os.path.join(bench, 'sites'))
+	else:
+		run_frappe_cmd('build')
 
 def get_sites(bench='.'):
 	sites_dir = os.path.join(bench, "sites")
@@ -133,8 +140,13 @@ def setup_auto_update(bench='.'):
 
 def setup_backups(bench='.'):
 	logger.info('setting up backups')
-	add_to_crontab('0 */6 * * * cd {sites_dir} &&  {frappe} --backup all >> {logfile} 2>&1'.format(sites_dir=get_sites_dir(bench=bench),
-		frappe=get_frappe(bench=bench),
+	bench_dir = get_bench_dir(bench=bench)
+	if FRAPPE_VERSION == '4':
+		backup_command = "cd {sites_dir} && {frappe} --backup all".format(frappe=get_frappe(bench=bench),)
+	else:
+		backup_command = "cd {bench_dir} && {bench} --site all backup".format(bench_dir=bench_dir, bench=sys.argv[0])
+
+	add_to_crontab('0 */6 * * *  {backup_command} --backup all >> {logfile} 2>&1'.format(backup_command=backup_command,
 		logfile=os.path.join(get_bench_dir(bench=bench), 'logs', 'backup.log')))
 
 def add_to_crontab(line):
@@ -394,3 +406,15 @@ def get_redis_version():
 		return "2.6"
 	if re.search("Redis server v=2.8", version_string):
 		return "2.8"
+
+def get_current_frappe_version():
+	from .app import get_current_frappe_version as fv
+	return fv()
+
+def run_frappe_cmd(*args):
+	bench = '.'
+	f = get_env_cmd('python', bench=bench)
+	os.chdir(os.path.join(bench, 'sites'))
+	subprocess.check_call((f, '-m', 'frappe.utils.bench_helper', 'frappe') + args)
+
+FRAPPE_VERSION = get_current_frappe_version()

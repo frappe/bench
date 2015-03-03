@@ -1,5 +1,5 @@
 import os
-from .utils import exec_cmd, get_frappe, check_git_for_shallow_clone, get_config, build_assets, restart_supervisor_processes, get_cmd_output
+from .utils import exec_cmd, get_frappe, check_git_for_shallow_clone, get_config, build_assets, restart_supervisor_processes, get_cmd_output, run_frappe_cmd
 
 import logging
 import requests
@@ -60,8 +60,12 @@ def get_app(app, git_url, branch=None, bench='.', build_asset_files=True):
 
 def new_app(app, bench='.'):
 	logger.info('creating new app {}'.format(app))
-	exec_cmd("{frappe} --make_app {apps} {app}".format(frappe=get_frappe(bench=bench),
-		apps=os.path.join(bench, 'apps'), app=app))
+	apps = os.path.join(bench, 'apps')
+	if FRAPPE_VERSION == '4':
+		exec_cmd("{frappe} --make_app {apps} {app}".format(frappe=get_frappe(bench=bench),
+			apps=apps, app=app))
+	else:
+		run_frappe_cmd('make-app', apps, app)
 	install_app(app, bench=bench)
 
 def install_app(app, bench='.'):
@@ -152,3 +156,5 @@ def get_apps_json(path):
 	else:
 		with open(path) as f:
 			return json.load(f)
+
+FRAPPE_VERSION = get_current_frappe_version()
