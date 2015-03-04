@@ -102,6 +102,8 @@ def frappe_cmd(bench='.'):
 def get_frappe_commands(bench='.'):
 	python = get_env_cmd('python', bench=bench)
 	sites_path = os.path.join(bench, 'sites')
+	if not os.path.exists(sites_path):
+		return []
 	try:
 		return json.loads(get_cmd_output("{python} -m frappe.utils.bench_helper get-frappe-commands".format(python=python), cwd=sites_path))
 	except subprocess.CalledProcessError:
@@ -110,6 +112,8 @@ def get_frappe_commands(bench='.'):
 def get_frappe_help(bench='.'):
 	python = get_env_cmd('python', bench=bench)
 	sites_path = os.path.join(bench, 'sites')
+	if not os.path.exists(sites_path):
+		return []
 	try:
 		out = get_cmd_output("{python} -m frappe.utils.bench_helper get-frappe-help".format(python=python), cwd=sites_path)
 		return "Framework commands:\n" + out.split('Commands:')[1]
