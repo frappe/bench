@@ -81,5 +81,6 @@ def generate_redis_config(bench='.'):
 		"redis_version": get_redis_version()
 	}
 	config = template.render(**conf)
-	with open("config/redis.conf", 'w') as f:
+	conf_path = os.path.join(bench, 'config', 'redis.conf')
+	with open(conf_path) as f:
 		f.write(config)
