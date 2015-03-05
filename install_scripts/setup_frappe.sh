@@ -16,7 +16,7 @@ get_passwd() {
 }
 
 set_opts () {
-	OPTS=`getopt -o v --long verbose,mysql-root-password:,frappe-user:,setup-production,skip-setup-bench,bench-branch,help -n 'parse-options' -- "$@"`
+	OPTS=`getopt -o v --long verbose,mysql-root-password:,frappe-user:,setup-production,bench-branch:,skip-setup-bench,help -n 'parse-options' -- "$@"`
 	 
 	if [ $? != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
 	 
@@ -26,11 +26,20 @@ set_opts () {
 	HELP=false
 	FRAPPE_USER=false
 	BENCH_BRANCH="master"
-	FRAPPE_USER_PASS=`get_passwd`
-	MSQ_PASS=`get_passwd`
-	ADMIN_PASS=`get_passwd`
 	SETUP_PROD=false
 	SETUP_BENCH=true
+
+	if [ -f ~/frappe_passwords.sh ]; then
+		source ~/frappe_passwords.sh
+	else
+		FRAPPE_USER_PASS=`get_passwd`
+		MSQ_PASS=`get_passwd`
+		ADMIN_PASS=`get_passwd`
+
+		echo "FRAPPE_USER_PASS=$FRAPPE_USER_PASS" > ~/frappe_passwords.sh
+		echo "MSQ_PASS=$MSQ_PASS" >> ~/frappe_passwords.sh
+		echo "ADMIN_PASS=$ADMIN_PASS" >> ~/frappe_passwords.sh
+	fi
 	 
 	while true; do
 	case "$1" in
@@ -324,8 +333,8 @@ install_bench() {
 
 setup_bench() {
 	echo Installing frappe-bench
-	FRAPPE_BRANCH="develop"
-	ERPNEXT_APPS_JSON="https://raw.githubusercontent.com/frappe/bench/master/install_scripts/erpnext-apps.json"
+	FRAPPE_BRANCH="v5.0"
+	ERPNEXT_APPS_JSON="https://gist.githubusercontent.com/anonymous/5ce5405e9e68f3756974/raw/eeb8c1a58922c1c02e8bf3182bcbc6f0ce918d70/apps.json"
 	if $SETUP_PROD; then
 		FRAPPE_BRANCH="master"
 		ERPNEXT_APPS_JSON="https://raw.githubusercontent.com/frappe/bench/master/install_scripts/erpnext-apps-master.json"
@@ -335,8 +344,12 @@ setup_bench() {
 	echo Setting up first site
 	echo /home/$FRAPPE_USER/frappe-bench > /etc/frappe_bench_dir
 	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench new-site site1.local --mariadb-root-password $MSQ_PASS --admin-password $ADMIN_PASS"
-	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench frappe --install_app erpnext"
-	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench frappe --install_app shopping_cart"
+	if [ "$FRAPPE_BRANCH" == "v5.0" ]; then
+		run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench install-app erpnext"
+	else
+		run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench frappe --install_app erpnext"
+		run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench frappe --install_app shopping_cart"
+	fi
 	run_cmd bash -c "cd /home/$FRAPPE_USER/frappe-bench && bench setup sudoers $FRAPPE_USER"
 	if $SETUP_PROD; then
 		run_cmd bash -c "cd /home/$FRAPPE_USER/frappe-bench && bench setup production $FRAPPE_USER"
