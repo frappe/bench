@@ -221,7 +221,7 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 		print "This update will cause a major version change in Frappe/ERPNext from {0} to {1}.".format(*version_upgrade)
 		print "This would take significant time to migrate and might break custom apps. Please run `bench update --upgrade` to confirm."
 		sys.exit(1)
-	else:
+	elif not version_upgrade and upgrade:
 		upgrade = False
 
 	if pull:
