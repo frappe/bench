@@ -417,4 +417,27 @@ def run_frappe_cmd(*args, **kwargs):
 	sites_dir = os.path.join(bench, 'sites')
 	subprocess.check_call((f, '-m', 'frappe.utils.bench_helper', 'frappe') + args, cwd=sites_dir)
 
+
+def pre_upgrade(bench='.')
+	from .migrate_to_v5 import validate_v4, remove_shopping_cart
+	validate_v4(bench=bench)
+	for repo in repos:
+		checkout_v5(repo, bench=bench)
+	remove_shopping_cart(bench=bench)
+
+def post_upgrade(bench='.'):
+	from .app import get_current_frappe_version
+	from .config import generate_nginx_config, generate_supervisor_config, generate_redis_config
+	if get_current_frappe_version() == 5:
+		print "Your bench was upgraded to version 5"
+		if conf.get('restart_supervisor_on_update'):
+			generate_redis_config(bench=bench)
+			generate_supervisor_config(bench=bench)
+			generate_nginx_config(bench=bench)
+			print "As you have setup your bench for production, you will have to reload configuration for nginx and supervisor"
+			print "To complete the migration, please run the following commands"
+			print 
+			print "sudo service nginx restart"
+			print "sudo supervisorctl reload"
+
 FRAPPE_VERSION = get_current_frappe_version()

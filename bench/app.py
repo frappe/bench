@@ -78,14 +78,11 @@ def install_app(app, bench='.'):
 				find_links=find_links))
 	add_to_appstxt(app, bench=bench)
 
-def pull_all_apps(bench='.', upgrade=False):
+def pull_all_apps(bench='.'):
 	apps_dir = os.path.join(bench, 'apps')
 	apps = [app for app in os.listdir(apps_dir) if os.path.isdir(os.path.join(apps_dir, app))]
 	rebase = '--rebase' if get_config().get('rebase_on_pull') else ''
 	frappe_dir = os.path.join(apps_dir, 'frappe')
-
-	if not upgrade:
-		check_version_upgrade()
 
 	for app in apps:
 		app_dir = os.path.join(apps_dir, app)
@@ -93,7 +90,7 @@ def pull_all_apps(bench='.', upgrade=False):
 			logger.info('pulling {0}'.format(app))
 			exec_cmd("git pull {rebase} upstream {branch}".format(rebase=rebase, branch=get_current_branch(app_dir)), cwd=app_dir)
 
-def check_version_upgrade(bench='.'):
+def is_version_upgrade(bench='.'):
 	apps_dir = os.path.join(bench, 'apps')
 	frappe_dir = os.path.join(apps_dir, 'frappe')
 
@@ -107,7 +104,8 @@ def check_version_upgrade(bench='.'):
 	upstream_version = get_major_version(upstream_version)
 
 	if upstream_version - local_version  > 0:
-		raise MajorVersionUpgradeException("Major Upgrade", upstream_version, local_version)
+		return True
+	return False
 
 def get_current_frappe_version(bench='.'):
 	apps_dir = os.path.join(bench, 'apps')

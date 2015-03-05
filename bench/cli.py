@@ -13,10 +13,11 @@ from .utils import set_default_site as _set_default_site
 from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_env_cmd, get_frappe, setup_logging,
 					get_config, update_config, restart_supervisor_processes, put_config, default_config, update_requirements,
 					backup_all_sites, backup_site, get_sites, prime_wheel_cache, is_root, set_mariadb_host, drop_privileges,
-					fix_file_perms, fix_prod_setup_perms, set_ssl_certificate, set_ssl_certificate_key, get_cmd_output)
+					fix_file_perms, fix_prod_setup_perms, set_ssl_certificate, set_ssl_certificate_key, get_cmd_output, post_upgrade,
+					pre_upgrade)
 from .app import get_app as _get_app
 from .app import new_app as _new_app
-from .app import pull_all_apps, get_apps, MajorVersionUpgradeException, get_current_frappe_version
+from .app import pull_all_apps, get_apps, get_current_frappe_version, is_version_upgrade
 from .config import generate_nginx_config, generate_supervisor_config, generate_redis_config
 from .production_setup import setup_production as _setup_production
 from .migrate_to_v5 import migrate_to_v5
@@ -213,13 +214,21 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 				'restart-supervisor': restart_supervisor,
 				'upgrade': upgrade
 		})
+
+
+	if is_version_upgrade() and not upgrade:
+		print "This update will cause a major version change in Frappe/ERPNext."
+		print "This would take significant time to migrate and might break custom apps. Please run `bench update --upgrade` to confirm."
+		sys.exit(1)
+	else:
+		upgrade = False
+
 	if pull:
-		try: 
-			pull_all_apps(upgrade=upgrade)
-		except MajorVersionUpgradeException, e:
-			print "This update will cause a major version change in Frappe/ERPNext from v{0} to v{1}.".format(e.local_version, e.upstream_version)
-			print "This would take significant time to migrate and might break custom apps. Please run `bench update --upgrade` to confirm."
-			sys.exit(1)
+		pull_all_apps()
+
+	if upgrade:
+		pre_upgrade()
+
 	if requirements:
 		update_requirements()
 	if patch:
@@ -230,6 +239,8 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 		build_assets()
 	if restart_supervisor or conf.get('restart_supervisor_on_update'):
 		restart_supervisor_processes()
+	if upgrade:
+		post_upgrade()
 
 	print "_"*80
 	print "https://frappe.io/buy - Donate to help make better free and open source tools"
