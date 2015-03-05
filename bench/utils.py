@@ -418,17 +418,16 @@ def run_frappe_cmd(*args, **kwargs):
 	subprocess.check_call((f, '-m', 'frappe.utils.bench_helper', 'frappe') + args, cwd=sites_dir)
 
 
-def pre_upgrade(bench='.')
+def pre_upgrade(from_ver, to_ver, bench='.'):
 	from .migrate_to_v5 import validate_v4, remove_shopping_cart
-	validate_v4(bench=bench)
-	for repo in repos:
-		checkout_v5(repo, bench=bench)
-	remove_shopping_cart(bench=bench)
+	if from_ver == 4 and to_ver == 5:
+		remove_shopping_cart(bench=bench)
 
-def post_upgrade(bench='.'):
+def post_upgrade(from_ver, to_ver, bench='.'):
 	from .app import get_current_frappe_version
 	from .config import generate_nginx_config, generate_supervisor_config, generate_redis_config
-	if get_current_frappe_version() == 5:
+	conf = get_config(bench=bench)
+	if from_ver == 4 and to_ver == 5:
 		print "Your bench was upgraded to version 5"
 		if conf.get('restart_supervisor_on_update'):
 			generate_redis_config(bench=bench)

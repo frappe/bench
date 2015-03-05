@@ -104,7 +104,7 @@ def is_version_upgrade(bench='.'):
 	upstream_version = get_major_version(upstream_version)
 
 	if upstream_version - local_version  > 0:
-		return True
+		return (local_version, upstream_version)
 	return False
 
 def get_current_frappe_version(bench='.'):

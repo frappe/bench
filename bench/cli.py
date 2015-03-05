@@ -42,7 +42,7 @@ def cli():
 		return old_frappe_cli()
 	elif len(sys.argv) > 1 and sys.argv[1] in get_frappe_commands():
 		return frappe_cmd()
-	elif len(sys.argv) > 1 and sys.argv[1] in ("--site", "--verbose", "--force"):
+	elif len(sys.argv) > 1 and sys.argv[1] in ("--site", "--verbose", "--force", "--profile"):
 		return frappe_cmd()
 	elif len(sys.argv) > 1 and sys.argv[1]=="--help":
 		print click.Context(bench).get_help()
@@ -215,9 +215,10 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 				'upgrade': upgrade
 		})
 
+	version_upgrade = is_version_upgrade()
 
-	if is_version_upgrade() and not upgrade:
-		print "This update will cause a major version change in Frappe/ERPNext."
+	if version_upgrade and not upgrade:
+		print "This update will cause a major version change in Frappe/ERPNext from {0} to {1}.".format(*version_upgrade)
 		print "This would take significant time to migrate and might break custom apps. Please run `bench update --upgrade` to confirm."
 		sys.exit(1)
 	else:
@@ -226,11 +227,12 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 	if pull:
 		pull_all_apps()
 
-	if upgrade:
-		pre_upgrade()
-
 	if requirements:
 		update_requirements()
+
+	if upgrade:
+		pre_upgrade(version_upgrade[0], version_upgrade[1])
+
 	if patch:
 		if not no_backup:
 			backup_all_sites()
@@ -240,7 +242,7 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 	if restart_supervisor or conf.get('restart_supervisor_on_update'):
 		restart_supervisor_processes()
 	if upgrade:
-		post_upgrade()
+		post_upgrade(version_upgrade[0], version_upgrade[1])
 
 	print "_"*80
 	print "https://frappe.io/buy - Donate to help make better free and open source tools"
