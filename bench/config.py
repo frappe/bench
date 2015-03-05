@@ -2,10 +2,23 @@ import os
 import getpass
 import json
 import subprocess
+import shutil
 from jinja2 import Environment, PackageLoader
 from .utils import get_sites, get_config, update_config, get_redis_version
 
 env = Environment(loader=PackageLoader('bench', 'templates'), trim_blocks=True)
+
+def write_config_file(bench, file_name, config):
+	config_path = os.path.join(bench, 'config')
+	file_path = os.path.join(config_path, file_name)
+	number = (len([path for path in os.listdir(config_path) if path.startswith(file_name)]) -1 ) or ''
+	if number:
+		number = '.' + str(number)
+	if os.path.exists(file_path):
+		shutil.move(file_path, file_path + '.save' + number)
+
+	with open(file_path, 'wb') as f:
+		f.write(config)
 
 def generate_supervisor_config(bench='.', user=None):
 	from .app import get_current_frappe_version
@@ -26,8 +39,7 @@ def generate_supervisor_config(bench='.', user=None):
 		"redis_config": os.path.join(bench_dir, 'config', 'redis.conf'),
 		"frappe_version": get_current_frappe_version()
 	})
-	with open("config/supervisor.conf", 'w') as f:
-		f.write(config)
+	write_config_file(bench, 'supervisor.conf', config)
 	update_config({'restart_supervisor_on_update': True})
 
 def get_site_config(site, bench='.'):
@@ -70,8 +82,7 @@ def generate_nginx_config(bench='.'):
 		"dns_multitenant": get_config().get('dns_multitenant'),
 		"sites": sites
 	})
-	with open("config/nginx.conf", 'w') as f:
-		f.write(config)
+	write_config_file(bench, 'nginx.conf', config)
 
 def generate_redis_config(bench='.'):
 	template = env.get_template('redis.conf')
@@ -81,6 +92,4 @@ def generate_redis_config(bench='.'):
 		"redis_version": get_redis_version()
 	}
 	config = template.render(**conf)
-	conf_path = os.path.join(bench, 'config', 'redis.conf')
-	with open(conf_path, 'wb') as f:
-		f.write(config)
+	write_config_file(bench, 'redis.conf', config)
