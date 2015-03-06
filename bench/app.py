@@ -60,7 +60,7 @@ def get_app(app, git_url, branch=None, bench='.', build_asset_files=True):
 
 def new_app(app, bench='.'):
 	logger.info('creating new app {}'.format(app))
-	apps = os.path.join(bench, 'apps')
+	apps = os.path.abspath(os.path.join(bench, 'apps'))
 	if FRAPPE_VERSION == 4:
 		exec_cmd("{frappe} --make_app {apps} {app}".format(frappe=get_frappe(bench=bench),
 			apps=apps, app=app))
