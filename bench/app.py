@@ -148,7 +148,6 @@ def install_apps_from_path(path, bench='.'):
 	apps = get_apps_json(path)
 	for app in apps:
 		get_app(app['name'], app['url'], branch=app.get('branch'), bench=bench, build_asset_files=False)
-	build_assets(bench=bench)
 
 def get_apps_json(path):
 	if path.startswith('http'):

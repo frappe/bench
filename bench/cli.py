@@ -76,7 +76,7 @@ def change_uid():
 			sys.exit(1)
 
 def change_dir():
-	if os.path.exists('config.json'):
+	if os.path.exists('config.json') or "init" in sys.argv:
 		return
 	dir_path_file = '/etc/frappe_bench_dir'
 	if os.path.exists(dir_path_file):
@@ -218,6 +218,8 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 	version_upgrade = is_version_upgrade()
 
 	if version_upgrade and not upgrade:
+		print
+		print
 		print "This update will cause a major version change in Frappe/ERPNext from {0} to {1}.".format(*version_upgrade)
 		print "This would take significant time to migrate and might break custom apps. Please run `bench update --upgrade` to confirm."
 		sys.exit(1)

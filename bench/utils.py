@@ -35,6 +35,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None):
 	from .app import get_app, install_apps_from_path
 	from .config import generate_redis_config
+	global FRAPPE_VERSION 
 	if os.path.exists(path):
 		print 'Directory {} already exists!'.format(path)
 		sys.exit(1)
@@ -50,9 +51,10 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	if wheel_cache_dir:
 		update_config({"wheel_cache_dir":wheel_cache_dir}, bench=path)
 		prime_wheel_cache(bench=path)
+
 	if not frappe_path:
 		frappe_path = 'https://github.com/frappe/frappe.git'
-	get_app('frappe', frappe_path, branch=frappe_branch, bench=path)
+	get_app('frappe', frappe_path, branch=frappe_branch, bench=path, build_asset_files=False)
 	if not no_procfile:
 		setup_procfile(bench=path)
 	if not no_backups:
@@ -61,6 +63,8 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		setup_auto_update(bench=path)
 	if apps_path:
 		install_apps_from_path(apps_path, bench=path)
+	FRAPPE_VERSION = get_current_frappe_version(bench=path)
+	build_assets(bench=bench)
 	generate_redis_config(bench=path)
 
 def exec_cmd(cmd, cwd='.'):
@@ -407,9 +411,9 @@ def get_redis_version():
 	if re.search("Redis server v=2.8", version_string):
 		return "2.8"
 
-def get_current_frappe_version():
+def get_current_frappe_version(bench='.'):
 	from .app import get_current_frappe_version as fv
-	return fv()
+	return fv(bench=bench)
 
 def run_frappe_cmd(*args, **kwargs):
 	bench = kwargs.get('bench', '.')
@@ -421,13 +425,20 @@ def run_frappe_cmd(*args, **kwargs):
 def pre_upgrade(from_ver, to_ver, bench='.'):
 	from .migrate_to_v5 import validate_v4, remove_shopping_cart
 	if from_ver == 4 and to_ver == 5:
+		apps = ('frappe', 'erpnext')
 		remove_shopping_cart(bench=bench)
+		
+		for app in apps:
+			cwd = os.path.join(bench, 'apps', repo)
+			if os.path.exists(cwd):
+				exec_cmd("git clean -df", cwd=cwd)
 
 def post_upgrade(from_ver, to_ver, bench='.'):
 	from .app import get_current_frappe_version
 	from .config import generate_nginx_config, generate_supervisor_config, generate_redis_config
 	conf = get_config(bench=bench)
 	if from_ver == 4 and to_ver == 5:
+		print "-"*80
 		print "Your bench was upgraded to version 5"
 		if conf.get('restart_supervisor_on_update'):
 			generate_redis_config(bench=bench)
