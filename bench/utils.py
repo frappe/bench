@@ -64,7 +64,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	if apps_path:
 		install_apps_from_path(apps_path, bench=path)
 	FRAPPE_VERSION = get_current_frappe_version(bench=path)
-	build_assets(bench=bench)
+	build_assets(bench=path)
 	generate_redis_config(bench=path)
 
 def exec_cmd(cmd, cwd='.'):
