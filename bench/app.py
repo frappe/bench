@@ -149,6 +149,9 @@ def switch_branch(branch, apps=None, bench='.'):
 def switch_to_master(apps=None, bench='.'):
 	switch_branch('master', apps=apps, bench=bench)
 
+def switch_to_develop(apps=None, bench='.'):
+	switch_branch('develop', apps=apps, bench=bench)
+
 def switch_to_v4(apps=None, bench='.'):
 	switch_branch('v4.x.x', apps=apps, bench=bench)
 

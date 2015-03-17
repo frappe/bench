@@ -275,19 +275,20 @@ def migrate_3to4(path):
 			migrate_3to4=os.path.join(os.path.dirname(__file__), 'migrate3to4.py'),
 			site=path))
 
-@click.command('migrate-to-v5')
-def _migrate_to_v5(bench='.'):
-	"Migrate to Version 5"
-	click.echo("This will migrate all sites in the bench to version 5. Version 5 is still work in progress and NOT STABLE.")
-	if click.confirm("This is irreversible. Do you want to continue?", abort=True):
-		migrate_to_v5(bench=bench)
-
 @click.command('switch-to-master')
 def _switch_to_master():
 	"Switch frappe and erpnext to master branch"
 	switch_to_master()
 	print 
 	print 'Switched to master'
+	print 'Please run `bench update --patch` to be safe from any differences in database schema'
+
+@click.command('switch-to-develop')
+def _switch_to_develop():
+	"Switch frappe and erpnext to develop branch"
+	switch_to_develop()
+	print 
+	print 'Switched to develop'
 	print 'Please run `bench update --patch` to be safe from any differences in database schema'
 		
 @click.command('switch-to-v4')
@@ -548,6 +549,7 @@ bench.add_command(_set_mariadb_host)
 bench.add_command(set_default_site)
 bench.add_command(migrate_3to4)
 bench.add_command(_switch_to_master)
+bench.add_command(_switch_to_develop)
 bench.add_command(_switch_to_v4)
 bench.add_command(shell)
 bench.add_command(_backup_all_sites)
@@ -556,4 +558,3 @@ bench.add_command(_prime_wheel_cache)
 bench.add_command(_release)
 bench.add_command(patch)
 bench.add_command(set_url_root)
-bench.add_command(_migrate_to_v5)
