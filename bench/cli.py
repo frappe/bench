@@ -17,7 +17,7 @@ from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_env_c
 					pre_upgrade)
 from .app import get_app as _get_app
 from .app import new_app as _new_app
-from .app import pull_all_apps, get_apps, get_current_frappe_version, is_version_upgrade
+from .app import pull_all_apps, get_apps, get_current_frappe_version, is_version_upgrade, switch_to_v4, switch_to_master
 from .config import generate_nginx_config, generate_supervisor_config, generate_redis_config
 from .production_setup import setup_production as _setup_production
 from .migrate_to_v5 import migrate_to_v5
@@ -222,6 +222,8 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 		print
 		print "This update will cause a major version change in Frappe/ERPNext from {0} to {1}.".format(*version_upgrade)
 		print "This would take significant time to migrate and might break custom apps. Please run `bench update --upgrade` to confirm."
+		print 
+		print "You can also pin your bench to {0} by running `bench swtich-to-v{0}`".format(version_upgrade[0])
 		sys.exit(1)
 	elif not version_upgrade and upgrade:
 		upgrade = False
@@ -279,6 +281,22 @@ def _migrate_to_v5(bench='.'):
 	click.echo("This will migrate all sites in the bench to version 5. Version 5 is still work in progress and NOT STABLE.")
 	if click.confirm("This is irreversible. Do you want to continue?", abort=True):
 		migrate_to_v5(bench=bench)
+
+@click.command('switch-to-master')
+def _switch_to_master():
+	"Switch frappe and erpnext to master branch"
+	switch_to_master()
+	print 
+	print 'Switched to master'
+	print 'Please run `bench update --patch` to be safe from any differences in database schema'
+		
+@click.command('switch-to-v4')
+def _switch_to_v4():
+	"Switch frappe and erpnext to v4 branch"
+	switch_to_v4()
+	print 
+	print 'Switched to v4'
+	print 'Please run `bench update --patch` to be safe from any differences in database schema'
 
 @click.command('set-nginx-port')
 @click.argument('site')
@@ -342,11 +360,13 @@ def _prime_wheel_cache():
 @click.command('release')
 @click.argument('app', type=click.Choice(['frappe', 'erpnext', 'shopping_cart']))
 @click.argument('bump-type', type=click.Choice(['major', 'minor', 'patch']))
-def _release(app, bump_type):
+@click.option('--develop', default='develop')
+@click.option('--master', default='master')
+def _release(app, bump_type, develop, master):
 	"Release app (internal to the Frappe team)"
 	from .release import release
 	repo = os.path.join('apps', app)
-	release(repo, bump_type)
+	release(repo, bump_type, develop, master)
 
 ## Setup
 @click.group()
@@ -527,6 +547,8 @@ bench.add_command(_set_ssl_certificate_key)
 bench.add_command(_set_mariadb_host)
 bench.add_command(set_default_site)
 bench.add_command(migrate_3to4)
+bench.add_command(_switch_to_master)
+bench.add_command(_switch_to_v4)
 bench.add_command(shell)
 bench.add_command(_backup_all_sites)
 bench.add_command(_backup_site)

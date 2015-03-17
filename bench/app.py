@@ -136,6 +136,22 @@ def get_upstream_version(repo_dir):
 			raise
 	return get_version_from_string(contents)
 
+def switch_branch(branch, apps=None, bench='.'):
+	apps_dir = os.path.join(bench, 'apps')
+	if not apps:
+	    apps = ('frappe', 'erpnext', 'shopping_cart')
+	for app in apps:
+		app_dir = os.path.join(apps_dir, app)
+		if os.path.exists(app_dir):
+			exec_cmd("git fetch upstream", cwd=app_dir)
+			exec_cmd("git checkout {branch}".format(branch=branch), cwd=app_dir)
+
+def switch_to_master(apps=None, bench='.'):
+	switch_branch('master', apps=apps, bench=bench)
+
+def switch_to_v4(apps=None, bench='.'):
+	switch_branch('v4.x.x', apps=apps, bench=bench)
+
 def get_version_from_string(contents):
 	match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % 'version',
 			contents)
