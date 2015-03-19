@@ -444,6 +444,7 @@ def post_upgrade(from_ver, to_ver, bench='.'):
 			generate_redis_config(bench=bench)
 			generate_supervisor_config(bench=bench)
 			generate_nginx_config(bench=bench)
+			setup_procfile(bench=bench)
 			print "As you have setup your bench for production, you will have to reload configuration for nginx and supervisor"
 			print "To complete the migration, please run the following commands"
 			print 

@@ -17,7 +17,7 @@ from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_env_c
 					pre_upgrade)
 from .app import get_app as _get_app
 from .app import new_app as _new_app
-from .app import pull_all_apps, get_apps, get_current_frappe_version, is_version_upgrade, switch_to_v4, switch_to_master
+from .app import pull_all_apps, get_apps, get_current_frappe_version, is_version_upgrade, switch_to_v4, switch_to_master, switch_to_develop
 from .config import generate_nginx_config, generate_supervisor_config, generate_redis_config
 from .production_setup import setup_production as _setup_production
 from .migrate_to_v5 import migrate_to_v5
@@ -220,10 +220,11 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 	if version_upgrade and not upgrade:
 		print
 		print
-		print "This update will cause a major version change in Frappe/ERPNext from {0} to {1}.".format(*version_upgrade)
+		print "This update will cause a major version change in Frappe/ERPNext from {0} to {1} (beta).".format(*version_upgrade)
 		print "This would take significant time to migrate and might break custom apps. Please run `bench update --upgrade` to confirm."
 		print 
-		print "You can also pin your bench to {0} by running `bench swtich-to-v{0}`".format(version_upgrade[0])
+		# print "You can also pin your bench to {0} by running `bench swtich-to-v{0}`".format(version_upgrade[0])
+		print "You can stay on the latest stable release by running `bench switch-to-master` or pin your bench to {0} by running `bench swtich-to-v{0}`".format(version_upgrade[0])
 		sys.exit(1)
 	elif not version_upgrade and upgrade:
 		upgrade = False
@@ -251,6 +252,14 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 	print "_"*80
 	print "https://frappe.io/buy - Donate to help make better free and open source tools"
 	print
+
+@click.command('retry-upgrade')
+@click.option('--version', default=5)
+def retry_upgrade(version):
+	pull_all_apps()
+	patch_sites()
+	build_assets()
+	post_upgrade(version-1, version)
 
 def restart_update(kwargs):
 	args = ['--'+k for k, v in kwargs.items() if v]
@@ -558,3 +567,4 @@ bench.add_command(_prime_wheel_cache)
 bench.add_command(_release)
 bench.add_command(patch)
 bench.add_command(set_url_root)
+bench.add_command(retry_upgrade)
