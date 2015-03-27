@@ -1,4 +1,4 @@
-deBench
+Bench
 =====
 
 The bench allows you to setup Frappe / ERPNext apps on your local Linux (CentOS 6, Debian 7 or Ubuntu) machine or a production server. You can use the bench to serve multiple frappe sites.
