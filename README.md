@@ -5,7 +5,7 @@ The bench allows you to setup Frappe / ERPNext apps on your local Linux (CentOS 
 
 To do this install, you must have basic information on how Linux works and should be able to use the command-line. If you are looking easier ways to get started and evaluate ERPNext, [download the Virtual Machine or take a free trial at FrappeCloud.com](https://erpnext.com/use).
 
-For questions, please join the [developer forum](https://groups.google.com/group/erpnext-developer-forum).
+For questions, please join the [developer forum](https://discuss.frappe.io/).
 
 Installation
 ============
