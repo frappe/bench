@@ -89,6 +89,7 @@ def setup_procfile(bench='.'):
 	}
 	if frappe_version > 4:
 		procfile_contents['redis_cache'] = "redis-server config/redis.conf"
+		procfile_contents['web'] = "bench serve"
 	
 	procfile = '\n'.join(["{0}: {1}".format(k, v) for k, v in procfile_contents.items()])
 
