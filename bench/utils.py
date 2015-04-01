@@ -222,6 +222,7 @@ def start():
 	program = get_process_manager()
 	if not program:
 		raise Exception("No process manager found")
+	os.environ['PYTHONUNBUFFERED'] = "true"
 	os.execv(program, [program, 'start'])
 
 def check_cmd(cmd, cwd='.'):
