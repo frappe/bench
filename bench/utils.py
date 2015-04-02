@@ -431,9 +431,9 @@ def pre_upgrade(from_ver, to_ver, bench='.'):
 		remove_shopping_cart(bench=bench)
 		
 		for app in apps:
-			cwd = os.path.join(bench, 'apps', repo)
+			cwd = os.path.join(bench, 'apps', app)
 			if os.path.exists(cwd):
-				exec_cmd("git clean -df", cwd=cwd)
+				exec_cmd("git clean -dxf", cwd=cwd)
 
 def post_upgrade(from_ver, to_ver, bench='.'):
 	from .app import get_current_frappe_version
