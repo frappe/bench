@@ -314,7 +314,7 @@ def backup_site(site, bench='.'):
 		exec_cmd("{frappe} --backup {site}".format(frappe=get_frappe(bench=bench), site=site),
 				cwd=os.path.join(bench, 'sites'))
 	else:
-		run_frappe_cmd('--site {site} backup'.format(site=site), bench=bench)
+		run_frappe_cmd('--site', site, 'backup', bench=bench)
 
 def backup_all_sites(bench='.'):
 	for site in get_sites(bench=bench):
@@ -429,14 +429,16 @@ def run_frappe_cmd(*args, **kwargs):
 
 def pre_upgrade(from_ver, to_ver, bench='.'):
 	from .migrate_to_v5 import validate_v4, remove_shopping_cart
+	pip = os.path.join(bench, 'env', 'bin', 'pip')
 	if from_ver == 4 and to_ver == 5:
 		apps = ('frappe', 'erpnext')
 		remove_shopping_cart(bench=bench)
 		
 		for app in apps:
-			cwd = os.path.join(bench, 'apps', app)
+			cwd = os.path.abspath(os.path.join(bench, 'apps', app))
 			if os.path.exists(cwd):
 				exec_cmd("git clean -dxf", cwd=cwd)
+				exec_cmd("{pip} install --upgrade -e {app}".format(pip=pip, app=cwd))
 
 def post_upgrade(from_ver, to_ver, bench='.'):
 	from .app import get_current_frappe_version

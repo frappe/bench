@@ -232,11 +232,14 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 	if pull:
 		pull_all_apps()
 
-	if requirements:
-		update_requirements()
-
 	if upgrade:
 		pre_upgrade(version_upgrade[0], version_upgrade[1])
+		import utils, app
+		reload(utils)
+		reload(app)
+
+	if requirements:
+		update_requirements()
 
 	if patch:
 		if not no_backup:
