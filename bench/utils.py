@@ -310,8 +310,11 @@ def update_requirements(bench='.'):
 			exec_cmd("{pip} install -q -r {req_file}".format(pip=pip, req_file=req_file))
 
 def backup_site(site, bench='.'):
-	exec_cmd("{frappe} --backup {site}".format(frappe=get_frappe(bench=bench), site=site),
-			cwd=os.path.join(bench, 'sites'))
+	if FRAPPE_VERSION == 4:
+		exec_cmd("{frappe} --backup {site}".format(frappe=get_frappe(bench=bench), site=site),
+				cwd=os.path.join(bench, 'sites'))
+	else:
+		run_frappe_cmd('--site {site} backup'.format(site=site), bench=bench)
 
 def backup_all_sites(bench='.'):
 	for site in get_sites(bench=bench):
