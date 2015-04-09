@@ -150,8 +150,8 @@ def bump(repo, bump_type, develop='develop', master='master', remote='upstream')
 	assert bump_type in ['minor', 'major', 'patch']
 	new_version = bump_repo(repo, bump_type, develop=develop, master=master, remote=remote)
 	commit_changes(repo, new_version)
-	tag_name = create_release(repo, new_version)
-	push_release(repo)
+	tag_name = create_release(repo, new_version, develop_branch=develop, master_branch=master)
+	push_release(repo, develop_branch=develop, master_branch=master)
 	create_github_release('frappe', repo, tag_name, '')
 	print 'Released {tag} for {repo}'.format(tag=tag_name, repo=repo)
 
