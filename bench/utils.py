@@ -151,7 +151,7 @@ def setup_backups(bench='.'):
 	else:
 		backup_command = "cd {bench_dir} && {bench} --site all backup".format(bench_dir=bench_dir, bench=sys.argv[0])
 
-	add_to_crontab('0 */6 * * *  {backup_command} --backup all >> {logfile} 2>&1'.format(backup_command=backup_command,
+	add_to_crontab('0 */6 * * *  {backup_command} >> {logfile} 2>&1'.format(backup_command=backup_command,
 		logfile=os.path.join(get_bench_dir(bench=bench), 'logs', 'backup.log')))
 
 def add_to_crontab(line):
