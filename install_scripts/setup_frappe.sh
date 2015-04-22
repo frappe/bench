@@ -107,7 +107,7 @@ add_centos6_mariadb_repo() {
 	echo "
 [mariadb]
 name = MariaDB
-baseurl = http://yum.mariadb.org/5.5/centos$OS_VER-$ARCH
+baseurl = http://yum.mariadb.org/10.0/centos$OS_VER-$ARCH
 gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
 gpgcheck=1
 " > /etc/yum.repos.d/mariadb.repo
@@ -118,7 +118,7 @@ add_ubuntu_mariadb_repo() {
 	run_cmd sudo apt-get update
 	run_cmd sudo apt-get install -y software-properties-common python-software-properties
 	run_cmd sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xcbcb082a1bb943db
-	run_cmd sudo add-apt-repository "deb http://ams2.mirrors.digitalocean.com/mariadb/repo/5.5/ubuntu $OS_VER main"
+	run_cmd sudo add-apt-repository "deb http://ams2.mirrors.digitalocean.com/mariadb/repo/10.0/ubuntu $OS_VER main"
 }
 
 add_debian_mariadb_repo() {
@@ -135,7 +135,7 @@ add_debian_mariadb_repo() {
 	run_cmd sudo apt-get update
 	run_cmd sudo apt-get install -y python-software-properties
 	run_cmd sudo apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 0xcbcb082a1bb943db
-	run_cmd sudo add-apt-repository "deb http://ams2.mirrors.digitalocean.com/mariadb/repo/5.5/debian $CODENAME main"
+	run_cmd sudo add-apt-repository "deb http://ams2.mirrors.digitalocean.com/mariadb/repo/10.0/debian $CODENAME main"
 }
 
 add_ius_repo() {
