@@ -105,11 +105,9 @@ To setup a bench that runs ERPNext, run the following commands
 cd ~
 bench init frappe-bench
 cd frappe-bench
-bench get-app erpnext https://github.com/frappe/erpnext				# Add ERPNext to your bench apps
-bench get-app shopping_cart https://github.com/frappe/shopping-cart	# Add Shopping cart to your bench apps
-bench new-site site1.local											# Create a new site
-bench frappe --install_app erpnext site1.local						# Install ERPNext for the site
-bench frappe --install_app shopping_cart site1.local				# Install Shopping cart for the site
+bench get-app erpnext https://github.com/frappe/erpnext			# Add ERPNext to your bench apps
+bench new-site site1.local						# Create a new site
+bench install-app erpnext						# Install ERPNext for the site
 ```
 
 You can now either use `bench start` or setup the bench for production use.
@@ -162,7 +160,7 @@ Frappe Processes
 * WSGI Server
 
 	* The WSGI server is responsible for responding to the HTTP requests to
-	frappe. In development scenario (`frappe --serve` or `bench start`), the
+	frappe. In development scenario (`bench serve` or `bench start`), the
 	Werkzeug WSGI server is used and in production, gunicorn (automatically
 	configured in supervisor) is used.
 
