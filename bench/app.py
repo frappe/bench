@@ -90,12 +90,12 @@ def pull_all_apps(bench='.'):
 			logger.info('pulling {0}'.format(app))
 			exec_cmd("git pull {rebase} upstream {branch}".format(rebase=rebase, branch=get_current_branch(app_dir)), cwd=app_dir)
 
-def is_version_upgrade(bench='.'):
+def is_version_upgrade(bench='.', branch=None):
 	apps_dir = os.path.join(bench, 'apps')
 	frappe_dir = os.path.join(apps_dir, 'frappe')
 
 	fetch_upstream(frappe_dir)
-	upstream_version = get_upstream_version(frappe_dir)
+	upstream_version = get_upstream_version(frappe_dir, branch=branch)
 
 	if not upstream_version:
 		raise Exception("Current branch not in upstream")
@@ -126,9 +126,11 @@ def get_current_version(repo_dir):
 	with open(os.path.join(repo_dir, 'setup.py')) as f:
 		return get_version_from_string(f.read())
 
-def get_upstream_version(repo_dir):
+def get_upstream_version(repo_dir, branch=None):
+	if not branch:
+		branch = get_current_branch(repo_dir)
 	try:
-		contents = subprocess.check_output(['git', 'show', 'upstream/{branch}:setup.py'.format(branch=get_current_branch(repo_dir))], cwd=repo_dir, stderr=subprocess.STDOUT)
+		contents = subprocess.check_output(['git', 'show', 'upstream/{branch}:setup.py'.format(branch=branch)], cwd=repo_dir, stderr=subprocess.STDOUT)
 	except subprocess.CalledProcessError, e:
 		if "Invalid object" in e.output:
 			return None
@@ -136,8 +138,14 @@ def get_upstream_version(repo_dir):
 			raise
 	return get_version_from_string(contents)
 
-def switch_branch(branch, apps=None, bench='.'):
+def switch_branch(branch, apps=None, bench='.', upgrade=False):
+	from .utils import update_requirements, backup_all_sites, patch_sites, build_assets, pre_upgrade, post_upgrade
+	import utils
 	apps_dir = os.path.join(bench, 'apps')
+	version_upgrade = is_version_upgrade(bench=bench, branch=branch)
+	if version_upgrade and not upgrade:
+		raise MajorVersionUpgradeException("Switching to {0} will cause upgrade from {1} to {2}".format(branch, version_upgrade[0], version_upgrade[1]), version_upgrade[0], version_upgrade[1])
+
 	if not apps:
 	    apps = ('frappe', 'erpnext', 'shopping_cart')
 	for app in apps:
@@ -146,14 +154,23 @@ def switch_branch(branch, apps=None, bench='.'):
 			exec_cmd("git fetch upstream", cwd=app_dir)
 			exec_cmd("git checkout {branch}".format(branch=branch), cwd=app_dir)
 
-def switch_to_master(apps=None, bench='.'):
-	switch_branch('master', apps=apps, bench=bench)
+	if version_upgrade and upgrade:
+		pre_upgrade(version_upgrade[0], version_upgrade[1])
+		update_requirements()
+		reload(utils)
+		backup_all_sites()
+		patch_sites()
+		build_assets()
+		post_upgrade(version_upgrade[0], version_upgrade[1])
 
-def switch_to_develop(apps=None, bench='.'):
-	switch_branch('develop', apps=apps, bench=bench)
+def switch_to_master(apps=None, bench='.', upgrade=False):
+	switch_branch('master', apps=apps, bench=bench, upgrade=upgrade)
 
-def switch_to_v4(apps=None, bench='.'):
-	switch_branch('v4.x.x', apps=apps, bench=bench)
+def switch_to_develop(apps=None, bench='.', upgrade=False):
+	switch_branch('develop', apps=apps, bench=bench, upgrade=upgrade)
+
+def switch_to_v4(apps=None, bench='.', upgrade=False):
+	switch_branch('v4.x.x', apps=apps, bench=bench, upgrade=upgrade)
 
 def get_version_from_string(contents):
 	match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % 'version',

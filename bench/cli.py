@@ -288,25 +288,28 @@ def migrate_3to4(path):
 			site=path))
 
 @click.command('switch-to-master')
-def _switch_to_master():
+@click.option('--upgrade',flag_value=True, type=bool)
+def _switch_to_master(upgrade=False):
 	"Switch frappe and erpnext to master branch"
-	switch_to_master()
+	switch_to_master(upgrade=upgrade)
 	print 
 	print 'Switched to master'
 	print 'Please run `bench update --patch` to be safe from any differences in database schema'
 
 @click.command('switch-to-develop')
-def _switch_to_develop():
+@click.option('--upgrade',flag_value=True, type=bool)
+def _switch_to_develop(upgrade=False):
 	"Switch frappe and erpnext to develop branch"
-	switch_to_develop()
+	switch_to_develop(upgrade=upgrade)
 	print 
 	print 'Switched to develop'
 	print 'Please run `bench update --patch` to be safe from any differences in database schema'
 		
 @click.command('switch-to-v4')
-def _switch_to_v4():
+@click.option('--upgrade',flag_value=True, type=bool)
+def _switch_to_v4(upgrade=False):
 	"Switch frappe and erpnext to v4 branch"
-	switch_to_v4()
+	switch_to_v4(upgrade=upgrade)
 	print 
 	print 'Switched to v4'
 	print 'Please run `bench update --patch` to be safe from any differences in database schema'
