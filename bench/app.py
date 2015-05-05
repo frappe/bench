@@ -153,6 +153,7 @@ def switch_branch(branch, apps=None, bench='.', upgrade=False):
 		if os.path.exists(app_dir):
 			exec_cmd("git fetch upstream", cwd=app_dir)
 			exec_cmd("git checkout {branch}".format(branch=branch), cwd=app_dir)
+			exec_cmd("git merge upstream/{branch}".format(branch=branch), cwd=app_dir)
 
 	if version_upgrade and upgrade:
 		pre_upgrade(version_upgrade[0], version_upgrade[1])

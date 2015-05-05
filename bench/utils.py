@@ -372,14 +372,14 @@ def drop_privileges(uid_name='nobody', gid_name='nogroup'):
 
 def fix_prod_setup_perms(frappe_user=None):
 	files = [
-	"logs/web.error.log",
-	"logs/web.log",
-	"logs/workerbeat.error.log",
-	"logs/workerbeat.log",
-	"logs/worker.error.log",
-	"logs/worker.log",
-	"config/nginx.conf",
-	"config/supervisor.conf",
+		"logs/web.error.log",
+		"logs/web.log",
+		"logs/workerbeat.error.log",
+		"logs/workerbeat.log",
+		"logs/worker.error.log",
+		"logs/worker.log",
+		"config/nginx.conf",
+		"config/supervisor.conf",
 	]
 
 	if not frappe_user:
@@ -452,6 +452,7 @@ def post_upgrade(from_ver, to_ver, bench='.'):
 			generate_supervisor_config(bench=bench)
 			generate_nginx_config(bench=bench)
 			setup_procfile(bench=bench)
+			setup_backups(bench=bench)
 			print "As you have setup your bench for production, you will have to reload configuration for nginx and supervisor"
 			print "To complete the migration, please run the following commands"
 			print 
