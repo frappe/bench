@@ -151,7 +151,10 @@ def switch_branch(branch, apps=None, bench='.', upgrade=False):
 	for app in apps:
 		app_dir = os.path.join(apps_dir, app)
 		if os.path.exists(app_dir):
-			exec_cmd("git fetch upstream", cwd=app_dir)
+			unshallow = "--unshallow" if os.path.exists(os.path.join(app_dir, ".git", "shallow")) else ""
+			exec_cmd("git config --unset-all remote.upstream.fetch", cwd=app_dir)
+			exec_cmd("git config --add remote.upstream.fetch '+refs/heads/*:refs/remotes/upstream/*'", cwd=app_dir)
+			exec_cmd("git fetch upstream {unshallow}".format(unshallow=unshallow), cwd=app_dir)
 			exec_cmd("git checkout {branch}".format(branch=branch), cwd=app_dir)
 			exec_cmd("git merge upstream/{branch}".format(branch=branch), cwd=app_dir)
 
