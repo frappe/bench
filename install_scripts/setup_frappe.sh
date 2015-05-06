@@ -385,6 +385,7 @@ setup_bench() {
 	if $SETUP_PROD; then
 		run_cmd bash -c "cd /home/$FRAPPE_USER/frappe-bench && bench setup production $FRAPPE_USER"
 	fi
+	chown $FRAPPE_USER /home/$FRAPPE_USER/frappe-bench/logs/*
 }
 
 add_user() {
