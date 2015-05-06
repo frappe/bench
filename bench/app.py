@@ -156,8 +156,8 @@ def switch_branch(branch, apps=None, bench='.', upgrade=False):
 			exec_cmd("git merge upstream/{branch}".format(branch=branch), cwd=app_dir)
 
 	if version_upgrade and upgrade:
-		pre_upgrade(version_upgrade[0], version_upgrade[1])
 		update_requirements()
+		pre_upgrade(version_upgrade[0], version_upgrade[1])
 		reload(utils)
 		backup_all_sites()
 		patch_sites()
