@@ -8,6 +8,10 @@ import json
 from distutils.spawn import find_executable
 import pwd, grp
 
+
+class PatchError(Exception):
+	pass
+
 logger = logging.getLogger(__name__)
 
 
@@ -112,10 +116,13 @@ def new_site(site, mariadb_root_password=None, admin_password=None, bench='.'):
 		exec_cmd("{frappe} --use {site}".format(frappe=get_frappe(bench=bench), site=site), cwd=os.path.join(bench, 'sites'))
 
 def patch_sites(bench='.'):
-	if FRAPPE_VERSION == 4:
-		exec_cmd("{frappe} --latest all".format(frappe=get_frappe(bench=bench)), cwd=os.path.join(bench, 'sites'))
-	else:
-		run_frappe_cmd('--site', 'all', 'migrate', bench=bench)
+	try:
+		if FRAPPE_VERSION == 4:
+			exec_cmd("{frappe} --latest all".format(frappe=get_frappe(bench=bench)), cwd=os.path.join(bench, 'sites'))
+		else:
+			run_frappe_cmd('--site', 'all', 'migrate', bench=bench)
+	except subprocess.CalledProcessError:
+		raise PatchError
 
 def build_assets(bench='.'):
 	if FRAPPE_VERSION == 4:
