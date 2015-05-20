@@ -375,12 +375,7 @@ setup_bench() {
 	echo Setting up first site
 	echo /home/$FRAPPE_USER/frappe-bench > /etc/frappe_bench_dir
 	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench new-site site1.local --mariadb-root-password $MSQ_PASS --admin-password $ADMIN_PASS"
-	if [ "$FRAPPE_BRANCH" == "develop" ]; then
-		run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench install-app erpnext"
-	else
-		run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench frappe --install_app erpnext"
-		run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench frappe --install_app shopping_cart"
-	fi
+	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench install-app erpnext"
 	run_cmd bash -c "cd /home/$FRAPPE_USER/frappe-bench && bench setup sudoers $FRAPPE_USER"
 	if $SETUP_PROD; then
 		run_cmd bash -c "cd /home/$FRAPPE_USER/frappe-bench && bench setup production $FRAPPE_USER"
