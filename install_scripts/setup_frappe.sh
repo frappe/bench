@@ -215,7 +215,7 @@ install_wkhtmltopdf_centos () {
 }
 
 install_wkhtmltopdf_deb () {
-	if [[ $OS_VER == "utopic" ]]; then
+	if [[ $OS_VER == "utopic" ||  $OS_VER == "vivid" ]]; then
 		echo "Cannot install wkhtmltodpdf. Skipping..."
 		return 0
 	fi
