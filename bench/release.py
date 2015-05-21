@@ -146,13 +146,22 @@ def bump_repo(repo, bump_type, develop='develop', master='master', remote='upstr
 	set_version(repo, new_version)
 	return new_version
 
+def get_release_message(repo_path, develop_branch='develop', master_branch='master'):
+	repo = git.Repo(repo_path)
+	g = repo.git
+	return g.log('upstream/{master_branch}..upstream/{develop_branch}'.format(master_branch=master_branch, develop_branch=develop_branch), '--format=format:%s', '--no-merges')
+
 def bump(repo, bump_type, develop='develop', master='master', remote='upstream'):
 	assert bump_type in ['minor', 'major', 'patch']
 	new_version = bump_repo(repo, bump_type, develop=develop, master=master, remote=remote)
+	message = get_release_message(repo, develop_branch=develop, master_branch=master)
+	print
+	print message
+	print
 	commit_changes(repo, new_version)
 	tag_name = create_release(repo, new_version, develop_branch=develop, master_branch=master)
 	push_release(repo, develop_branch=develop, master_branch=master)
-	create_github_release('frappe', repo, tag_name, '')
+	create_github_release('frappe', repo, tag_name, message)
 	print 'Released {tag} for {repo}'.format(tag=tag_name, repo=repo)
 
 def release(repo, bump_type, develop, master):
