@@ -14,7 +14,7 @@ from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_env_c
 					get_config, update_config, restart_supervisor_processes, put_config, default_config, update_requirements,
 					backup_all_sites, backup_site, get_sites, prime_wheel_cache, is_root, set_mariadb_host, drop_privileges,
 					fix_file_perms, fix_prod_setup_perms, set_ssl_certificate, set_ssl_certificate_key, get_cmd_output, post_upgrade,
-					pre_upgrade, PatchError)
+					pre_upgrade, PatchError, download_translations_p)
 from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps, get_apps, get_current_frappe_version, is_version_upgrade, switch_to_v4, switch_to_master, switch_to_develop
@@ -235,14 +235,14 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 	if pull:
 		pull_all_apps()
 
+	if requirements:
+		update_requirements()
+
 	if upgrade:
 		pre_upgrade(version_upgrade[0], version_upgrade[1])
 		import utils, app
 		reload(utils)
 		reload(app)
-
-	if requirements:
-		update_requirements()
 
 	if patch:
 		if not no_backup:
@@ -549,6 +549,12 @@ def _fix_file_perms():
 patch.add_command(_fix_file_perms)
 patch.add_command(_fix_prod_perms)
 
+
+@click.command('download-translations')
+def _download_translations():
+	"Download latest translations"
+	download_translations_p()
+
 #Bench commands
 
 bench.add_command(init)
@@ -577,3 +583,4 @@ bench.add_command(_release)
 bench.add_command(patch)
 bench.add_command(set_url_root)
 bench.add_command(retry_upgrade)
+bench.add_command(_download_translations)

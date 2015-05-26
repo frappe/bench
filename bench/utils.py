@@ -4,7 +4,10 @@ import sys
 import subprocess
 import getpass
 import logging
+import itertools
+import requests
 import json
+import multiprocessing
 from distutils.spawn import find_executable
 import pwd, grp
 
@@ -466,4 +469,42 @@ def post_upgrade(from_ver, to_ver, bench='.'):
 			print "sudo service nginx restart"
 			print "sudo supervisorctl reload"
 
+def update_translations_p(args):
+	update_translations(*args)
+
+def download_translations_p():
+	pool = multiprocessing.Pool(8)
+
+	langs = get_langs()
+	apps = ('frappe', 'erpnext')
+	args = list(itertools.product(apps, langs))
+
+	pool.map(update_translations_p, args)
+
+def download_translations():
+	langs = get_langs()
+	apps = ('frappe', 'erpnext')
+	for app, lang in itertools.product(apps, langs):
+		update_translations(app, lang)
+
+
+def get_langs():
+	lang_file = 'apps/frappe/frappe/data/languages.txt'
+	with open(lang_file) as f:
+		lang_data = f.read()
+	langs = [line.split('\t')[0] for line in lang_data.splitlines()]
+	langs.remove('en')
+	return langs
+
+
+def update_translations(app, lang):
+	translations_dir = os.path.join('apps', app, app, 'translations')
+	csv_file = os.path.join(translations_dir, lang + '.csv')
+	r = requests.get("https://translate.erpnext.com/files/{}-{}.csv".format(app, lang))
+	r.raise_for_status()
+	with open(csv_file, 'wb') as f:
+		f.write(r.text.encode('utf-8'))
+	print 'downloaded for', app, lang
+
+	
 FRAPPE_VERSION = get_current_frappe_version()
