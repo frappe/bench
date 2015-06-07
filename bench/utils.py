@@ -38,11 +38,13 @@ def get_frappe(bench='.'):
 def get_env_cmd(cmd, bench='.'):
 	return os.path.abspath(os.path.join(bench, 'env', 'bin', cmd))
 
+
 def init(path, apps_path=None, no_procfile=False, no_backups=False,
-		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None):
+		no_auto_update=False, frappe_path=None, frappe_branch=None,
+		wheel_cache_dir=None, reference_bench=''):
 	from .app import get_app, install_apps_from_path
 	from .config import generate_redis_config
-	global FRAPPE_VERSION 
+	global FRAPPE_VERSION
 	if os.path.exists(path):
 		print 'Directory {} already exists!'.format(path)
 		sys.exit(1)
@@ -56,12 +58,12 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	setup_env(bench=path)
 	put_config(default_config, bench=path)
 	if wheel_cache_dir:
-		update_config({"wheel_cache_dir":wheel_cache_dir}, bench=path)
+		update_config({"wheel_cache_dir": wheel_cache_dir}, bench=path)
 		prime_wheel_cache(bench=path)
 
 	if not frappe_path:
 		frappe_path = 'https://github.com/frappe/frappe.git'
-	get_app('frappe', frappe_path, branch=frappe_branch, bench=path, build_asset_files=False)
+	get_app('frappe', frappe_path, branch=frappe_branch, bench=path, build_asset_files=False, reference_bench=reference_bench)
 	if not no_procfile:
 		setup_procfile(bench=path)
 	if not no_backups:
@@ -69,7 +71,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	if not no_auto_update:
 		setup_auto_update(bench=path)
 	if apps_path:
-		install_apps_from_path(apps_path, bench=path)
+		install_apps_from_path(apps_path, bench=path, reference_bench=reference_bench)
 	FRAPPE_VERSION = get_current_frappe_version(bench=path)
 	build_assets(bench=path)
 	generate_redis_config(bench=path)
