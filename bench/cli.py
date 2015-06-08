@@ -151,16 +151,14 @@ def bench(bench='.'):
 @click.option('--apps_path', default=None, help="path to json files with apps to install after init")
 @click.option('--frappe-path', default=None, help="path to frappe repo")
 @click.option('--frappe-branch', default=None, help="path to frappe repo")
-@click.option('--reference', default=None, help="Reuse git objects from a reference bench")
 @click.option('--no-procfile', flag_value=True, type=bool, help="Pull changes in all the apps in bench")
 @click.option('--no-backups',flag_value=True, type=bool, help="Run migrations for all sites in the bench")
 @click.option('--no-auto-update',flag_value=True, type=bool, help="Build JS and CSS artifacts for the bench")
-def init(path, apps_path, frappe_path, frappe_branch, reference, no_procfile, no_backups,
+def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups,
 		no_auto_update):
 	"Create a new bench"
 	_init(path, apps_path=apps_path, no_procfile=no_procfile, no_backups=no_backups,
-		no_auto_update=no_auto_update, frappe_path=frappe_path,
-		frappe_branch=frappe_branch, reference_bench=reference)
+			no_auto_update=no_auto_update, frappe_path=frappe_path, frappe_branch=frappe_branch)
 	click.echo('Bench {} initialized'.format(path))
 
 @click.command('get-app')
