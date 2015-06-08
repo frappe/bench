@@ -137,10 +137,16 @@ def get_current_version(repo):
 				contents)
 		return match.group(2)
 
+def check_for_unmerged_changelog(repo):
+	current = os.path.join(repo, os.path.basename(repo), 'change_log', 'current')
+	if os.path.exists(current) and os.listdir(current):
+		raise Exception("Unmerged change log! in " + repo)
+
 def bump_repo(repo, bump_type, develop='develop', master='master', remote='upstream'):
 	update_branch(repo, master, remote=remote)
 	update_branch(repo, develop, remote=remote)
 	git.Repo(repo).git.checkout(develop)
+	check_for_unmerged_changelog(repo)
 	current_version = get_current_version(repo)
 	new_version = get_bumped_version(current_version, bump_type)
 	set_version(repo, new_version)
@@ -149,7 +155,7 @@ def bump_repo(repo, bump_type, develop='develop', master='master', remote='upstr
 def get_release_message(repo_path, develop_branch='develop', master_branch='master'):
 	repo = git.Repo(repo_path)
 	g = repo.git
-	return g.log('upstream/{master_branch}..upstream/{develop_branch}'.format(master_branch=master_branch, develop_branch=develop_branch), '--format=format:%s', '--no-merges')
+	return "* " + g.log('upstream/{master_branch}..upstream/{develop_branch}'.format(master_branch=master_branch, develop_branch=develop_branch), '--format=format:%s', '--no-merges').replace('\n', '\n* ')
 
 def bump(repo, bump_type, develop='develop', master='master', remote='upstream'):
 	assert bump_type in ['minor', 'major', 'patch']
