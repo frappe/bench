@@ -98,7 +98,7 @@ def is_version_upgrade(bench='.', branch=None):
 	upstream_version = get_upstream_version(frappe_dir, branch=branch)
 
 	if not upstream_version:
-		raise Exception("Current branch not in upstream")
+		raise Exception("Current branch of 'frappe' not in upstream")
 
 	local_version = get_major_version(get_current_version(frappe_dir))
 	upstream_version = get_major_version(upstream_version)
