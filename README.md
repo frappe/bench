@@ -37,6 +37,15 @@ Install pre-requisites,
 * Redis
 * [wkhtmltopdf](http://wkhtmltopdf.org/downloads.html) (optional, required for pdf generation)
 * Memcached
+
+For installing MaraiDB on OSX, use:
+```
+brew install mariadb
+mysql.server start
+mysql_install_db
+mysqladmin -uroot password ROOTPASSWORD
+```
+
 	
 Install bench as a *non root* user,
 
