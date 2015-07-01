@@ -41,8 +41,8 @@ Install pre-requisites,
 For installing MaraiDB on OSX, use:
 ```
 brew install mariadb
-mysql.server start
 mysql_install_db
+mysql.server start
 mysqladmin -uroot password ROOTPASSWORD
 ```
 
