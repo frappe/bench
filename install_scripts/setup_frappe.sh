@@ -124,9 +124,10 @@ add_ubuntu_mariadb_repo() {
 add_debian_mariadb_repo() {
 	if [ $OS_VER == "7" ]; then
 		CODENAME="wheezy"
-
 	elif [ $OS_VER == "6" ]; then
 		CODENAME="squeeze"
+	elif [ $OS_VER == "8" ]; then
+		CODENAME="jessie"
 	else
 		echo Unsupported Debian Version
 		exit 1
@@ -238,15 +239,17 @@ install_wkhtmltopdf_centos () {
 
 install_wkhtmltopdf_deb () {
 	WK_VER=$OS_VER
-	
+
 	if [[ $OS_VER == "utopic" ||  $OS_VER == "vivid" ||  $OS_VER == "wily" ]]; then
 		echo "Installing wkhtmltox package for trusty (Ubuntu 14.4) even if you are using $OS_VER."
 		WK_VER="trusty"
 	fi
 	if [[ $OS == "debian" &&  $OS_VER == "7" ]]; then
 		WK_VER="wheezy"
+	elif [[ $OS == "debian" &&  $OS_VER == "8" ]]; then
+		WK_VER="jessie"
 	fi
-	
+
 	run_cmd wget http://download.gna.org/wkhtmltopdf/0.12/0.12.2.1/wkhtmltox-0.12.2.1_linux-$WK_VER-$WK_ARCH.deb
 	run_cmd dpkg -i wkhtmltox-0.12.2.1_linux-$WK_VER-$WK_ARCH.deb
 }
