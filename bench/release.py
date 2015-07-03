@@ -139,7 +139,7 @@ def get_current_version(repo):
 
 def check_for_unmerged_changelog(repo):
 	current = os.path.join(repo, os.path.basename(repo), 'change_log', 'current')
-	if os.path.exists(current) and os.listdir(current):
+	if os.path.exists(current) and [f for f in os.listdir(current) if f != "readme.md"]:
 		raise Exception("Unmerged change log! in " + repo)
 
 def bump_repo(repo, bump_type, develop='develop', master='master', remote='upstream'):
