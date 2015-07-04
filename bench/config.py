@@ -36,7 +36,8 @@ def generate_supervisor_config(bench='.', user=None):
 		"user": user,
 		"http_timeout": config.get("http_timeout", 120),
 		"redis_server": subprocess.check_output('which redis-server', shell=True).strip(),
-		"redis_config": os.path.join(bench_dir, 'config', 'redis.conf'),
+		"redis_cache_config": os.path.join(bench_dir, 'config', 'redis_cache.conf'),
+		"redis_async_broker_config": os.path.join(bench_dir, 'config', 'redis_async_broker.conf'),
 		"frappe_version": get_current_frappe_version()
 	})
 	write_config_file(bench, 'supervisor.conf', config)
@@ -47,7 +48,7 @@ def get_site_config(site, bench='.'):
 		return json.load(f)
 
 def get_sites_with_config(bench='.'):
-	sites = get_sites()
+	sites = get_sites(bench=bench)
 	ret = []
 	for site in sites:
 		site_config = get_site_config(site, bench=bench)
@@ -84,12 +85,22 @@ def generate_nginx_config(bench='.'):
 	})
 	write_config_file(bench, 'nginx.conf', config)
 
-def generate_redis_config(bench='.'):
-	template = env.get_template('redis.conf')
+def generate_redis_cache_config(bench='.'):
+	template = env.get_template('redis_cache.conf')
 	conf = {
 		"maxmemory": get_config().get('cache_maxmemory', '50'),
 		"port": get_config().get('redis_cache_port', '11311'),
 		"redis_version": get_redis_version()
 	}
 	config = template.render(**conf)
-	write_config_file(bench, 'redis.conf', config)
+	write_config_file(bench, 'redis_cache.conf', config)
+
+
+def generate_redis_async_broker_config(bench='.'):
+	template = env.get_template('redis_async_broker.conf')
+	conf = {
+		"port": get_config().get('redis_async_broker_port', '12311'),
+		"redis_version": get_redis_version()
+	}
+	config = template.render(**conf)
+	write_config_file(bench, 'redis_async_broker.conf', config)

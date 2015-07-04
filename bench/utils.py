@@ -7,12 +7,17 @@ import logging
 import itertools
 import requests
 import json
+import select
 import multiprocessing
 from distutils.spawn import find_executable
 import pwd, grp
 
 
 class PatchError(Exception):
+	pass
+
+
+class CommandFailedError(Exception):
 	pass
 
 logger = logging.getLogger(__name__)
@@ -75,18 +80,20 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	generate_redis_config(bench=path)
 
 def exec_cmd(cmd, cwd='.'):
-	try:
-		subprocess.check_call(cmd, cwd=cwd, shell=True)
-	except subprocess.CalledProcessError, e:
-		print "Error:", getattr(e, "output", None) or getattr(e, "error", None)
-		raise
+	p = subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	return_code = print_output(p)
+	if return_code > 0:
+		raise CommandFailedError(cmd)
 
 def setup_env(bench='.'):
 	exec_cmd('virtualenv -q {} -p {}'.format('env', sys.executable), cwd=bench)
 	exec_cmd('./env/bin/pip -q install wheel', cwd=bench)
 	exec_cmd('./env/bin/pip -q install https://github.com/frappe/MySQLdb1/archive/MySQLdb-1.2.5-patched.tar.gz', cwd=bench)
 
-def setup_procfile(bench='.'):
+def setup_socketio(bench='.'):
+	exec_cmd("npm install nodemon socket.io redis express superagent cookie", cwd=bench)
+
+def setup_procfile(with_celery_broker=False, with_watch=False, bench='.'):
 	from .app import get_current_frappe_version
 	frappe_version = get_current_frappe_version()
 	procfile_contents = {
@@ -95,9 +102,15 @@ def setup_procfile(bench='.'):
 		'workerbeat': "sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app beat -s scheduler.schedule'"
 	}
 	if frappe_version > 4:
-		procfile_contents['redis_cache'] = "redis-server config/redis.conf"
+		procfile_contents['redis_cache'] = "redis-server config/redis_cache.conf"
+		procfile_contents['redis_async_broker'] = "redis-server config/redis_async_broker.conf"
 		procfile_contents['web'] = "bench serve"
-	
+		procfile_contents['socketio'] = "./node_modules/.bin/nodemon apps/frappe/socketio.js"
+		if with_celery_broker:
+			procfile_contents['redis_celery'] = "redis-server"
+		if with_watch:
+			procfile_contents['watch'] = "bench watch"
+
 	procfile = '\n'.join(["{0}: {1}".format(k, v) for k, v in procfile_contents.items()])
 
 	with open(os.path.join(bench, 'Procfile'), 'w') as f:
@@ -283,16 +296,13 @@ def update_site_config(site, new_config, bench='.'):
 	put_site_config(site, config, bench=bench)
 
 def set_nginx_port(site, port, bench='.', gen_config=True):
-	set_site_config_nginx_property(site, {"nginx_port": port}, bench=bench)
+	set_site_config_nginx_property(site, {"nginx_port": port}, bench=bench, gen_config=gen_config)
 
 def set_ssl_certificate(site, ssl_certificate, bench='.', gen_config=True):
-	set_site_config_nginx_property(site, {"ssl_certificate": ssl_certificate}, bench=bench)
+	set_site_config_nginx_property(site, {"ssl_certificate": ssl_certificate}, bench=bench, gen_config=gen_config)
 
 def set_ssl_certificate_key(site, ssl_certificate_key, bench='.', gen_config=True):
-	set_site_config_nginx_property(site, {"ssl_certificate_key": ssl_certificate_key}, bench=bench)
-
-def set_nginx_port(site, port, bench='.', gen_config=True):
-	set_site_config_nginx_property(site, {"nginx_port": port}, bench=bench)
+	set_site_config_nginx_property(site, {"ssl_certificate_key": ssl_certificate_key}, bench=bench, gen_config=gen_config)
 
 def set_site_config_nginx_property(site, config, bench='.', gen_config=True):
 	from .config import generate_nginx_config
@@ -300,7 +310,7 @@ def set_site_config_nginx_property(site, config, bench='.', gen_config=True):
 		raise Exception("No such site")
 	update_site_config(site, config, bench=bench)
 	if gen_config:
-		generate_nginx_config()
+		generate_nginx_config(bench=bench)
 
 def set_url_root(site, url_root, bench='.'):
 	update_site_config(site, {"host_name": url_root}, bench=bench)
@@ -434,7 +444,16 @@ def run_frappe_cmd(*args, **kwargs):
 	bench = kwargs.get('bench', '.')
 	f = get_env_cmd('python', bench=bench)
 	sites_dir = os.path.join(bench, 'sites')
-	subprocess.check_call((f, '-m', 'frappe.utils.bench_helper', 'frappe') + args, cwd=sites_dir)
+	p = subprocess.Popen((f, '-m', 'frappe.utils.bench_helper', 'frappe') + args, cwd=sites_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	return_code = print_output(p)
+	if return_code > 0:
+		raise CommandFailedError(args)
+
+def get_frappe_cmd_output(*args, **kwargs):
+	bench = kwargs.get('bench', '.')
+	f = get_env_cmd('python', bench=bench)
+	sites_dir = os.path.join(bench, 'sites')
+	return subprocess.check_output((f, '-m', 'frappe.utils.bench_helper', 'frappe') + args, cwd=sites_dir)
 
 
 def pre_upgrade(from_ver, to_ver, bench='.'):
@@ -506,5 +525,33 @@ def update_translations(app, lang):
 		f.write(r.text.encode('utf-8'))
 	print 'downloaded for', app, lang
 
-	
+
+def print_output(p):
+	while p.poll() is None:
+		readx = select.select([p.stdout.fileno(), p.stderr.fileno()], [], [])[0]
+		send_buffer = []
+		for fd in readx:
+			if fd == p.stdout.fileno():
+				while 1:
+					buf = p.stdout.read(1)
+					if not len(buf):
+						break
+					if buf == '\r' or buf == '\n':
+						send_buffer.append(buf)
+						log_line(''.join(send_buffer), 'stdout')
+						send_buffer = []
+					else:
+						send_buffer.append(buf)
+
+			if fd == p.stderr.fileno():
+				log_line(p.stderr.readline(), 'stderr')
+	return p.poll()
+
+
+def log_line(data, stream):
+	if stream == 'stderr':
+		return sys.stderr.write(data)
+	return sys.stdout.write(data)
+
+
 FRAPPE_VERSION = get_current_frappe_version()
