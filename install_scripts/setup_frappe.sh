@@ -224,7 +224,7 @@ install_wkhtmltopdf_deb () {
 	else
 		WK_VER=$OS_VER
 	fi
-	run_cmd wget http://downloads.sourceforge.net/wkhtmltopdf/0.12.2.1/wkhtmltox-0.12.2.1_linux-$WK_VER-$WK_ARCH.deb
+	run_cmd wget http://download.gna.org/wkhtmltopdf/0.12.2.1/wkhtmltox-0.12.2.1_linux-$WK_VER-$WK_ARCH.deb
 	run_cmd dpkg -i wkhtmltox-0.12.2.1_linux-$WK_VER-$WK_ARCH.deb
 }
 
