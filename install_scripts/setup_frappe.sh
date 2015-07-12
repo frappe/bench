@@ -210,7 +210,7 @@ install_wkhtmltopdf_centos () {
 		return 0
 	fi
 	RPM="wkhtmltox-0.12.2.1_linux-$OS$OS_VER-$WK_ARCH.rpm"
-	run_cmd wget http://downloads.sourceforge.net/wkhtmltopdf/0.12.2.1/$RPM
+	run_cmd wget http://download.gna.org/wkhtmltopdf/0.12.2.1/$RPM
 	rpm --quiet -q wkhtmltox || run_cmd rpm -Uvh $RPM
 }
 
