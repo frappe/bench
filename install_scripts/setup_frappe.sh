@@ -141,9 +141,9 @@ add_debian_mariadb_repo() {
 add_ius_repo() {
 	if [ $OS_VER -eq "6" ]; then
 	wget http://dl.iuscommunity.org/pub/ius/stable/CentOS/$OS_VER/$T_ARCH/epel-release-6-5.noarch.rpm
-	wget http://dl.iuscommunity.org/pub/ius/stable/CentOS/$OS_VER/$T_ARCH/ius-release-1.0-13.ius.centos6.noarch.rpm
+	wget http://dl.iuscommunity.org/pub/ius/stable/CentOS/$OS_VER/$T_ARCH/ius-release-1.0-14.ius.centos6.noarch.rpm
 	rpm --quiet -q epel-release || rpm -Uvh epel-release-6-5.noarch.rpm
-	rpm --quiet -q ius-release || rpm -Uvh ius-release-1.0-13.ius.centos6.noarch.rpm
+	rpm --quiet -q ius-release || rpm -Uvh ius-release-1.0-14.ius.centos6.noarch.rpm
 	fi
 }
 
