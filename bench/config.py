@@ -3,6 +3,7 @@ import getpass
 import json
 import subprocess
 import shutil
+from distutils.spawn import find_executable
 from jinja2 import Environment, PackageLoader
 from .utils import get_sites, get_config, update_config, get_redis_version
 
@@ -35,7 +36,8 @@ def generate_supervisor_config(bench='.', user=None):
 		"sites_dir": sites_dir,
 		"user": user,
 		"http_timeout": config.get("http_timeout", 120),
-		"redis_server": subprocess.check_output('which redis-server', shell=True).strip(),
+		"redis_server": find_executable('redis-server'),
+		"node": find_executable('node'),
 		"redis_cache_config": os.path.join(bench_dir, 'config', 'redis_cache.conf'),
 		"redis_async_broker_config": os.path.join(bench_dir, 'config', 'redis_async_broker.conf'),
 		"frappe_version": get_current_frappe_version()
