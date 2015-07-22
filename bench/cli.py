@@ -286,9 +286,10 @@ def restart():
 	restart_supervisor_processes()
 
 @click.command('start')
-def start():
+@click.option('--no-dev', flag_value=True, type=bool)
+def start(no_dev=False):
 	"Start Frappe development processes"
-	_start()
+	_start(no_dev=no_dev)
 
 @click.command('migrate-3to4')
 @click.argument('path')
