@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
 	name='bench',
 	version='0.1',
-	py_modules=find_packages(),
+	packages=find_packages(),
 	include_package_data=True,
 	url='https://github.com/frappe/bench',
 	author='Web Notes Technologies Pvt. Ltd.',
