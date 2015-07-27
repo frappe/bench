@@ -46,7 +46,7 @@ def get_env_cmd(cmd, bench='.'):
 def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None):
 	from .app import get_app, install_apps_from_path
-	from .config import generate_redis_cache_config
+	from .config import generate_redis_cache_config, generate_redis_async_broker_config
 	global FRAPPE_VERSION 
 	if os.path.exists(path):
 		print 'Directory {} already exists!'.format(path)
@@ -79,7 +79,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	FRAPPE_VERSION = get_current_frappe_version(bench=path)
 	build_assets(bench=path)
 	generate_redis_cache_config(bench=path)
-	generate_redis_config(bench=path)
+	generate_redis_async_broker_config(bench=path)
 
 def exec_cmd(cmd, cwd='.'):
 	p = subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -475,7 +475,7 @@ def pre_upgrade(from_ver, to_ver, bench='.'):
 
 def post_upgrade(from_ver, to_ver, bench='.'):
 	from .app import get_current_frappe_version
-	from .config import generate_nginx_config, generate_supervisor_config, generate_redis_cache_config
+	from .config import generate_nginx_config, generate_supervisor_config, generate_redis_cache_config, generate_redis_async_broker_config
 	conf = get_config(bench=bench)
 	if from_ver == 4 and to_ver == 5:
 		print "-"*80
@@ -491,6 +491,9 @@ def post_upgrade(from_ver, to_ver, bench='.'):
 			print 
 			print "sudo service nginx restart"
 			print "sudo supervisorctl reload"
+	if from_ver == 5 and to_ver == 6:
+			generate_redis_cache_config(bench=bench)
+			generate_redis_async_broker_config(bench=bench)
 
 def update_translations_p(args):
 	update_translations(*args)
