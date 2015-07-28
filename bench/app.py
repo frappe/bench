@@ -63,9 +63,9 @@ def new_app(app, bench='.'):
 	apps = os.path.abspath(os.path.join(bench, 'apps'))
 	if FRAPPE_VERSION == 4:
 		exec_cmd("{frappe} --make_app {apps} {app}".format(frappe=get_frappe(bench=bench),
-			apps=apps, app=app))
+			apps=apps, app=app), async=False)
 	else:
-		run_frappe_cmd('make-app', apps, app, bench=bench)
+		run_frappe_cmd('make-app', apps, app, bench=bench, async=False)
 	install_app(app, bench=bench)
 
 def install_app(app, bench='.'):

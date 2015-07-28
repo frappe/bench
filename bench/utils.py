@@ -47,7 +47,8 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None):
 	from .app import get_app, install_apps_from_path
 	from .config import generate_redis_cache_config, generate_redis_async_broker_config
-	global FRAPPE_VERSION 
+	global FRAPPE_VERSION
+
 	if os.path.exists(path):
 		print 'Directory {} already exists!'.format(path)
 		sys.exit(1)
@@ -81,9 +82,19 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	generate_redis_cache_config(bench=path)
 	generate_redis_async_broker_config(bench=path)
 
-def exec_cmd(cmd, cwd='.'):
-	p = subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-	return_code = print_output(p)
+def exec_cmd(cmd, cwd='.', async=True):
+	if async:
+		stderr = stdout = subprocess.PIPE
+	else:
+		stderr = stdout = None
+
+	p = subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=stdout, stderr=stderr)
+
+	if async:
+		return_code = print_output(p)
+	else:
+		return_code = p.wait()
+
 	if return_code > 0:
 		raise CommandFailedError(cmd)
 
@@ -107,6 +118,7 @@ def setup_procfile(with_celery_broker=False, with_watch=False, bench='.'):
 		procfile_contents['redis_cache'] = "redis-server config/redis_cache.conf"
 		procfile_contents['redis_async_broker'] = "redis-server config/redis_async_broker.conf"
 		procfile_contents['web'] = "bench serve"
+		procfile_contents['socketio'] = "node apps/frappe/socketio.js"
 		procfile_contents['socketio'] = "./node_modules/.bin/nodemon apps/frappe/socketio.js"
 		if with_celery_broker:
 			procfile_contents['redis_celery'] = "redis-server"
@@ -448,8 +460,20 @@ def run_frappe_cmd(*args, **kwargs):
 	bench = kwargs.get('bench', '.')
 	f = get_env_cmd('python', bench=bench)
 	sites_dir = os.path.join(bench, 'sites')
-	p = subprocess.Popen((f, '-m', 'frappe.utils.bench_helper', 'frappe') + args, cwd=sites_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-	return_code = print_output(p)
+
+	if kwargs.get('async'):
+		stderr = stdout = subprocess.PIPE
+	else:
+		stderr = stdout = None
+
+	p = subprocess.Popen((f, '-m', 'frappe.utils.bench_helper', 'frappe') + args,
+		cwd=sites_dir, stdout=stdout, stderr=stderr)
+
+	if kwargs.get('async'):
+		return_code = print_output(p)
+	else:
+		return_code = p.wait()
+
 	if return_code > 0:
 		raise CommandFailedError(args)
 
@@ -466,7 +490,7 @@ def pre_upgrade(from_ver, to_ver, bench='.'):
 	if from_ver == 4 and to_ver == 5:
 		apps = ('frappe', 'erpnext')
 		remove_shopping_cart(bench=bench)
-		
+
 		for app in apps:
 			cwd = os.path.abspath(os.path.join(bench, 'apps', app))
 			if os.path.exists(cwd):
@@ -488,7 +512,7 @@ def post_upgrade(from_ver, to_ver, bench='.'):
 			setup_backups(bench=bench)
 			print "As you have setup your bench for production, you will have to reload configuration for nginx and supervisor"
 			print "To complete the migration, please run the following commands"
-			print 
+			print
 			print "sudo service nginx restart"
 			print "sudo supervisorctl reload"
 	if from_ver == 5 and to_ver == 6:
