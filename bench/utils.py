@@ -7,6 +7,7 @@ import logging
 import itertools
 import requests
 import json
+import platform
 import multiprocessing
 from distutils.spawn import find_executable
 import pwd, grp
@@ -167,7 +168,10 @@ def setup_backups(bench='.'):
 def add_to_crontab(line):
 	current_crontab = read_crontab()
 	if not line in current_crontab:
-		s = subprocess.Popen("crontab", stdin=subprocess.PIPE)
+		cmd = ["crontab"]
+		if platform.system() == 'FreeBSD':
+			cmd = ["crontab", "-"]
+		s = subprocess.Popen(cmd, stdin=subprocess.PIPE)
 		s.stdin.write(current_crontab)
 		s.stdin.write(line + '\n')
 		s.stdin.close()
