@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
 	name='bench',
-	version='0.1',
+	version='0.92',
 	py_modules=find_packages(),
 	include_package_data=True,
 	url='https://github.com/frappe/bench',
