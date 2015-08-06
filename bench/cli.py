@@ -256,7 +256,7 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 		post_upgrade(version_upgrade[0], version_upgrade[1])
 
 	print "_"*80
-	print "https://frappe.io/buy - Donate to help make better free and open source tools"
+	print "Free and open source tools brought to you by https://erpnext.com"
 	print
 
 @click.command('retry-upgrade')
