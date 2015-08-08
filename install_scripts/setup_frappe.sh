@@ -17,11 +17,11 @@ get_passwd() {
 
 set_opts () {
 	OPTS=`getopt -o v --long verbose,mysql-root-password:,frappe-user:,bench-branch:,setup-production,skip-setup-bench,help -n 'parse-options' -- "$@"`
-	 
+
 	if [ $? != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
-	 
+
 	eval set -- "$OPTS"
-	 
+
 	VERBOSE=false
 	HELP=false
 	FRAPPE_USER=false
@@ -40,7 +40,7 @@ set_opts () {
 		echo "MSQ_PASS=$MSQ_PASS" >> ~/frappe_passwords.sh
 		echo "ADMIN_PASS=$ADMIN_PASS" >> ~/frappe_passwords.sh
 	fi
-	 
+
 	while true; do
 	case "$1" in
 	-v | --verbose ) VERBOSE=true; shift ;;
@@ -57,7 +57,7 @@ set_opts () {
 }
 
 get_distro() {
-	ARCH=$(uname -m | sed 's/x86_/amd/;s/i[3-6]86/x86/') 
+	ARCH=$(uname -m | sed 's/x86_/amd/;s/i[3-6]86/x86/')
 
 	if [ $ARCH == "amd64" ]; then
 		T_ARCH="x86_64"
@@ -65,7 +65,7 @@ get_distro() {
 	else
 		T_ARCH="i386"
 		WK_ARCH="i386"
-	fi 
+	fi
 
 	if [ -f /etc/redhat-release ]; then
 		OS="centos"
@@ -87,7 +87,7 @@ get_distro() {
 	export ARCH=$ARCH
 	export T_ARCH=$T_ARCH
 	export WK_ARCH=$WK_ARCH
-	echo Installing for $OS $OS_VER $ARCH 
+	echo Installing for $OS $OS_VER $ARCH
 	echo "In case you encounter an error, you can post on https://discuss.frappe.io"
 	echo
 }
@@ -96,7 +96,7 @@ run_cmd() {
 	if $VERBOSE; then
 		"$@"
 	else
-		# $@ 
+		# $@
 		"$@" > /tmp/cmdoutput.txt 2>&1 || (cat /tmp/cmdoutput.txt && exit 1)
 	fi
 }
@@ -112,7 +112,7 @@ gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
 gpgcheck=1
 " > /etc/yum.repos.d/mariadb.repo
 }
- 
+
 
 add_ubuntu_mariadb_repo() {
 	run_cmd sudo apt-get update
@@ -124,7 +124,7 @@ add_ubuntu_mariadb_repo() {
 add_debian_mariadb_repo() {
 	if [ $OS_VER == "7" ]; then
 		CODENAME="wheezy"
-	
+
 	elif [ $OS_VER == "6" ]; then
 		CODENAME="squeeze"
 	else
@@ -157,12 +157,12 @@ add_maria_db_repo() {
 	elif [ "$OS" == "centos" ]; then
 		echo Adding centos mariadb repo
 		add_centos6_mariadb_repo
-	
-	elif [ "$OS" == "debian" ]; then 
+
+	elif [ "$OS" == "debian" ]; then
 		echo Adding debian mariadb repo
 		add_debian_mariadb_repo
 
-	elif [ "$OS" == "Ubuntu" ]; then 
+	elif [ "$OS" == "Ubuntu" ]; then
 		echo Adding ubuntu mariadb repo
 		add_ubuntu_mariadb_repo
 	else
@@ -171,13 +171,13 @@ add_maria_db_repo() {
 	fi
 }
 
-## install 
+## install
 
 install_packages() {
 	if [ $OS == "centos" ]; then
 		run_cmd sudo yum install wget -y
 		run_cmd sudo yum groupinstall -y "Development tools"
-		if [ $OS_VER == "6" ]; then 
+		if [ $OS_VER == "6" ]; then
 			run_cmd add_ius_repo
 			run_cmd sudo yum install -y git MariaDB-server MariaDB-client MariaDB-compat python-setuptools nginx zlib-devel bzip2-devel openssl-devel postfix python27-devel python27 libxml2 libxml2-devel libxslt libxslt-devel redis MariaDB-devel libXrender libXext python27-setuptools cronie sudo which xorg-x11-fonts-Type1 xorg-x11-fonts-75dpi
 		elif [ $OS_VER == "7" ]; then
@@ -187,9 +187,9 @@ install_packages() {
 		echo "Installing wkhtmltopdf"
 		install_wkhtmltopdf_centos
 		run_cmd easy_install-2.7 -U pip
-	
-	
-	elif [ $OS == "debian" ] || [ $OS == "Ubuntu" ]; then 
+
+
+	elif [ $OS == "debian" ] || [ $OS == "Ubuntu" ]; then
 		export DEBIAN_FRONTEND=noninteractive
 		setup_debconf
 		run_cmd sudo apt-get update
@@ -216,16 +216,20 @@ install_wkhtmltopdf_centos () {
 
 install_wkhtmltopdf_deb () {
 	if [[ $OS_VER == "utopic" ||  $OS_VER == "vivid" ]]; then
-		echo "Cannot install wkhtmltodpdf. Skipping..."
+		echo "Cannot install wkhtmltopdf. Skipping..."
 		return 0
 	fi
-	if [[ $OS == "debian" &&  $OS_VER == "7" ]]; then
-		WK_VER="wheezy"
+	if [[ $OS_VER == "trusty" ]]; then
+		run_cmd sudo apt-get install wkhtmltopdf -y
 	else
-		WK_VER=$OS_VER
+		if [[ $OS == "debian" &&  $OS_VER == "7" ]]; then
+			WK_VER="wheezy"
+		else
+			WK_VER=$OS_VER
+		fi
+		run_cmd wget http://download.gna.org/wkhtmltopdf/0.12/0.12.2.1/wkhtmltox-0.12.2.1_linux-$WK_VER-$WK_ARCH.deb
+		run_cmd dpkg -i wkhtmltox-0.12.2.1_linux-$WK_VER-$WK_ARCH.deb
 	fi
-	run_cmd wget http://download.gna.org/wkhtmltopdf/0.12/0.12.2.1/wkhtmltox-0.12.2.1_linux-$WK_VER-$WK_ARCH.deb
-	run_cmd dpkg -i wkhtmltox-0.12.2.1_linux-$WK_VER-$WK_ARCH.deb
 }
 
 
@@ -326,7 +330,7 @@ default-character-set = utf8mb4
 			run_cmd sudo systemctl restart mysql
 		fi
 
-	elif [ $OS == "debian" ] || [ $OS == "Ubuntu" ]; then 
+	elif [ $OS == "debian" ] || [ $OS == "Ubuntu" ]; then
 		echo "$config" > $deb_cnf_path
 		sudo service mysql restart
 	fi
@@ -364,7 +368,7 @@ setup_bench() {
 		FRAPPE_BRANCH="master"
 		ERPNEXT_APPS_JSON="https://raw.githubusercontent.com/frappe/bench/master/install_scripts/erpnext-apps-master.json"
 	fi
-		
+
 	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER && bench init frappe-bench --frappe-branch $FRAPPE_BRANCH --apps_path $ERPNEXT_APPS_JSON"
 	echo Setting up first site
 	echo /home/$FRAPPE_USER/frappe-bench > /etc/frappe_bench_dir
