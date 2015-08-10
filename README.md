@@ -32,11 +32,10 @@ Manual Install
 
 Install pre-requisites,
 
-* Python 2.7
-* MariaDB
-* Redis
+* [Python 2.7](https://www.python.org/download/releases/2.7/)
+* [MariaDB](https://mariadb.org/)
+* [Redis](http://redis.io/topics/quickstart)
 * [wkhtmltopdf](http://wkhtmltopdf.org/downloads.html) (optional, required for pdf generation)
-* Memcached
 
 For installing MaraiDB on OSX, use:
 ```
