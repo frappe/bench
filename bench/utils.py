@@ -118,12 +118,13 @@ def setup_procfile(with_celery_broker=False, with_watch=False, bench='.'):
 		procfile_contents['redis_cache'] = "redis-server config/redis_cache.conf"
 		procfile_contents['redis_async_broker'] = "redis-server config/redis_async_broker.conf"
 		procfile_contents['web'] = "bench serve"
-		procfile_contents['socketio'] = "node apps/frappe/socketio.js"
-		procfile_contents['socketio'] = "./node_modules/.bin/nodemon apps/frappe/socketio.js"
 		if with_celery_broker:
 			procfile_contents['redis_celery'] = "redis-server"
 		if with_watch:
 			procfile_contents['watch'] = "bench watch"
+	if frappe_version > 5:
+		procfile_contents['socketio'] = "node apps/frappe/socketio.js"
+		procfile_contents['socketio'] = "./node_modules/.bin/nodemon apps/frappe/socketio.js"
 
 	procfile = '\n'.join(["{0}: {1}".format(k, v) for k, v in procfile_contents.items()])
 
@@ -487,7 +488,7 @@ def get_frappe_cmd_output(*args, **kwargs):
 def pre_upgrade(from_ver, to_ver, bench='.'):
 	from .migrate_to_v5 import validate_v4, remove_shopping_cart
 	pip = os.path.join(bench, 'env', 'bin', 'pip')
-	if from_ver == 4 and to_ver == 5:
+	if from_ver <= 4 and to_ver >= 5:
 		apps = ('frappe', 'erpnext')
 		remove_shopping_cart(bench=bench)
 
@@ -515,7 +516,7 @@ def post_upgrade(from_ver, to_ver, bench='.'):
 			print
 			print "sudo service nginx restart"
 			print "sudo supervisorctl reload"
-	if from_ver == 5 and to_ver == 6:
+	if from_ver <= 5 and to_ver == 6:
 			generate_redis_cache_config(bench=bench)
 			generate_redis_async_broker_config(bench=bench)
 
