@@ -63,9 +63,9 @@ def new_app(app, bench='.'):
 	apps = os.path.abspath(os.path.join(bench, 'apps'))
 	if FRAPPE_VERSION == 4:
 		exec_cmd("{frappe} --make_app {apps} {app}".format(frappe=get_frappe(bench=bench),
-			apps=apps, app=app))
+			apps=apps, app=app), async=False)
 	else:
-		run_frappe_cmd('make-app', apps, app, bench=bench)
+		run_frappe_cmd('make-app', apps, app, bench=bench, async=False)
 	install_app(app, bench=bench)
 
 def install_app(app, bench='.'):
@@ -79,56 +79,51 @@ def install_app(app, bench='.'):
 	add_to_appstxt(app, bench=bench)
 
 def pull_all_apps(bench='.'):
-	apps_dir = os.path.join(bench, 'apps')
-	apps = [app for app in os.listdir(apps_dir) if os.path.isdir(os.path.join(apps_dir, app))]
 	rebase = '--rebase' if get_config().get('rebase_on_pull') else ''
-	frappe_dir = os.path.join(apps_dir, 'frappe')
 
-	for app in apps:
-		app_dir = os.path.join(apps_dir, app)
+	for app in get_apps(bench=bench):
+		app_dir = get_repo_dir(app, bench=bench)
 		if os.path.exists(os.path.join(app_dir, '.git')):
 			logger.info('pulling {0}'.format(app))
-			exec_cmd("git pull {rebase} upstream {branch}".format(rebase=rebase, branch=get_current_branch(app_dir)), cwd=app_dir)
+			exec_cmd("git pull {rebase} upstream {branch}".format(rebase=rebase, branch=get_current_branch(app, bench=bench)), cwd=app_dir)
 
 def is_version_upgrade(bench='.', branch=None):
-	apps_dir = os.path.join(bench, 'apps')
-	frappe_dir = os.path.join(apps_dir, 'frappe')
-
-	fetch_upstream(frappe_dir)
-	upstream_version = get_upstream_version(frappe_dir, branch=branch)
+	fetch_upstream('frappe', bench=bench)
+	upstream_version = get_upstream_version('frappe', bench=bench, branch=branch)
 
 	if not upstream_version:
 		raise Exception("Current branch of 'frappe' not in upstream")
 
-	local_version = get_major_version(get_current_version(frappe_dir))
+	local_version = get_major_version(get_current_version('frappe', bench=bench))
 	upstream_version = get_major_version(upstream_version)
 
-	if upstream_version - local_version  > 0:
+	if upstream_version - local_version > 0:
 		return (local_version, upstream_version)
 	return False
 
 def get_current_frappe_version(bench='.'):
-	apps_dir = os.path.join(bench, 'apps')
-	frappe_dir = os.path.join(apps_dir, 'frappe')
-
 	try:
-		return get_major_version(get_current_version(frappe_dir))
+		return get_major_version(get_current_version('frappe', bench=bench))
 	except IOError:
 		return ''
 
-def get_current_branch(repo_dir):
+def get_current_branch(app, bench='.'):
+	repo_dir = get_repo_dir(app, bench=bench)
 	return get_cmd_output("basename $(git symbolic-ref -q HEAD)", cwd=repo_dir)
 
-def fetch_upstream(repo_dir):
+def fetch_upstream(app, bench='.'):
+	repo_dir = get_repo_dir(app, bench=bench)
 	return exec_cmd("git fetch upstream", cwd=repo_dir)
 
-def get_current_version(repo_dir):
+def get_current_version(app, bench='.'):
+	repo_dir = get_repo_dir(app, bench=bench)
 	with open(os.path.join(repo_dir, 'setup.py')) as f:
 		return get_version_from_string(f.read())
 
-def get_upstream_version(repo_dir, branch=None):
+def get_upstream_version(app, branch=None, bench='.'):
+	repo_dir = get_repo_dir(app, bench=bench)
 	if not branch:
-		branch = get_current_branch(repo_dir)
+		branch = get_current_branch(app)
 	try:
 		contents = subprocess.check_output(['git', 'show', 'upstream/{branch}:setup.py'.format(branch=branch)], cwd=repo_dir, stderr=subprocess.STDOUT)
 	except subprocess.CalledProcessError, e:
@@ -137,6 +132,13 @@ def get_upstream_version(repo_dir, branch=None):
 		else:
 			raise
 	return get_version_from_string(contents)
+
+def get_upstream_url(app, bench='.'):
+	repo_dir = get_repo_dir(app, bench=bench)
+	return subprocess.check_output(['git', 'config', '--get', 'remote.upstream.url'], cwd=repo_dir).strip()
+
+def get_repo_dir(app, bench='.'):
+	return os.path.join(bench, 'apps', app)
 
 def switch_branch(branch, apps=None, bench='.', upgrade=False):
 	from .utils import update_requirements, backup_all_sites, patch_sites, build_assets, pre_upgrade, post_upgrade

@@ -1,7 +1,7 @@
 import click
 from .utils import init as _init
 from .utils import setup_env as _setup_env
-from .utils import new_site as _new_site 
+from .utils import new_site as _new_site
 from .utils import setup_backups as _setup_backups
 from .utils import setup_auto_update as _setup_auto_update
 from .utils import setup_sudoers as _setup_sudoers
@@ -14,11 +14,11 @@ from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_env_c
 					get_config, update_config, restart_supervisor_processes, put_config, default_config, update_requirements,
 					backup_all_sites, backup_site, get_sites, prime_wheel_cache, is_root, set_mariadb_host, drop_privileges,
 					fix_file_perms, fix_prod_setup_perms, set_ssl_certificate, set_ssl_certificate_key, get_cmd_output, post_upgrade,
-					pre_upgrade, PatchError, download_translations_p)
+					pre_upgrade, PatchError, download_translations_p, setup_socketio)
 from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps, get_apps, get_current_frappe_version, is_version_upgrade, switch_to_v4, switch_to_master, switch_to_develop
-from .config import generate_nginx_config, generate_supervisor_config, generate_redis_config
+from .config import generate_nginx_config, generate_supervisor_config, generate_redis_cache_config, generate_redis_async_broker_config
 from .production_setup import setup_production as _setup_production
 from .migrate_to_v5 import migrate_to_v5
 import os
@@ -48,7 +48,7 @@ def cli():
 		print click.Context(bench).get_help()
 		print
 		print get_frappe_help()
-		return 
+		return
 	elif len(sys.argv) > 1 and sys.argv[1] in get_apps():
 		return app_cmd()
 	else:
@@ -168,13 +168,13 @@ def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups,
 def get_app(name, git_url, branch):
 	"clone an app from the internet and set it up in your bench"
 	_get_app(name, git_url, branch=branch)
-	
+
 @click.command('new-app')
 @click.argument('app-name')
 def new_app(app_name):
 	"start a new app"
 	_new_app(app_name)
-	
+
 @click.command('new-site')
 @click.option('--mariadb-root-password', help="MariaDB root password")
 @click.option('--admin-password', help="admin password to set for site")
@@ -182,7 +182,7 @@ def new_app(app_name):
 def new_site(site, mariadb_root_password=None, admin_password=None):
 	"Create a new site in the bench"
 	_new_site(site, mariadb_root_password=mariadb_root_password, admin_password=admin_password)
-	
+
 #TODO: Not DRY
 @click.command('update')
 @click.option('--pull', flag_value=True, type=bool, help="Pull changes in all the apps in bench")
@@ -194,18 +194,33 @@ def new_site(site, mariadb_root_password=None, admin_password=None):
 @click.option('--auto',flag_value=True, type=bool)
 @click.option('--upgrade',flag_value=True, type=bool)
 @click.option('--no-backup',flag_value=True, type=bool)
-def update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, requirements=False, no_backup=False, upgrade=False):
+def _update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, requirements=False, no_backup=False, upgrade=False):
 	"Update bench"
 
 	if not (pull or patch or build or bench or requirements):
 		pull, patch, build, bench, requirements = True, True, True, True, True
 
 	conf = get_config()
+
+	version_upgrade = is_version_upgrade()
+
+	if version_upgrade and not upgrade:
+		print
+		print
+		print "This update will cause a major version change in Frappe/ERPNext from {0} to {1} (beta).".format(*version_upgrade)
+		print "This would take significant time to migrate and might break custom apps. Please run `bench update --upgrade` to confirm."
+		print
+		# print "You can also pin your bench to {0} by running `bench swtich-to-v{0}`".format(version_upgrade[0])
+		print "You can stay on the latest stable release by running `bench switch-to-master` or pin your bench to {0} by running `bench swtich-to-v{0}`".format(version_upgrade[0])
+		sys.exit(1)
+
 	if conf.get('release_bench'):
 		print 'Release bench, cannot update'
 		sys.exit(1)
+
 	if auto:
 		sys.exit(1)
+
 	if bench and conf.get('update_bench_on_update'):
 		update_bench()
 		restart_update({
@@ -218,45 +233,43 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 				'upgrade': upgrade
 		})
 
-	version_upgrade = is_version_upgrade()
+	update(pull, patch, build, bench, auto, restart_supervisor, requirements, no_backup, upgrade)
 
+	print "_"*80
+	print "https://frappe.io/buy - Donate to help make better free and open source tools"
+	print
+
+def update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, requirements=False, no_backup=False, upgrade=False, bench_path='.'):
+	conf = get_config(bench=bench_path)
+	version_upgrade = is_version_upgrade(bench=bench_path)
 	if version_upgrade and not upgrade:
-		print
-		print
-		print "This update will cause a major version change in Frappe/ERPNext from {0} to {1} (beta).".format(*version_upgrade)
-		print "This would take significant time to migrate and might break custom apps. Please run `bench update --upgrade` to confirm."
-		print 
-		# print "You can also pin your bench to {0} by running `bench swtich-to-v{0}`".format(version_upgrade[0])
-		print "You can stay on the latest stable release by running `bench switch-to-master` or pin your bench to {0} by running `bench swtich-to-v{0}`".format(version_upgrade[0])
-		sys.exit(1)
-	elif not version_upgrade and upgrade:
-		upgrade = False
+		raise Exception("Major Version Upgrade")
 
 	if pull:
-		pull_all_apps()
+		pull_all_apps(bench=bench_path)
 
 	if requirements:
-		update_requirements()
+		update_requirements(bench=bench_path)
 
 	if upgrade:
-		pre_upgrade(version_upgrade[0], version_upgrade[1])
+		pre_upgrade(version_upgrade[0], version_upgrade[1], bench=bench_path)
 		import utils, app
 		reload(utils)
 		reload(app)
 
 	if patch:
 		if not no_backup:
-			backup_all_sites()
-		patch_sites()
+			backup_all_sites(bench=bench_path)
+		patch_sites(bench=bench_path)
 	if build:
-		build_assets()
+		build_assets(bench=bench_path)
 	if restart_supervisor or conf.get('restart_supervisor_on_update'):
-		restart_supervisor_processes()
+		restart_supervisor_processes(bench=bench_path)
 	if upgrade:
-		post_upgrade(version_upgrade[0], version_upgrade[1])
+		post_upgrade(version_upgrade[0], version_upgrade[1], bench=bench_path)
 
 	print "_"*80
-	print "Free and open source tools brought to you by https://erpnext.com"
+	print "Bench: Open source installer + admin for Frappe and ERPNext (https://erpnext.com)"
 	print
 
 @click.command('retry-upgrade')
@@ -277,9 +290,10 @@ def restart():
 	restart_supervisor_processes()
 
 @click.command('start')
-def start():
+@click.option('--no-dev', flag_value=True, type=bool)
+def start(no_dev=False):
 	"Start Frappe development processes"
-	_start()
+	_start(no_dev=no_dev)
 
 @click.command('migrate-3to4')
 @click.argument('path')
@@ -295,7 +309,7 @@ def migrate_3to4(path):
 def _switch_to_master(upgrade=False):
 	"Switch frappe and erpnext to master branch"
 	switch_to_master(upgrade=upgrade)
-	print 
+	print
 	print 'Switched to master'
 	print 'Please run `bench update --patch` to be safe from any differences in database schema'
 
@@ -304,16 +318,16 @@ def _switch_to_master(upgrade=False):
 def _switch_to_develop(upgrade=False):
 	"Switch frappe and erpnext to develop branch"
 	switch_to_develop(upgrade=upgrade)
-	print 
+	print
 	print 'Switched to develop'
 	print 'Please run `bench update --patch` to be safe from any differences in database schema'
-		
+
 @click.command('switch-to-v4')
 @click.option('--upgrade',flag_value=True, type=bool)
 def _switch_to_v4(upgrade=False):
 	"Switch frappe and erpnext to v4 branch"
 	switch_to_v4(upgrade=upgrade)
-	print 
+	print
 	print 'Switched to v4'
 	print 'Please run `bench update --patch` to be safe from any differences in database schema'
 
@@ -392,28 +406,33 @@ def _release(app, bump_type, develop, master):
 def setup():
 	"Setup bench"
 	pass
-	
+
 @click.command('sudoers')
 @click.argument('user')
 def setup_sudoers(user):
 	"Add commands to sudoers list for execution without password"
 	_setup_sudoers(user)
-	
+
 @click.command('nginx')
 def setup_nginx():
 	"generate config for nginx"
 	generate_nginx_config()
-	
+
 @click.command('supervisor')
 def setup_supervisor():
 	"generate config for supervisor"
 	generate_supervisor_config()
-	
+
 @click.command('redis-cache')
 def setup_redis_cache():
 	"generate config for redis cache"
-	generate_redis_config()
-	
+	generate_redis_cache_config()
+
+@click.command('redis-async-broker')
+def setup_redis_async_broker():
+	"generate config for redis async broker"
+	generate_redis_async_broker_config()
+
 @click.command('production')
 @click.argument('user')
 def setup_production(user):
@@ -424,7 +443,7 @@ def setup_production(user):
 def setup_auto_update():
 	"Add cronjob for bench auto update"
 	_setup_auto_update()
-	
+
 @click.command('backups')
 def setup_backups():
 	"Add cronjob for bench backups"
@@ -440,9 +459,16 @@ def setup_env():
 	_setup_env()
 
 @click.command('procfile')
-def setup_procfile():
+@click.option('--with-watch', flag_value=True, type=bool)
+@click.option('--with-celery-broker', flag_value=True, type=bool)
+def setup_procfile(with_celery_broker, with_watch):
 	"Setup Procfile for bench start"
-	_setup_procfile()
+	_setup_procfile(with_celery_broker, with_watch)
+
+@click.command('socketio')
+def _setup_socketio():
+	"Setup node deps for socketio server"
+	setup_socketio()
 
 @click.command('config')
 def setup_config():
@@ -453,11 +479,13 @@ setup.add_command(setup_nginx)
 setup.add_command(setup_sudoers)
 setup.add_command(setup_supervisor)
 setup.add_command(setup_redis_cache)
+setup.add_command(setup_redis_async_broker)
 setup.add_command(setup_auto_update)
 setup.add_command(setup_dnsmasq)
 setup.add_command(setup_backups)
 setup.add_command(setup_env)
 setup.add_command(setup_procfile)
+setup.add_command(_setup_socketio)
 setup.add_command(setup_config)
 setup.add_command(setup_production)
 
@@ -562,7 +590,7 @@ bench.add_command(get_app)
 bench.add_command(new_app)
 bench.add_command(new_site)
 bench.add_command(setup)
-bench.add_command(update)
+bench.add_command(_update)
 bench.add_command(restart)
 bench.add_command(config)
 bench.add_command(start)
