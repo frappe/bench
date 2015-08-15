@@ -31,10 +31,14 @@ import grp
 import subprocess
 
 logger = logging.getLogger('bench')
+from_command_line = False
 
 global FRAPPE_VERSION
 
 def cli():
+	global from_command_line
+	from_command_line = True
+
 	check_uid()
 	change_dir()
 	change_uid()

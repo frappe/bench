@@ -83,7 +83,10 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	generate_redis_cache_config(bench=path)
 	generate_redis_async_broker_config(bench=path)
 
-def exec_cmd(cmd, cwd='.', async=True):
+def exec_cmd(cmd, cwd='.'):
+	from .cli import from_command_line
+
+	async = False if from_command_line else True
 	if async:
 		stderr = stdout = subprocess.PIPE
 	else:
@@ -462,11 +465,14 @@ def get_current_frappe_version(bench='.'):
 	return fv(bench=bench)
 
 def run_frappe_cmd(*args, **kwargs):
+	from .cli import from_command_line
+
 	bench = kwargs.get('bench', '.')
 	f = get_env_cmd('python', bench=bench)
 	sites_dir = os.path.join(bench, 'sites')
 
-	if kwargs.get('async'):
+	async = False if from_command_line else True
+	if async:
 		stderr = stdout = subprocess.PIPE
 	else:
 		stderr = stdout = None
@@ -474,7 +480,7 @@ def run_frappe_cmd(*args, **kwargs):
 	p = subprocess.Popen((f, '-m', 'frappe.utils.bench_helper', 'frappe') + args,
 		cwd=sites_dir, stdout=stdout, stderr=stderr)
 
-	if kwargs.get('async'):
+	if async:
 		return_code = print_output(p)
 	else:
 		return_code = p.wait()
