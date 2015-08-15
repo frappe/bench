@@ -124,9 +124,10 @@ add_ubuntu_mariadb_repo() {
 add_debian_mariadb_repo() {
 	if [ $OS_VER == "7" ]; then
 		CODENAME="wheezy"
-	
 	elif [ $OS_VER == "6" ]; then
 		CODENAME="squeeze"
+	elif [ $OS_VER == "8" ]; then
+		CODENAME="jessie"
 	else
 		echo Unsupported Debian Version
 		exit 1
@@ -221,6 +222,8 @@ install_wkhtmltopdf_deb () {
 	fi
 	if [[ $OS == "debian" &&  $OS_VER == "7" ]]; then
 		WK_VER="wheezy"
+	elif [[ $OS == "debian" &&  $OS_VER == "8" ]]; then
+		WK_VER="jessie"
 	else
 		WK_VER=$OS_VER
 	fi
