@@ -77,8 +77,9 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		setup_auto_update(bench=path)
 	if apps_path:
 		install_apps_from_path(apps_path, bench=path)
-	setup_socketio(bench=path)
 	FRAPPE_VERSION = get_current_frappe_version(bench=path)
+	if FRAPPE_VERSION > 5:
+		setup_socketio(bench=path)
 	build_assets(bench=path)
 	generate_redis_cache_config(bench=path)
 	generate_redis_async_broker_config(bench=path)
