@@ -495,6 +495,10 @@ def get_frappe_cmd_output(*args, **kwargs):
 	sites_dir = os.path.join(bench, 'sites')
 	return subprocess.check_output((f, '-m', 'frappe.utils.bench_helper', 'frappe') + args, cwd=sites_dir)
 
+def validate_upgrade(from_ver, to_ver, bench='.'):
+	if to_ver >= 6:
+		if not find_executable('npm') and not find_executable('node'):
+			raise Exception("Please install nodejs and npm")
 
 def pre_upgrade(from_ver, to_ver, bench='.'):
 	from .migrate_to_v5 import remove_shopping_cart
@@ -508,9 +512,6 @@ def pre_upgrade(from_ver, to_ver, bench='.'):
 			if os.path.exists(cwd):
 				exec_cmd("git clean -dxf", cwd=cwd)
 				exec_cmd("{pip} install --upgrade -e {app}".format(pip=pip, app=cwd))
-	if to_ver >= 6:
-		if not find_executable('npm') and not find_executable('node'):
-			raise Exception("Please install nodejs and npm")
 
 def post_upgrade(from_ver, to_ver, bench='.'):
 	from .config import generate_nginx_config, generate_supervisor_config, generate_redis_cache_config, generate_redis_async_broker_config

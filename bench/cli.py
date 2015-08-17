@@ -14,7 +14,7 @@ from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_env_c
 					get_config, update_config, restart_supervisor_processes, put_config, default_config, update_requirements,
 					backup_all_sites, backup_site, get_sites, prime_wheel_cache, is_root, set_mariadb_host, drop_privileges,
 					fix_file_perms, fix_prod_setup_perms, set_ssl_certificate, set_ssl_certificate_key, get_cmd_output, post_upgrade,
-					pre_upgrade, PatchError, download_translations_p, setup_socketio)
+					pre_upgrade, validate_upgrade, PatchError, download_translations_p, setup_socketio)
 from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps, get_apps, get_current_frappe_version, is_version_upgrade, switch_to_v4, switch_to_master, switch_to_develop
@@ -248,6 +248,9 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 	version_upgrade = is_version_upgrade(bench=bench_path)
 	if version_upgrade and not upgrade:
 		raise Exception("Major Version Upgrade")
+
+	if upgrade:
+		validate_upgrade(version_upgrade[0], version_upgrade[1], bench=bench_path)
 
 	if pull:
 		pull_all_apps(bench=bench_path)
