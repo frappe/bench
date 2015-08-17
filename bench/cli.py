@@ -155,9 +155,9 @@ def bench(bench='.'):
 @click.option('--apps_path', default=None, help="path to json files with apps to install after init")
 @click.option('--frappe-path', default=None, help="path to frappe repo")
 @click.option('--frappe-branch', default=None, help="path to frappe repo")
-@click.option('--no-procfile', flag_value=True, type=bool, help="Pull changes in all the apps in bench")
-@click.option('--no-backups',flag_value=True, type=bool, help="Run migrations for all sites in the bench")
-@click.option('--no-auto-update',flag_value=True, type=bool, help="Build JS and CSS artifacts for the bench")
+@click.option('--no-procfile', is_flag=True, help="Pull changes in all the apps in bench")
+@click.option('--no-backups',is_flag=True, help="Run migrations for all sites in the bench")
+@click.option('--no-auto-update',is_flag=True, help="Build JS and CSS artifacts for the bench")
 def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups,
 		no_auto_update):
 	"Create a new bench"
@@ -189,16 +189,17 @@ def new_site(site, mariadb_root_password=None, admin_password=None):
 
 #TODO: Not DRY
 @click.command('update')
-@click.option('--pull', flag_value=True, type=bool, help="Pull changes in all the apps in bench")
-@click.option('--patch',flag_value=True, type=bool, help="Run migrations for all sites in the bench")
-@click.option('--build',flag_value=True, type=bool, help="Build JS and CSS artifacts for the bench")
-@click.option('--bench',flag_value=True, type=bool, help="Update bench")
-@click.option('--requirements',flag_value=True, type=bool, help="Update requirements")
-@click.option('--restart-supervisor',flag_value=True, type=bool, help="restart supervisor processes after update")
-@click.option('--auto',flag_value=True, type=bool)
-@click.option('--upgrade',flag_value=True, type=bool)
-@click.option('--no-backup',flag_value=True, type=bool)
-def _update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, requirements=False, no_backup=False, upgrade=False):
+@click.option('--pull', is_flag=True, help="Pull changes in all the apps in bench")
+@click.option('--patch',is_flag=True, help="Run migrations for all sites in the bench")
+@click.option('--build',is_flag=True, help="Build JS and CSS artifacts for the bench")
+@click.option('--bench',is_flag=True, help="Update bench")
+@click.option('--requirements',is_flag=True, help="Update requirements")
+@click.option('--restart-supervisor',is_flag=True, help="restart supervisor processes after update")
+@click.option('--auto',is_flag=True)
+@click.option('--upgrade',is_flag=True)
+@click.option('--no-backup',is_flag=True)
+@click.option('--force',is_flag=True)
+def _update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, requirements=False, no_backup=False, upgrade=False, force=False):
 	"Update bench"
 
 	if not (pull or patch or build or bench or requirements):
@@ -208,14 +209,14 @@ def _update(pull=False, patch=False, build=False, bench=False, auto=False, resta
 
 	version_upgrade = is_version_upgrade()
 
-	if version_upgrade and not upgrade:
+	if version_upgrade[0] and not upgrade:
 		print
 		print
-		print "This update will cause a major version change in Frappe/ERPNext from {0} to {1}.".format(*version_upgrade)
+		print "This update will cause a major version change in Frappe/ERPNext from {0} to {1}.".format(*version_upgrade[1:])
 		print "This would take significant time to migrate and might break custom apps. Please run `bench update --upgrade` to confirm."
 		print
 		# print "You can also pin your bench to {0} by running `bench swtich-to-v{0}`".format(version_upgrade[0])
-		print "You can stay on the latest stable release by running `bench switch-to-master` or pin your bench to {0} by running `bench swtich-to-v{0}`".format(version_upgrade[0])
+		print "You can stay on the latest stable release by running `bench switch-to-master` or pin your bench to {0} by running `bench swtich-to-v{0}`".format(version_upgrade[1])
 		sys.exit(1)
 
 	if conf.get('release_bench'):
@@ -237,20 +238,20 @@ def _update(pull=False, patch=False, build=False, bench=False, auto=False, resta
 				'upgrade': upgrade
 		})
 
-	update(pull, patch, build, bench, auto, restart_supervisor, requirements, no_backup, upgrade)
+	update(pull, patch, build, bench, auto, restart_supervisor, requirements, no_backup, upgrade, force=force)
 
 	print "_"*80
 	print "https://frappe.io/buy - Donate to help make better free and open source tools"
 	print
 
-def update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, requirements=False, no_backup=False, upgrade=False, bench_path='.'):
+def update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, requirements=False, no_backup=False, upgrade=False, bench_path='.', force=False):
 	conf = get_config(bench=bench_path)
 	version_upgrade = is_version_upgrade(bench=bench_path)
-	if version_upgrade and not upgrade:
+	if version_upgrade[0] and not upgrade:
 		raise Exception("Major Version Upgrade")
 
-	if upgrade:
-		validate_upgrade(version_upgrade[0], version_upgrade[1], bench=bench_path)
+	if upgrade and (version_upgrade[0] or (not version_upgrade[0] and force)):
+		validate_upgrade(version_upgrade[1], version_upgrade[2], bench=bench_path)
 
 	if pull:
 		pull_all_apps(bench=bench_path)
@@ -258,8 +259,8 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 	if requirements:
 		update_requirements(bench=bench_path)
 
-	if upgrade:
-		pre_upgrade(version_upgrade[0], version_upgrade[1], bench=bench_path)
+	if upgrade and (version_upgrade[0] or (not version_upgrade[0] and force)):
+		pre_upgrade(version_upgrade[1], version_upgrade[2], bench=bench_path)
 		import utils, app
 		reload(utils)
 		reload(app)
@@ -270,8 +271,8 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 		patch_sites(bench=bench_path)
 	if build:
 		build_assets(bench=bench_path)
-	if upgrade:
-		post_upgrade(version_upgrade[0], version_upgrade[1], bench=bench_path)
+	if upgrade and (version_upgrade[0] or (not version_upgrade[0] and force)):
+		post_upgrade(version_upgrade[1], version_upgrade[2], bench=bench_path)
 	if restart_supervisor or conf.get('restart_supervisor_on_update'):
 		restart_supervisor_processes(bench=bench_path)
 
@@ -297,7 +298,7 @@ def restart():
 	restart_supervisor_processes()
 
 @click.command('start')
-@click.option('--no-dev', flag_value=True, type=bool)
+@click.option('--no-dev', is_flag=True)
 def start(no_dev=False):
 	"Start Frappe development processes"
 	_start(no_dev=no_dev)
@@ -312,7 +313,7 @@ def migrate_3to4(path):
 			site=path))
 
 @click.command('switch-to-master')
-@click.option('--upgrade',flag_value=True, type=bool)
+@click.option('--upgrade',is_flag=True)
 def _switch_to_master(upgrade=False):
 	"Switch frappe and erpnext to master branch"
 	switch_to_master(upgrade=upgrade)
@@ -321,7 +322,7 @@ def _switch_to_master(upgrade=False):
 	print 'Please run `bench update --patch` to be safe from any differences in database schema'
 
 @click.command('switch-to-develop')
-@click.option('--upgrade',flag_value=True, type=bool)
+@click.option('--upgrade',is_flag=True)
 def _switch_to_develop(upgrade=False):
 	"Switch frappe and erpnext to develop branch"
 	switch_to_develop(upgrade=upgrade)
@@ -330,7 +331,7 @@ def _switch_to_develop(upgrade=False):
 	print 'Please run `bench update --patch` to be safe from any differences in database schema'
 
 @click.command('switch-to-v4')
-@click.option('--upgrade',flag_value=True, type=bool)
+@click.option('--upgrade',is_flag=True)
 def _switch_to_v4(upgrade=False):
 	"Switch frappe and erpnext to v4 branch"
 	switch_to_v4(upgrade=upgrade)
@@ -466,8 +467,8 @@ def setup_env():
 	_setup_env()
 
 @click.command('procfile')
-@click.option('--with-watch', flag_value=True, type=bool)
-@click.option('--with-celery-broker', flag_value=True, type=bool)
+@click.option('--with-watch', is_flag=True)
+@click.option('--with-celery-broker', is_flag=True)
 def setup_procfile(with_celery_broker, with_watch):
 	"Setup Procfile for bench start"
 	_setup_procfile(with_celery_broker, with_watch)

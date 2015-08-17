@@ -524,7 +524,6 @@ def post_upgrade(from_ver, to_ver, bench='.'):
 			generate_redis_cache_config(bench=bench)
 			generate_supervisor_config(bench=bench)
 			generate_nginx_config(bench=bench)
-			setup_procfile(bench=bench)
 			setup_backups(bench=bench)
 
 		if from_ver <= 5 and to_ver == 6:
@@ -536,6 +535,10 @@ def post_upgrade(from_ver, to_ver, bench='.'):
 		print
 		print "sudo service nginx restart"
 		print "sudo supervisorctl reload"
+
+	if (to_ver >= 5):
+		# For dev server. Always set this up incase someone wants to start a dev server.
+		setup_procfile(bench=bench)
 
 def update_translations_p(args):
 	update_translations(*args)
