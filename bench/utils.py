@@ -516,23 +516,26 @@ def pre_upgrade(from_ver, to_ver, bench='.'):
 def post_upgrade(from_ver, to_ver, bench='.'):
 	from .config import generate_nginx_config, generate_supervisor_config, generate_redis_cache_config, generate_redis_async_broker_config
 	conf = get_config(bench=bench)
-	if from_ver == 4 and to_ver == 5:
-		print "-"*80
-		print "Your bench was upgraded to version 5"
-		if conf.get('restart_supervisor_on_update'):
+	print "-"*80
+	print "Your bench was upgraded to version {0}".format(to_ver)
+
+	if conf.get('restart_supervisor_on_update'):
+		if from_ver == 4 and to_ver == 5:
 			generate_redis_cache_config(bench=bench)
 			generate_supervisor_config(bench=bench)
 			generate_nginx_config(bench=bench)
 			setup_procfile(bench=bench)
 			setup_backups(bench=bench)
-			print "As you have setup your bench for production, you will have to reload configuration for nginx and supervisor"
-			print "To complete the migration, please run the following commands"
-			print
-			print "sudo service nginx restart"
-			print "sudo supervisorctl reload"
-	if from_ver <= 5 and to_ver == 6:
+
+		if from_ver <= 5 and to_ver == 6:
 			generate_redis_cache_config(bench=bench)
 			generate_redis_async_broker_config(bench=bench)
+
+		print "As you have setup your bench for production, you will have to reload configuration for nginx and supervisor"
+		print "To complete the migration, please run the following commands"
+		print
+		print "sudo service nginx restart"
+		print "sudo supervisorctl reload"
 
 def update_translations_p(args):
 	update_translations(*args)

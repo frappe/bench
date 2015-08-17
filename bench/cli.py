@@ -270,10 +270,10 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 		patch_sites(bench=bench_path)
 	if build:
 		build_assets(bench=bench_path)
-	if restart_supervisor or conf.get('restart_supervisor_on_update'):
-		restart_supervisor_processes(bench=bench_path)
 	if upgrade:
 		post_upgrade(version_upgrade[0], version_upgrade[1], bench=bench_path)
+	if restart_supervisor or conf.get('restart_supervisor_on_update'):
+		restart_supervisor_processes(bench=bench_path)
 
 	print "_"*80
 	print "Bench: Open source installer + admin for Frappe and ERPNext (https://erpnext.com)"
