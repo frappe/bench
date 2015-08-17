@@ -128,7 +128,7 @@ def setup_procfile(with_celery_broker=False, with_watch=False, bench='.'):
 		if with_watch:
 			procfile_contents['watch'] = "bench watch"
 	if frappe_version > 5:
-		procfile_contents['socketio'] = "./node_modules/.bin/nodemon apps/frappe/socketio.js"
+		procfile_contents['socketio'] = "node apps/frappe/socketio.js"
 
 	procfile = '\n'.join(["{0}: {1}".format(k, v) for k, v in procfile_contents.items()])
 
