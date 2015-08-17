@@ -37,7 +37,7 @@ def generate_supervisor_config(bench='.', user=None):
 		"user": user,
 		"http_timeout": config.get("http_timeout", 120),
 		"redis_server": find_executable('redis-server'),
-		"node": find_executable('node'),
+		"node": find_executable('node') or find_executable('nodejs'),
 		"redis_cache_config": os.path.join(bench_dir, 'config', 'redis_cache.conf'),
 		"redis_async_broker_config": os.path.join(bench_dir, 'config', 'redis_async_broker.conf'),
 		"frappe_version": get_current_frappe_version()

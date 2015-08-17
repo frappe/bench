@@ -497,7 +497,7 @@ def get_frappe_cmd_output(*args, **kwargs):
 
 def validate_upgrade(from_ver, to_ver, bench='.'):
 	if to_ver >= 6:
-		if not find_executable('npm') and not find_executable('node'):
+		if not find_executable('npm') and not (find_executable('node') or find_executable('nodejs')):
 			raise Exception("Please install nodejs and npm")
 
 def pre_upgrade(from_ver, to_ver, bench='.'):
@@ -520,14 +520,14 @@ def post_upgrade(from_ver, to_ver, bench='.'):
 	print "Your bench was upgraded to version {0}".format(to_ver)
 
 	if conf.get('restart_supervisor_on_update'):
+		generate_redis_cache_config(bench=bench)
+		generate_supervisor_config(bench=bench)
+		generate_nginx_config(bench=bench)
+
 		if from_ver == 4 and to_ver == 5:
-			generate_redis_cache_config(bench=bench)
-			generate_supervisor_config(bench=bench)
-			generate_nginx_config(bench=bench)
 			setup_backups(bench=bench)
 
 		if from_ver <= 5 and to_ver == 6:
-			generate_redis_cache_config(bench=bench)
 			generate_redis_async_broker_config(bench=bench)
 
 		print "As you have setup your bench for production, you will have to reload configuration for nginx and supervisor"
@@ -536,7 +536,7 @@ def post_upgrade(from_ver, to_ver, bench='.'):
 		print "sudo service nginx restart"
 		print "sudo supervisorctl reload"
 
-	if (to_ver >= 5):
+	if to_ver >= 5:
 		# For dev server. Always set this up incase someone wants to start a dev server.
 		setup_procfile(bench=bench)
 
