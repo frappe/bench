@@ -128,7 +128,6 @@ def setup_procfile(with_celery_broker=False, with_watch=False, bench='.'):
 		if with_watch:
 			procfile_contents['watch'] = "bench watch"
 	if frappe_version > 5:
-		procfile_contents['socketio'] = "node apps/frappe/socketio.js"
 		procfile_contents['socketio'] = "./node_modules/.bin/nodemon apps/frappe/socketio.js"
 
 	procfile = '\n'.join(["{0}: {1}".format(k, v) for k, v in procfile_contents.items()])
@@ -529,6 +528,7 @@ def post_upgrade(from_ver, to_ver, bench='.'):
 
 		if from_ver <= 5 and to_ver == 6:
 			generate_redis_async_broker_config(bench=bench)
+			setup_socketio(bench=bench)
 
 		print "As you have setup your bench for production, you will have to reload configuration for nginx and supervisor"
 		print "To complete the migration, please run the following commands"
