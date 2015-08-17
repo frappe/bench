@@ -211,7 +211,7 @@ def _update(pull=False, patch=False, build=False, bench=False, auto=False, resta
 	if version_upgrade and not upgrade:
 		print
 		print
-		print "This update will cause a major version change in Frappe/ERPNext from {0} to {1} (beta).".format(*version_upgrade)
+		print "This update will cause a major version change in Frappe/ERPNext from {0} to {1}.".format(*version_upgrade)
 		print "This would take significant time to migrate and might break custom apps. Please run `bench update --upgrade` to confirm."
 		print
 		# print "You can also pin your bench to {0} by running `bench swtich-to-v{0}`".format(version_upgrade[0])
