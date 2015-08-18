@@ -109,7 +109,7 @@ def setup_env(bench='.'):
 	exec_cmd('./env/bin/pip -q install https://github.com/frappe/MySQLdb1/archive/MySQLdb-1.2.5-patched.tar.gz', cwd=bench)
 
 def setup_socketio(bench='.'):
-	exec_cmd("npm install nodemon socket.io redis express superagent cookie", cwd=bench)
+	exec_cmd("npm install socket.io redis express superagent cookie", cwd=bench)
 
 def setup_procfile(with_celery_broker=False, with_watch=False, bench='.'):
 	from .app import get_current_frappe_version
@@ -128,7 +128,7 @@ def setup_procfile(with_celery_broker=False, with_watch=False, bench='.'):
 		if with_watch:
 			procfile_contents['watch'] = "bench watch"
 	if frappe_version > 5:
-		procfile_contents['socketio'] = "node apps/frappe/socketio.js"
+		procfile_contents['socketio'] = "{0} apps/frappe/socketio.js".format(find_executable("node") or find_executable("nodejs"))
 
 	procfile = '\n'.join(["{0}: {1}".format(k, v) for k, v in procfile_contents.items()])
 
