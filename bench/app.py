@@ -179,6 +179,9 @@ def switch_to_develop(apps=None, bench='.', upgrade=False):
 def switch_to_v4(apps=None, bench='.', upgrade=False):
 	switch_branch('v4.x.x', apps=apps, bench=bench, upgrade=upgrade)
 
+def switch_to_v5(apps=None, bench='.', upgrade=False):
+	switch_branch('v5.x.x', apps=apps, bench=bench, upgrade=upgrade)
+
 def get_version_from_string(contents):
 	match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % 'version',
 			contents)

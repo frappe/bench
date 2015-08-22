@@ -17,7 +17,7 @@ from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_env_c
 					pre_upgrade, validate_upgrade, PatchError, download_translations_p, setup_socketio)
 from .app import get_app as _get_app
 from .app import new_app as _new_app
-from .app import pull_all_apps, get_apps, get_current_frappe_version, is_version_upgrade, switch_to_v4, switch_to_master, switch_to_develop
+from .app import pull_all_apps, get_apps, get_current_frappe_version, is_version_upgrade, switch_to_v4, switch_to_v5, switch_to_master, switch_to_develop
 from .config import generate_nginx_config, generate_supervisor_config, generate_redis_cache_config, generate_redis_async_broker_config
 from .production_setup import setup_production as _setup_production
 from .migrate_to_v5 import migrate_to_v5
@@ -339,6 +339,15 @@ def _switch_to_v4(upgrade=False):
 	print 'Switched to v4'
 	print 'Please run `bench update --patch` to be safe from any differences in database schema'
 
+@click.command('switch-to-v5')
+@click.option('--upgrade',is_flag=True)
+def _switch_to_v5(upgrade=False):
+	"Switch frappe and erpnext to v4 branch"
+	switch_to_v5(upgrade=upgrade)
+	print
+	print 'Switched to v5'
+	print 'Please run `bench update --patch` to be safe from any differences in database schema'
+
 @click.command('set-nginx-port')
 @click.argument('site')
 @click.argument('port', type=int)
@@ -611,6 +620,7 @@ bench.add_command(migrate_3to4)
 bench.add_command(_switch_to_master)
 bench.add_command(_switch_to_develop)
 bench.add_command(_switch_to_v4)
+bench.add_command(_switch_to_v5)
 bench.add_command(shell)
 bench.add_command(_backup_all_sites)
 bench.add_command(_backup_site)
