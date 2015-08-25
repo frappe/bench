@@ -18,7 +18,7 @@ Supported for CentOS 6, CentOS 7, Debian 7 and Ubuntu 12.04+
 Open your Terminal and enter:
 
 ```
-wget https://raw.githubusercontent.com/frappe/bench/master/install_scripts/setup_frappe.sh
+rm -fr setup_frappe.sh; wget https://raw.githubusercontent.com/frappe/bench/master/install_scripts/setup_frappe.sh
 sudo bash setup_frappe.sh --setup-production
 ```
 
