@@ -146,7 +146,7 @@ setup_swap() {
         if [ "$swap_count" -ge 8000 ]
         then
           echo "Your swap is already enough. Do not need to add swap. Returing to frappe installation.\n"
-          rm -rf $LOCKfile
+          run_cmd sudo rm -rf $LOCKfile
           return 1
         elif [ "$swap_count" -ne 0 ]
         then
@@ -162,7 +162,7 @@ setup_swap() {
         if [ "$swap_count" -ge 3900 ]
         then
           echo "Your swap is already enough. Do not need to add swap. Returing to frappe installation.\n"
-          rm -rf $LOCKfile
+          run_cmd sudo rm -rf $LOCKfile
           return 1
         elif [ "$swap_count" -ne 0 ]
         then
@@ -177,7 +177,7 @@ setup_swap() {
         if [ "$swap_count" -ge 2000 ]
         then
           echo "Your swap is already enough. Do not need to add swap. Returing to frappe installation.\n"
-          rm -rf $LOCKfile
+          run_cmd sudo rm -rf $LOCKfile
           return 1
         elif [ "$swap_count" -ne 0 ]
         then
@@ -197,19 +197,23 @@ setup_swap() {
       if [ "$1" -gt "$((root_disk_size-1024))" ]
       then
         echo "The root disk partition has no space for $1M swap file. Returing to frappe installation.\n"
-        rm -rf $LOCKfile
+        run_cmd sudo rm -rf $LOCKfile
         return 1
       fi
       if [ ! -e $swapfile ]
       then
-        dd if=/dev/zero of=$swapfile bs=1M count=$1
-        /sbin/mkswap $swapfile
-        /sbin/swapon $swapfile
-        /sbin/swapon -s
+        #if ! [ -x "$(fallocate -h)" ]; then
+				#run_cmd dd if=/dev/zero of=$swapfile bs=1M count=$1
+				#else
+				run_cmd sudo fallocate -l $1 /$swapfile
+				#fi
+        run_cmd /sbin/mkswap $swapfile
+        run_cmd /sbin/swapon $swapfile
+        run_cmd /sbin/swapon -s
         echo "Step 3. Add swap partition successful.\n"
       else
         echo "The /var/swap_file already exists. Returing to frappe installation.\n"
-        rm -rf $LOCKfile
+        run_cmd sudo rm -rf $LOCKfile
         return 1
       fi
     }
@@ -217,9 +221,9 @@ setup_swap() {
     remove_old_swap()
     {
       old_swap_file=$(grep swap $fstab|grep -v "#"|awk '{print $1}')
-      swapoff $old_swap_file
-      cp -f $fstab ${fstab}_bak
-      sed -i '/swap/d' $fstab
+      run_cmd swapoff $old_swap_file
+      run_cmd cp -f $fstab ${fstab}_bak
+      run_cmd sed -i '/swap/d' $fstab
     }
 
     config_rhel_fstab()
@@ -230,7 +234,7 @@ setup_swap() {
         echo "$swapfile	 swap	 swap defaults 0 0" >>$fstab
       else
         echo "/etc/fstab is already configured. Returing to frappe installation.\n"
-        rm -rf $LOCKfile
+        run_cmd sudo rm -rf $LOCKfile
         return 1
       fi
     }
@@ -243,7 +247,7 @@ setup_swap() {
         echo "$swapfile	 none	 swap sw 0 0" >>$fstab
       else
         echo "/etc/fstab is already configured. Returing to frappe installation.\n"
-        rm -rf $LOCKfile
+        run_cmd sudo rm -rf $LOCKfile
         return 1
       fi
     }
@@ -257,14 +261,14 @@ setup_swap() {
       exit
     else
       echo "Step 1. No lock file, begin to create lock file and continue.\n"
-      touch $LOCKfile
+      run_cmd sudo touch $LOCKfile
     fi
 
     #check user
     if [ $(id -u) != "0" ]
     then
       echo "Error: You must be root to run this script, please use root to setup the swap partition.\n"
-      rm -rf $LOCKfile
+      run_cmd sudo rm -rf $LOCKfile
       return 1
     fi
 
@@ -272,7 +276,7 @@ setup_swap() {
     if [ "X$os_release" == "X" ]
     then
       echo "The OS does not identify, So the swap setup is skipped.\n"
-      rm -rf $LOCKfile
+      run_cmd sudo rm -rf $LOCKfile
       return 0
     else
       echo "Step 2. Check this OS type.\n"
@@ -297,7 +301,7 @@ setup_swap() {
 
     free -m
     echo "All the swap setup related operations were completed. Returing to frappe installation.\n"
-    rm -rf $LOCKfile
+    run_cmd sudo rm -rf $LOCKfile
 }
 
 ## add repos
@@ -604,6 +608,9 @@ main() {
 	set_opts $@
 	get_distro
 	add_maria_db_repo
+	if $SETUP_SWAP; then
+		setup_swap
+	fi
 	echo Installing packages for $OS\. This might take time...
 	install_packages
 	if [ $OS == "centos" ]; then
