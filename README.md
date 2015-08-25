@@ -26,6 +26,13 @@ This script should install the pre-requisites, install bench and setup an ERPNex
 
 If you want to develop ERPNext or any Frappe App, you can omit the "--setup-production" part from the command.
 
+For advanced users, `setup_frappe.sh` script offers following options:
+```
+sudo bash setup_frappe.sh --setup-swap --setup-production
+```
+This will check if your system does require swap partition, if required it will create new one, otherwise it will skip the swap setup part and continue with rest of the setup instructions.
+
+
 
 Manual Install
 --------------
@@ -45,7 +52,7 @@ mysql.server start
 mysqladmin -uroot password ROOTPASSWORD
 ```
 
-	
+
 Install bench as a *non root* user,
 
 		git clone https://github.com/frappe/bench bench-repo
@@ -100,7 +107,7 @@ Basic Usage
 		bench start
 
 	To login to Frappe / ERPNext, open your browser and go to `localhost:8000`
-	
+
 	The default user name is "Administrator" and password is what you set when you created the new site.
 
 
@@ -205,7 +212,7 @@ then copy/link this file to the supervisor config directory and reload it for it
 take effect.
 
 eg,
-	
+
 ```
 bench setup supervisor
 sudo ln -s `pwd`/config/supervisor.conf /etc/supervisor/conf.d/frappe.conf
@@ -213,7 +220,7 @@ sudo ln -s `pwd`/config/supervisor.conf /etc/supervisor/conf.d/frappe.conf
 
 Note: For CentOS 7, the extension should be `ini`, thus the command becomes
 ```
-bench setup supervisor 
+bench setup supervisor
 sudo ln -s `pwd`/config/supervisor.conf /etc/supervisor/conf.d/frappe.ini #for CentOS 7 only
 ```
 
