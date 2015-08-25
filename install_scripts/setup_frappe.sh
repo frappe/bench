@@ -145,47 +145,47 @@ setup_swap() {
       then
         if [ "$swap_count" -ge 8000 ]
         then
-          echo "Your swap is already enough. Do not need to add swap. Returing to frappe installation.\n"
+          echo "Your swap is already enough. Do not need to add swap. Returing to frappe installation."
           run_cmd sudo rm -rf $LOCKfile
           return 1
         elif [ "$swap_count" -ne 0 ]
         then
-          echo "Your swap is not enough, need to add swap.\n"
+          echo "Your swap is not enough, need to add swap."
           remove_old_swap
           create_swap 8192
         else
-          echo "Your swap is not enough, need to add swap.\n"
+          echo "Your swap is not enough, need to add swap."
           create_swap 8192
         fi
       elif [ "$mem_count" -ge 3900 ] && [ "$mem_count" -lt 15000 ]
       then
         if [ "$swap_count" -ge 3900 ]
         then
-          echo "Your swap is already enough. Do not need to add swap. Returing to frappe installation.\n"
+          echo "Your swap is already enough. Do not need to add swap. Returing to frappe installation."
           run_cmd sudo rm -rf $LOCKfile
           return 1
         elif [ "$swap_count" -ne 0 ]
         then
-          echo "Your swap is not enough, need to add swap.\n"
+          echo "Your swap is not enough, need to add swap."
           remove_old_swap
           create_swap 4096
         else
-          echo "Your swap is not enough, need to add swap.\n"
+          echo "Your swap is not enough, need to add swap."
           create_swap 4096
         fi
       else
         if [ "$swap_count" -ge 2000 ]
         then
-          echo "Your swap is already enough. Do not need to add swap. Returing to frappe installation.\n"
+          echo "Your swap is already enough. Do not need to add swap. Returing to frappe installation."
           run_cmd sudo rm -rf $LOCKfile
           return 1
         elif [ "$swap_count" -ne 0 ]
         then
-          echo "Your swap is not enough, need to add swap.\n"
+          echo "Your swap is not enough, need to add swap."
           remove_old_swap
           create_swap 2048
         else
-          echo "Your swap is not enough, need to add swap.\n"
+          echo "Your swap is not enough, need to add swap."
           create_swap 2048
         fi
       fi
@@ -196,7 +196,7 @@ setup_swap() {
       root_disk_size=$(df -m|grep -w "/"|awk '{print $4}')
       if [ "$1" -gt "$((root_disk_size-1024))" ]
       then
-        echo "The root disk partition has no space for $1M swap file. Returing to frappe installation.\n"
+        echo "The root disk partition has no space for $1M swap file. Returing to frappe installation."
         run_cmd sudo rm -rf $LOCKfile
         return 1
       fi
@@ -211,9 +211,9 @@ setup_swap() {
         run_cmd sudo mkswap $swapfile
         run_cmd sudo swapon $swapfile
         run_cmd sudo swapon -s
-        echo "Step 3. Add swap partition successful.\n"
+        echo "Step 3. Add swap partition successful."
       else
-        echo "The /swapfile already exists. Returing to frappe installation.\n"
+        echo "The /swapfile already exists. Returing to frappe installation."
         run_cmd sudo rm -rf $LOCKfile
         return 1
       fi
@@ -242,11 +242,11 @@ setup_swap() {
     {
       if ! grep $swapfile $fstab >/dev/null 2>&1
       then
-        echo "Begin to modify $fstab.\n"
+        echo "Begin to modify $fstab."
         echo "$swapfile	 swap	 swap defaults 0 0" >>$fstab
 				adjust_swappiness
       else
-        echo "/etc/fstab is already configured. Returing to frappe installation.\n"
+        echo "/etc/fstab is already configured. Returing to frappe installation."
         run_cmd sudo rm -rf $LOCKfile
         return 1
       fi
@@ -256,11 +256,11 @@ setup_swap() {
     {
       if ! grep $swapfile $fstab >/dev/null 2>&1
       then
-        echo "Begin to modify $fstab.\n"
+        echo "Begin to modify $fstab."
         echo "$swapfile	 none	 swap sw 0 0" >>$fstab
 				adjust_swappiness
       else
-        echo "/etc/fstab is already configured. Returing to frappe installation.\n"
+        echo "/etc/fstab is already configured. Returing to frappe installation."
         run_cmd sudo rm -rf $LOCKfile
         return 1
       fi
@@ -271,17 +271,17 @@ setup_swap() {
     LOCKfile=/tmp/.setup-swap-lock-frappe
     if [ -f "$LOCKfile" ]
     then
-      echo "The script is already exist, please delete file from $LOCKfile next time to run this script.\n"
+      echo "The script is already exist, please delete file from $LOCKfile next time to run this script."
       exit
     else
-      echo "Step 1. No lock file, begin to create lock file and continue.\n"
+      echo "Step 1. No lock file, begin to create lock file and continue."
       run_cmd sudo touch $LOCKfile
     fi
 
     #check user
     if [ $(id -u) != "0" ]
     then
-      echo "Error: You must be root to run this script, please use root to setup the swap partition.\n"
+      echo "Error: You must be root to run this script, please use root to setup the swap partition."
       run_cmd sudo rm -rf $LOCKfile
       return 1
     fi
@@ -289,21 +289,21 @@ setup_swap() {
     os_release=$(check_os_release)
     if [ "X$os_release" == "X" ]
     then
-      echo "The OS does not identify, So the swap setup is skipped.\n"
+      echo "The OS does not identify, So the swap setup is skipped."
       run_cmd sudo rm -rf $LOCKfile
       return 0
     else
-      echo "Step 2. Check this OS type.\n"
-      echo "This OS is $os_release.\n"
+      echo "Step 2. Check this OS type."
+      echo "This OS is $os_release."
     fi
 
     swapfile=/swapfile
     fstab=/etc/fstab
 
-    echo "Step 3. Check the memory and swap.\n"
+    echo "Step 3. Check the memory and swap."
     check_memory_and_swap
 
-    echo "Step 4. Begin to modify $fstab.\n"
+    echo "Step 4. Begin to modify $fstab."
     case "$os_release" in
     redhat|centos)
       config_rhel_fstab
@@ -314,7 +314,7 @@ setup_swap() {
     esac
 
     free -m
-    echo "All the swap setup related operations were completed. Returing to frappe installation.\n"
+    echo "All the swap setup related operations were completed. Returing to frappe installation."
     run_cmd sudo rm -rf $LOCKfile
 }
 
