@@ -107,35 +107,34 @@ run_cmd() {
 setup_swap() {
     check_os_release()
     {
-      # while true
-      # do
-      #   if cat /proc/version | grep redhat >/dev/null 2>&1
-      #   then
-      #     os_release=redhat
-      #     echo "$os_release"
-      #     break
-      #   fi
-      #   if cat /proc/version | grep centos >/dev/null 2>&1
-      #   then
-      #     os_release=centos
-      #     echo "$os_release"
-      #     break
-      #   fi
-      #   if cat /proc/version | grep ubuntu >/dev/null 2>&1
-      #   then
-      #     os_release=ubuntu
-      #     echo "$os_release"
-      #     break
-      #   fi
-      #   if cat /proc/version | grep -i debian >/dev/null 2>&1
-      #   then
-      #     os_release=debian
-      #     echo "$os_release"
-      #     break
-      #   fi
-      #   break
-      #   done
-			os_release=$OS
+      while true
+      do
+        if cat /proc/version | grep redhat >/dev/null 2>&1
+        then
+          os_release=redhat
+          echo "$os_release"
+          break
+        fi
+        if cat /proc/version | grep centos >/dev/null 2>&1
+        then
+          os_release=centos
+          echo "$os_release"
+          break
+        fi
+        if cat /proc/version | grep ubuntu >/dev/null 2>&1
+        then
+          os_release=ubuntu
+          echo "$os_release"
+          break
+        fi
+        if cat /proc/version | grep -i debian >/dev/null 2>&1
+        then
+          os_release=debian
+          echo "$os_release"
+          break
+        fi
+        break
+      done
     }
 
     check_memory_and_swap()
