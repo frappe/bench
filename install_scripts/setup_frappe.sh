@@ -193,7 +193,7 @@ setup_swap() {
 
     create_swap()
     {
-      root_disk_size=$(df -m|grep -w "/"|awk '{print $4}')
+      root_disk_size=$(df -m|grep -w "/"|awk '{print $4}'|head -1)
       if [ "$1" -gt "$((root_disk_size-1024))" ]
       then
         echo "The root disk partition has no space for $1M swap file. Returing to frappe installation."
