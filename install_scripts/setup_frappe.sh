@@ -205,12 +205,12 @@ setup_swap() {
         #if ! [ -x "$(fallocate -h)" ]; then
 				#run_cmd dd if=/dev/zero of=$swapfile bs=1M count=$1
 				#else
-				run_cmd sudo fallocate -l $1 /$swapfile
+				run_cmd sudo fallocate -l $1 $swapfile
 				#fi
-				run_cmd sudo /sbin/chmod 600 /$swapfile
-        run_cmd sudo /sbin/mkswap $swapfile
-        run_cmd sudo /sbin/swapon $swapfile
-        run_cmd sudo /sbin/swapon -s
+				run_cmd sudo chmod 600 $swapfile
+        run_cmd sudo mkswap $swapfile
+        run_cmd sudo swapon $swapfile
+        run_cmd sudo swapon -s
         echo "Step 3. Add swap partition successful.\n"
       else
         echo "The /swapfile already exists. Returing to frappe installation.\n"
