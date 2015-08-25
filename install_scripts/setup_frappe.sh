@@ -181,11 +181,11 @@ setup_swap() {
           return 1
         elif [ "$swap_count" -ne 0 ]
         then
-          echo "Your swap is not enough,need to add swap.\n"
+          echo "Your swap is not enough, need to add swap.\n"
           remove_old_swap
           create_swap 2048
         else
-          echo "Your swap is not enough,need to add swap.\n"
+          echo "Your swap is not enough, need to add swap.\n"
           create_swap 2048
         fi
       fi
@@ -205,7 +205,7 @@ setup_swap() {
         #if ! [ -x "$(fallocate -h)" ]; then
 				#run_cmd dd if=/dev/zero of=$swapfile bs=1M count=$1
 				#else
-				run_cmd sudo fallocate -l $1 $swapfile
+				run_cmd sudo fallocate -l ${1}M $swapfile
 				#fi
 				run_cmd sudo chmod 600 $swapfile
         run_cmd sudo mkswap $swapfile
