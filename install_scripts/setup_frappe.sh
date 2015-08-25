@@ -107,34 +107,35 @@ run_cmd() {
 setup_swap() {
     check_os_release()
     {
-      while true
-      do
-        if cat /proc/version | grep redhat >/dev/null 2>&1
-        then
-          os_release=redhat
-          echo "$os_release"
-          break
-        fi
-        if cat /proc/version | grep centos >/dev/null 2>&1
-        then
-          os_release=centos
-          echo "$os_release"
-          break
-        fi
-        if cat /proc/version | grep ubuntu >/dev/null 2>&1
-        then
-          os_release=ubuntu
-          echo "$os_release"
-          break
-        fi
-        if cat /proc/version | grep -i debian >/dev/null 2>&1
-        then
-          os_release=debian
-          echo "$os_release"
-          break
-        fi
-        break
-        done
+      # while true
+      # do
+      #   if cat /proc/version | grep redhat >/dev/null 2>&1
+      #   then
+      #     os_release=redhat
+      #     echo "$os_release"
+      #     break
+      #   fi
+      #   if cat /proc/version | grep centos >/dev/null 2>&1
+      #   then
+      #     os_release=centos
+      #     echo "$os_release"
+      #     break
+      #   fi
+      #   if cat /proc/version | grep ubuntu >/dev/null 2>&1
+      #   then
+      #     os_release=ubuntu
+      #     echo "$os_release"
+      #     break
+      #   fi
+      #   if cat /proc/version | grep -i debian >/dev/null 2>&1
+      #   then
+      #     os_release=debian
+      #     echo "$os_release"
+      #     break
+      #   fi
+      #   break
+      #   done
+			os_release=$OS
     }
 
     check_memory_and_swap()
@@ -207,12 +208,13 @@ setup_swap() {
 				#else
 				run_cmd sudo fallocate -l $1 /$swapfile
 				#fi
-        run_cmd /sbin/mkswap $swapfile
-        run_cmd /sbin/swapon $swapfile
-        run_cmd /sbin/swapon -s
+				run_cmd sudo /sbin/chmod 600 /$swapfile
+        run_cmd sudo /sbin/mkswap $swapfile
+        run_cmd sudo /sbin/swapon $swapfile
+        run_cmd sudo /sbin/swapon -s
         echo "Step 3. Add swap partition successful.\n"
       else
-        echo "The /var/swap_file already exists. Returing to frappe installation.\n"
+        echo "The /swapfile already exists. Returing to frappe installation.\n"
         run_cmd sudo rm -rf $LOCKfile
         return 1
       fi
@@ -221,10 +223,21 @@ setup_swap() {
     remove_old_swap()
     {
       old_swap_file=$(grep swap $fstab|grep -v "#"|awk '{print $1}')
-      run_cmd swapoff $old_swap_file
-      run_cmd cp -f $fstab ${fstab}_bak
-      run_cmd sed -i '/swap/d' $fstab
+      run_cmd sudo swapoff $old_swap_file
+      run_cmd sudo cp -f $fstab ${fstab}_bak
+      run_cmd sudo sed -i '/swap/d' $fstab
+			old_swapiness_setting=$(grep swap $fstab|grep -v "#"|awk '{print $1}')
     }
+		adjust_swappiness() {
+			echo "Begin to adjust swappiness & vfs_cache_pressure"
+			run_cmd sudo sed '/vm\.swappiness/d' -ibak /etc/sysctl.conf
+			echo "vm.swappiness = 10" >> /etc/sysctl.conf
+			run_cmd sudo sysctl vm.swappiness=10
+
+			run_cmd sudo sed '/vm\.vfs_cache_pressure/d' -ibak /etc/sysctl.conf
+			echo "vm.vfs_cache_pressure = 50" >> /etc/sysctl.conf
+			run_cmd sudo sysctl vm.vfs_cache_pressure=50
+		}
 
     config_rhel_fstab()
     {
@@ -232,6 +245,7 @@ setup_swap() {
       then
         echo "Begin to modify $fstab.\n"
         echo "$swapfile	 swap	 swap defaults 0 0" >>$fstab
+				adjust_swappiness
       else
         echo "/etc/fstab is already configured. Returing to frappe installation.\n"
         run_cmd sudo rm -rf $LOCKfile
@@ -245,6 +259,7 @@ setup_swap() {
       then
         echo "Begin to modify $fstab.\n"
         echo "$swapfile	 none	 swap sw 0 0" >>$fstab
+				adjust_swappiness
       else
         echo "/etc/fstab is already configured. Returing to frappe installation.\n"
         run_cmd sudo rm -rf $LOCKfile
