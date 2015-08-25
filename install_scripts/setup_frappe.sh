@@ -16,7 +16,7 @@ get_passwd() {
 }
 
 set_opts () {
-	OPTS=`getopt -o v --long verbose,mysql-root-password:,frappe-user:,bench-branch:,setup-production,skip-setup-bench,help -n 'parse-options' -- "$@"`
+	OPTS=`getopt -o v --long verbose,mysql-root-password:,frappe-user:,bench-branch:,setup-production,skip-setup-bench,setup-swap,help -n 'parse-options' -- "$@"`
 
 	if [ $? != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
 
@@ -28,6 +28,7 @@ set_opts () {
 	BENCH_BRANCH="master"
 	SETUP_PROD=false
 	SETUP_BENCH=true
+	SETUP_SWAP=false
 
 	if [ -f ~/frappe_passwords.sh ]; then
 		source ~/frappe_passwords.sh
@@ -50,6 +51,7 @@ set_opts () {
 	--setup-production ) SETUP_PROD=true; shift;;
 	--bench-branch ) BENCH_BRANCH="$2"; shift;;
 	--skip-setup-bench ) SETUP_BENCH=false; shift;;
+	--setup-swap ) SETUP_SWAP=true; shift;;
 	-- ) shift; break ;;
 	* ) break ;;
 	esac
@@ -99,6 +101,203 @@ run_cmd() {
 		# $@
 		"$@" > /tmp/cmdoutput.txt 2>&1 || (cat /tmp/cmdoutput.txt && exit 1)
 	fi
+}
+
+## setup swap
+setup_swap() {
+    check_os_release()
+    {
+      while true
+      do
+        if cat /proc/version | grep redhat >/dev/null 2>&1
+        then
+          os_release=redhat
+          echo "$os_release"
+          break
+        fi
+        if cat /proc/version | grep centos >/dev/null 2>&1
+        then
+          os_release=centos
+          echo "$os_release"
+          break
+        fi
+        if cat /proc/version | grep ubuntu >/dev/null 2>&1
+        then
+          os_release=ubuntu
+          echo "$os_release"
+          break
+        fi
+        if cat /proc/version | grep -i debian >/dev/null 2>&1
+        then
+          os_release=debian
+          echo "$os_release"
+          break
+        fi
+        break
+        done
+    }
+
+    check_memory_and_swap()
+    {
+      mem_count=$(free -m|grep Mem|awk '{print $2}')
+      swap_count=$(free -m|grep Swap|awk '{print $2}')
+      if [ "$mem_count" -ge 15000 ]  && [ "$mem_count" -le 32768 ]
+      then
+        if [ "$swap_count" -ge 8000 ]
+        then
+          echo "Your swap is already enough. Do not need to add swap. Returing to frappe installation.\n"
+          rm -rf $LOCKfile
+          return 1
+        elif [ "$swap_count" -ne 0 ]
+        then
+          echo "Your swap is not enough, need to add swap.\n"
+          remove_old_swap
+          create_swap 8192
+        else
+          echo "Your swap is not enough, need to add swap.\n"
+          create_swap 8192
+        fi
+      elif [ "$mem_count" -ge 3900 ] && [ "$mem_count" -lt 15000 ]
+      then
+        if [ "$swap_count" -ge 3900 ]
+        then
+          echo "Your swap is already enough. Do not need to add swap. Returing to frappe installation.\n"
+          rm -rf $LOCKfile
+          return 1
+        elif [ "$swap_count" -ne 0 ]
+        then
+          echo "Your swap is not enough, need to add swap.\n"
+          remove_old_swap
+          create_swap 4096
+        else
+          echo "Your swap is not enough, need to add swap.\n"
+          create_swap 4096
+        fi
+      else
+        if [ "$swap_count" -ge 2000 ]
+        then
+          echo "Your swap is already enough. Do not need to add swap. Returing to frappe installation.\n"
+          rm -rf $LOCKfile
+          return 1
+        elif [ "$swap_count" -ne 0 ]
+        then
+          echo "Your swap is not enough,need to add swap.\n"
+          remove_old_swap
+          create_swap 2048
+        else
+          echo "Your swap is not enough,need to add swap.\n"
+          create_swap 2048
+        fi
+      fi
+    }
+
+    create_swap()
+    {
+      root_disk_size=$(df -m|grep -w "/"|awk '{print $4}')
+      if [ "$1" -gt "$((root_disk_size-1024))" ]
+      then
+        echo "The root disk partition has no space for $1M swap file. Returing to frappe installation.\n"
+        rm -rf $LOCKfile
+        return 1
+      fi
+      if [ ! -e $swapfile ]
+      then
+        dd if=/dev/zero of=$swapfile bs=1M count=$1
+        /sbin/mkswap $swapfile
+        /sbin/swapon $swapfile
+        /sbin/swapon -s
+        echo "Step 3. Add swap partition successful.\n"
+      else
+        echo "The /var/swap_file already exists. Returing to frappe installation.\n"
+        rm -rf $LOCKfile
+        return 1
+      fi
+    }
+
+    remove_old_swap()
+    {
+      old_swap_file=$(grep swap $fstab|grep -v "#"|awk '{print $1}')
+      swapoff $old_swap_file
+      cp -f $fstab ${fstab}_bak
+      sed -i '/swap/d' $fstab
+    }
+
+    config_rhel_fstab()
+    {
+      if ! grep $swapfile $fstab >/dev/null 2>&1
+      then
+        echo "Begin to modify $fstab.\n"
+        echo "$swapfile	 swap	 swap defaults 0 0" >>$fstab
+      else
+        echo "/etc/fstab is already configured. Returing to frappe installation.\n"
+        rm -rf $LOCKfile
+        return 1
+      fi
+    }
+
+    config_debian_fstab()
+    {
+      if ! grep $swapfile $fstab >/dev/null 2>&1
+      then
+        echo "Begin to modify $fstab.\n"
+        echo "$swapfile	 none	 swap sw 0 0" >>$fstab
+      else
+        echo "/etc/fstab is already configured. Returing to frappe installation.\n"
+        rm -rf $LOCKfile
+        return 1
+      fi
+    }
+
+    #################### swap start ####################
+    #check lock file , one time only let the script run one time
+    LOCKfile=/tmp/.setup-swap-lock-frappe
+    if [ -f "$LOCKfile" ]
+    then
+      echo "The script is already exist, please delete file from $LOCKfile next time to run this script.\n"
+      exit
+    else
+      echo "Step 1. No lock file, begin to create lock file and continue.\n"
+      touch $LOCKfile
+    fi
+
+    #check user
+    if [ $(id -u) != "0" ]
+    then
+      echo "Error: You must be root to run this script, please use root to setup the swap partition.\n"
+      rm -rf $LOCKfile
+      return 1
+    fi
+
+    os_release=$(check_os_release)
+    if [ "X$os_release" == "X" ]
+    then
+      echo "The OS does not identify, So the swap setup is skipped.\n"
+      rm -rf $LOCKfile
+      return 0
+    else
+      echo "Step 2. Check this OS type.\n"
+      echo "This OS is $os_release.\n"
+    fi
+
+    swapfile=/swapfile
+    fstab=/etc/fstab
+
+    echo "Step 3. Check the memory and swap.\n"
+    check_memory_and_swap
+
+    echo "Step 4. Begin to modify $fstab.\n"
+    case "$os_release" in
+    redhat|centos)
+      config_rhel_fstab
+      ;;
+    ubuntu|debian)
+      config_debian_fstab
+      ;;
+    esac
+
+    free -m
+    echo "All the swap setup related operations were completed. Returing to frappe installation.\n"
+    rm -rf $LOCKfile
 }
 
 ## add repos
