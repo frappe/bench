@@ -10,11 +10,10 @@ def restart_service(service):
 	elif os.path.basename(get_program(['service']) or '') == 'service':
 		exec_cmd("{service_manager} {service} restart ".format(service_manager='service', service=service))
 	else:
-		# look for 'service_manager' and 'service_manager_command' in config.json
-		config = get_config()
-		service_manager = config.get("service_manager")
+		# look for 'service_manager' and 'service_manager_command' in environment
+		service_manager = os.environ.get("BENCH_SERVICE_MANAGER")
 		if service_manager:
-			service_manager_command = (config.get("service_manager_command")
+			service_manager_command = (os.environ.get("BENCH_SERVICE_MANAGER_COMMAND")
 				or "{service_manager} restart {service}").format(service_manager=service_manager, service=service)
 			exec_cmd(service_manager_command)
 
