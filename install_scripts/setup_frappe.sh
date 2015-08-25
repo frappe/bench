@@ -211,7 +211,7 @@ setup_swap() {
         run_cmd sudo mkswap $swapfile
         run_cmd sudo swapon $swapfile
         run_cmd sudo swapon -s
-        echo "Step 3. Add swap partition successful."
+        echo "Step 3. The swap partition setup successful."
       else
         echo "The /swapfile already exists. Returing to frappe installation."
         run_cmd sudo rm -rf $LOCKfile
@@ -225,10 +225,10 @@ setup_swap() {
       run_cmd sudo swapoff $old_swap_file
       run_cmd sudo cp -f $fstab ${fstab}_bak
       run_cmd sudo sed -i '/swap/d' $fstab
-			old_swapiness_setting=$(grep swap $fstab|grep -v "#"|awk '{print $1}')
     }
+
 		adjust_swappiness() {
-			echo "Begin to adjust swappiness & vfs_cache_pressure"
+			echo "Step 5. Begin to adjust swappiness & vfs_cache_pressure"
 			run_cmd sudo sed '/vm\.swappiness/d' -ibak /etc/sysctl.conf
 			echo "vm.swappiness = 10" >> /etc/sysctl.conf
 			run_cmd sudo sysctl vm.swappiness=10
