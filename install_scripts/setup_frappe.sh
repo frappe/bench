@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+set -x
 
 
 ## Utils
@@ -105,217 +106,149 @@ run_cmd() {
 
 ## setup swap
 setup_swap() {
-    check_os_release()
-    {
-      while true
-      do
-        if cat /proc/version | grep redhat >/dev/null 2>&1
-        then
-          os_release=redhat
-          echo "$os_release"
-          break
-        fi
-        if cat /proc/version | grep centos >/dev/null 2>&1
-        then
-          os_release=centos
-          echo "$os_release"
-          break
-        fi
-        if cat /proc/version | grep ubuntu >/dev/null 2>&1
-        then
-          os_release=ubuntu
-          echo "$os_release"
-          break
-        fi
-        if cat /proc/version | grep -i debian >/dev/null 2>&1
-        then
-          os_release=debian
-          echo "$os_release"
-          break
-        fi
-        break
-      done
-    }
+	check_memory_and_swap() {
+		mem_count=$(free -m|grep Mem|awk '{print $2}')
+		swap_count=$(free -m|grep Swap|awk '{print $2}')
+		if [ "$mem_count" -ge 15000 ]  && [ "$mem_count" -le 32768 ]
+			then
+			if [ "$swap_count" -ge 8000 ]
+				then
+				echo "Your swap is already enough. Do not need to add swap. Returing to frappe installation."
 
-    check_memory_and_swap()
-    {
-      mem_count=$(free -m|grep Mem|awk '{print $2}')
-      swap_count=$(free -m|grep Swap|awk '{print $2}')
-      if [ "$mem_count" -ge 15000 ]  && [ "$mem_count" -le 32768 ]
-      then
-        if [ "$swap_count" -ge 8000 ]
-        then
-          echo "Your swap is already enough. Do not need to add swap. Returing to frappe installation."
-          run_cmd sudo rm -rf $LOCKfile
-          return 1
-        elif [ "$swap_count" -ne 0 ]
-        then
-          echo "Your swap is not enough, need to add swap."
-          remove_old_swap
-          create_swap 8192
-        else
-          echo "Your swap is not enough, need to add swap."
-          create_swap 8192
-        fi
-      elif [ "$mem_count" -ge 3900 ] && [ "$mem_count" -lt 15000 ]
-      then
-        if [ "$swap_count" -ge 3900 ]
-        then
-          echo "Your swap is already enough. Do not need to add swap. Returing to frappe installation."
-          run_cmd sudo rm -rf $LOCKfile
-          return 1
-        elif [ "$swap_count" -ne 0 ]
-        then
-          echo "Your swap is not enough, need to add swap."
-          remove_old_swap
-          create_swap 4096
-        else
-          echo "Your swap is not enough, need to add swap."
-          create_swap 4096
-        fi
-      else
-        if [ "$swap_count" -ge 2000 ]
-        then
-          echo "Your swap is already enough. Do not need to add swap. Returing to frappe installation."
-          run_cmd sudo rm -rf $LOCKfile
-          return 1
-        elif [ "$swap_count" -ne 0 ]
-        then
-          echo "Your swap is not enough, need to add swap."
-          remove_old_swap
-          create_swap 2048
-        else
-          echo "Your swap is not enough, need to add swap."
-          create_swap 2048
-        fi
-      fi
-    }
+				return 1
+			elif [ "$swap_count" -ne 0 ]
+				then
+				echo "Your swap is not enough, need to add swap."
+				remove_old_swap
+				create_swap 8192
+			else
+				echo "Your swap is not enough, need to add swap."
+				create_swap 8192
+			fi
+		elif [ "$mem_count" -ge 3900 ] && [ "$mem_count" -lt 15000 ]
+			then
+			if [ "$swap_count" -ge 3900 ]
+				then
+				echo "Your swap is already enough. Do not need to add swap. Returing to frappe installation."
 
-    create_swap()
-    {
-      root_disk_size=$(df -m|grep -w "/"|awk '{print $4}'|head -1)
-      if [ "$1" -gt "$((root_disk_size-1024))" ]
-      then
-        echo "The root disk partition has no space for $1M swap file. Returing to frappe installation."
-        run_cmd sudo rm -rf $LOCKfile
-        return 1
-      fi
-      if [ ! -e $swapfile ]
-      then
-        #if ! [ -x "$(fallocate -h)" ]; then
-				#run_cmd dd if=/dev/zero of=$swapfile bs=1M count=$1
-				#else
-				run_cmd sudo fallocate -l ${1}M $swapfile
-				#fi
-				run_cmd sudo chmod 600 $swapfile
-        run_cmd sudo mkswap $swapfile
-        run_cmd sudo swapon $swapfile
-        run_cmd sudo swapon -s
-        echo "Step 3. The swap partition setup successful."
-      else
-        echo "The /swapfile already exists. Returing to frappe installation."
-        run_cmd sudo rm -rf $LOCKfile
-        return 1
-      fi
-    }
+				return 1
+			elif [ "$swap_count" -ne 0 ]
+				then
+				echo "Your swap is not enough, need to add swap."
+				remove_old_swap
+				create_swap 4096
+			else
+				echo "Your swap is not enough, need to add swap."
+				create_swap 4096
+			fi
+		else
+			if [ "$swap_count" -ge 2000 ]
+				then
+				echo "Your swap is already enough. Do not need to add swap. Returing to frappe installation."
 
-    remove_old_swap()
-    {
-      old_swap_file=$(grep swap $fstab|grep -v "#"|awk '{print $1}')
-      run_cmd sudo swapoff $old_swap_file
-      run_cmd sudo cp -f $fstab ${fstab}_bak
-      run_cmd sudo sed -i '/swap/d' $fstab
-    }
+				return 1
+			elif [ "$swap_count" -ne 0 ]
+				then
+				echo "Your swap is not enough, need to add swap."
+				remove_old_swap
+				create_swap 2048
+			else
+				echo "Your swap is not enough, need to add swap."
+				create_swap 2048
+			fi
+		fi
+	}
 
-		adjust_swappiness() {
-			echo "Step 5. Begin to adjust swappiness & vfs_cache_pressure"
-			run_cmd sudo sed '/vm\.swappiness/d' -ibak /etc/sysctl.conf
-			echo "vm.swappiness = 10" >> /etc/sysctl.conf
-			run_cmd sudo sysctl vm.swappiness=10
+	create_swap() {
+		root_disk_size=$(df -m|grep -w "/"|awk '{print $4}'|head -1)
+		if [ "$1" -gt "$((root_disk_size-1024))" ]
+			then
+			echo "The root disk partition has no space for $1M swap file. Returing to frappe installation."
 
-			run_cmd sudo sed '/vm\.vfs_cache_pressure/d' -ibak /etc/sysctl.conf
-			echo "vm.vfs_cache_pressure = 50" >> /etc/sysctl.conf
-			run_cmd sudo sysctl vm.vfs_cache_pressure=50
-		}
+			return 1
+		fi
+		if [ ! -e $swapfile ]
+			then
+			run_cmd sudo fallocate -l ${1}M $swapfile
+			run_cmd sudo chmod 600 $swapfile
+			run_cmd sudo mkswap $swapfile
+			run_cmd sudo swapon $swapfile
+			run_cmd sudo swapon -s
+			echo "The swap partition setup successful."
+		else
+			echo "The /swapfile already exists. Returing to frappe installation."
 
-    config_rhel_fstab()
-    {
-      if ! grep $swapfile $fstab >/dev/null 2>&1
-      then
-        echo "Begin to modify $fstab."
-        echo "$swapfile	 swap	 swap defaults 0 0" >>$fstab
-				adjust_swappiness
-      else
-        echo "/etc/fstab is already configured. Returing to frappe installation."
-        run_cmd sudo rm -rf $LOCKfile
-        return 1
-      fi
-    }
+			return 1
+		fi
+	}
 
-    config_debian_fstab()
-    {
-      if ! grep $swapfile $fstab >/dev/null 2>&1
-      then
-        echo "Begin to modify $fstab."
-        echo "$swapfile	 none	 swap sw 0 0" >>$fstab
-				adjust_swappiness
-      else
-        echo "/etc/fstab is already configured. Returing to frappe installation."
-        run_cmd sudo rm -rf $LOCKfile
-        return 1
-      fi
-    }
+	remove_old_swap() {
+		old_swap_file=$(grep swap $fstab|grep -v "#"|awk '{print $1}')
+		run_cmd sudo swapoff $old_swap_file
+		run_cmd sudo cp -f $fstab ${fstab}_bak
+		run_cmd sudo sed -i '/swap/d' $fstab
+	}
+
+	adjust_swappiness() {
+		echo "Step 5. Begin to adjust swappiness & vfs_cache_pressure"
+		run_cmd sudo sed '/vm\.swappiness/d' -ibak /etc/sysctl.conf
+		echo "vm.swappiness = 10" >> /etc/sysctl.conf
+		run_cmd sudo sysctl vm.swappiness=10
+
+		run_cmd sudo sed '/vm\.vfs_cache_pressure/d' -ibak /etc/sysctl.conf
+		echo "vm.vfs_cache_pressure = 50" >> /etc/sysctl.conf
+		run_cmd sudo sysctl vm.vfs_cache_pressure=50
+	}
+
+	config_centos_fstab() {
+		if ! grep $swapfile $fstab >/dev/null 2>&1
+			then
+			echo "Begin to modify $fstab."
+			echo "$swapfile	 swap	 swap defaults 0 0" >>$fstab
+			adjust_swappiness
+		else
+			echo "/etc/fstab is already configured. Returing to frappe installation."
+
+			return 1
+		fi
+	}
+
+	config_debian_fstab() {
+		if ! grep $swapfile $fstab >/dev/null 2>&1
+			then
+			echo "Begin to modify $fstab."
+			echo "$swapfile	 none	 swap sw 0 0" >>$fstab
+			adjust_swappiness
+		else
+			echo "/etc/fstab is already configured. Returing to frappe installation."
+
+			return 1
+		fi
+	}
 
     #################### swap start ####################
-    #check lock file , one time only let the script run one time
-    LOCKfile=/tmp/.setup-swap-lock-frappe
-    if [ -f "$LOCKfile" ]
-    then
-      echo "The script is already exist, please delete file from $LOCKfile next time to run this script."
-      exit
-    else
-      echo "Step 1. No lock file, begin to create lock file and continue."
-      run_cmd sudo touch $LOCKfile
-    fi
+swapfile=/swapfile
+fstab=/etc/fstab
 
-    #check user
-    if [ $(id -u) != "0" ]
-    then
-      echo "Error: You must be root to run this script, please use root to setup the swap partition."
-      run_cmd sudo rm -rf $LOCKfile
-      return 1
-    fi
+echo "Check the memory and swap."
+check_memory_and_swap
 
-    os_release=$(check_os_release)
-    if [ "X$os_release" == "X" ]
-    then
-      echo "The OS does not identify, So the swap setup is skipped."
-      run_cmd sudo rm -rf $LOCKfile
-      return 0
-    else
-      echo "Step 2. Check this OS type."
-      echo "This OS is $os_release."
-    fi
+echo "Making swap partition persistant by adding it to $fstab."
 
-    swapfile=/swapfile
-    fstab=/etc/fstab
-
-    echo "Step 3. Check the memory and swap."
-    check_memory_and_swap
-
-    echo "Step 4. Begin to modify $fstab."
-    case "$os_release" in
-    redhat|centos)
-      config_rhel_fstab
-      ;;
-    ubuntu|debian)
-      config_debian_fstab
-      ;;
-    esac
-
-    free -m
-    echo "All the swap setup related operations were completed. Returing to frappe installation."
-    run_cmd sudo rm -rf $LOCKfile
+case "$OS" in
+	centos)
+	config_centos_fstab
+	;;
+	Ubuntu|debian)
+	config_debian_fstab
+	;;
+	*)
+	echo "Unable to identify OS, ignoring swap setup instructions."
+	return 1
+	;;
+esac
+# free -m
+echo "Returing to frappe installation."
 }
 
 ## add repos
@@ -624,10 +557,10 @@ add_user() {
 main() {
 	set_opts $@
 	get_distro
-	add_maria_db_repo
 	if $SETUP_SWAP; then
 		setup_swap
 	fi
+	add_maria_db_repo
 	echo Installing packages for $OS\. This might take time...
 	install_packages
 	if [ $OS == "centos" ]; then
