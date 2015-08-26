@@ -541,7 +541,10 @@ def post_upgrade(from_ver, to_ver, bench='.'):
 		setup_procfile(bench=bench)
 
 def update_translations_p(args):
-	update_translations(*args)
+	try:
+		update_translations(*args)
+	except requests.exceptions.HTTPError:
+		print 'Download failed for', args[0], args[1]
 
 def download_translations_p():
 	pool = multiprocessing.Pool(8)
