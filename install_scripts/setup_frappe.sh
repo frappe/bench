@@ -410,14 +410,13 @@ install_packages() {
 	elif [ $OS == "debian" ] || [ $OS == "Ubuntu" ]; then
 		export DEBIAN_FRONTEND=noninteractive
 		setup_debconf
-<<<<<<< HEAD
-		run_cmd sudo apt-get update && apt-get upgrade -y
-=======
 		if [ $OS == "debian" ]; then
 			run_cmd bash -c "curl -sL https://deb.nodesource.com/setup_0.12 | bash -"
 		fi
 		run_cmd sudo apt-get update
->>>>>>> frappe/master
+=======
+		run_cmd sudo apt-get update
+>>>>>>> parent of 394ca9b... Helps fix issues with outdated system packages
 		run_cmd sudo apt-get install -y python-dev python-setuptools build-essential python-mysqldb git ntp vim screen htop mariadb-server mariadb-common libmariadbclient-dev  libxslt1.1 libxslt1-dev redis-server libssl-dev libcrypto++-dev postfix nginx supervisor python-pip fontconfig libxrender1 libxext6 xfonts-75dpi xfonts-base nodejs npm
 
 		echo "Installing wkhtmltopdf"
