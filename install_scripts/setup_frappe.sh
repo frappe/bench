@@ -129,8 +129,7 @@ setup_swap() {
 		if [ "$1" -gt "$((root_disk_size-1024))" ]
 			then
 			echo "The root disk partition has no space for $1M swap file. Returing to frappe installation."
-
-			return 1
+			return 0
 		fi
 		if [ ! -e $swapfile ]
 			then
@@ -138,12 +137,10 @@ setup_swap() {
 			run_cmd sudo chmod 600 $swapfile
 			run_cmd sudo mkswap $swapfile
 			run_cmd sudo swapon $swapfile
-			run_cmd sudo swapon -s
 			echo "The swap partition setup successful."
 		else
 			echo "The /swapfile already exists. Returing to frappe installation."
-
-			return 1
+			return 0
 		fi
 	}
 
@@ -173,8 +170,7 @@ setup_swap() {
 			adjust_swappiness
 		else
 			echo "/etc/fstab is already configured. Returing to frappe installation."
-
-			return 1
+			return 0
 		fi
 	}
 
@@ -186,8 +182,7 @@ setup_swap() {
 			adjust_swappiness
 		else
 			echo "/etc/fstab is already configured. Returing to frappe installation."
-
-			return 1
+			return 0
 		fi
 	}
 
@@ -199,7 +194,6 @@ echo "Check the memory and swap."
 check_memory_and_swap
 
 echo "Making swap partition persistant by adding it to $fstab."
-
 case "$OS" in
 	centos)
 	config_centos_fstab
@@ -209,7 +203,7 @@ case "$OS" in
 	;;
 	*)
 	echo "Unable to identify OS, ignoring swap setup instructions."
-	return 1
+	return 0
 	;;
 esac
 # free -m
