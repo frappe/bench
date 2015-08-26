@@ -117,11 +117,11 @@ setup_swap() {
 				return 1
 			elif [ "$swap_count" -ne 0 ]
 				then
-				echo "Your swap is not enough, need to add swap."
+				echo "Your swap is not enough, creating swap partition."
 				remove_old_swap
 				create_swap 8192
 			else
-				echo "Your swap is not enough, need to add swap."
+				echo "Your swap is not enough, creating swap partition."
 				create_swap 8192
 			fi
 		elif [ "$mem_count" -ge 3900 ] && [ "$mem_count" -lt 15000 ]
@@ -133,11 +133,11 @@ setup_swap() {
 				return 1
 			elif [ "$swap_count" -ne 0 ]
 				then
-				echo "Your swap is not enough, need to add swap."
+				echo "Your swap is not enough, creating swap partition."
 				remove_old_swap
 				create_swap 4096
 			else
-				echo "Your swap is not enough, need to add swap."
+				echo "Your swap is not enough, creating swap partition."
 				create_swap 4096
 			fi
 		else
@@ -148,11 +148,11 @@ setup_swap() {
 				return 1
 			elif [ "$swap_count" -ne 0 ]
 				then
-				echo "Your swap is not enough, need to add swap."
+				echo "Your swap is not enough, creating swap partition."
 				remove_old_swap
 				create_swap 2048
 			else
-				echo "Your swap is not enough, need to add swap."
+				echo "Your swap is not enough, creating swap partition."
 				create_swap 2048
 			fi
 		fi
@@ -189,7 +189,7 @@ setup_swap() {
 	}
 
 	adjust_swappiness() {
-		echo "Step 5. Begin to adjust swappiness & vfs_cache_pressure"
+		echo "Adjusting swappiness & vfs_cache_pressure"
 		run_cmd sudo sed '/vm\.swappiness/d' -ibak /etc/sysctl.conf
 		echo "vm.swappiness = 10" >> /etc/sysctl.conf
 		run_cmd sudo sysctl vm.swappiness=10
