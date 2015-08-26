@@ -108,53 +108,19 @@ setup_swap() {
 	check_memory_and_swap() {
 		mem_count=$(free -m|grep Mem|awk '{print $2}')
 		swap_count=$(free -m|grep Swap|awk '{print $2}')
-		if [ "$mem_count" -ge 15000 ]  && [ "$mem_count" -le 32768 ]
+		if  [ "$mem_count" -le 2048 ]
 			then
-			if [ "$swap_count" -ge 8000 ]
+			if [ "$swap_count" -ne 0 ]
 				then
-				echo "Your swap is already enough. Do not need to add swap. Returing to frappe installation."
-
-				return 1
-			elif [ "$swap_count" -ne 0 ]
-				then
-				echo "Your swap is not enough, creating swap partition."
 				remove_old_swap
-				create_swap 8192
-			else
-				echo "Your swap is not enough, creating swap partition."
-				create_swap 8192
 			fi
-		elif [ "$mem_count" -ge 3900 ] && [ "$mem_count" -lt 15000 ]
-			then
-			if [ "$swap_count" -ge 3900 ]
-				then
-				echo "Your swap is already enough. Do not need to add swap. Returing to frappe installation."
-
-				return 1
-			elif [ "$swap_count" -ne 0 ]
-				then
-				echo "Your swap is not enough, creating swap partition."
-				remove_old_swap
-				create_swap 4096
-			else
-				echo "Your swap is not enough, creating swap partition."
-				create_swap 4096
-			fi
+				create_swap $((mem_count*3))
 		else
-			if [ "$swap_count" -ge 2000 ]
+			if [ "$swap_count" -ne 0 ]
 				then
-				echo "Your swap is already enough. Do not need to add swap. Returing to frappe installation."
-
-				return 1
-			elif [ "$swap_count" -ne 0 ]
-				then
-				echo "Your swap is not enough, creating swap partition."
 				remove_old_swap
-				create_swap 2048
-			else
-				echo "Your swap is not enough, creating swap partition."
-				create_swap 2048
 			fi
+			create_swap $((mem_count+2048))
 		fi
 	}
 
