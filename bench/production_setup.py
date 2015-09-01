@@ -64,4 +64,6 @@ def setup_production(user, bench='.'):
 	os.symlink(os.path.abspath(os.path.join(bench, 'config', 'supervisor.conf')), os.path.join(get_supervisor_confdir(), supervisor_conf_filename))
 	os.symlink(os.path.abspath(os.path.join(bench, 'config', 'nginx.conf')), '/etc/nginx/conf.d/frappe.conf')
 	exec_cmd('supervisorctl reload')
+	if os.environ.get('NO_SERVICE_RESTART'):
+		return
 	restart_service('nginx')
