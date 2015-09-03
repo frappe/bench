@@ -150,7 +150,10 @@ def switch_branch(branch, apps=None, bench='.', upgrade=False):
 		raise MajorVersionUpgradeException("Switching to {0} will cause upgrade from {1} to {2}. Pass --upgrade to confirm".format(branch, version_upgrade[1], version_upgrade[2]), version_upgrade[1], version_upgrade[2])
 
 	if not apps:
-	    apps = ('frappe', 'erpnext', 'shopping_cart')
+	    apps = ['frappe', 'erpnext']
+		if branch=="v4.x.x":
+			apps.append('shopping_cart')
+
 	for app in apps:
 		app_dir = os.path.join(apps_dir, app)
 		if os.path.exists(app_dir):
