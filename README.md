@@ -44,7 +44,12 @@ mysql_install_db
 mysql.server start
 mysqladmin -uroot password ROOTPASSWORD
 ```
-
+For installing Redis, pip and npm
+```
+sudo easy_install pip
+brew install redis
+brew install npm
+```
 	
 Install bench as a *non root* user,
 
