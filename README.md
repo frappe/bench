@@ -37,20 +37,8 @@ Install pre-requisites,
 * [Redis](http://redis.io/topics/quickstart)
 * [wkhtmltopdf](http://wkhtmltopdf.org/downloads.html) (optional, required for pdf generation)
 
-For installing MaraiDB on OSX, use:
-```
-brew install mariadb
-mysql_install_db
-mysql.server start
-mysqladmin -uroot password ROOTPASSWORD
-```
-For installing Redis, pip and npm
-```
-sudo easy_install pip
-brew install redis
-brew install npm
-```
-	
+[Installing pre-requisites on OSX](https://github.com/frappe/bench/wiki/Installing-Bench-Pre-requisites-on-MacOSX)
+
 Install bench as a *non root* user,
 
 		git clone https://github.com/frappe/bench bench-repo
@@ -105,7 +93,7 @@ Basic Usage
 		bench start
 
 	To login to Frappe / ERPNext, open your browser and go to `localhost:8000`
-	
+
 	The default user name is "Administrator" and password is what you set when you created the new site.
 
 
@@ -210,7 +198,7 @@ then copy/link this file to the supervisor config directory and reload it for it
 take effect.
 
 eg,
-	
+
 ```
 bench setup supervisor
 sudo ln -s `pwd`/config/supervisor.conf /etc/supervisor/conf.d/frappe.conf
@@ -218,7 +206,7 @@ sudo ln -s `pwd`/config/supervisor.conf /etc/supervisor/conf.d/frappe.conf
 
 Note: For CentOS 7, the extension should be `ini`, thus the command becomes
 ```
-bench setup supervisor 
+bench setup supervisor
 sudo ln -s `pwd`/config/supervisor.conf /etc/supervisor/conf.d/frappe.ini #for CentOS 7 only
 ```
 
