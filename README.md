@@ -44,14 +44,7 @@ Install pre-requisites,
 * [Redis](http://redis.io/topics/quickstart)
 * [wkhtmltopdf](http://wkhtmltopdf.org/downloads.html) (optional, required for pdf generation)
 
-For installing MaraiDB on OSX, use:
-```
-brew install mariadb
-mysql_install_db
-mysql.server start
-mysqladmin -uroot password ROOTPASSWORD
-```
-
+[Installing pre-requisites on OSX](https://github.com/frappe/bench/wiki/Installing-Bench-Pre-requisites-on-MacOSX)
 
 Install bench as a *non root* user,
 
