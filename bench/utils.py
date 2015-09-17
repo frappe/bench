@@ -547,7 +547,7 @@ def update_translations_p(args):
 		print 'Download failed for', args[0], args[1]
 
 def download_translations_p():
-	pool = multiprocessing.Pool(8)
+	pool = multiprocessing.Pool(4)
 
 	langs = get_langs()
 	apps = ('frappe', 'erpnext')
@@ -566,7 +566,7 @@ def get_langs():
 	lang_file = 'apps/frappe/frappe/data/languages.txt'
 	with open(lang_file) as f:
 		lang_data = f.read()
-	langs = [line.split('\t')[0] for line in lang_data.splitlines()]
+	langs = [line.split()[0] for line in lang_data.splitlines()]
 	langs.remove('en')
 	return langs
 
@@ -574,12 +574,18 @@ def get_langs():
 def update_translations(app, lang):
 	translations_dir = os.path.join('apps', app, app, 'translations')
 	csv_file = os.path.join(translations_dir, lang + '.csv')
-	r = requests.get("https://translate.erpnext.com/files/{}-{}.csv".format(app, lang))
+	url = "https://translate.erpnext.com/files/{}-{}.csv".format(app, lang)
+	r = requests.get(url, stream=True)
 	r.raise_for_status()
-	with open(csv_file, 'wb') as f:
-		f.write(r.text.encode('utf-8'))
-	print 'downloaded for', app, lang
 
+	with open(csv_file, 'wb') as f:
+		for chunk in r.iter_content(chunk_size=1024):
+			# filter out keep-alive new chunks
+			if chunk:
+				f.write(chunk)
+				f.flush()
+
+	print 'downloaded for', app, lang
 
 def print_output(p):
 	while p.poll() is None:
