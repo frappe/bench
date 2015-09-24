@@ -52,8 +52,8 @@ def create_github_release(owner, repo, tag_name, log, gh_username=None, gh_passw
 		'target_commitish': 'master',
 		'name': 'Release ' + tag_name,
 		'body': log,
-		'draft': 'false',
-		'prerelease': 'false'
+		'draft': False,
+		'prerelease': False
 	}
 	for i in xrange(3):
 		try:
@@ -66,6 +66,7 @@ def create_github_release(owner, repo, tag_name, log, gh_username=None, gh_passw
 			if i !=2:
 				continue
 			else:
+				print r.json()
 				raise
 	return r
 
