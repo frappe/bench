@@ -51,7 +51,8 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	if os.path.exists(path):
 		print 'Directory {} already exists!'.format(path)
-		sys.exit(1)
+		raise Exception("Site directory already exists")
+		# sys.exit(1)
 
 	os.mkdir(path)
 	for dirname in ('apps', 'sites', 'config', 'logs'):

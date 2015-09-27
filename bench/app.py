@@ -124,7 +124,7 @@ def get_current_version(app, bench='.'):
 def get_upstream_version(app, branch=None, bench='.'):
 	repo_dir = get_repo_dir(app, bench=bench)
 	if not branch:
-		branch = get_current_branch(app)
+		branch = get_current_branch(app, bench=bench)
 	try:
 		contents = subprocess.check_output(['git', 'show', 'upstream/{branch}:setup.py'.format(branch=branch)], cwd=repo_dir, stderr=subprocess.STDOUT)
 	except subprocess.CalledProcessError, e:
