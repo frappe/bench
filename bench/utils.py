@@ -614,5 +614,32 @@ def log_line(data, stream):
 		return sys.stderr.write(data)
 	return sys.stdout.write(data)
 
+def validate_os_requirements():
+	valid = validate_libjpeg()
+	return valid
+
+def validate_libjpeg():
+	out = get_output("whereis", "libjpeg")
+
+	if not out:
+		distro = platform.linux_distribution()
+		distro_name = distro[0].lower()
+		if "centos" in distro_name:
+			print "Please install libjpeg using the command:"
+			print "sudo yum install libjpeg-devel"
+			return False
+
+		elif "ubuntu" in distro_name or "elementary os" in distro_name or "debian" in distro_name:
+			print "Please install libjpeg using the command:"
+			print "sudo apt-get install libjpeg-dev"
+			return False
+
+	return True
+
+def get_output(*cmd):
+	s = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+	out = s.stdout.read()
+	s.stdout.close()
+	return out
 
 FRAPPE_VERSION = get_current_frappe_version()

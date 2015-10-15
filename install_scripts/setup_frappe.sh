@@ -179,10 +179,10 @@ install_packages() {
 		run_cmd sudo yum groupinstall -y "Development tools"
 		if [ $OS_VER == "6" ]; then
 			run_cmd add_ius_repo
-			run_cmd sudo yum install -y git MariaDB-server MariaDB-client MariaDB-compat python-setuptools nginx zlib-devel bzip2-devel openssl-devel postfix python27-devel python27 libxml2 libxml2-devel libxslt libxslt-devel redis MariaDB-devel libXrender libXext python27-setuptools cronie sudo which xorg-x11-fonts-Type1 xorg-x11-fonts-75dpi nodejs npm
+			run_cmd sudo yum install -y git MariaDB-server MariaDB-client MariaDB-compat python-setuptools nginx zlib-devel bzip2-devel openssl-devel postfix python27-devel python27 libxml2 libxml2-devel libxslt libxslt-devel redis MariaDB-devel libXrender libXext python27-setuptools cronie sudo which xorg-x11-fonts-Type1 xorg-x11-fonts-75dpi nodejs npm libjpeg-devel
 		elif [ $OS_VER == "7" ]; then
 			run_cmd add_epel_centos7
-			run_cmd sudo yum install -y git mariadb-server mariadb-devel python-setuptools nginx zlib-devel bzip2-devel openssl-devel postfix python-devel libxml2 libxml2-devel libxslt libxslt-devel redis libXrender libXext supervisor cronie sudo which xorg-x11-fonts-75dpi xorg-x11-fonts-Type1 nodejs npm
+			run_cmd sudo yum install -y git mariadb-server mariadb-devel python-setuptools nginx zlib-devel bzip2-devel openssl-devel postfix python-devel libxml2 libxml2-devel libxslt libxslt-devel redis libXrender libXext supervisor cronie sudo which xorg-x11-fonts-75dpi xorg-x11-fonts-Type1 nodejs npm libjpeg-devel
 		fi
 
 		echo "Installing wkhtmltopdf"
@@ -197,7 +197,7 @@ install_packages() {
 			run_cmd bash -c "curl -sL https://deb.nodesource.com/setup_0.12 | bash -"
 		fi
 		run_cmd sudo apt-get update
-		run_cmd sudo apt-get install -y python-dev python-setuptools build-essential python-mysqldb git ntp vim screen htop mariadb-server mariadb-common libmariadbclient-dev  libxslt1.1 libxslt1-dev redis-server libssl-dev libcrypto++-dev postfix nginx supervisor python-pip fontconfig libxrender1 libxext6 xfonts-75dpi xfonts-base nodejs npm
+		run_cmd sudo apt-get install -y python-dev python-setuptools build-essential python-mysqldb git ntp vim screen htop mariadb-server mariadb-common libmariadbclient-dev  libxslt1.1 libxslt1-dev redis-server libssl-dev libcrypto++-dev postfix nginx supervisor python-pip fontconfig libxrender1 libxext6 xfonts-75dpi xfonts-base nodejs npm libjpeg-dev
 
 		echo "Installing wkhtmltopdf"
 		install_wkhtmltopdf_deb
