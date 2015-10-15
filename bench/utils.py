@@ -351,7 +351,13 @@ def update_requirements(bench='.'):
 	for app in os.listdir(apps_dir):
 		req_file = os.path.join(apps_dir, app, 'requirements.txt')
 		if os.path.exists(req_file):
-			exec_cmd("{pip} install -q -r {req_file}".format(pip=pip, req_file=req_file))
+			try:
+				exec_cmd("{pip} install -q -r {req_file}".format(pip=pip, req_file=req_file))
+			except CommandFailedError, e:
+				if "Pillow" in e:
+					print_pillow_dependencies()
+
+				raise
 
 def backup_site(site, bench='.'):
 	if FRAPPE_VERSION == 4:
@@ -614,27 +620,21 @@ def log_line(data, stream):
 		return sys.stderr.write(data)
 	return sys.stdout.write(data)
 
-def validate_os_requirements():
-	valid = validate_libjpeg()
-	return valid
+def print_pillow_dependencies():
+	distro = platform.linux_distribution()
+	distro_name = distro[0].lower()
+	if "centos" in distro_name or "fedora" in distro_name:
+		print "Please install these dependencies using the command:"
+		print "sudo yum install libtiff-devel libjpeg-devel libzip-devel freetype-devel lcms2-devel libwebp-devel tcl-devel tk-devel"
 
-def validate_libjpeg():
-	out = get_output("whereis", "libjpeg")
+	elif "ubuntu" in distro_name or "elementary os" in distro_name or "debian" in distro_name:
+		print "Please install these dependencies using the command:"
 
-	if not out:
-		distro = platform.linux_distribution()
-		distro_name = distro[0].lower()
-		if "centos" in distro_name:
-			print "Please install libjpeg using the command:"
-			print "sudo yum install libjpeg-devel"
-			return False
+		if "ubuntu" in distro_name and distro[1]=="12.04":
+			print "sudo apt-get install libtiff4-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.5-dev tk8.5-dev python-tk"
+		else:
+			print "sudo apt-get install libtiff5-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python-tk"
 
-		elif "ubuntu" in distro_name or "elementary os" in distro_name or "debian" in distro_name:
-			print "Please install libjpeg using the command:"
-			print "sudo apt-get install libjpeg-dev"
-			return False
-
-	return True
 
 def get_output(*cmd):
 	s = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)

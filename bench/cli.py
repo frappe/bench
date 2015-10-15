@@ -245,9 +245,6 @@ def _update(pull=False, patch=False, build=False, bench=False, auto=False, resta
 
 def update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, requirements=False, no_backup=False, upgrade=False, bench_path='.', force=False):
 	conf = get_config(bench=bench_path)
-	if not validate_os_requirements():
-		return
-
 	version_upgrade = is_version_upgrade(bench=bench_path)
 
 	if version_upgrade[0] and not upgrade:
