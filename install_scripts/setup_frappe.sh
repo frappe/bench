@@ -237,9 +237,9 @@ install_wkhtmltopdf_centos () {
 }
 
 install_wkhtmltopdf_deb () {
-	if [[ $OS_VER == "utopic" ||  $OS_VER == "vivid" ]]; then
-		echo "Cannot install wkhtmltodpdf. Skipping..."
-		return 0
+	if [[ $OS_VER == "utopic" ||  $OS_VER == "vivid" ||  $OS_VER == "wily" ]]; then
+		echo "Installing wkhtmltox package for trusty (Ubuntu 14.4) even if you are using $OS_VER."
+		WK_VER="trusty"
 	fi
 	if [[ $OS == "debian" &&  $OS_VER == "7" ]]; then
 		WK_VER="wheezy"
