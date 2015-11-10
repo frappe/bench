@@ -237,15 +237,16 @@ install_wkhtmltopdf_centos () {
 }
 
 install_wkhtmltopdf_deb () {
+	WK_VER=$OS_VER
+	
 	if [[ $OS_VER == "utopic" ||  $OS_VER == "vivid" ||  $OS_VER == "wily" ]]; then
 		echo "Installing wkhtmltox package for trusty (Ubuntu 14.4) even if you are using $OS_VER."
 		WK_VER="trusty"
 	fi
 	if [[ $OS == "debian" &&  $OS_VER == "7" ]]; then
 		WK_VER="wheezy"
-	else
-		WK_VER=$OS_VER
 	fi
+	
 	run_cmd wget http://download.gna.org/wkhtmltopdf/0.12/0.12.2.1/wkhtmltox-0.12.2.1_linux-$WK_VER-$WK_ARCH.deb
 	run_cmd dpkg -i wkhtmltox-0.12.2.1_linux-$WK_VER-$WK_ARCH.deb
 }
