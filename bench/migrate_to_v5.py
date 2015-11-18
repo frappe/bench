@@ -39,8 +39,9 @@ def validate_v4(bench='.'):
 
 def checkout_v5(repo, bench='.'):
 	cwd = os.path.join(bench, 'apps', repo)
+	unshallow = "--unshallow" if os.path.exists(os.path.join(cwd, ".git", "shallow")) else ""
 	if os.path.exists(cwd):
-		exec_cmd("git fetch upstream", cwd=cwd)
+		exec_cmd("git config --add remote.upstream.fetch '+refs/heads/*:refs/remotes/upstream/*'", cwd=cwd)
+		exec_cmd("git fetch upstream {unshallow}".format(unshallow=unshallow), cwd=cwd)
 		exec_cmd("git checkout v5.0", cwd=cwd)
 		exec_cmd("git clean -df", cwd=cwd)
-
