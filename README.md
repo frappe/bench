@@ -26,6 +26,12 @@ This script should install the pre-requisites, install bench and setup an ERPNex
 
 If you want to develop ERPNext or any Frappe App, you can omit the "--setup-production" part from the command.
 
+For advanced users, `setup_frappe.sh` script offers following options:
+```
+sudo bash setup_frappe.sh --setup-swap --setup-production
+```
+This will check if your system does require swap partition, if required it will create new one, otherwise it will skip the swap setup part and continue with rest of the setup instructions.
+
 
 Manual Install
 --------------
