@@ -16,7 +16,7 @@ get_passwd() {
 }
 
 set_opts () {
-	OPTS=`getopt -o v --long verbose,mysql-root-password:,frappe-user:,bench-branch:,setup-production,skip-setup-bench,setup-swap,help -n 'parse-options' -- "$@"`
+	OPTS=`getopt -o v --long verbose,mysql-root-password:,frappe-user:,bench-branch:,setup-production,skip-setup-bench,help -n 'parse-options' -- "$@"`
 
 	if [ $? != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
 
@@ -28,7 +28,6 @@ set_opts () {
 	BENCH_BRANCH="master"
 	SETUP_PROD=false
 	SETUP_BENCH=true
-	SETUP_SWAP=false
 
 	if [ -f ~/frappe_passwords.sh ]; then
 		source ~/frappe_passwords.sh
@@ -51,7 +50,6 @@ set_opts () {
 	--setup-production ) SETUP_PROD=true; shift;;
 	--bench-branch ) BENCH_BRANCH="$2"; shift;;
 	--skip-setup-bench ) SETUP_BENCH=false; shift;;
-	--setup-swap ) SETUP_SWAP=true; shift;;
 	-- ) shift; break ;;
 	* ) break ;;
 	esac
@@ -101,112 +99,6 @@ run_cmd() {
 		# $@
 		"$@" > /tmp/cmdoutput.txt 2>&1 || (cat /tmp/cmdoutput.txt && exit 1)
 	fi
-}
-
-## setup swap
-setup_swap() {
-	check_memory_and_swap() {
-		mem_count=$(free -m|grep Mem|awk '{print $2}')
-		swap_count=$(free -m|grep Swap|awk '{print $2}')
-		if  [ "$mem_count" -le 2048 ]
-			then
-			if [ "$swap_count" -ne 0 ]
-				then
-				remove_old_swap
-			fi
-				create_swap $((mem_count*3))
-		else
-			if [ "$swap_count" -ne 0 ]
-				then
-				remove_old_swap
-			fi
-			create_swap $((mem_count+2048))
-		fi
-	}
-
-	create_swap() {
-		root_disk_size=$(df -m|grep -w "/"|awk '{print $4}'|head -1)
-		if [ "$1" -gt "$((root_disk_size-1024))" ]
-			then
-			echo "The root disk partition has no space for $1M swap file. Returing to frappe installation."
-			return 0
-		fi
-		if [ ! -e $swapfile ]
-			then
-			run_cmd sudo fallocate -l ${1}M $swapfile
-			run_cmd sudo chmod 600 $swapfile
-			run_cmd sudo mkswap $swapfile
-			run_cmd sudo swapon $swapfile
-			echo "The swap partition setup successful."
-		else
-			echo "The /swapfile already exists. Returing to frappe installation."
-			return 0
-		fi
-	}
-
-	remove_old_swap() {
-		old_swap_file=$(grep swap $fstab|grep -v "#"|awk '{print $1}')
-		run_cmd sudo swapoff $old_swap_file
-		run_cmd sudo cp -f $fstab ${fstab}_bak
-		run_cmd sudo sed -i '/swap/d' $fstab
-	}
-
-	adjust_swappiness() {
-		echo "Adjusting swappiness & vfs_cache_pressure"
-		run_cmd sudo sed '/vm\.swappiness/d' -ibak /etc/sysctl.conf
-		echo "vm.swappiness = 10" >> /etc/sysctl.conf
-		run_cmd sudo sysctl vm.swappiness=10
-
-		run_cmd sudo sed '/vm\.vfs_cache_pressure/d' -ibak /etc/sysctl.conf
-		echo "vm.vfs_cache_pressure = 50" >> /etc/sysctl.conf
-		run_cmd sudo sysctl vm.vfs_cache_pressure=50
-	}
-
-	config_centos_fstab() {
-		if ! grep $swapfile $fstab >/dev/null 2>&1
-			then
-			echo "Begin to modify $fstab."
-			echo "$swapfile	 swap	 swap defaults 0 0" >>$fstab
-			adjust_swappiness
-		else
-			echo "/etc/fstab is already configured. Returing to frappe installation."
-			return 0
-		fi
-	}
-
-	config_debian_fstab() {
-		if ! grep $swapfile $fstab >/dev/null 2>&1
-			then
-			echo "Begin to modify $fstab."
-			echo "$swapfile	 none	 swap sw 0 0" >>$fstab
-			adjust_swappiness
-		else
-			echo "/etc/fstab is already configured. Returing to frappe installation."
-			return 0
-		fi
-	}
-
-#################### swap start ####################
-swapfile=/swapfile
-fstab=/etc/fstab
-
-echo "Check the memory and swap."
-check_memory_and_swap
-
-echo "Making swap partition persistant by adding it to $fstab."
-case "$OS" in
-	centos)
-	config_centos_fstab
-	;;
-	Ubuntu|debian)
-	config_debian_fstab
-	;;
-	*)
-	echo "Unable to identify OS, ignoring swap setup instructions."
-	return 0
-	;;
-esac
-echo "Returing to frappe installation."
 }
 
 ## add repos
@@ -536,9 +428,6 @@ add_user() {
 main() {
 	set_opts $@
 	get_distro
-	if $SETUP_SWAP; then
-		setup_swap
-	fi
 	add_maria_db_repo
 	echo Installing packages for $OS\. This might take time...
 	install_packages
