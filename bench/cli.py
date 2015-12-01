@@ -239,10 +239,6 @@ def _update(pull=False, patch=False, build=False, bench=False, auto=False, resta
 
 	update(pull, patch, build, bench, auto, restart_supervisor, requirements, no_backup, upgrade, force=force)
 
-	print "_"*80
-	print "https://frappe.io/buy - Donate to help make better free and open source tools"
-	print
-
 def update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, requirements=False, no_backup=False, upgrade=False, bench_path='.', force=False):
 	conf = get_config(bench=bench_path)
 	version_upgrade = is_version_upgrade(bench=bench_path)
