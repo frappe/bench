@@ -134,7 +134,7 @@ add_debian_mariadb_repo() {
 	fi
 
 	run_cmd sudo apt-get update
-	run_cmd sudo apt-get install -y python-software-properties
+	run_cmd sudo apt-get install -y software-properties-common python-software-properties
 	run_cmd sudo apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 0xcbcb082a1bb943db
 	run_cmd sudo add-apt-repository "deb http://ams2.mirrors.digitalocean.com/mariadb/repo/10.0/debian $CODENAME main"
 }
@@ -213,6 +213,8 @@ install_packages() {
 
 		if [ $OS_VER == "precise" ]; then
 			run_cmd sudo apt-get install -y libtiff4-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.5-dev tk8.5-dev python-tk
+		elif [ $OS_VER == "8" ]; then
+                        run_cmd sudo apt-get install -y libtiff5-dev libjpeg62-turbo-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.5-dev tk8.5-dev python-tk
 		else
 			run_cmd sudo apt-get install -y libtiff5-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python-tk
 		fi
