@@ -381,6 +381,8 @@ install_bench() {
 		echo PIP not installed
 		exit 1
 	fi
+
+	run_cmd sudo $PIP install --upgrade pip
 	run_cmd sudo $PIP install -e /home/$FRAPPE_USER/bench-repo
 }
 
