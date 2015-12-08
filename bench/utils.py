@@ -44,7 +44,8 @@ def get_env_cmd(cmd, bench='.'):
 	return os.path.abspath(os.path.join(bench, 'env', 'bin', cmd))
 
 def init(path, apps_path=None, no_procfile=False, no_backups=False,
-		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None):
+		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None,
+		verbose=False):
 	from .app import get_app, install_apps_from_path
 	from .config import generate_redis_cache_config, generate_redis_async_broker_config
 	global FRAPPE_VERSION
@@ -68,7 +69,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	if not frappe_path:
 		frappe_path = 'https://github.com/frappe/frappe.git'
-	get_app('frappe', frappe_path, branch=frappe_branch, bench=path, build_asset_files=False)
+	get_app('frappe', frappe_path, branch=frappe_branch, bench=path, build_asset_files=False, verbose=verbose)
 	if not no_procfile:
 		setup_procfile(bench=path)
 	if not no_backups:

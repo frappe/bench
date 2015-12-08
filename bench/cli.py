@@ -158,11 +158,12 @@ def bench(bench='.'):
 @click.option('--no-procfile', is_flag=True, help="Pull changes in all the apps in bench")
 @click.option('--no-backups',is_flag=True, help="Run migrations for all sites in the bench")
 @click.option('--no-auto-update',is_flag=True, help="Build JS and CSS artifacts for the bench")
+@click.option('--verbose',is_flag=True, help="Verbose output during install")
 def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups,
-		no_auto_update):
+		no_auto_update, verbose):
 	"Create a new bench"
 	_init(path, apps_path=apps_path, no_procfile=no_procfile, no_backups=no_backups,
-			no_auto_update=no_auto_update, frappe_path=frappe_path, frappe_branch=frappe_branch)
+			no_auto_update=no_auto_update, frappe_path=frappe_path, frappe_branch=frappe_branch, verbose=verbose)
 	click.echo('Bench {} initialized'.format(path))
 
 @click.command('get-app')

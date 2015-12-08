@@ -40,7 +40,7 @@ def write_appstxt(apps, bench='.'):
 	with open(os.path.join(bench, 'sites', 'apps.txt'), 'w') as f:
 		return f.write('\n'.join(apps))
 
-def get_app(app, git_url, branch=None, bench='.', build_asset_files=True):
+def get_app(app, git_url, branch=None, bench='.', build_asset_files=True, verbose=False):
 	logger.info('getting app {}'.format(app))
 	shallow_clone = '--depth 1' if check_git_for_shallow_clone() and get_config().get('shallow_clone') else ''
 	branch = '--branch {branch}'.format(branch=branch) if branch else ''
@@ -51,7 +51,7 @@ def get_app(app, git_url, branch=None, bench='.', build_asset_files=True):
 				branch=branch),
 			cwd=os.path.join(bench, 'apps'))
 	print 'installing', app
-	install_app(app, bench=bench)
+	install_app(app, bench=bench, verbose=verbose)
 	if build_asset_files:
 		build_assets(bench=bench)
 	conf = get_config()
@@ -68,12 +68,13 @@ def new_app(app, bench='.'):
 		run_frappe_cmd('make-app', apps, app, bench=bench)
 	install_app(app, bench=bench)
 
-def install_app(app, bench='.'):
+def install_app(app, bench='.', verbose=False):
 	logger.info('installing {}'.format(app))
 	conf = get_config()
 	find_links = '--find-links={}'.format(conf.get('wheel_cache_dir')) if conf.get('wheel_cache_dir') else ''
-	exec_cmd("{pip} install -q {find_links} -e {app}".format(
+	exec_cmd("{pip} install {quiet} {find_links} -e {app}".format(
 				pip=os.path.join(bench, 'env', 'bin', 'pip'),
+				quiet="-q" if not verbose else "",
 				app=os.path.join(bench, 'apps', app),
 				find_links=find_links))
 	add_to_appstxt(app, bench=bench)
