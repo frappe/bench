@@ -347,6 +347,10 @@ def set_default_site(site, bench='.'):
 
 def update_requirements(bench='.'):
 	pip = os.path.join(bench, 'env', 'bin', 'pip')
+
+	# upgrade pip to latest
+	exec_cmd("{pip} install --upgrade pip".format(pip=pip))
+
 	apps_dir = os.path.join(bench, 'apps')
 	for app in os.listdir(apps_dir):
 		req_file = os.path.join(apps_dir, app, 'requirements.txt')
