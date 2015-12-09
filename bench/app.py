@@ -71,7 +71,8 @@ def new_app(app, bench='.'):
 def install_app(app, bench='.', verbose=False):
 	logger.info('installing {}'.format(app))
 	conf = get_config()
-	find_links = '--find-links={}'.format(conf.get('wheel_cache_dir')) if conf.get('wheel_cache_dir') else ''
+	# find_links = '--find-links={}'.format(conf.get('wheel_cache_dir')) if conf.get('wheel_cache_dir') else ''
+	find_links = ''
 	exec_cmd("{pip} install {quiet} {find_links} -e {app}".format(
 				pip=os.path.join(bench, 'env', 'bin', 'pip'),
 				quiet="-q" if not verbose else "",

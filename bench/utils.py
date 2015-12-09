@@ -63,9 +63,9 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	setup_env(bench=path)
 	put_config(default_config, bench=path)
-	if wheel_cache_dir:
-		update_config({"wheel_cache_dir":wheel_cache_dir}, bench=path)
-		prime_wheel_cache(bench=path)
+	# if wheel_cache_dir:
+	# 	update_config({"wheel_cache_dir":wheel_cache_dir}, bench=path)
+	# 	prime_wheel_cache(bench=path)
 
 	if not frappe_path:
 		frappe_path = 'https://github.com/frappe/frappe.git'
@@ -109,6 +109,7 @@ def setup_env(bench='.'):
 	exec_cmd('./env/bin/pip -q install --upgrade pip', cwd=bench)
 	exec_cmd('./env/bin/pip -q install wheel', cwd=bench)
 	exec_cmd('./env/bin/pip -q install https://github.com/frappe/MySQLdb1/archive/MySQLdb-1.2.5-patched.tar.gz', cwd=bench)
+	exec_cmd('./env/bin/pip -q install -e git+https://github.com/frappe/python-pdfkit.git#egg=pdfkit')
 
 def setup_socketio(bench='.'):
 	exec_cmd("npm install socket.io redis express superagent cookie", cwd=bench)
