@@ -358,7 +358,7 @@ def update_requirements(bench='.'):
 	for app in os.listdir(apps_dir):
 		req_file = os.path.join(apps_dir, app, 'requirements.txt')
 		if os.path.exists(req_file):
-			exec_cmd("{pip} install -q -r {req_file}".format(pip=pip, req_file=req_file))
+			exec_cmd("yes w | {pip} install -q -r {req_file}".format(pip=pip, req_file=req_file))
 
 def backup_site(site, bench='.'):
 	if FRAPPE_VERSION == 4:
