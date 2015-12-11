@@ -26,6 +26,7 @@ This script should install the pre-requisites, install bench and setup an ERPNex
 
 If you want to develop ERPNext or any Frappe App, you can omit the "--setup-production" part from the command.
 
+Note: If you are using a DigitalOcean droplet or any other cloud provider's vps, make sure it has >= 1gb of ram or has swap setup properly.
 
 Manual Install
 --------------
