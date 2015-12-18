@@ -24,7 +24,7 @@ sudo bash setup_frappe.sh --setup-production
 
 This script should install the pre-requisites, install bench and setup an ERPNext site. This will setup ERPNext with nginx, with Supervisor enabled and checkout the master branch of the ERPNext repo. Passwords for Frappe, Frappe Administrator and MariaDB (root) will be generated. You can then login as Administrator with the Administrator password printed. 
 
-If you want to develop ERPNext or any Frappe App, you can omit the "--setup-production" part from the command. This will setup ERPNext as well, however, it will run on NodeJS, have Supervisor disabled, and checkout the develop branch of the ERPNext repo. 
+If you want to develop ERPNext or any Frappe App, you can omit the "--setup-production" part from the command. This will setup ERPNext as well. Use ```bench start``` to run the server.
 
 Note: If you are using a DigitalOcean droplet or any other cloud provider's vps, make sure it has >= 1gb of ram or has swap setup properly.
 
