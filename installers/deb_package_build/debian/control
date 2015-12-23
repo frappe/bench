@@ -1,0 +1,12 @@
+Source: bench
+Maintainer: Web Notes Technologies Pvt. Ltd. <info@frappe.io>
+Section: misc
+Priority: optional
+Standards-Version: 0.92
+Build-Depends: python (>= 2.7)
+
+Package: bench
+# change to "all" if one package can be used for all achitectures
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: 
