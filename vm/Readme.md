@@ -1,10 +1,17 @@
-# ERPNext VM Builder
+### ERPNext VM Builder
 
-`./packer build vm.json` builds a new vm.
+#### Steps to build a vm image
 
-It uses packer (binary for x86_64 put here till https://github.com/mitchellh/packer/issues/2391 is resolved).
+* Install VirtualBox
+* Place a `base.ova` ubuntu base image in the current directory.
+* `./packer build vm.json` builds a new vm.
 
+#### How it works
 
-Ansible
-=======
+Packer imports the base image in a virtual machine and boots it. It runs the following
+
+* `scripts/install_ansible.sh` sets up ansible on the vm.
+* The `ansible/vm.yml` playbook sets up the dependencies, installs a bench and sets up a site. It also puts it into production.
+* `scripts/set_message.sh` sets welcome message (with update instructions) in the vm.
+* `scripts/zerofree.sh` writes zero to all the free space in the disk, it shrinks the disk image.
 
