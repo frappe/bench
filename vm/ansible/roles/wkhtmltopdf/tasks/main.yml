@@ -1,0 +1,32 @@
+---
+- name: install base fonts
+  yum: name={{ item }} state=present
+  with_items:
+    - libXrender
+    - libXext
+    - xorg-x11-fonts-75dpi
+    - xorg-x11-fonts-Type1
+  when: ansible_os_family == 'RedHat'
+
+- name: Install wkhtmltopdf rpm
+  yum: name=http://download.gna.org/wkhtmltopdf/0.12/{{ wkhtmltopdf_version }}/wkhtmltox-{{ wkhtmltopdf_version }}_linux-centos{{ ansible_distribution_major_version  }}-{{ "amd64" if ansible_architecture == "x86_64" else "i386"}}.rpm
+  when: ansible_os_family == 'RedHat'
+
+- name: install base fonts
+  apt: name={{ item }} state=present
+  with_items:
+    - libxrender1
+    - libxext6
+    - xfonts-75dpi
+    - xfonts-base
+  when: ansible_os_family == 'Debian'
+
+- name: Download wkhtmltopdf
+  get_url:
+    url=http://download.gna.org/wkhtmltopdf/0.12/{{ wkhtmltopdf_version }}/wkhtmltox-{{ wkhtmltopdf_version }}_linux-{{ ansible_distribution_release }}-{{ "amd64" if ansible_architecture == "x86_64" else "i386"}}.deb
+    dest="/tmp/"
+  when: ansible_os_family == 'Debian'
+
+- name: Install wkhtmltopdf deb
+  apt: deb=/tmp/wkhtmltox-{{ wkhtmltopdf_version }}_linux-{{ ansible_distribution_release }}-{{ "amd64" if ansible_architecture == "x86_64" else "i386"}}.deb
+  when: ansible_os_family == 'Debian'
