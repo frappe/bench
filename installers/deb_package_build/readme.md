@@ -2,6 +2,9 @@ To prepare your environment for building .deb package install instruments: <br>
 `sudo apt-get install build-essential devscripts debhelper` <br>
 <br>
 <b>Important:</b> to build .deb package archive name must be in the format $(name)\_$(version).orig.tar.gz <br> and directory within it must be named as $(name)\_$(version)<br><br>
+
+This build uses <i>dh-virtualenv</i>. For installation please follow the [tutorial] (http://dh-virtualenv.readthedocs.org/en/0.10/tutorial.html)
+
 To build debian package from scratch: <br>
 1) make working directory (basically with any name) near archive bench_0.92.orig.tar.gz: <br>
 `mkdir build_dir` <br>
