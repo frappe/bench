@@ -14,8 +14,10 @@ To build debian package from scratch: <br>
 `cd build_dir/` <br>
 4) run package build: <br>
 `debuild -us -uc` <br>
-5) install resulting package: <br>
-`sudo dpkg -i ../bench_0.92_amd64.deb` <br>
+5) package is: `../bench_0.92_amd64.deb`<br>
+<br>
+To install resulting package: <br>
+`sudo gdebi ../bench_0.92_amd64.deb` <br>
 Please note that name of package contains your architecture so for 32-bit machines name will differ. <br>
 <br>
 <i>Current state</i>: runs without problems on all Ubuntu versions installing bench in `/usr/share/python/bench/bin/bench`. Fails on Debian 8 with version format conflict.
