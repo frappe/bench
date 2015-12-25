@@ -1,0 +1,61 @@
+---
+# tasks file for add_repos
+#- hosts: local
+#  tasks:
+
+    - name: "Transfer script for .repo creation to /tmp"
+      copy: src=create_mariadb_repo_centos.sh dest=/tmp mode=0777
+      when: (ansible_distribution == "CentOS")
+
+    - name: "Filling in mariadb.repo file"
+      command: /tmp/create_mariadb_repo_centos.sh /tmp/mariadb.repo
+      when: (ansible_distribution == "CentOS")
+
+    - name: "Place mariadb.repo file in system dir"
+      command: mv /tmp/mariadb.repo /etc/yum.repos.d/
+      when: (ansible_distribution == "CentOS")
+
+    - name: "Clean files in tmp"
+      command: rm /tmp/create_mariadb_repo_centos.sh
+      when: (ansible_distribution == "CentOS")
+
+    - name: "Installing epel rpm for CentOS 6"
+      yum: name=http://dl.iuscommunity.org/pub/ius/stable/CentOS/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/epel-release-6-5.noarch.rpm state=present
+      when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "6")
+
+    - name: "Installing ius rpm for CentOS 6"
+      yum: name=http://dl.iuscommunity.org/pub/ius/stable/CentOS/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/ius-release-1.0-14.ius.centos6.noarch.rpm state=present
+      when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "6")
+
+    - name: "Install epel for CentOS 7"
+      yum: name=epel-release state=present
+      when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "7")
+
+    - name: "Update repository cache Debian/Ubuntu"
+      apt: update_cache=yes
+      when: (ansible_distribution == "Debian" or ansible_distribution == "Ubuntu")
+
+    - name: "Install software properties Debian"
+      apt: name=software-properties-common
+      when: (ansible_distribution == "Debian")
+
+    - name: "Install python software properties Debian"
+      apt: name=python-software-properties
+      when: (ansible_distribution == "Debian")
+
+    - name: "Receive key Debian/Ubuntu"
+      apt_key: keyserver=keyserver.ubuntu.com id=0xcbcb082a1bb943db
+      when: (ansible_distribution == "Debian" or ansible_distribution == "Ubuntu")
+
+    - name: "Add MariaDB repo Debian"
+      apt_repository: repo="deb http://ams2.mirrors.digitalocean.com/mariadb/repo/10.0/debian {{ ansible_distribution_release  }} main"
+      when: (ansible_distribution == "Debian" and ansible_distribution_major_version >= 6)
+
+    - name: "Add MariaDB repo Ubuntu"
+      apt_repository: repo="deb http://ams2.mirrors.digitalocean.com/mariadb/repo/10.0/ubuntu {{ ansible_distribution_version }} main"
+      when: (ansible_distribution == "Ubuntu") 
+
+    - name: "Install Nodesource Node.js repo Debian"
+      shell: curl -sL https://deb.nodesource.com/setup_0.12 | bash -
+      when: (ansible_distribution == "Debian")
+

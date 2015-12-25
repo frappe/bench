@@ -1,0 +1,14 @@
+---
+
+     - name: "Install packages for Ubuntu Precise Pangolin"
+       apt: pkg={{ item }} state=installed
+       with_items:
+            - libtiff4-dev
+            - libjpeg8-dev
+            - zlib1g-dev
+            - libfreetype6-dev
+            - liblcms2-dev
+            - libwebp-dev
+            - tcl8.5-dev
+            - tk8.5-dev
+            - python-tk

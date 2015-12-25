@@ -1,0 +1,83 @@
+---
+# tasks file for install_packages
+
+     - name: "Generate frappe password"
+       shell: echo `cat /dev/urandom | tr -dc "a-zA-Z0-9" | head -c 16`
+       register: frappe_pass
+
+     - name: "Generate password for MariaDB"
+       shell: echo `cat /dev/urandom | tr -dc "a-zA-Z0-9" | head -c 16`
+       register: msq_pass
+
+     - name: "Generate administrator password"
+       shell: echo `cat /dev/urandom | tr -dc "a-zA-Z0-9" | head -c 16`
+       register: admin_pass
+
+     - name: "Save frappe password"
+       shell: echo "frappe password:" > ~/frappe_passwords.txt {{frappe_pass.stdout}} >> ~/frappe_passwords.txt
+
+     - name: "Save MariaDB root password"
+       shell: echo "MariaDB root password:" >> ~/frappe_passwords.txt {{msq_pass.stdout}} >> ~/frappe_passwords.txt
+
+     - name: "Save administrator password"
+       shell: echo "administrator password:" >> ~/frappe_passwords.txt {{admin_pass.stdout}} >> ~/frappe_passwords.txt
+
+       
+     - include: setup_debconf.yml
+       when: (ansible_distribution == "Debian")
+ 
+     - include: install_packages_deb.yml
+       when: (ansible_distribution == "Debian" or ansible_distribution == "Ubuntu")
+
+     - include: install_packages_precise.yml
+       when: (ansible_distribution_release == "precise")
+
+     - include: install_packages_deb8.yml
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version == "8")
+
+     - include: install_packages_deb_else.yml
+       when: (ansible_distribution == "Debian" or ansible_distribution == "Ubuntu") and (ansible_distribution_major_version != "8" and ansible_distribution_release == "precise")
+
+     - name: "Install wget CentOS"
+       when: (ansible_distribution == "CentOS")
+       yum: name=wget state=present
+
+     - name: "Install Development tools CentOS"
+       when: (ansible_distribution == "CentOS")
+       yum: name="@Development tools" state=present
+
+     - include: install_packages_centos6.yml
+       when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "6")
+
+     - include: install_packages_centos7.yml
+       when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "7")
+
+     - include: install_supervisor_centos6.yml
+       when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "6")
+
+     - include: configure_services_centos6.yml
+       when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "6")
+
+     - include: start_services_centos6.yml
+       when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "6")
+
+     - include: configure_services_centos7.yml
+       when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "7")
+
+     - include: start_services_centos7.yml
+       when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "7")
+
+     - include: configure_mariadb_deb.yml
+       when: (ansible_distribution == "Debian")
+
+     - include: configure_mariadb_cent.yml
+       when: (ansible_distribution == "CentOS")
+
+     - name: "Restart MariaDB service CentOS"
+       when: (ansible_distribution == "CentOS")
+       service: name=mariadb state=restarted
+
+     - name: "Restart MariaDB service Debian/Ubuntu"
+       when: (ansible_distribution == "Debian" or ansible_distribution == "Ubuntu")
+       service: name=mysql state=restarted
+

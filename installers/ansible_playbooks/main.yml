@@ -1,0 +1,7 @@
+---
+
+- hosts: local
+  sudo: true
+  roles:
+    - add_repos
+    - install_packages

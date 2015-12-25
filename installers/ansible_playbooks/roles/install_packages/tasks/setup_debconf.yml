@@ -1,0 +1,12 @@
+---
+
+     - name: "Debconf postfix"
+       command: debconf-set-selections <<< "postfix postfix/mailname string `hostname`" debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Internet Site'"
+       environment:
+         DEBIAN_FRONTEND: noninteractive
+
+     - name: "Debconf MariaDB"
+       command: debconf-set-selections <<< "mariadb-server-5.5 mysql-server/root_password password {{ msq_pass }}" debconf-set-selections <<< "mariadb-server-5.5 mysql-server/root_password_again password {{ msq_pass }}"
+       environment:
+         DEBIAN_FRONTEND: noninteractive
+

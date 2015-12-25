@@ -1,0 +1,29 @@
+---
+- hosts: local
+  sudo: true
+  vars: 
+  tasks:
+
+     - name: "Generate appropriate OS name"
+       shell: echo {{ ansible_distribution }} | awk '{print tolower($0)}'
+       register: os_name 
+
+     - name: "Generate appropriate architecture name"
+       shell: uname -m | sed 's/x86_/amd/;s/i[3-6]86/x86/'
+       register: os_arch
+
+     - name: "Install wkhtmltopdf CentOS"
+       when: (ansible_distribution == "CentOS")
+       yum: name="http://download.gna.org/wkhtmltopdf/0.12/0.12.2.1/wkhtmltox-0.12.2.1_linux-{{ os_name.stdout }}{{ ansible_distribution_major_version }}-{{ os_arch.stdout }}.rpm"
+
+     - name: "Downloading wkhtmltopdf .deb package Debian/Ubuntu"
+       when: (ansible_distribution == "Debian" or ansible_distribution == "Ubuntu")
+       shell: wget http://download.gna.org/wkhtmltopdf/0.12/0.12.2.1/wkhtmltox-0.12.2.1_linux-{{ ansible_distribution_release }}-{{ os_arch.stdout }}.deb -O /tmp/wkhtmltopdf.deb
+
+     - name: "Installing wkhtmltopdf.deb Debian/Ubuntu"
+       when: (ansible_distribution == "Debian" or ansible_distribution == "Ubuntu")
+       apt: deb=/tmp/wkhtmltopdf.deb state=installed
+
+     - name: "Cleaning /tmp/wkhtmltopdf.deb"
+       when: (ansible_distribution == "Debian" or ansible_distribution == "Ubuntu")
+       shell: rm /tmp/wkhtmltopdf.deb
