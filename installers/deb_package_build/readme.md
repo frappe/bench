@@ -16,7 +16,9 @@ To build debian package from scratch: <br>
 `debuild -us -uc` <br>
 5) package is: `../bench_0.92_amd64.deb`<br>
 <br>
-To install resulting package: <br>
+If you don't have `gdebi` installed, first you need to run:<br>
+`sudo apt-get install gdebi`<br>
+To install resulting package with all it's dependencies: <br>
 `sudo gdebi ../bench_0.92_amd64.deb` <br>
 Please note that name of package contains your architecture so for 32-bit machines name will differ. <br>
 <br>
