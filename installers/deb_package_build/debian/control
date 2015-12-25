@@ -1,5 +1,5 @@
 Source: bench
-Maintainer: Web Notes Technologies Pvt. Ltd. <info@frappe.io>
+Maintainer: Frappe Technologies <info@frappe.io>
 Section: misc
 Priority: optional
 Standards-Version: 0.92
@@ -8,5 +8,10 @@ Build-Depends: python (>= 2.7)
 Package: bench
 # change to "all" if one package can be used for all achitectures
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: 
+Depends: ${shlibs:Depends}, ${misc:Depends}, python-dev, python-setuptools, build-essential, python-mysqldb, git,
+	ntp, vim, screen, htop, mariadb-server, mariadb-common, libmariadbclient-dev,
+	libxslt1.1, libxslt1-dev, redis-server, libssl-dev, libcrypto++-dev, postfix, nginx,
+	supervisor, fontconfig, libxrender1, libxext6, xfonts-75dpi, xfonts-base, nodejs, npm,
+	libtiff4-dev | libtiff5-dev, libjpeg8-dev | libjpeg62-turbo-dev, 
+	zlib1g-dev, libfreetype6-dev, liblcms2-dev, libwebp-dev, tcl8.5-dev | tcl8.5-dev, tk8.5-dev | tk8.5-dev, python-tk 
+Description: Metadata driven, full-stack web framework 
