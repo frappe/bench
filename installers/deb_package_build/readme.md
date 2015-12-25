@@ -22,7 +22,7 @@ To install resulting package with all it's dependencies: <br>
 `sudo gdebi ../bench_0.92_amd64.deb` <br>
 Please note that name of package contains your architecture so for 32-bit machines name will differ. <br>
 <br>
-<i>Current state</i>: runs without problems on all Ubuntu versions installing bench in `/usr/share/python/bench/bin/bench`. Fails on Debian 8 with version format conflict.
+<i>Current state</i>: .deb package is installed without problems on all target systems with all dependencies. Build of .deb package fails on Debian8 with version conflict error (because of quilt format), but works on all other platforms.
 
 Useful links:
 [Introduction to Debian Packaging](https://wiki.debian.org/IntroDebianPackaging#Step_3:_Add_the_Debian_packaging_files)
