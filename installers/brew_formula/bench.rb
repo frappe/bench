@@ -42,21 +42,52 @@ class Bench < Formula
   url "https://pypi.python.org/packages/source/G/GitPython/GitPython-0.3.2.RC1.tar.gz"
   sha256 "fd6786684a0d0dd7ebb961da754e3312fafe0c8e88f55ceb09858aa0af6094e0"
   end
+
+  resource "gitdb" do
+  url "https://pypi.python.org/packages/source/g/gitdb/gitdb-0.6.4.tar.gz"
+  sha256 "a3ebbc27be035a2e874ed904df516e35f4a29a778a764385de09de9e0f139658"
+  end
+
+  resource "markupsafe" do
+  url "https://pypi.python.org/packages/source/M/MarkupSafe/MarkupSafe-0.23.tar.gz"
+  sha256 "a4ec1aff59b95a14b45eb2e23761a0179e98319da5a7eb76b56ea8cdc7b871c3"
+  end
+
+  resource "smmap" do
+  url "https://pypi.python.org/packages/source/s/smmap/smmap-0.9.0.tar.gz"
+  sha256 "0e2b62b497bd5f0afebc002eda4d90df9d209c30ef257e8673c90a6b5c119d62"
+  end
   
 
   # depends_on "cmake" => :build
   #depends_on :x11s
   depends_on :python if MacOS.version <= :snow_leopard
-#  depends_on "honcho"
+  depends_on "honcho"
 
   def install
+    puts "THERE GOES LIBEXEC"
+    print libexec
+
     ENV.prepend_create_path "PYTHONPATH", libexec/"vendor/lib/python2.7/site-packages"
-    %w[click jinja2 virtualenv requests semantic_version gitpython].each do |r|
+    %w[click jinja2 virtualenv requests semantic_version gitpython gitdb markupsafe smmap].each do |r|
       resource(r).stage do
         system "python", *Language::Python.setup_install_args(libexec/"vendor")
       end
     end
 
+    # find brew logs directory
+    brew_logs_dir = `find /Users /Library -name Homebrew 2>/dev/null | grep "Logs/Homebrew"`
+
+    # find honcho installation log
+    honcho_log_path = `grep 'honcho' -R #{brew_logs_dir.chop()} | cut -d':' -f1 | uniq`
+
+    # find honcho installation path 
+    honcho_path = `grep "prefix" #{honcho_log_path.chop()} | cut -d"=" -f2 `
+
+    # create bash command to make symlinks of honcho in bench site-packages directory
+    make_symlinks_str = "find " + honcho_path.chop() + " -name site-packages | xargs ls -1 | while read line; do ln -s $line " + ENV["PYTHONPATH"] + "; done" 
+    system(make_symlinks_str)
+   
     ENV.prepend_create_path "PYTHONPATH", libexec/"lib/python2.7/site-packages"
     system "python", *Language::Python.setup_install_args(libexec)
 
