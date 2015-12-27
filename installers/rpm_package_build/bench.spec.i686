@@ -14,12 +14,12 @@ License: GPL
 Group: Development/Libraries
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Prefix: %{_prefix}
-BuildArch: noarch
+BuildArch: i686
 Vendor: Frappe Technologies <info@frappe.io>
 Url: https://github.com/frappe/bench
 
 # for building/installing the package
-BuildRequires:	python, python-wheel
+BuildRequires:	python
 
 # centos 6 dependencies
 %if 0%{rhel} == 6
@@ -44,7 +44,7 @@ UNKNOWN
 
 %prep
 %setup -n %{name}-%{unmangled_version} -n %{name}-%{unmangled_version}
-python setup.py bdist_wheel
+python2.7 setup.py bdist_wheel
 
 %install
 # directory for bench installation
@@ -53,11 +53,11 @@ mkdir -p build
 export ppath=`pwd`/build
 export PYTHONPATH=$ppath 
 export whl_file=`find . -type f -name *.whl`
-pip install --root=$ppath $whl_file
+pip install --root=$ppath $whl_file --ignore-installed
 # pip installed bench, now moving it to appropriate location in %{buildroot}
-mkdir -p %{buildroot}/usr/bin
-cp build/usr/bin/bench %{buildroot}/usr/bin/
-
+mkdir -p %{buildroot}/usr/lib/python2.7/site-packages/
+cp -r build/usr/* %{buildroot}/usr/
+cp -r bench/ %{buildroot}/usr/lib/python2.7/site-packages/
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -65,4 +65,5 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root)
 %doc MANIFEST.in LICENSE.md README.md
-/usr/bin/bench
+/usr/bin/*
+/usr/lib/*
