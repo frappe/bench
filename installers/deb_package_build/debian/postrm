@@ -1,5 +1,5 @@
 #!/bin/bash
 
 if [ ! -h /usr/bin/bench ]; then
-	ln -s /usr/bench/bin/bench /usr/bin/bench
+	rm -rf /usr/bin/bench
 fi
