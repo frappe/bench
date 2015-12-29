@@ -2,7 +2,7 @@
 
 
      - name: "Install list of common packages for Debian/Ubuntu"
-       apt: pkg={{ item }} state=installed
+       apt: pkg={{ item }} state=present update_cache=yes
        with_items:
             - python-dev
             - python-setuptools

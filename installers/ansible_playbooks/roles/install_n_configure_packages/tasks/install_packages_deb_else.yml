@@ -1,7 +1,7 @@
 ---
 
      - name: "Install packages for Ubuntu/Debian except from Precise and 8"
-       apt: pkg={{ item }} state=installed
+       apt: pkg={{ item }} state=present
        with_items:
             - libtiff5-dev
             - libjpeg8-dev

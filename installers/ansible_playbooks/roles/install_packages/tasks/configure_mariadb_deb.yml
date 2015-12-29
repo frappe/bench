@@ -1,8 +1,0 @@
----
-
-     - name: "Transfer script to tmp"
-       copy: src=create_mariadb_config.sh dest=/tmp mode=0777
-
-     - name: "Create MariaDB configuration"
-       command: /tmp/create_mariadb_config.sh /etc/mysql/conf.d/barracuda.cnf
-

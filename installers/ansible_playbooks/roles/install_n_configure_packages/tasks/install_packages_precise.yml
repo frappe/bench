@@ -1,7 +1,7 @@
 ---
 
      - name: "Install packages for Ubuntu Precise Pangolin"
-       apt: pkg={{ item }} state=installed
+       apt: pkg={{ item }} state=present
        with_items:
             - libtiff4-dev
             - libjpeg8-dev

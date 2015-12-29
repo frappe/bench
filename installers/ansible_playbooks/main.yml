@@ -4,4 +4,4 @@
   sudo: true
   roles:
     - add_repos
-    - install_packages
+    - install_n_configure_packages

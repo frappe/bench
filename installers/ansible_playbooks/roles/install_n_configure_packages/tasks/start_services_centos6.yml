@@ -2,6 +2,6 @@
 
       - service: name=nginx state=started
 
-      - service: name=mariadb state=started
+      - service: name=mysql state=started
 
       - service: name=redis state=started

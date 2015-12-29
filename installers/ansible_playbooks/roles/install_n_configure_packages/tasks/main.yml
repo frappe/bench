@@ -1,31 +1,17 @@
 ---
 # tasks file for install_packages
+  
+     - name: "Check if there is already frappe_passwords.sh file"
+       stat: path=/root/frappe_passwords.sh
+       register: passwords_exist
 
-     - name: "Generate frappe password"
-       shell: echo `cat /dev/urandom | tr -dc "a-zA-Z0-9" | head -c 16`
-       register: frappe_pass
+     - include: generate_passwords.yml
+       when: passwords_exist.stat.exists == False
 
-     - name: "Generate password for MariaDB"
-       shell: echo `cat /dev/urandom | tr -dc "a-zA-Z0-9" | head -c 16`
-       register: msq_pass
-
-     - name: "Generate administrator password"
-       shell: echo `cat /dev/urandom | tr -dc "a-zA-Z0-9" | head -c 16`
-       register: admin_pass
-
-     - name: "Save frappe password"
-       shell: echo "frappe password:" > ~/frappe_passwords.txt {{frappe_pass.stdout}} >> ~/frappe_passwords.txt
-
-     - name: "Save MariaDB root password"
-       shell: echo "MariaDB root password:" >> ~/frappe_passwords.txt {{msq_pass.stdout}} >> ~/frappe_passwords.txt
-
-     - name: "Save administrator password"
-       shell: echo "administrator password:" >> ~/frappe_passwords.txt {{admin_pass.stdout}} >> ~/frappe_passwords.txt
-
-       
      - include: setup_debconf.yml
        when: (ansible_distribution == "Debian")
- 
+
+###### Install bunch of packages
      - include: install_packages_deb.yml
        when: (ansible_distribution == "Debian" or ansible_distribution == "Ubuntu")
 
@@ -55,6 +41,7 @@
      - include: install_supervisor_centos6.yml
        when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "6")
 
+###### Configure & launch services
      - include: configure_services_centos6.yml
        when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "6")
 
@@ -67,15 +54,31 @@
      - include: start_services_centos7.yml
        when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "7")
 
-     - include: configure_mariadb_deb.yml
+     - name: "Check if need to configure MariaDB Debian"
+       stat: path=/etc/mysql/conf.d/barracuda.cnf 
+       register: mariadb_configuration_deb
        when: (ansible_distribution == "Debian")
 
-     - include: configure_mariadb_cent.yml
+     - name: "Create MariaDB configuration Debian"
+       script: ../files/create_mariadb_config.sh /etc/mysql/conf.d/barracuda.cnf
+       when: (ansible_distribution == "Debian") and (mariadb_configuration_deb.stat.exists == False)
+
+     - name: "Check if need to configure MariaDB CentOS"
+       stat: path=/etc/my.cnf.d/barracuda.cnf
+       register: mariadb_configuration_cent
        when: (ansible_distribution == "CentOS")
 
-     - name: "Restart MariaDB service CentOS"
-       when: (ansible_distribution == "CentOS")
+     - name: "Create MariaDB configuration CentOS"
+       script: ../files/create_mariadb_config.sh /etc/my.cnf.d/barracuda.cnf
+       when: (ansible_distribution == "CentOS") and (mariadb_configuration_cent.stat.exists == False)
+
+     - name: "Restart MariaDB service CentOS7"
+       when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "7") 
        service: name=mariadb state=restarted
+    
+     - name: "Restart MariaDB service CentOS6"
+       when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "6")
+       service: name=mysql state=restarted
 
      - name: "Restart MariaDB service Debian/Ubuntu"
        when: (ansible_distribution == "Debian" or ansible_distribution == "Ubuntu")

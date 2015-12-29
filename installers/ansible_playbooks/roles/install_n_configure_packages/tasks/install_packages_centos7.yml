@@ -1,7 +1,7 @@
 ---
 
      - name: "Install packages list for CentOS 7"
-       yum: pkg={{ item }} state=installed
+       yum: pkg={{ item }} state=present
        with_items:
             - git
             - mariadb-server

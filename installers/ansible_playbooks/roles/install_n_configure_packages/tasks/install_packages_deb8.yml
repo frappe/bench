@@ -1,7 +1,7 @@
 ---
 
      - name: "Install packages for Debian 8"
-       apt: pkg={{ item }} state=installed
+       apt: pkg={{ item }} state=present
        with_items:
             - libtiff5-dev
             - libjpeg62-turbo-dev
