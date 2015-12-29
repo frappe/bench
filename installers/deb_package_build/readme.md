@@ -6,18 +6,18 @@ To prepare your environment for building .deb package install instruments: <br>
 This build uses <i>dh-virtualenv</i>. For installation please follow the [tutorial] (http://dh-virtualenv.readthedocs.org/en/0.10/tutorial.html)
 
 To build debian package from scratch: <br>
-1) make working directory (basically with any name) near archive bench_0.92.orig.tar.gz: <br>
-`mkdir build_dir` <br>
+1) unpack archive bench_0.92.orig.tar.gz: <br>
+`tar -xf bench_0.92.orig.tar.gz` <br>
 2) copy debian directory in there: <br>
-`cp -r debian/ build_dir/` <br>
+`cp -r debian/ bench_0.92/` <br>
 3) change directory: <br>
-`cd build_dir/` <br>
+`cd bench_0.92/` <br>
 4) run package build: <br>
-`debuild -us -uc` <br>
+`dpkg-buildpackage -us -uc` <br>
 5) package is: `../bench_0.92_amd64.deb`<br>
 <br>
 If you don't have `gdebi` installed, first you need to run:<br>
-`sudo apt-get install gdebi`<br>
+`sudo apt-get install gdebi-core`<br>
 To install resulting package with all it's dependencies: <br>
 `sudo gdebi ../bench_0.92_amd64.deb` <br>
 Please note that name of package contains your architecture so for 32-bit machines name will differ. <br>
