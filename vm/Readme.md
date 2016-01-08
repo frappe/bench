@@ -18,3 +18,8 @@ Packer imports the base image in a virtual machine and boots it. It runs the fol
 #### For a build server
 
 Running the `build.py` script builds a vm and puts it in `~/public`. It also writes a `latest.json` file in `~/public` with filename of the latest build and its md5sum.
+
+#### Packer binary
+
+The binary included in this tree is compiled (for linux amd64) with a fix for https://github.com/mitchellh/packer/issues/2447. We can remove it once a new version of packer is released.
+
