@@ -15,3 +15,6 @@ Packer imports the base image in a virtual machine and boots it. It runs the fol
 * `scripts/set_message.sh` sets welcome message (with update instructions) in the vm.
 * `scripts/zerofree.sh` writes zero to all the free space in the disk, it shrinks the disk image.
 
+#### For a build server
+
+Running the `build.py` script builds a vm and puts it in `~/public`. It also writes a `latest.json` file in `~/public` with filename of the latest build and its md5sum.
