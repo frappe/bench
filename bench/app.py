@@ -8,7 +8,7 @@ import json
 import re
 import subprocess
 
-
+logging.basicConfig(level="DEBUG")
 logger = logging.getLogger(__name__)
 
 class MajorVersionUpgradeException(Exception):
