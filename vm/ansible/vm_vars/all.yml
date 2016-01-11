@@ -1,0 +1,4 @@
+---
+mysql_root_password: frappe
+frappe_user: frappe
+admin_password: admin

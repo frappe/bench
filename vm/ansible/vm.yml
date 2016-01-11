@@ -1,0 +1,63 @@
+---
+- include: base.yml
+- name: Clone bench
+  hosts: all
+  user: "{{ frappe_user }}"
+  tasks:
+      - git:
+          repo=https://github.com/frappe/bench
+          dest=/home/frappe/bench-repo
+  tags:
+    - bench_install
+
+- name: Install bench
+  hosts: all
+  become: yes
+  become_user: root
+  tasks:
+
+      - easy_install: name=pip executable=easy_install-2.7
+      - pip:          name=/home/frappe/bench-repo extra_args='-e'
+  tags:
+    - bench_install
+
+
+- name: Setup bench
+  hosts: all
+  become: yes
+  become_user: "{{ frappe_user }}"
+  become_method: sudo
+  gather_facts: false
+  tasks:
+    - bench:
+        path: /home/frappe/frappe-bench
+        frappe_branch: develop
+        apps:
+          - name: erpnext
+            url: https://github.com/frappe/erpnext
+          - name: erpnext_demo
+            url: https://github.com/frappe/erpnext_demo
+        mariadb_root_password: "{{ mysql_root_password }}"
+        sites:
+          - name: erpnext.vm
+            admin_password: "{{ admin_password or 'admin' }}"
+            apps:
+              - erpnext
+  tags:
+    - bench_setup
+
+- name: Setup Production
+  hosts: all
+  become: yes
+  become_user: root
+  become_method: sudo
+  tasks:
+    - shell: "bench setup sudoers {{ frappe_user }}"
+      args:
+        chdir: "/home/{{ frappe_user }}/frappe-bench"
+        creates: "/home/{{ frappe_user }}/frappe-bench/config/supervisor.conf"
+    - shell: "bench setup production {{ frappe_user }}"
+      args:
+        chdir: "/home/{{ frappe_user }}/frappe-bench"
+        creates: "/home/{{ frappe_user }}/frappe-bench/config/supervisor.conf"
+    - file: path="/home/{{ frappe_user }}/frappe-bench/logs/" recurse=yes owner="{{ frappe_user }}"
