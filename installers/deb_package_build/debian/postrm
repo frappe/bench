@@ -1,0 +1,5 @@
+#!/bin/bash
+
+if [ ! -h /usr/bin/bench ]; then
+	rm -rf /usr/bin/bench
+fi

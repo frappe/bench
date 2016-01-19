@@ -1,0 +1,3 @@
+---
+
+#msq_pass: shell MSQ_PASS=$(echo `echo ololo`) echo $MSQ_PASS
