@@ -59,6 +59,7 @@ def get_app(app, git_url, branch=None, bench='.', build_asset_files=True, verbos
 		restart_supervisor_processes(bench=bench)
 
 def new_app(app, bench='.'):
+	app = app.lower().replace(" ", "_")
 	logger.info('creating new app {}'.format(app))
 	apps = os.path.abspath(os.path.join(bench, 'apps'))
 	if FRAPPE_VERSION == 4:
@@ -70,7 +71,6 @@ def new_app(app, bench='.'):
 
 def install_app(app, bench='.', verbose=False):
 	logger.info('installing {}'.format(app))
-	conf = get_config()
 	# find_links = '--find-links={}'.format(conf.get('wheel_cache_dir')) if conf.get('wheel_cache_dir') else ''
 	find_links = ''
 	exec_cmd("{pip} install {quiet} {find_links} -e {app}".format(
