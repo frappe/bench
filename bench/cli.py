@@ -407,7 +407,7 @@ def _prime_wheel_cache():
 	prime_wheel_cache(bench='.')
 
 @click.command('release')
-@click.argument('app', type=click.Choice(['frappe', 'erpnext', 'shopping_cart']))
+@click.argument('app', type=click.Choice(['frappe', 'erpnext', 'erpnext_shopify', 'paypal_integration']))
 @click.argument('bump-type', type=click.Choice(['major', 'minor', 'patch']))
 @click.option('--develop', default='develop')
 @click.option('--master', default='master')

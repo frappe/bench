@@ -120,6 +120,8 @@ def setup_procfile(with_celery_broker=False, with_watch=False, bench='.'):
 	procfile_contents = {
 		'web': "./env/bin/frappe --serve --sites_path sites",
 		'worker': "sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app worker'",
+		'longjob_worker': "sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app -n longjobs@%%h worker'",
+		'async_worker': "sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app -n async@%%h worker'",
 		'workerbeat': "sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app beat -s scheduler.schedule'"
 	}
 	if frappe_version > 4:
