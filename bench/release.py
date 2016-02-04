@@ -20,7 +20,8 @@ github_password = None
 repo_map = {
 	'frappe': 'frappe',
 	'erpnext': 'erpnext',
-	'shopping_cart': 'shopping-cart'
+	'erpnext_shopify': 'erpnext_shopify',
+	'paypal_integration': 'paypal_integration'
 }
 
 def create_release(repo_path, version, remote='origin', develop_branch='develop', master_branch='master'):
