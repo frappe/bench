@@ -93,7 +93,8 @@ def generate_redis_celery_broker_config(bench='.'):
 	_generate_redis_config(
 		template_name='redis_celery_broker.conf',
 		context={
-
+			"port": get_config().get('redis_async_broker_port', '12311'),
+			"bench_path": os.path.abspath(bench)
 		},
 		bench=bench
 	)
