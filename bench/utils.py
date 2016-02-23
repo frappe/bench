@@ -47,7 +47,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None,
 		verbose=False):
 	from .app import get_app, install_apps_from_path
-	from .config import generate_redis_cache_config, generate_redis_async_broker_config
+	from .config import generate_redis_cache_config, generate_redis_async_broker_config, generate_redis_celery_broker_config
 	global FRAPPE_VERSION
 
 	if os.path.exists(path):
@@ -62,28 +62,69 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	setup_logging()
 
 	setup_env(bench=path)
-	put_config(default_config, bench=path)
-	# if wheel_cache_dir:
-	# 	update_config({"wheel_cache_dir":wheel_cache_dir}, bench=path)
-	# 	prime_wheel_cache(bench=path)
+
+	bench_config = make_bench_config()
+	put_config(bench_config, bench=path)
 
 	if not frappe_path:
 		frappe_path = 'https://github.com/frappe/frappe.git'
 	get_app('frappe', frappe_path, branch=frappe_branch, bench=path, build_asset_files=False, verbose=verbose)
+
+	if apps_path:
+		install_apps_from_path(apps_path, bench=path)
+
+	FRAPPE_VERSION = get_current_frappe_version(bench=path)
+	if FRAPPE_VERSION > 5:
+		setup_socketio(bench=path)
+
+	build_assets(bench=path)
+	generate_redis_celery_broker_config(bench=path)
+	generate_redis_cache_config(bench=path)
+	generate_redis_async_broker_config(bench=path)
+
 	if not no_procfile:
 		setup_procfile(bench=path)
 	if not no_backups:
 		setup_backups(bench=path)
 	if not no_auto_update:
 		setup_auto_update(bench=path)
-	if apps_path:
-		install_apps_from_path(apps_path, bench=path)
-	FRAPPE_VERSION = get_current_frappe_version(bench=path)
-	if FRAPPE_VERSION > 5:
-		setup_socketio(bench=path)
-	build_assets(bench=path)
-	generate_redis_cache_config(bench=path)
-	generate_redis_async_broker_config(bench=path)
+
+def make_bench_config():
+	bench_config = {}
+	bench_config.update(default_config)
+	bench_config.update(make_ports())
+	return bench_config
+
+def make_ports(benches_path="."):
+	default_ports = {
+		"webserver_port": 8000,
+		"socketio_port": 9000,
+		"redis_celery_broker_port": 11000,
+		"redis_async_broker_port": 12000,
+		"redis_cache_port": 13000
+	}
+
+	# collect all existing ports
+	existing_ports = {}
+	for folder in os.listdir(benches_path):
+		bench = os.path.join(benches_path, folder)
+		if os.path.isdir(bench):
+			bench_config = get_config(bench)
+			for key in default_ports.keys():
+				value = bench_config.get(key)
+				if value:
+					existing_ports.setdefault(key, []).append(value)
+
+	# new port value = max of existing port value + 1
+	ports = {}
+	for key, value in default_ports.items():
+		existing_value = max(existing_ports.get(key, []))
+		if existing_value:
+			value = existing_value + 1
+
+		ports[key] = value
+
+	return ports
 
 def exec_cmd(cmd, cwd='.'):
 	from .cli import from_command_line
