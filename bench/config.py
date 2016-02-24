@@ -88,36 +88,40 @@ def generate_nginx_config(bench='.'):
 	})
 	write_config_file(bench, 'nginx.conf', config)
 
-def generate_redis_celery_broker_config(bench='.'):
+def generate_redis_celery_broker_config(bench='.', pid_db_save_path):
 	"""Redis that is used for queueing celery tasks"""
 	_generate_redis_config(
 		template_name='redis_celery_broker.conf',
 		context={
 			"port": get_config().get('redis_async_broker_port', '12311'),
-			"bench_path": os.path.abspath(bench)
+			"bench_path": os.path.abspath(bench),
+			"pid_db_save_path": pid_db_save_path
 		},
 		bench=bench
 	)
 
-def generate_redis_async_broker_config(bench='.'):
+def generate_redis_async_broker_config(bench='.', pid_db_save_path):
 	"""Redis that is used to do pub/sub"""
 	_generate_redis_config(
 		template_name='redis_async_broker.conf',
 		context={
 			"port": get_config().get('redis_async_broker_port', '12311'),
-			"bench_path": os.path.abspath(bench)
+			"bench_path": os.path.abspath(bench),
+			"pid_db_save_path": pid_db_save_path
 		},
 		bench=bench
 	)
 
-def generate_redis_cache_config(bench='.'):
+def generate_redis_cache_config(bench='.', pid_db_save_path):
 	"""Redis that is used and optimized for caching"""
 	_generate_redis_config(
 		template_name='redis_cache.conf',
 		context={
 			"maxmemory": get_config().get('cache_maxmemory', '50'),
 			"port": get_config().get('redis_cache_port', '11311'),
-			"redis_version": get_redis_version()
+			"redis_version": get_redis_version(),
+			"bench_path": os.path.abspath(bench),
+			"pid_db_save_path": pid_db_save_path
 		},
 		bench=bench
 	)

@@ -59,6 +59,10 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	for dirname in ('apps', 'sites', 'config', 'logs'):
 		os.mkdir(os.path.join(path, dirname))
 
+	# This is folder to save the pid and redis db files for each redis process
+	pid_db_save_path = os.path.join(path, 'config', 'files')
+	os.mkdir(pid_db_save_path)
+
 	setup_logging()
 
 	setup_env(bench=path)
@@ -78,9 +82,9 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		setup_socketio(bench=path)
 
 	build_assets(bench=path)
-	generate_redis_celery_broker_config(bench=path)
-	generate_redis_cache_config(bench=path)
-	generate_redis_async_broker_config(bench=path)
+	generate_redis_celery_broker_config(bench=path, pid_db_save_path)
+	generate_redis_cache_config(bench=path, pid_db_save_path)
+	generate_redis_async_broker_config(bench=path, pid_db_save_path)
 
 	if not no_procfile:
 		setup_procfile(bench=path)
