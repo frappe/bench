@@ -41,7 +41,9 @@ def generate_supervisor_config(bench='.', user=None):
 		"node": find_executable('node') or find_executable('nodejs'),
 		"redis_cache_config": os.path.join(bench_dir, 'config', 'redis_cache.conf'),
 		"redis_async_broker_config": os.path.join(bench_dir, 'config', 'redis_async_broker.conf'),
-		"frappe_version": get_current_frappe_version()
+		"frappe_version": get_current_frappe_version(),
+		"webserver_port": config.get('webserver_port'),
+		"n_workers": config.get('max_workers')
 	})
 	write_config_file(bench, 'supervisor.conf', config)
 	update_config({'restart_supervisor_on_update': True})

@@ -30,7 +30,7 @@ default_config = {
 	'rebase_on_pull': False,
 	'update_bench_on_update': True,
 	'frappe_user': getpass.getuser(),
-	'shallow_clone': True
+	'shallow_clone': True,
 }
 
 folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/files')
@@ -95,7 +95,16 @@ def make_bench_config():
 	bench_config = {}
 	bench_config.update(default_config)
 	bench_config.update(make_ports())
+	bench_config.update(get_max_worker_count())
+
 	return bench_config
+
+def get_max_worker_count():
+	'''This function will return the maximum workers that can be started depending upon'''
+	'''number of cpu's present on the machine'''
+	n_cpus = multiprocessing.cpu_count()
+	return dict(max_workers=2 * n_cpus)
+
 
 def make_ports(benches_path="."):
 	default_ports = {

@@ -5,6 +5,7 @@ import bench.utils
 import json
 import os
 import shutil
+import socket
 
 class TestBenchInit(unittest.TestCase):
 	def setUp(self):
@@ -22,9 +23,6 @@ class TestBenchInit(unittest.TestCase):
 
 		bench.utils.init(bench_name)
 
-		# logging
-		self.assert_exists(bench_name, "logs", "bench.log")
-
 		self.assert_folders(bench_name)
 
 		self.assert_virtual_env(bench_name)
@@ -37,10 +35,24 @@ class TestBenchInit(unittest.TestCase):
 
 	def test_multiple_benches(self):
 		self.test_init("test-bench-1")
-		self.assert_ports("test-bench-1")
+		test_bench_1_ports = {
+			"webserver_port": 8000,
+			"socketio_port": 9000,
+			"redis_celery_broker_port": 11000,
+			"redis_async_broker_port": 12000,
+			"redis_cache_port": 13000
+		}
+		self.assert_ports("test-bench-1", test_bench_1_ports)
 
 		self.test_init("test-bench-2")
-		self.assert_ports("test-bench-2")
+		test_bench_2_ports = {
+			"webserver_port": 8001,
+			"socketio_port": 9001,
+			"redis_celery_broker_port": 11001,
+			"redis_async_broker_port": 12001,
+			"redis_cache_port": 13001
+		}
+		self.assert_ports("test-bench-2", test_bench_2_ports)
 
 	def assert_folders(self, bench_name):
 		for folder in bench.utils.folders_in_bench:
@@ -61,6 +73,7 @@ class TestBenchInit(unittest.TestCase):
 		config_json = os.path.exists(os.path.join(bench_name, "config.json"))
 		self.assertTrue(config_json)
 		with open(config_json, "r") as f:
+			print f
 			config_dict = json.loads(f.read().decode("utf-8"))
 			for key, value in bench.utils.default_config.items():
 				self.assertEquals(config_dict.get(key), value)
@@ -81,9 +94,14 @@ class TestBenchInit(unittest.TestCase):
 		self.assert_exists(bench_name, "node_modules")
 		self.assert_exists(bench_name, "node_modules", "socket.io")
 
-	def assert_ports(self, bench_name):
-		pass
+	def assert_ports(self, bench_name, ports):
+		config_path = os.path.join(self.benches_path, bench_name, 'config', 'config.json')
+
+		with open(config_path, "r") as f:
+			config_json = json.load(f)
+
+		for key, port in ports:
+			self.assertEqual(config_json.get(key), port)
 
 	def assert_exists(self, *args):
-		self.assert_exists(*args)
-
+		self.assertTrue(os.path.exists(os.path.join(*args)))
