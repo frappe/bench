@@ -6,6 +6,7 @@ import shutil
 from distutils.spawn import find_executable
 from jinja2 import Environment, PackageLoader
 from .utils import get_sites, get_config, update_config, get_redis_version
+import multiprocessing
 
 env = Environment(loader=PackageLoader('bench', 'templates'), trim_blocks=True)
 
@@ -40,7 +41,8 @@ def generate_supervisor_config(bench='.', user=None):
 		"node": find_executable('node') or find_executable('nodejs'),
 		"redis_cache_config": os.path.join(bench_dir, 'config', 'redis_cache.conf'),
 		"redis_async_broker_config": os.path.join(bench_dir, 'config', 'redis_async_broker.conf'),
-		"frappe_version": get_current_frappe_version()
+		"frappe_version": get_current_frappe_version(),
+		"gunicorn_workers": (2 * multiprocessing.cpu_count()) + 1
 	})
 	write_config_file(bench, 'supervisor.conf', config)
 	update_config({'restart_supervisor_on_update': True})
