@@ -33,6 +33,8 @@ default_config = {
 	'shallow_clone': True
 }
 
+folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/files')
+
 def get_frappe(bench='.'):
 	frappe = get_env_cmd('frappe', bench=bench)
 	if not os.path.exists(frappe):
@@ -56,12 +58,8 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		# sys.exit(1)
 
 	os.mkdir(path)
-	for dirname in ('apps', 'sites', 'config', 'logs'):
+	for dirname in folders_in_bench:
 		os.mkdir(os.path.join(path, dirname))
-
-	# This is folder to save the pid and redis db files for each redis process
-	pid_db_save_path = os.path.join(path, 'config', 'files')
-	os.mkdir(pid_db_save_path)
 
 	setup_logging()
 
@@ -82,9 +80,9 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		setup_socketio(bench=path)
 
 	build_assets(bench=path)
-	generate_redis_celery_broker_config(bench=path, pid_db_save_path)
-	generate_redis_cache_config(bench=path, pid_db_save_path)
-	generate_redis_async_broker_config(bench=path, pid_db_save_path)
+	generate_redis_celery_broker_config(bench=path)
+	generate_redis_cache_config(bench=path)
+	generate_redis_async_broker_config(bench=path)
 
 	if not no_procfile:
 		setup_procfile(bench=path)
@@ -122,9 +120,9 @@ def make_ports(benches_path="."):
 	# new port value = max of existing port value + 1
 	ports = {}
 	for key, value in default_ports.items():
-		existing_value = max(existing_ports.get(key, []))
+		existing_value = existing_ports.get(key, [])
 		if existing_value:
-			value = existing_value + 1
+			value = max(existing_value) + 1
 
 		ports[key] = value
 
