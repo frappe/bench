@@ -55,16 +55,21 @@ def setup_production(user, bench='.'):
 	fix_prod_setup_perms(bench, frappe_user=user)
 	remove_default_nginx_configs()
 
+	bench_name = os.path.basename(os.path.abspath(bench))
+	nginx_conf = '/etc/nginx/conf.d/{bench_name}.conf'.format(bench_name=bench_name)
+
 	if is_centos7():
-		supervisor_conf_filename = 'frappe.ini'
+		supervisor_conf_extn = "ini"
 		copy_default_nginx_config()
 	else:
-		supervisor_conf_filename = 'frappe.conf'
+		supervisor_conf_extn = "conf"
 
+	supervisor_conf = os.path.join(get_supervisor_confdir(), '{bench_name}.{extn}'.format(
+		bench_name=bench_name, extn=supervisor_conf_extn))
 
 	links = (
-		(os.path.abspath(os.path.join(bench, 'config', 'nginx.conf')), '/etc/nginx/conf.d/frappe.conf'),
-		(os.path.abspath(os.path.join(bench, 'config', 'supervisor.conf')), os.path.join(get_supervisor_confdir(), supervisor_conf_filename)),
+		(os.path.abspath(os.path.join(bench, 'config', 'nginx.conf')), nginx_conf),
+		(os.path.abspath(os.path.join(bench, 'config', 'supervisor.conf')), supervisor_conf),
 	)
 
 	for src, dest in links:
@@ -74,4 +79,5 @@ def setup_production(user, bench='.'):
 	exec_cmd('supervisorctl reload')
 	if os.environ.get('NO_SERVICE_RESTART'):
 		return
+
 	restart_service('nginx')

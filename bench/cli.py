@@ -18,7 +18,7 @@ from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_env_c
 from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps, get_apps, get_current_frappe_version, is_version_upgrade, switch_to_v4, switch_to_v5, switch_to_master, switch_to_develop
-from .config import generate_nginx_config, generate_supervisor_config, generate_redis_cache_config, generate_redis_async_broker_config
+from .config import generate_nginx_config, generate_supervisor_config, generate_redis_cache_config, generate_redis_async_broker_config, generate_redis_celery_broker_config
 from .production_setup import setup_production as _setup_production
 from .migrate_to_v5 import migrate_to_v5
 import os
@@ -74,7 +74,7 @@ def check_uid():
 
 def change_uid():
 	if is_root() and not cmd_requires_root():
-		frappe_user = get_config().get('frappe_user')
+		frappe_user = get_config(".").get('frappe_user')
 		if frappe_user:
 			drop_privileges(uid_name=frappe_user, gid_name=frappe_user)
 			os.environ['HOME'] = pwd.getpwnam(frappe_user).pw_dir
@@ -206,7 +206,7 @@ def _update(pull=False, patch=False, build=False, bench=False, auto=False, resta
 	if not (pull or patch or build or bench or requirements):
 		pull, patch, build, bench, requirements = True, True, True, True, True
 
-	conf = get_config()
+	conf = get_config(".")
 
 	version_upgrade = is_version_upgrade()
 
@@ -449,6 +449,11 @@ def setup_redis_async_broker():
 	"generate config for redis async broker"
 	generate_redis_async_broker_config()
 
+@click.command('redis-celery-broker')
+def setup_redis_celery_broker():
+	"generate config for redis celery broker"
+	generate_redis_celery_broker_config()
+
 @click.command('production')
 @click.argument('user')
 def setup_production(user):
@@ -496,6 +501,7 @@ setup.add_command(setup_sudoers)
 setup.add_command(setup_supervisor)
 setup.add_command(setup_redis_cache)
 setup.add_command(setup_redis_async_broker)
+setup.add_command(setup_redis_celery_broker)
 setup.add_command(setup_auto_update)
 setup.add_command(setup_dnsmasq)
 setup.add_command(setup_backups)

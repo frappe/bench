@@ -105,8 +105,9 @@ def get_max_worker_count():
 	'''This function will return the maximum workers that can be started depending upon
 	number of cpu's present on the machine'''
 	n_cpus = multiprocessing.cpu_count()
-	return dict(max_workers=2 * n_cpus)
-
+	return {
+		"max_workers": (2 * n_cpus) + 1
+	}
 
 def make_ports(benches_path="."):
 	default_ports = {
@@ -449,11 +450,16 @@ def update_common_site_config(ddict, bench='.'):
 	update_json_file(os.path.join(bench, 'sites', 'common_site_config.json'), ddict)
 
 def update_json_file(filename, ddict):
-	with open(filename, 'r') as f:
-		content = json.load(f)
+	if os.path.exists(filename):
+		with open(filename, 'r') as f:
+			content = json.load(f)
+
+	else:
+		content = {}
+
 	content.update(ddict)
 	with open(filename, 'w') as f:
-		content = json.dump(content, f, indent=1)
+		content = json.dump(content, f, indent=1, sort_keys=True)
 
 def drop_privileges(uid_name='nobody', gid_name='nogroup'):
 	# from http://stackoverflow.com/a/2699996

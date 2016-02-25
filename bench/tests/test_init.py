@@ -5,7 +5,6 @@ import bench.utils
 import json
 import os
 import shutil
-import socket
 
 class TestBenchInit(unittest.TestCase):
 	def setUp(self):
@@ -19,9 +18,7 @@ class TestBenchInit(unittest.TestCase):
 				shutil.rmtree(bench_path)
 
 	def test_init(self, bench_name="test-bench"):
-		self.benches.append(bench_name)
-
-		bench.utils.init(bench_name)
+		self.init_bench(bench_name)
 
 		self.assert_folders(bench_name)
 
@@ -34,25 +31,43 @@ class TestBenchInit(unittest.TestCase):
 		self.assert_socketio(bench_name)
 
 	def test_multiple_benches(self):
+		# 1st bench
 		self.test_init("test-bench-1")
-		test_bench_1_ports = {
+
+		self.assert_ports("test-bench-1", {
 			"webserver_port": 8000,
 			"socketio_port": 9000,
 			"redis_celery_broker_port": 11000,
 			"redis_async_broker_port": 12000,
 			"redis_cache_port": 13000
-		}
-		self.assert_ports("test-bench-1", test_bench_1_ports)
+		})
 
+		self.assert_common_site_config("test-bench-1", {
+			"celery_broker": "redis://localhost:11000",
+			"async_redis_server": "redis://localhost:12000",
+			"cache_redis_server": "redis://localhost:13000"
+		})
+
+		# 2nd bench
 		self.test_init("test-bench-2")
-		test_bench_2_ports = {
+
+		self.assert_ports("test-bench-2", {
 			"webserver_port": 8001,
 			"socketio_port": 9001,
 			"redis_celery_broker_port": 11001,
 			"redis_async_broker_port": 12001,
 			"redis_cache_port": 13001
-		}
-		self.assert_ports("test-bench-2", test_bench_2_ports)
+		})
+
+		self.assert_common_site_config("test-bench-2", {
+			"celery_broker": "redis://localhost:11001",
+			"async_redis_server": "redis://localhost:12001",
+			"cache_redis_server": "redis://localhost:13001"
+		})
+
+	def init_bench(self, bench_name):
+		self.benches.append(bench_name)
+		bench.utils.init(bench_name)
 
 	def assert_folders(self, bench_name):
 		for folder in bench.utils.folders_in_bench:
@@ -70,13 +85,12 @@ class TestBenchInit(unittest.TestCase):
 		self.assert_exists(bench_name, "env", "lib", "python2.7", "site-packages", "pip")
 
 	def assert_bench_config(self, bench_name):
-		config_json = os.path.exists(os.path.join(bench_name, "config.json"))
-		self.assertTrue(config_json)
-		with open(config_json, "r") as f:
-			print f
-			config_dict = json.loads(f.read().decode("utf-8"))
-			for key, value in bench.utils.default_config.items():
-				self.assertEquals(config_dict.get(key), value)
+		config_json = os.path.join(bench_name, "config.json")
+		self.assertTrue(os.path.exists(config_json))
+
+		config = self.load_json(config_json)
+		for key, value in bench.utils.default_config.items():
+			self.assertEquals(config.get(key), value)
 
 	def assert_config(self, bench_name):
 		for config, search_key in (
@@ -86,7 +100,7 @@ class TestBenchInit(unittest.TestCase):
 
 			self.assert_exists(bench_name, "config", config)
 
-			with open(os.path.join(self.bench, "config", config), "r") as f:
+			with open(os.path.join(bench_name, "config", config), "r") as f:
 				f = f.read().decode("utf-8")
 				self.assertTrue(search_key in f)
 
@@ -95,16 +109,22 @@ class TestBenchInit(unittest.TestCase):
 		self.assert_exists(bench_name, "node_modules", "socket.io")
 
 	def assert_ports(self, bench_name, ports):
-		config_path = os.path.join(self.benches_path, bench_name, 'config', 'config.json')
+		config_path = os.path.join(bench_name, 'config.json')
+		config = self.load_json(config_path)
 
-		with open(config_path, "r") as f:
-			config_json = json.load(f)
+		for key, port in ports.items():
+			self.assertEquals(config.get(key), port)
 
-		for key, port in ports:
-			self.assertEqual(config_json.get(key), port)
+	def assert_common_site_config(self, bench_name, expected_config):
+		common_site_config_path = os.path.join(bench_name, 'sites', 'common_site_config.json')
+		config = self.load_json(common_site_config_path)
 
-	def assert_site_config(self, bench_name):
-		pass
+		for key, value in expected_config.items():
+			self.assertEquals(config.get(key), value)
 
 	def assert_exists(self, *args):
 		self.assertTrue(os.path.exists(os.path.join(*args)))
+
+	def load_json(self, path):
+		with open(path, "r") as f:
+			return json.loads(f.read().decode("utf-8"))

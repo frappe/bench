@@ -1,0 +1,16 @@
+language: python
+
+python:
+  - "2.7"
+
+install:
+  - sudo apt-get purge -y mysql-common
+  - sudo bash $TRAVIS_BUILD_DIR/install_scripts/setup_frappe.sh --skip-install-bench --mysql-root-password travis
+  - mkdir -p ~/bench-repo
+  - cp -r $TRAVIS_BUILD_DIR/* ~/bench-repo/
+
+script:
+  - cd ~
+  - sudo pip install --upgrade pip
+  - sudo pip install -e bench-repo
+  - sudo python -m unittest bench.tests.test_setup_production
