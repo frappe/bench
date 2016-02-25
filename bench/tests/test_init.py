@@ -103,5 +103,8 @@ class TestBenchInit(unittest.TestCase):
 		for key, port in ports:
 			self.assertEqual(config_json.get(key), port)
 
+	def assert_site_config(self, bench_name):
+		pass
+
 	def assert_exists(self, *args):
 		self.assertTrue(os.path.exists(os.path.join(*args)))

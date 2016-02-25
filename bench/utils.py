@@ -49,7 +49,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None,
 		verbose=False):
 	from .app import get_app, install_apps_from_path
-	from .config import generate_redis_cache_config, generate_redis_async_broker_config, generate_redis_celery_broker_config
+	from .config import generate_redis_cache_config, generate_redis_async_broker_config, generate_redis_celery_broker_config, generate_common_site_config
 	global FRAPPE_VERSION
 
 	if os.path.exists(path):
@@ -67,6 +67,8 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	bench_config = make_bench_config()
 	put_config(bench_config, bench=path)
+
+	generate_common_site_config(bench=path)
 
 	if not frappe_path:
 		frappe_path = 'https://github.com/frappe/frappe.git'
@@ -100,8 +102,8 @@ def make_bench_config():
 	return bench_config
 
 def get_max_worker_count():
-	'''This function will return the maximum workers that can be started depending upon'''
-	'''number of cpu's present on the machine'''
+	'''This function will return the maximum workers that can be started depending upon
+	number of cpu's present on the machine'''
 	n_cpus = multiprocessing.cpu_count()
 	return dict(max_workers=2 * n_cpus)
 
@@ -291,7 +293,7 @@ def setup_logging(bench='.'):
 		logger.addHandler(hdlr)
 		logger.setLevel(logging.DEBUG)
 
-def get_config(bench='.'):
+def get_config(bench):
 	config_path = os.path.join(bench, 'config.json')
 	if not os.path.exists(config_path):
 		return {}
@@ -473,7 +475,7 @@ def drop_privileges(uid_name='nobody', gid_name='nogroup'):
 	# Ensure a very conservative umask
 	os.umask(022)
 
-def fix_prod_setup_perms(frappe_user=None):
+def fix_prod_setup_perms(bench='.', frappe_user=None):
 	files = [
 		"logs/web.error.log",
 		"logs/web.log",
@@ -486,7 +488,7 @@ def fix_prod_setup_perms(frappe_user=None):
 	]
 
 	if not frappe_user:
-		frappe_user = get_config().get('frappe_user')
+		frappe_user = get_config(bench).get('frappe_user')
 
 	if not frappe_user:
 		print "frappe user not set"

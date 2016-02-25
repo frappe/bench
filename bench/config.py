@@ -30,7 +30,7 @@ def generate_supervisor_config(bench='.', user=None):
 	sites = get_sites(bench=bench)
 	if not user:
 		user = getpass.getuser()
-	config = get_config()
+	config = get_config(bench=bench)
 
 	config = template.render(**{
 		"bench_dir": bench_dir,
@@ -52,6 +52,30 @@ def get_site_config(site, bench='.'):
 	with open(os.path.join(bench, 'sites', site, 'site_config.json')) as f:
 		return json.load(f)
 
+def generate_common_site_config(bench='.'):
+	'''Generates the default common_site_config.json while a new bench is created'''
+	config = get_config(bench=bench)
+	
+	celery_broker_port = config.get('redis_celery_broker_port', '11311')
+	celery_broker = 'redis://localhost:{0}'.format(celery_broker_port)
+
+	async_redis_server_port = config.get('redis_async_broker_port', '12311')
+	async_redis_server = 'redis://localhost:{0}'.format(async_redis_server_port)
+
+	cache_redis_server_port = config.get('redis_cache_port', '13311')
+	cache_redis_server = 'redis://localhost:{0}'.format(cache_redis_server_port)
+
+	default_common_site_config = {
+		"celery_broker" : celery_broker,
+		"async_redis_server": async_redis_server,
+		"cache_redis_server": cache_redis_server
+	}
+
+	#TODO Optionally we need to add the host or domain name in case dns_multitenant is false
+
+	with open(os.path.join(bench, 'sites', 'common_site_config.json'), 'wb') as f:
+		json.dump(default_common_site_config, f, indent=1, sort_keys=True)
+
 def get_sites_with_config(bench='.'):
 	sites = get_sites(bench=bench)
 	ret = []
@@ -71,8 +95,9 @@ def generate_nginx_config(bench='.'):
 	sites_dir = os.path.join(bench_dir, "sites")
 	sites = get_sites_with_config(bench=bench)
 	user = getpass.getuser()
+	config = get_config(bench)
 
-	if get_config().get('serve_default_site'):
+	if config.get('serve_default_site'):
 		try:
 			with open("sites/currentsite.txt") as f:
 				default_site = {'name': f.read().strip()}
@@ -83,9 +108,9 @@ def generate_nginx_config(bench='.'):
 
 	config = template.render(**{
 		"sites_dir": sites_dir,
-		"http_timeout": get_config().get("http_timeout", 120),
+		"http_timeout": config.get("http_timeout", 120),
 		"default_site": default_site,
-		"dns_multitenant": get_config().get('dns_multitenant'),
+		"dns_multitenant": config.get('dns_multitenant'),
 		"sites": sites
 	})
 	write_config_file(bench, 'nginx.conf', config)
@@ -95,7 +120,7 @@ def generate_redis_celery_broker_config(bench='.'):
 	_generate_redis_config(
 		template_name='redis_celery_broker.conf',
 		context={
-			"port": get_config().get('redis_async_broker_port', '12311'),
+			"port": get_config(bench).get('redis_celery_broker_port', '11311'),
 			"bench_path": os.path.abspath(bench),
 		},
 		bench=bench
@@ -106,21 +131,21 @@ def generate_redis_async_broker_config(bench='.'):
 	_generate_redis_config(
 		template_name='redis_async_broker.conf',
 		context={
-			"port": get_config().get('redis_async_broker_port', '12311'),
-			"bench_path": os.path.abspath(bench)
+			"port": get_config(bench).get('redis_async_broker_port', '12311'),
 		},
 		bench=bench
 	)
 
 def generate_redis_cache_config(bench='.'):
 	"""Redis that is used and optimized for caching"""
+	config = get_config(bench=bench)
+
 	_generate_redis_config(
 		template_name='redis_cache.conf',
 		context={
-			"maxmemory": get_config().get('cache_maxmemory', '50'),
-			"port": get_config().get('redis_cache_port', '11311'),
+			"maxmemory": config.get('cache_maxmemory', '50'),
+			"port": config.get('redis_cache_port', '13311'),
 			"redis_version": get_redis_version(),
-			"bench_path": os.path.abspath(bench),
 		},
 		bench=bench
 	)

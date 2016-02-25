@@ -54,7 +54,7 @@ def get_app(app, git_url, branch=None, bench='.', build_asset_files=True, verbos
 	install_app(app, bench=bench, verbose=verbose)
 	if build_asset_files:
 		build_assets(bench=bench)
-	conf = get_config()
+	conf = get_config(bench=bench)
 	if conf.get('restart_supervisor_on_update'):
 		restart_supervisor_processes(bench=bench)
 

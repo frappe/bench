@@ -52,7 +52,7 @@ def copy_default_nginx_config():
 def setup_production(user, bench='.'):
 	generate_supervisor_config(bench=bench, user=user)
 	generate_nginx_config(bench=bench)
-	fix_prod_setup_perms(frappe_user=user)
+	fix_prod_setup_perms(bench, frappe_user=user)
 	remove_default_nginx_configs()
 
 	if is_centos7():
