@@ -97,16 +97,15 @@ def make_bench_config():
 	bench_config = {}
 	bench_config.update(default_config)
 	bench_config.update(make_ports())
-	bench_config.update(get_max_worker_count())
+	bench_config.update(get_gunicorn_workers())
 
 	return bench_config
 
-def get_max_worker_count():
+def get_gunicorn_workers():
 	'''This function will return the maximum workers that can be started depending upon
 	number of cpu's present on the machine'''
-	n_cpus = multiprocessing.cpu_count()
 	return {
-		"max_workers": (2 * n_cpus) + 1
+		"gunicorn_workers": multiprocessing.cpu_count()
 	}
 
 def make_ports(benches_path="."):
@@ -357,7 +356,9 @@ def get_cmd_output(cmd, cwd='.'):
 
 def restart_supervisor_processes(bench='.'):
 	conf = get_config(bench=bench)
-	cmd = conf.get('supervisor_restart_cmd', 'sudo supervisorctl restart frappe:')
+	bench_name = get_bench_name(bench)
+	cmd = conf.get('supervisor_restart_cmd',
+				   'sudo supervisorctl restart {bench_name}-processes:'.format(bench_name=bench_name))
 	exec_cmd(cmd, cwd=bench)
 
 def get_site_config(site, bench='.'):
@@ -718,3 +719,6 @@ def validate_pillow_dependencies(bench, requirements):
 				print "sudo apt-get install -y libtiff5-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python-tk"
 
 			raise
+
+def get_bench_name(bench_path):
+	return os.path.basename(os.path.abspath(bench_path))

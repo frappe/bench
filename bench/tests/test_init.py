@@ -15,7 +15,7 @@ class TestBenchInit(unittest.TestCase):
 		for bench_name in self.benches:
 			bench_path = os.path.join(self.benches_path, bench_name)
 			if os.path.exists(bench_path):
-				shutil.rmtree(bench_path)
+				shutil.rmtree(bench_path, ignore_errors=True)
 
 	def test_init(self, bench_name="test-bench"):
 		self.init_bench(bench_name)
@@ -78,11 +78,19 @@ class TestBenchInit(unittest.TestCase):
 		self.assert_exists(bench_name, "apps", "frappe", "setup.py")
 
 	def assert_virtual_env(self, bench_name):
-		self.assert_exists(bench_name, "env", "lib", "python2.7")
-		self.assert_exists(bench_name, "env", "lib", "python2.7", "site-packages")
-		self.assert_exists(bench_name, "env", "lib", "python2.7", "site-packages", "IPython")
-		self.assert_exists(bench_name, "env", "lib", "python2.7", "site-packages", "MySQL_python-1.2.5.dist-info")
-		self.assert_exists(bench_name, "env", "lib", "python2.7", "site-packages", "pip")
+		bench_path = os.path.abspath(bench_name)
+		python = os.path.join(bench_path, "env", "bin", "python")
+		python_path = bench.utils.get_cmd_output('{python} -c "import os; print os.path.dirname(os.__file__)"'.format(python=python))
+
+		# part of bench's virtualenv
+		self.assertTrue(python_path.startswith(bench_path))
+		self.assert_exists(python_path)
+		self.assert_exists(python_path, "site-packages")
+		self.assert_exists(python_path, "site-packages", "IPython")
+		self.assert_exists(python_path, "site-packages", "pip")
+
+		site_packages = os.listdir(os.path.join(python_path, "site-packages"))
+		self.assertTrue(any(package.startswith("MySQL_python-1.2.5") for package in site_packages))
 
 	def assert_bench_config(self, bench_name):
 		config_json = os.path.join(bench_name, "config.json")

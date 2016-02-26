@@ -1,4 +1,4 @@
-from .utils import get_program, exec_cmd, get_cmd_output, fix_prod_setup_perms, get_config
+from .utils import get_program, exec_cmd, get_cmd_output, fix_prod_setup_perms, get_config, get_bench_name
 from .config import generate_nginx_config, generate_supervisor_config
 from jinja2 import Environment, PackageLoader
 import os
@@ -55,7 +55,7 @@ def setup_production(user, bench='.'):
 	fix_prod_setup_perms(bench, frappe_user=user)
 	remove_default_nginx_configs()
 
-	bench_name = os.path.basename(os.path.abspath(bench))
+	bench_name = get_bench_name(bench)
 	nginx_conf = '/etc/nginx/conf.d/{bench_name}.conf'.format(bench_name=bench_name)
 
 	if is_centos7():

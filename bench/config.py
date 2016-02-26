@@ -6,7 +6,7 @@ import shutil
 import socket
 from distutils.spawn import find_executable
 from jinja2 import Environment, PackageLoader
-from .utils import get_sites, get_config, update_config, get_redis_version, update_common_site_config
+from .utils import get_sites, get_config, update_config, get_redis_version, update_common_site_config, get_bench_name
 
 env = Environment(loader=PackageLoader('bench', 'templates'), trim_blocks=True)
 
@@ -45,8 +45,8 @@ def generate_supervisor_config(bench='.', user=None):
 		"redis_celery_broker_config": os.path.join(bench_dir, 'config', 'redis_celery_broker.conf'),
 		"frappe_version": get_current_frappe_version(),
 		"webserver_port": config.get('webserver_port', 8000),
-		"n_workers": config.get('max_workers', 2),
-		"bench_name": os.path.basename(os.path.abspath(bench))
+		"gunicorn_workers": config.get('gunicorn_workers', 2),
+		"bench_name": get_bench_name(bench)
 	})
 	write_config_file(bench, 'supervisor.conf', config)
 	update_config({'restart_supervisor_on_update': True})
@@ -114,7 +114,7 @@ def generate_nginx_config(bench='.'):
 		"sites": sites,
 		"webserver_port": config.get('webserver_port', 8000),
 		"socketio_port": config.get('socketio_port', 3000),
-		"bench_name": os.path.basename(os.path.abspath(bench))
+		"bench_name": get_bench_name(bench)
 	})
 	write_config_file(bench, 'nginx.conf', config)
 
@@ -157,7 +157,7 @@ def _generate_redis_config(template_name, context, bench):
 	template = env.get_template(template_name)
 
 	if "pid_path" not in context:
-		context["pid_path"] = os.path.abspath(os.path.join(bench, "config", "files"))
+		context["pid_path"] = os.path.abspath(os.path.join(bench, "config", "pids"))
 
 	redis_config = template.render(**context)
 	write_config_file(bench, template_name, redis_config)

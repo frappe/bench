@@ -13,7 +13,8 @@ from .utils import set_default_site as _set_default_site
 from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_env_cmd, get_frappe, setup_logging,
 					get_config, update_config, restart_supervisor_processes, put_config, default_config, update_requirements,
 					backup_all_sites, backup_site, get_sites, prime_wheel_cache, is_root, set_mariadb_host, drop_privileges,
-					fix_file_perms, fix_prod_setup_perms, set_ssl_certificate, set_ssl_certificate_key, get_cmd_output, post_upgrade,
+					fix_file_perms, fix_prod_setup_perms, set_ssl_certificate, set_ssl_certificate_key,
+					get_cmd_output, post_upgrade, get_bench_name,
 					pre_upgrade, validate_upgrade, PatchError, download_translations_p, setup_socketio, before_update)
 from .app import get_app as _get_app
 from .app import new_app as _new_app
@@ -582,7 +583,8 @@ def patch():
 def _fix_prod_perms():
 	"Fix permissions if supervisor processes were run as root"
 	if os.path.exists("config/supervisor.conf"):
-		exec_cmd("supervisorctl stop frappe:")
+		bench_name = get_bench_name(bench_path=".")
+		exec_cmd("supervisorctl stop {bench_name}-processes:".format(bench_name=bench_name))
 
 	fix_prod_setup_perms()
 

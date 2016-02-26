@@ -1,11 +1,12 @@
 from __future__ import unicode_literals
 from bench.tests.test_init import TestBenchInit
-from bench.production_setup import setup_production
+from bench.production_setup import setup_production, get_supervisor_confdir
 import bench.utils
 import os
 import getpass
 import re
 import unittest
+import time
 
 class TestSetupProduction(TestBenchInit):
 	# setUp, tearDown and other tests are defiend in TestBenchInit
@@ -20,6 +21,8 @@ class TestSetupProduction(TestBenchInit):
 			self.assert_nginx_config(bench_name)
 			self.assert_supervisor_config(bench_name)
 
+		# test after start of both benches
+		for bench_name in ("test-bench-1", "test-bench-2"):
 			self.assert_supervisor_process(bench_name)
 
 		self.assert_nginx_process()
@@ -39,14 +42,16 @@ class TestSetupProduction(TestBenchInit):
 			f = f.read().decode("utf-8")
 
 			for key in (
-					"upstream { bench_name }-frappe",
-					"upstream { bench_name}-socketio-server"
+					"upstream {bench_name}-frappe",
+					"upstream {bench_name}-socketio-server"
 				):
-				self.assertTrue(key.format(bench_name) in f)
+				self.assertTrue(key.format(bench_name=bench_name) in f)
 
 	def assert_supervisor_config(self, bench_name):
 		conf_src = os.path.join(os.path.abspath(bench_name), 'config', 'supervisor.conf')
-		conf_dest = "/etc/supervisor.d/{bench_name}.conf".format(bench_name=bench_name)
+
+		supervisor_conf_dir = get_supervisor_confdir()
+		conf_dest = "{supervisor_conf_dir}/{bench_name}.conf".format(supervisor_conf_dir=supervisor_conf_dir, bench_name=bench_name)
 
 		self.assertTrue(os.path.exists(conf_src))
 		self.assertTrue(os.path.exists(conf_dest))
@@ -59,37 +64,42 @@ class TestSetupProduction(TestBenchInit):
 			f = f.read().decode("utf-8")
 
 			for key in (
-					"program:{ bench_name }-frappe-web",
-					"program:{ bench_name }-frappe-worker",
-					"program:{ bench_name }-frappe-longjob-worker",
-					"program:{ bench_name }-frappe-async-worker",
-					"program:{ bench_name }-frappe-workerbeat",
-					"program:{ bench_name }-redis-cache",
-					"program:{ bench_name }-redis-celery-broker",
-					"program:{ bench_name }-redis-async-broker",
-					"program:{ bench_name }-node-socketio",
-					"group:{ bench_name }-processes",
-					"group:{ bench_name }-redis"
+					"program:{bench_name}-frappe-web",
+					"program:{bench_name}-frappe-worker",
+					"program:{bench_name}-frappe-longjob-worker",
+					"program:{bench_name}-frappe-async-worker",
+					"program:{bench_name}-frappe-workerbeat",
+					"program:{bench_name}-redis-cache",
+					"program:{bench_name}-redis-celery-broker",
+					"program:{bench_name}-redis-async-broker",
+					"program:{bench_name}-node-socketio",
+					"group:{bench_name}-processes",
+					"group:{bench_name}-redis"
 				):
-				self.assertTrue(key.format(bench_name) in f)
+				self.assertTrue(key.format(bench_name=bench_name) in f)
 
 	def assert_supervisor_process(self, bench_name):
 		out = bench.utils.get_cmd_output("sudo supervisorctl status")
+
+		if "STARTING" in out:
+			time.sleep(10)
+			out = bench.utils.get_cmd_output("sudo supervisorctl status")
+
 		for key in (
-				"{bench_name}-process:{ bench_name }-frappe-web[\s]*RUNNING",
-				"{bench_name}-process:{ bench_name }-frappe-worker[\s]*RUNNING",
-				"{bench_name}-process:{ bench_name }-frappe-longjob-worker[\s]*RUNNING",
-				"{bench_name}-process:{ bench_name }-frappe-async-worker[\s]*RUNNING",
-				"{bench_name}-process:{ bench_name }-frappe-workerbeat[\s]*RUNNING",
-				"{bench_name}-process:{ bench_name }-node-socketio[\s]*RUNNING",
-				"{bench_name}-redis:{ bench_name }-redis-cache[\s]*RUNNING",
-				"{bench_name}-redis:{bench_name}-redis-celery-broker[\s]*RUNNING",
-				"{bench_name}-redis:{bench_name}-redis-async-broker[\s]*RUNNING",
+				"{bench_name}-processes:{bench_name}-frappe-web[\s]+RUNNING",
+				"{bench_name}-processes:{bench_name}-frappe-worker[\s]+RUNNING",
+				"{bench_name}-processes:{bench_name}-frappe-longjob-worker[\s]+RUNNING",
+				"{bench_name}-processes:{bench_name}-frappe-async-worker[\s]+RUNNING",
+				"{bench_name}-processes:{bench_name}-frappe-workerbeat[\s]+RUNNING",
+				"{bench_name}-processes:{bench_name}-node-socketio[\s]+RUNNING",
+				"{bench_name}-redis:{bench_name}-redis-cache[\s]+RUNNING",
+				"{bench_name}-redis:{bench_name}-redis-celery-broker[\s]+RUNNING",
+				"{bench_name}-redis:{bench_name}-redis-async-broker[\s]+RUNNING",
 			):
-			self.assertTrue(re.match(key.format(bench_name), out))
+			self.assertTrue(re.search(key.format(bench_name=bench_name), out))
 
 	def assert_nginx_process(self):
-		out = bench.utils.get_cmd_output("sudo nginx -t")
+		out = bench.utils.get_cmd_output("sudo nginx -t 2>&1")
 		self.assertTrue("nginx: configuration file /etc/nginx/nginx.conf test is successful" in out)
 
 
