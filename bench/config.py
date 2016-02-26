@@ -156,8 +156,8 @@ def generate_redis_cache_config(bench='.'):
 def _generate_redis_config(template_name, context, bench):
 	template = env.get_template(template_name)
 
-	if "process_files_path" not in context:
-		context["process_files_path"] = os.path.abspath(os.path.join(bench, "config", "files"))
+	if "pid_path" not in context:
+		context["pid_path"] = os.path.abspath(os.path.join(bench, "config", "files"))
 
 	redis_config = template.render(**context)
 	write_config_file(bench, template_name, redis_config)

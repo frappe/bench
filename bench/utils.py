@@ -33,7 +33,7 @@ default_config = {
 	'shallow_clone': True,
 }
 
-folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/files')
+folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 
 def get_frappe(bench='.'):
 	frappe = get_env_cmd('frappe', bench=bench)
