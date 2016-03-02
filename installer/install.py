@@ -4,22 +4,34 @@ import sys
 import pwd
 import stat
 import subprocess
-from distutils.spawn import find_executable
 import string
+
 from random import choice
+from distutils.spawn import find_executable
+from setuptools.command import easy_install as easy_install
 
 def install_bench(args):
 	# pre-requisites for bench repo cloning
+	install_pip()
+	install_ansible()
 	install_git()
 
 	# which user to use for bench repo cloning
 	user_password = add_user(args.user)
 
-	# clone bench repo!
+	# stop install
+	if args.skip_bench_setup:
+		return
 
-	# install pip
+	# clone bench repo
+	cloned = clone_bench_repo(args.user)
+
+	# install pre-requisites
+	installed = install_prerequisites(args.user)
 
 	# install bench
+	# if cloned:
+	# 	install_bench_cmd(user)
 
 def install_python27():
 	version = (sys.version_info[0], sys.version_info[1])
@@ -91,6 +103,40 @@ def add_user(user):
 
 		return user_password
 
+def install_pip():
+	"""Install pip for the user or upgrade to latest version if already present"""
+	try:
+		import pip
+	except ImportError:
+		easy_install.main(['pip'])
+
+def install_ansible():
+	try:
+		import ansible
+	except ImportError:
+		import pip
+		pip.main(["install", "ansible"])
+
+def clone_bench_repo(user):
+	"""Clones the bench repository in the user folder"""
+	bench_repo = os.path.join(get_user_folder(user), 'bench-repo')
+
+	success = run_os_command(
+		{"git": "git clone https://github.com/frappe/bench {bench_repo}".format(bench_repo=bench_repo)}
+	)
+
+	return success
+
+def install_dependencies():
+	"""Installs the pre-requisites like mariadb, nginx, redis etc. for the user"""
+	playbooks_path = get_playbooks_path()
+
+	for playbook in os.listdir(playbooks_path):
+		if playbook.endswith('.yml'):
+			success = run_playbook(os.path.join(playbooks_path, playbook))
+
+	return success
+
 def run_os_command(command_map):
 	"""command_map is a dictionary of {"executable": command}. For ex. {"apt-get": "sudo apt-get install -y python2.7"} """
 	success = False
@@ -115,13 +161,27 @@ def get_random_string(length=16):
 	"""generate a random string"""
 	return ''.join([choice(string.letters + string.digits) for i in range(length)])
 
+def get_playbooks_path():
+	return os.path.abspath(os.path.join(os.getcwd(), 'bench-repo', 'installer', 'playbooks'))
+
+def run_playbook(playbook_name):
+	success = subprocess.check_call("ansible-playbook -c local {playbook_name}".format(playbook_name=playbook_name).split())
+	return success
+
+def install_bench_cmd(user):
+	"""Installs bench using pip from the bench-repo"""
+	pass
+
 def parse_commandline_args():
 	import argparse
 
 	parser = argparse.ArgumentParser(description='Frappe Installer')
 	parser.add_argument('--user', metavar='USER', dest='user', action='store',
 						help="System user which will be used to start various processes required by Frappe framework. If this user doesn't exist, it will be created.")
-
+	parser.add_argument('--skip-bench-setup', dest='skip_bench_setup', action='store_true', default=False,
+						help="Skip cloning and installation of bench.")
+	parser.add_argument('--only-dependencies', dest='only_dependencies', action='store_true', default=False,
+						help="Only install dependencies via ansible")
 	args = parser.parse_args()
 
 	return args
@@ -135,4 +195,8 @@ if __name__ == "__main__":
 
 	args = parse_commandline_args()
 
-	install_bench(args)
+	if args.only_dependencies:
+		install_dependencies()
+
+	else:
+		install_bench(args)
