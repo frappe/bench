@@ -1,0 +1,12 @@
+---
+- name: Check current locale
+  shell: localectl
+  register: locale_test
+
+- name: Set Locale
+  command: "localectl set-locale LANG={{ locale_lang }}"
+  when: locale_test.stdout.find('LANG={{ locale_lang }}') == -1
+
+- name: Set keymap
+  command: "localectl set-keymap {{ locale_keymap }}"
+  when: "locale_test.stdout.find('Keymap: {{locale_keymap}}') == -1" 

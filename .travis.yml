@@ -1,10 +1,14 @@
 language: python
+dist: trusty
+sudo: required
 
 python:
   - "2.7"
 
 install:
-  - sudo apt-get purge -y mysql-common
+  - sudo apt-get remove --purge --force-yes mysql-common mysql-server mysql-client
+  - sudo apt-get autoremove
+  - sudo apt-get autoclean
   - sudo python $TRAVIS_BUILD_DIR/installer/install.py --user travis --skip-bench-setup
   # - sudo bash $TRAVIS_BUILD_DIR/install_scripts/setup_frappe.sh --skip-install-bench --mysql-root-password travis
   - mkdir -p ~/bench-repo

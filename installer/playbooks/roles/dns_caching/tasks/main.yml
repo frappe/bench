@@ -1,0 +1,7 @@
+- name: add dnsmasq to network config
+  lineinfile: >
+    dest=/etc/NetworkManager/NetworkManager.conf
+    regexp="dns="
+    line="dns=dnsmasq"
+    state=present
+  notify: restart network manager
