@@ -10,7 +10,9 @@
     - localhost
 
 - name: Add .my.cnf
-  template: src=my.cnf.j2 dest=/root/.my.cnf owner=root group=root mode=0600
+  command: '/usr/bin/whoami'
+  register: current_user
+  template: src=my.cnf.j2 dest=/home/{{ current_user }}/.my.cnf owner=root group=root mode=0600
 
 - name: Set root Password
   mysql_user: name=root host={{ item }} password={{ mysql_root_password }} state=present
