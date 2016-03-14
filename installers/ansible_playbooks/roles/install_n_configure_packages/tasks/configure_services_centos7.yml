@@ -1,9 +1,0 @@
----
-
-      - service: name=nginx enabled=yes
-
-      - service: name=mariadb enabled=yes
-
-      - service: name=redis enabled=yes
-
-      - service: name=supervisord enabled=yes

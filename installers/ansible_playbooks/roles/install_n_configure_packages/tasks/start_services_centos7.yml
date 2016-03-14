@@ -1,9 +1,0 @@
----
-
-      - service: name=nginx state=started
-
-      - service: name=mariadb state=started
-
-      - service: name=redis state=started
-
-      - service: name=supervisord state=started
