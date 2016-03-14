@@ -1,0 +1,69 @@
+---
+- hosts: localhost
+  vars:
+    bench_repo_path: "/Users/{{ ansible_user_id }}/frappe/bench-repo"
+    bench_path: "/Users/{{ ansible_user_id }}/frappe/frappe-bench"
+    mysql_config_template: "templates/simple_mariadb_config.cnf"
+    mysql_conf_dir:
+      "CentOS": /etc/my.cnf.d
+      "Ubuntu": /etc/mysql/conf.d
+      "MacOSX": /usr/local/etc/my.cnf.d
+  tasks:
+  
+  - name: install prequisites
+    homebrew: name={{ item }} state=present
+    with_items:
+      - cmake
+      - redis
+      - mariadb
+      - nodejs
+      - npm
+    when: ansible_os_family == 'Darwin'
+  - name: cask installs
+    homebrew_cask: name={{ item }} state=present
+    with_items:
+      - wkhtmltopdf
+    when: ansible_os_family == 'Darwin'
+    
+  - name: Install MySQLdb in global env
+    pip: name=mysql-python version=1.2.5
+    become: yes
+    become_method: sudo
+
+  - name: Set root Password
+    mysql_user: 
+      name=root 
+      host={{ item }} 
+      password={{ mysql_root_password }} 
+      state=present
+      login_user=root
+    with_items:
+      - localhost
+    when: mysql_root_password is defined
+
+  - name: Add configuration
+    template: src={{ mysql_config_template }} dest={{ mysql_conf_dir[ansible_distribution] }}/frappe.cnf owner=root mode=0644
+    notify: restart mysql
+    become: yes
+    become_method: sudo
+
+  - name: clone bench
+    git:
+      repo=https://github.com/frappe/bench
+      dest={{ bench_repo_path }}
+
+  - name: install bench
+    pip: name={{ bench_repo_path }} extra_args='-e'
+    become: yes
+    become_method: sudo
+
+  - name: init bench
+    command: bench init {{ bench_path }}
+    args:
+      creates: "{{ bench_path }}"
+      
+  - name: install frappe app
+    command: bench get-app frappe https://github.com/frappe/frappe
+    args:
+      creates: "{{ bench_path }}/apps/frappe"
+      chdir: "{{ bench_path }}"
