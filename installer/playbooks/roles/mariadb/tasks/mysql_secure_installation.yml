@@ -13,13 +13,13 @@
   template: src=my.cnf.j2 dest=/root/.my.cnf owner=root group=root mode=0600
 
 - name: Set root Password
-  mysql_user: name=root host={{ item }} password={{ mysql_root_password }} state=present
+  mysql_user: login_user=root login_password={{ mysql_root_password }} name=root host={{ item }} password={{ mysql_root_password }} state=present
   with_items:
     - 127.0.0.1
     - ::1
 
 - name: Reload privilege tables
-  command: 'mysql -ne "{{ item }}"'
+  command: 'mysql -u root -ne "{{ item }}"'
   with_items:
     - FLUSH PRIVILEGES
   changed_when: False

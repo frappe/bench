@@ -165,7 +165,7 @@ def get_playbooks_path():
 	return os.path.abspath(os.path.join(os.getcwd(), 'bench-repo', 'installer', 'playbooks'))
 
 def run_playbook(playbook_name):
-	success = subprocess.check_call("{sudo} ansible-playbook -c local {playbook_name}"
+	success = subprocess.check_call("{sudo} ansible-playbook -c local {playbook_name} -vvvv"
 		.format(playbook_name=playbook_name, sudo="sudo" if is_sudo_user() else "")
 		.split())
 	return success
