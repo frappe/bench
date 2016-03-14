@@ -42,7 +42,7 @@ def write_appstxt(apps, bench='.'):
 
 def get_app(app, git_url, branch=None, bench='.', build_asset_files=True, verbose=False):
 	logger.info('getting app {}'.format(app))
-	shallow_clone = '--depth 1' if check_git_for_shallow_clone() and get_config().get('shallow_clone') else ''
+	shallow_clone = '--depth 1' if check_git_for_shallow_clone() and get_config(bench).get('shallow_clone') else ''
 	branch = '--branch {branch}'.format(branch=branch) if branch else ''
 	exec_cmd("git clone {git_url} {branch} {shallow_clone} --origin upstream {app}".format(
 				git_url=git_url,
@@ -54,7 +54,7 @@ def get_app(app, git_url, branch=None, bench='.', build_asset_files=True, verbos
 	install_app(app, bench=bench, verbose=verbose)
 	if build_asset_files:
 		build_assets(bench=bench)
-	conf = get_config()
+	conf = get_config(bench=bench)
 	if conf.get('restart_supervisor_on_update'):
 		restart_supervisor_processes(bench=bench)
 
@@ -81,7 +81,7 @@ def install_app(app, bench='.', verbose=False):
 	add_to_appstxt(app, bench=bench)
 
 def pull_all_apps(bench='.'):
-	rebase = '--rebase' if get_config().get('rebase_on_pull') else ''
+	rebase = '--rebase' if get_config(bench).get('rebase_on_pull') else ''
 
 	for app in get_apps(bench=bench):
 		app_dir = get_repo_dir(app, bench=bench)

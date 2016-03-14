@@ -1,0 +1,59 @@
+---
+# Set root password
+# UPDATE mysql.user SET Password=PASSWORD('mysecret') WHERE User='root';
+# FLUSH PRIVILEGES;
+
+
+- name: Set root Password
+  mysql_user: name=root host={{ item }} password={{ mysql_root_password }} state=present
+  with_items:
+    - localhost
+
+- name: Add .my.cnf
+  command: '/usr/bin/whoami'
+  register: current_user
+  template: src=my.cnf.j2 dest=/home/{{ current_user }}/.my.cnf owner=root group=root mode=0600
+
+- name: Set root Password
+  mysql_user: name=root host={{ item }} password={{ mysql_root_password }} state=present
+  with_items:
+    - 127.0.0.1
+    - ::1
+
+- name: Reload privilege tables
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - FLUSH PRIVILEGES
+  changed_when: False
+
+- name: Reload privilege tables
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - FLUSH PRIVILEGES
+  changed_when: False
+
+- name: Remove anonymous users
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - DELETE FROM mysql.user WHERE User=''
+  changed_when: False
+
+- name: Disallow root login remotely
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1')
+  changed_when: False
+
+- name: Remove test database and access to it
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - DROP DATABASE if exists test
+    - DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'
+  changed_when: False
+  ignore_errors: True
+
+- name: Reload privilege tables
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - FLUSH PRIVILEGES
+  changed_when: False

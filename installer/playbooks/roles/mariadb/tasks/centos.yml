@@ -8,3 +8,5 @@
     - MariaDB-server
     - MariaDB-client
     - MySQL-python
+    - MariaDB-devel
+

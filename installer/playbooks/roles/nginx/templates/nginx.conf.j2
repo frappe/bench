@@ -1,0 +1,51 @@
+user  {{ nginx_user }};
+
+error_log  {{ nginx_error_log }};
+pid        /var/run/nginx.pid;
+
+worker_processes  {{ nginx_worker_processes }};
+
+events {
+    worker_connections  {{ nginx_worker_connections }};
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    server_names_hash_bucket_size 64;
+
+    client_max_body_size {{ nginx_client_max_body_size }};
+
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log  {{ nginx_access_log }};
+
+    sendfile        {{ nginx_sendfile }};
+    tcp_nopush      {{ nginx_tcp_nopush }};
+    tcp_nodelay     {{ nginx_tcp_nodelay }};
+
+    keepalive_timeout  {{ nginx_keepalive_timeout }};
+    keepalive_requests {{ nginx_keepalive_requests }};
+
+    #gzip  on;
+
+{% if nginx_proxy_cache_path %}
+    proxy_cache_path {{ nginx_proxy_cache_path }};
+{% endif %}
+
+{% for upstream in nginx_upstreams %}
+    upstream {{ upstream.name }} {
+{% if upstream.strategy is defined %}
+        {{ upstream.strategy }};
+{% endif %}
+{% for server in upstream.servers %}
+        server {{ server }};
+{% endfor %}
+    }
+{% endfor %}
+
+    include {{ nginx_vhost_path }}/*;
+}

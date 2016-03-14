@@ -1,0 +1,8 @@
+---
+mariadb_version: 10.0
+
+mysql_conf_tpl: change_me
+mysql_conf_file: settings.cnf
+
+mysql_secure_installation: false
+mysql_root_password: frappe
