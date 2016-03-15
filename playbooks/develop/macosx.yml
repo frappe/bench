@@ -32,11 +32,4 @@
   # setup frappe-bench
   - include: setup_bench.yml
   
-  # setup procfile
-  
-  # setup config for redis/socketio
-  
-  # setup common_site_config
-  
-  # set developer_mode
   

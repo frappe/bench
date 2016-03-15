@@ -20,7 +20,6 @@ from .app import new_app as _new_app
 from .app import pull_all_apps, get_apps, get_current_frappe_version, is_version_upgrade, switch_to_v4, switch_to_v5, switch_to_master, switch_to_develop
 from .config.nginx import make_nginx_conf
 from .production_setup import setup_production as _setup_production
-from .migrate_to_v5 import migrate_to_v5
 from .config.common_site_config import get_config, make_config, update_config
 
 import os
@@ -304,15 +303,6 @@ def start(no_dev=False):
 	"Start Frappe development processes"
 	_start(no_dev=no_dev)
 
-@click.command('migrate-3to4')
-@click.argument('path')
-def migrate_3to4(path):
-	"Migrate from ERPNext v3.x"
-	exec_cmd("{python} {migrate_3to4} {site}".format(
-			python=os.path.join('env', 'bin', 'python'),
-			migrate_3to4=os.path.join(os.path.dirname(__file__), 'migrate3to4.py'),
-			site=path))
-
 @click.command('switch-to-master')
 @click.option('--upgrade',is_flag=True)
 def _switch_to_master(upgrade=False):
@@ -459,10 +449,6 @@ def setup_backups():
 	"Add cronjob for bench backups"
 	_setup_backups()
 
-@click.command('dnsmasq')
-def setup_dnsmasq():
-	pass
-
 @click.command('env')
 def setup_env():
 	"Setup virtualenv for bench"
@@ -489,7 +475,6 @@ setup.add_command(setup_sudoers)
 setup.add_command(setup_supervisor)
 setup.add_command(setup_redis)
 setup.add_command(setup_auto_update)
-setup.add_command(setup_dnsmasq)
 setup.add_command(setup_backups)
 setup.add_command(setup_env)
 setup.add_command(setup_procfile)
@@ -559,34 +544,6 @@ config.add_command(config_dns_multitenant)
 config.add_command(config_serve_default_site)
 config.add_command(config_http_timeout)
 
-
-@click.group()
-def patch():
-	pass
-
-@click.command('fix-prod-perms')
-def _fix_prod_perms():
-	"Fix permissions if supervisor processes were run as root"
-	if os.path.exists("config/supervisor.conf"):
-		bench_name = get_bench_name(bench_path=".")
-		exec_cmd("supervisorctl stop {bench_name}-processes:".format(bench_name=bench_name))
-
-	fix_prod_setup_perms()
-
-	if os.path.exists("config/supervisor.conf"):
-		exec_cmd("{bench} setup supervisor".format(bench=sys.argv[0]))
-		exec_cmd("supervisorctl reload")
-
-
-@click.command('fix-file-perms')
-def _fix_file_perms():
-	"Fix file permissions"
-	fix_file_perms()
-
-patch.add_command(_fix_file_perms)
-patch.add_command(_fix_prod_perms)
-
-
 @click.command('download-translations')
 def _download_translations():
 	"Download latest translations"
@@ -608,7 +565,6 @@ bench.add_command(_set_ssl_certificate)
 bench.add_command(_set_ssl_certificate_key)
 bench.add_command(_set_mariadb_host)
 bench.add_command(set_default_site)
-bench.add_command(migrate_3to4)
 bench.add_command(_switch_to_master)
 bench.add_command(_switch_to_develop)
 bench.add_command(_switch_to_v4)
@@ -617,7 +573,6 @@ bench.add_command(shell)
 bench.add_command(_backup_all_sites)
 bench.add_command(_backup_site)
 bench.add_command(_release)
-bench.add_command(patch)
 bench.add_command(set_url_root)
 bench.add_command(retry_upgrade)
 bench.add_command(_download_translations)

@@ -15,6 +15,7 @@ default_config = {
 }
 
 def make_config(bench_path):
+	make_pid_folder(bench_path)
 	bench_config = get_config(bench_path)
 	bench_config.update(default_config)
 	bench_config.update(get_gunicorn_workers())
@@ -101,3 +102,7 @@ def make_ports(bench_path):
 
 	return ports
 	
+def make_pid_folder(bench_path):
+	pids_path = os.path.join(bench_path, 'config', 'pids')
+	if not os.path.exists(pids_path):
+		os.makedirs(pids_path)

@@ -1,12 +1,8 @@
 # wget setup_frappe.py | python
 import os
 import sys
-import pwd
-import stat
 import subprocess
-import string
 
-from random import choice
 from distutils.spawn import find_executable
 from setuptools.command import easy_install as easy_install
 
@@ -19,7 +15,7 @@ def install_bench(args):
 	install_git()
 
 	# clone bench repo
-	cloned = clone_bench_repo()
+	clone_bench_repo()
 
 	if args.develop:
 		run_playbook('develop/install.yml', sudo=True)
@@ -83,7 +79,7 @@ def clone_bench_repo():
 
 	os.makedirs('/usr/local/frappe')
 	success = run_os_command(
-		{"git": "git clone https://github.com/frappe/bench {bench_repo}".format(bench_repo=bench_repo)}
+		{"git": "git clone https://github.com/frappe/bench {bench_repo} --branch new-install".format(bench_repo=bench_repo)}
 	)
 
 	return success
