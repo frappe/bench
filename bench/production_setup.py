@@ -1,5 +1,6 @@
-from .utils import get_program, exec_cmd, get_cmd_output, fix_prod_setup_perms, get_config
-from .config import generate_nginx_config, generate_supervisor_config
+from .utils import get_program, exec_cmd, get_cmd_output, fix_prod_setup_perms, get_config, get_bench_name
+from .config import generate_supervisor_config
+from .config.nginx import make_nginx_conf
 from jinja2 import Environment, PackageLoader
 import os
 import shutil
@@ -46,25 +47,22 @@ def is_running_systemd():
 		return True
 	return False
 
-def copy_default_nginx_config():
-	shutil.copy(os.path.join(os.path.dirname(__file__), 'templates', 'nginx_default.conf'), '/etc/nginx/nginx.conf')
-
 def setup_production(user, bench='.'):
 	generate_supervisor_config(bench=bench, user=user)
-	generate_nginx_config(bench=bench)
-	fix_prod_setup_perms(frappe_user=user)
+	make_nginx_conf(bench=bench)
+	fix_prod_setup_perms(bench, frappe_user=user)
 	remove_default_nginx_configs()
 
-	if is_centos7():
-		supervisor_conf_filename = 'frappe.ini'
-		copy_default_nginx_config()
-	else:
-		supervisor_conf_filename = 'frappe.conf'
+	bench_name = get_bench_name(bench)
+	nginx_conf = '/etc/nginx/conf.d/{bench_name}.conf'.format(bench_name=bench_name)
 
+	supervisor_conf_extn = "ini" if is_centos7() else "conf"
+	supervisor_conf = os.path.join(get_supervisor_confdir(), '{bench_name}.{extn}'.format(
+		bench_name=bench_name, extn=supervisor_conf_extn))
 
 	links = (
-		(os.path.abspath(os.path.join(bench, 'config', 'nginx.conf')), '/etc/nginx/conf.d/frappe.conf'),
-		(os.path.abspath(os.path.join(bench, 'config', 'supervisor.conf')), os.path.join(get_supervisor_confdir(), supervisor_conf_filename)),
+		(os.path.abspath(os.path.join(bench, 'config', 'nginx.conf')), nginx_conf),
+		(os.path.abspath(os.path.join(bench, 'config', 'supervisor.conf')), supervisor_conf),
 	)
 
 	for src, dest in links:
@@ -74,4 +72,5 @@ def setup_production(user, bench='.'):
 	exec_cmd('supervisorctl reload')
 	if os.environ.get('NO_SERVICE_RESTART'):
 		return
+
 	restart_service('nginx')

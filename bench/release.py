@@ -173,7 +173,7 @@ def bump(repo, bump_type, develop='develop', master='master', remote='upstream')
 	print 'Released {tag} for {repo}'.format(tag=tag_name, repo=repo)
 
 def release(repo, bump_type, develop, master):
-	if not get_config().get('release_bench'):
+	if not get_config(".").get('release_bench'):
 		print 'bench not configured to release'
 		sys.exit(1)
 	global github_username, github_password

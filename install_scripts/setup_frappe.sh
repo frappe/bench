@@ -16,7 +16,7 @@ get_passwd() {
 }
 
 set_opts () {
-	OPTS=`getopt -o v --long verbose,mysql-root-password:,frappe-user:,bench-branch:,setup-production,skip-setup-bench,help -n 'parse-options' -- "$@"`
+	OPTS=`getopt -o v --long verbose,mysql-root-password:,frappe-user:,bench-branch:,setup-production,skip-install-bench,skip-setup-bench,help -n 'parse-options' -- "$@"`
 
 	if [ $? != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
 
@@ -27,6 +27,7 @@ set_opts () {
 	FRAPPE_USER=false
 	BENCH_BRANCH="master"
 	SETUP_PROD=false
+	INSTALL_BENCH=true
 	SETUP_BENCH=true
 
 	if [ -f ~/frappe_passwords.sh ]; then
@@ -50,6 +51,7 @@ set_opts () {
 	--setup-production ) SETUP_PROD=true; shift;;
 	--bench-branch ) BENCH_BRANCH="$2"; shift;;
 	--skip-setup-bench ) SETUP_BENCH=false; shift;;
+	--skip-install-bench ) INSTALL_BENCH=false; shift;;
 	-- ) shift; break ;;
 	* ) break ;;
 	esac
@@ -202,14 +204,12 @@ install_packages() {
 	elif [ $OS == "debian" ] || [ $OS == "Ubuntu" ]; then
 		export DEBIAN_FRONTEND=noninteractive
 		setup_debconf
-		if [ $OS == "debian" ]; then
-			run_cmd bash -c "curl -sL https://deb.nodesource.com/setup_0.12 | bash -"
-		fi
+		run_cmd bash -c "curl -sL https://deb.nodesource.com/setup_0.12 | sudo bash -"
 		run_cmd sudo apt-get update
 		run_cmd sudo apt-get install -y python-dev python-setuptools build-essential python-mysqldb git \
 			ntp vim screen htop mariadb-server mariadb-common libmariadbclient-dev \
 			libxslt1.1 libxslt1-dev redis-server libssl-dev libcrypto++-dev postfix nginx \
-			supervisor python-pip fontconfig libxrender1 libxext6 xfonts-75dpi xfonts-base nodejs npm
+			supervisor python-pip fontconfig libxrender1 libxext6 xfonts-75dpi xfonts-base nodejs
 
 		if [ $OS_VER == "precise" ]; then
 			run_cmd sudo apt-get install -y libtiff4-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.5-dev tk8.5-dev python-tk
@@ -454,9 +454,12 @@ main() {
 	configure_mariadb
 	echo "Adding frappe user"
 	add_user
-	install_bench
-	if $SETUP_BENCH; then
-		setup_bench
+
+	if $INSTALL_BENCH; then
+		install_bench
+		if $SETUP_BENCH; then
+			setup_bench
+		fi
 	fi
 
 	echo
