@@ -1,0 +1,4 @@
+---
+- hosts: localhost
+  - include: develop/macosx.yml
+    when: ansible_os_family == 'Darwin'

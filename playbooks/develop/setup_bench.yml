@@ -1,0 +1,16 @@
+---
+  - name: install bench
+    pip: name={{ bench_repo_path }} extra_args='-e'
+    become: yes
+    become_method: sudo
+
+  - name: init bench
+    command: bench init {{ bench_path }}
+    args:
+      creates: "{{ bench_path }}"
+      
+  - name: install frappe app
+    command: bench get-app frappe https://github.com/frappe/frappe
+    args:
+      creates: "{{ bench_path }}/apps/frappe"
+      chdir: "{{ bench_path }}"

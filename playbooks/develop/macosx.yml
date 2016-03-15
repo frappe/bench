@@ -1,0 +1,42 @@
+---
+- hosts: localhost
+  vars:
+    bench_repo_path: "/usr/local/frappe/bench-repo"
+    bench_path: "/Users/{{ ansible_user_id }}/frappe/frappe-bench"
+    mysql_config_template: "develop/simple_mariadb_config.cnf"
+    mysql_conf_dir: /usr/local/etc/my.cnf.d
+
+  tasks:
+    
+  # install pre-requisites
+  - name: install prequisites
+    homebrew: name={{ item }} state=present
+    with_items:
+      - cmake
+      - redis
+      - mariadb
+      - nodejs
+      - npm
+    when: ansible_os_family == 'Darwin'
+  
+  # install wkhtmltopdf
+  - name: cask installs
+    homebrew_cask: name={{ item }} state=present
+    with_items:
+      - wkhtmltopdf
+    when: ansible_os_family == 'Darwin'
+  
+  # setup MariaDB
+  - include: develop/setup_mariadb.yml
+  
+  # setup frappe-bench
+  - include: develop/setup_bench.yml
+  
+  # setup procfile
+  
+  # setup config for redis/socketio
+  
+  # setup common_site_config
+  
+  # set developer_mode
+  
