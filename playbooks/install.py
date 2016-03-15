@@ -109,7 +109,7 @@ def run_playbook(playbook_name, sudo):
 	args = ["ansible-playbook", "-c", "local",  playbook_name]
 	if sudo:
 		args.append('-K')
-	success = subprocess.check_call(args, cwd=os.path.join(bench_repo, 'bench', 'playbooks'))
+	success = subprocess.check_call(args, cwd=os.path.join(bench_repo, 'playbooks'))
 	return success
 
 def parse_commandline_args():
