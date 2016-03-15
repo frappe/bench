@@ -3,7 +3,7 @@
   vars:
     bench_repo_path: "/usr/local/frappe/bench-repo"
     bench_path: "/Users/{{ ansible_user_id }}/frappe/frappe-bench"
-    mysql_config_template: "develop/simple_mariadb_config.cnf"
+    mysql_config_template: "templates/simple_mariadb_config.cnf"
     mysql_conf_dir: /usr/local/etc/my.cnf.d
 
   tasks:
@@ -27,10 +27,10 @@
     when: ansible_os_family == 'Darwin'
   
   # setup MariaDB
-  - include: develop/setup_mariadb.yml
+  - include: setup_mariadb.yml
   
   # setup frappe-bench
-  - include: develop/setup_bench.yml
+  - include: setup_bench.yml
   
   # setup procfile
   
