@@ -58,7 +58,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		raise Exception("Site directory already exists")
 		# sys.exit(1)
 
-	os.mkdir(path)
+	os.makedirs(path)
 	for dirname in folders_in_bench:
 		os.mkdir(os.path.join(path, dirname))
 
