@@ -1,5 +1,7 @@
 import os
-from .utils import exec_cmd, get_frappe, check_git_for_shallow_clone, get_config, build_assets, restart_supervisor_processes, get_cmd_output, run_frappe_cmd
+from .utils import (exec_cmd, get_frappe, check_git_for_shallow_clone, build_assets, 
+	restart_supervisor_processes, get_cmd_output, run_frappe_cmd)
+from .config.common_site_config import get_config
 
 import logging
 import requests

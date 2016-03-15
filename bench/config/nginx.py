@@ -1,9 +1,10 @@
 import os
 import json
-from bench.utils import get_sites, get_config, get_bench_name
+from bench.utils import get_sites, get_bench_name
 
 def make_nginx_conf(bench):
 	from bench.config import env, write_config_file
+	from bench.config.common_site_config import get_config
 
 	template = env.get_template('nginx.conf')
 	bench_path = os.path.abspath(bench)

@@ -1,9 +1,7 @@
-from .utils import get_program, exec_cmd, get_cmd_output, fix_prod_setup_perms, get_config, get_bench_name
-from .config import generate_supervisor_config
+from .utils import get_program, exec_cmd, get_cmd_output, fix_prod_setup_perms, get_bench_name
+from .config.supervisor import generate_supervisor_config
 from .config.nginx import make_nginx_conf
-from jinja2 import Environment, PackageLoader
 import os
-import shutil
 
 def restart_service(service):
 	if os.path.basename(get_program(['systemctl']) or '') == 'systemctl' and is_running_systemd():

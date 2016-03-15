@@ -6,12 +6,11 @@ from .utils import setup_backups as _setup_backups
 from .utils import setup_auto_update as _setup_auto_update
 from .utils import setup_sudoers as _setup_sudoers
 from .utils import start as _start
-from .utils import setup_procfile as _setup_procfile
 from .utils import set_nginx_port as _set_nginx_port
 from .utils import set_url_root as _set_url_root
 from .utils import set_default_site as _set_default_site
 from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_env_cmd, get_frappe, setup_logging,
-					get_config, update_config, restart_supervisor_processes, put_config, default_config, update_requirements,
+					restart_supervisor_processes, update_requirements,
 					backup_all_sites, backup_site, get_sites, is_root, set_mariadb_host, drop_privileges,
 					fix_file_perms, fix_prod_setup_perms, set_ssl_certificate, set_ssl_certificate_key,
 					get_cmd_output, post_upgrade, get_bench_name,
@@ -19,10 +18,11 @@ from .utils import (build_assets, patch_sites, exec_cmd, update_bench, get_env_c
 from .app import get_app as _get_app
 from .app import new_app as _new_app
 from .app import pull_all_apps, get_apps, get_current_frappe_version, is_version_upgrade, switch_to_v4, switch_to_v5, switch_to_master, switch_to_develop
-from .config import generate_supervisor_config, generate_redis_cache_config, generate_redis_async_broker_config, generate_redis_celery_broker_config
 from .config.nginx import make_nginx_conf
 from .production_setup import setup_production as _setup_production
 from .migrate_to_v5 import migrate_to_v5
+from .config.common_site_config import get_config, make_config, update_config
+
 import os
 import sys
 import logging
@@ -434,22 +434,14 @@ def setup_nginx():
 @click.command('supervisor')
 def setup_supervisor():
 	"generate config for supervisor"
+	from bench.config.supervisor import generate_supervisor_config
 	generate_supervisor_config()
 
-@click.command('redis-cache')
-def setup_redis_cache():
+@click.command('redis')
+def setup_redis():
 	"generate config for redis cache"
-	generate_redis_cache_config()
-
-@click.command('redis-async-broker')
-def setup_redis_async_broker():
-	"generate config for redis async broker"
-	generate_redis_async_broker_config()
-
-@click.command('redis-celery-broker')
-def setup_redis_celery_broker():
-	"generate config for redis celery broker"
-	generate_redis_celery_broker_config()
+	from bench.config.redis import generate_config
+	generate_config('.')
 
 @click.command('production')
 @click.argument('user')
@@ -477,11 +469,10 @@ def setup_env():
 	_setup_env()
 
 @click.command('procfile')
-@click.option('--with-watch', is_flag=True)
-@click.option('--with-celery-broker', is_flag=True)
-def setup_procfile(with_celery_broker, with_watch):
+def setup_procfile():
 	"Setup Procfile for bench start"
-	_setup_procfile(with_celery_broker, with_watch)
+	from bench.config.procfile import setup_procfile
+	setup_procfile('.')
 
 @click.command('socketio')
 def _setup_socketio():
@@ -491,14 +482,12 @@ def _setup_socketio():
 @click.command('config')
 def setup_config():
 	"overwrite or make config.json"
-	put_config(default_config)
+	make_config('.')
 
 setup.add_command(setup_nginx)
 setup.add_command(setup_sudoers)
 setup.add_command(setup_supervisor)
-setup.add_command(setup_redis_cache)
-setup.add_command(setup_redis_async_broker)
-setup.add_command(setup_redis_celery_broker)
+setup.add_command(setup_redis)
 setup.add_command(setup_auto_update)
 setup.add_command(setup_dnsmasq)
 setup.add_command(setup_backups)

@@ -37,8 +37,8 @@ class TestBenchInit(unittest.TestCase):
 		self.assert_ports("test-bench-1", {
 			"webserver_port": 8000,
 			"socketio_port": 9000,
-			"redis_celery_broker_port": 11000,
-			"redis_async_broker_port": 12000,
+			"redis_queue_port": 11000,
+			"redis_socketio_port": 12000,
 			"redis_cache_port": 13000
 		})
 
@@ -54,8 +54,8 @@ class TestBenchInit(unittest.TestCase):
 		self.assert_ports("test-bench-2", {
 			"webserver_port": 8001,
 			"socketio_port": 9001,
-			"redis_celery_broker_port": 11001,
-			"redis_async_broker_port": 12001,
+			"redis_queue_port": 11001,
+			"redis_socketio_port": 12001,
 			"redis_cache_port": 13001
 		})
 

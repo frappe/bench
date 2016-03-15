@@ -1,5 +1,4 @@
 import os
-import re
 import sys
 import subprocess
 import getpass
@@ -49,7 +48,9 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None,
 		verbose=False):
 	from .app import get_app, install_apps_from_path
-	from .config import generate_redis_cache_config, generate_redis_async_broker_config, generate_redis_celery_broker_config, generate_common_site_config
+	from .config.common_site_config import make_config
+	from .config import redis
+	from .config.procfile import setup_procfile
 	global FRAPPE_VERSION
 
 	if os.path.exists(path):
@@ -65,10 +66,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	setup_env(bench=path)
 
-	bench_config = make_bench_config()
-	put_config(bench_config, bench=path)
-
-	generate_common_site_config(bench=path)
+	make_config(path)
 
 	if not frappe_path:
 		frappe_path = 'https://github.com/frappe/frappe.git'
@@ -82,62 +80,15 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		setup_socketio(bench=path)
 
 	build_assets(bench=path)
-	generate_redis_celery_broker_config(bench=path)
-	generate_redis_cache_config(bench=path)
-	generate_redis_async_broker_config(bench=path)
+	redis.generate_config(path)
 
 	if not no_procfile:
-		setup_procfile(bench=path)
+		setup_procfile(path)
 	if not no_backups:
 		setup_backups(bench=path)
 	if not no_auto_update:
 		setup_auto_update(bench=path)
 
-def make_bench_config():
-	bench_config = {}
-	bench_config.update(default_config)
-	bench_config.update(make_ports())
-	bench_config.update(get_gunicorn_workers())
-
-	return bench_config
-
-def get_gunicorn_workers():
-	'''This function will return the maximum workers that can be started depending upon
-	number of cpu's present on the machine'''
-	return {
-		"gunicorn_workers": multiprocessing.cpu_count()
-	}
-
-def make_ports(benches_path="."):
-	default_ports = {
-		"webserver_port": 8000,
-		"socketio_port": 9000,
-		"redis_celery_broker_port": 11000,
-		"redis_async_broker_port": 12000,
-		"redis_cache_port": 13000
-	}
-
-	# collect all existing ports
-	existing_ports = {}
-	for folder in os.listdir(benches_path):
-		bench = os.path.join(benches_path, folder)
-		if os.path.isdir(bench):
-			bench_config = get_config(bench)
-			for key in default_ports.keys():
-				value = bench_config.get(key)
-				if value:
-					existing_ports.setdefault(key, []).append(value)
-
-	# new port value = max of existing port value + 1
-	ports = {}
-	for key, value in default_ports.items():
-		existing_value = existing_ports.get(key, [])
-		if existing_value:
-			value = max(existing_value) + 1
-
-		ports[key] = value
-
-	return ports
 
 def exec_cmd(cmd, cwd='.'):
 	from .cli import from_command_line
@@ -167,32 +118,6 @@ def setup_env(bench='.'):
 
 def setup_socketio(bench='.'):
 	exec_cmd("npm install socket.io redis express superagent cookie", cwd=bench)
-
-def setup_procfile(with_celery_broker=False, with_watch=False, bench='.'):
-	from .app import get_current_frappe_version
-	frappe_version = get_current_frappe_version()
-	procfile_contents = {
-		'web': "./env/bin/frappe --serve --sites_path sites",
-		'worker': "sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app worker'",
-		'longjob_worker': "sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app -n longjobs@%h worker'",
-		'async_worker': "sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app -n async@%h worker'",
-		'workerbeat': "sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app beat -s scheduler.schedule'"
-	}
-	if frappe_version > 4:
-		procfile_contents['redis_cache'] = "redis-server config/redis_cache.conf"
-		procfile_contents['redis_async_broker'] = "redis-server config/redis_async_broker.conf"
-		procfile_contents['web'] = "bench serve"
-		if with_celery_broker:
-			procfile_contents['redis_celery'] = "redis-server"
-		if with_watch:
-			procfile_contents['watch'] = "bench watch"
-	if frappe_version > 5:
-		procfile_contents['socketio'] = "{0} apps/frappe/socketio.js".format(find_executable("node") or find_executable("nodejs"))
-
-	procfile = '\n'.join(["{0}: {1}".format(k, v) for k, v in procfile_contents.items()])
-
-	with open(os.path.join(bench, 'Procfile'), 'w') as f:
-		f.write(procfile)
 
 def new_site(site, mariadb_root_password=None, admin_password=None, bench='.'):
 	import hashlib
@@ -293,22 +218,6 @@ def setup_logging(bench='.'):
 		logger.addHandler(hdlr)
 		logger.setLevel(logging.DEBUG)
 
-def get_config(bench):
-	config_path = os.path.join(bench, 'config.json')
-	if not os.path.exists(config_path):
-		return {}
-	with open(config_path) as f:
-		return json.load(f)
-
-def put_config(config, bench='.'):
-	with open(os.path.join(bench, 'config.json'), 'w') as f:
-		return json.dump(config, f, indent=1)
-
-def update_config(new_config, bench='.'):
-	config = get_config(bench=bench)
-	config.update(new_config)
-	put_config(config, bench=bench)
-
 def get_program(programs):
 	program = None
 	for p in programs:
@@ -355,6 +264,7 @@ def get_cmd_output(cmd, cwd='.'):
 		raise
 
 def restart_supervisor_processes(bench='.'):
+	from .config.common_site_config import get_config
 	conf = get_config(bench=bench)
 	bench_name = get_bench_name(bench)
 	cmd = conf.get('supervisor_restart_cmd',
@@ -471,6 +381,7 @@ def drop_privileges(uid_name='nobody', gid_name='nogroup'):
 	os.umask(022)
 
 def fix_prod_setup_perms(bench='.', frappe_user=None):
+	from .config.common_site_config import get_config
 	files = [
 		"logs/web.error.log",
 		"logs/web.log",
@@ -506,15 +417,6 @@ def fix_file_perms():
 		for _file in os.listdir(bin_dir):
 			if not _file.startswith('activate'):
 				os.chmod(os.path.join(bin_dir, _file), 0755)
-
-def get_redis_version():
-	version_string = subprocess.check_output('redis-server --version', shell=True).strip()
-	if re.search("Redis server version 2.4", version_string):
-		return "2.4"
-	if re.search("Redis server v=2.6", version_string):
-		return "2.6"
-	if re.search("Redis server v=2.8", version_string):
-		return "2.8"
 
 def get_current_frappe_version(bench='.'):
 	from .app import get_current_frappe_version as fv
@@ -569,6 +471,7 @@ def pre_upgrade(from_ver, to_ver, bench='.'):
 				exec_cmd("{pip} install --upgrade -e {app}".format(pip=pip, app=cwd))
 
 def post_upgrade(from_ver, to_ver, bench='.'):
+	from .config.common_site_config import get_config
 	from .config import generate_supervisor_config, generate_redis_cache_config, generate_redis_async_broker_config
 	from .config.nginx import make_nginx_conf
 	conf = get_config(bench=bench)
@@ -592,10 +495,6 @@ def post_upgrade(from_ver, to_ver, bench='.'):
 		print
 		print "sudo service nginx restart"
 		print "sudo supervisorctl reload"
-
-	if to_ver >= 5:
-		# For dev server. Always set this up incase someone wants to start a dev server.
-		setup_procfile(bench=bench)
 
 def update_translations_p(args):
 	try:

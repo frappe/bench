@@ -1,0 +1,10 @@
+redis_cache: redis-server config/redis_cache.conf
+redis_socketio: redis-server config/redis_socketio.conf
+redis_queue: redis-server config/redis_queue.conf
+web: bench serve
+socketio: {{ node }} apps/frappe/socketio.js
+worker: sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app worker'
+longjob_worker: sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app -n longjobs@%h worker'
+async_worker: sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app -n async@%h worker'
+workerbeat: sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app beat -s scheduler.schedule'
+watch: bench watch

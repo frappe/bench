@@ -12,7 +12,8 @@ import re
 from requests.auth import HTTPBasicAuth
 import requests.exceptions
 from time import sleep
-from .utils import get_config
+from .config.common_site_config import get_config
+
 
 github_username = None
 github_password = None
