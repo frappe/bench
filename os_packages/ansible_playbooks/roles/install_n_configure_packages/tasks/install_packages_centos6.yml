@@ -1,0 +1,33 @@
+---
+
+     - name: "Install packages list for CentOS 6"
+       yum: pkg={{ item }} state=present
+       with_items:
+            - git
+            - MariaDB-server
+            - MariaDB-client
+            - MariaDB-compat
+            - python-setuptools
+            - nginx
+            - zlib-devel
+            - bzip2-devel
+            - openssl-devel
+            - postfix
+            - python27-devel
+            - python27
+            - libxml2
+            - libxml2-devel
+            - libxslt
+            - libxslt-devel
+            - redis
+            - MariaDB-devel
+            - libXrender
+            - libXext
+            - python27-setuptools
+            - cronie
+            - sudo
+            - which
+            - xorg-x11-fonts-Type1
+            - xorg-x11-fonts-75dpi
+            - nodejs
+            - npm

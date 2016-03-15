@@ -1,0 +1,7 @@
+---
+
+      - service: name=nginx state=started
+
+      - service: name=mysql state=started
+
+      - service: name=redis state=started

@@ -1,0 +1,5 @@
+#!/usr/bin/make -f
+export DH_VIRTUALENV_INSTALL_ROOT=/usr/
+%:
+	dh $@  --install-suffix '' --with python-virtualenv 
+

@@ -1,0 +1,33 @@
+---
+
+
+     - name: "Install list of common packages for Debian/Ubuntu"
+       apt: pkg={{ item }} state=present update_cache=yes
+       with_items:
+            - python-dev
+            - python-setuptools
+            - build-essential
+            - python-mysqldb
+            - git
+            - ntp
+            - vim
+            - screen
+            - htop
+            - mariadb-server
+            - mariadb-common
+            - libmariadbclient-dev
+            - libxslt1.1
+            - libxslt1-dev
+            - redis-server
+            - libssl-dev
+            - libcrypto++-dev
+            - postfix
+            - nginx
+            - supervisor
+            - fontconfig
+            - libxrender1
+            - libxext6
+            - xfonts-75dpi
+            - xfonts-base
+            - nodejs
+            - npm

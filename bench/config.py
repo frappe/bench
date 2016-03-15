@@ -3,9 +3,10 @@ import getpass
 import json
 import subprocess
 import shutil
+import socket
 from distutils.spawn import find_executable
 from jinja2 import Environment, PackageLoader
-from .utils import get_sites, get_config, update_config, get_redis_version
+from .utils import get_sites, get_config, update_config, get_redis_version, update_common_site_config, get_bench_name
 
 env = Environment(loader=PackageLoader('bench', 'templates'), trim_blocks=True)
 
@@ -29,7 +30,8 @@ def generate_supervisor_config(bench='.', user=None):
 	sites = get_sites(bench=bench)
 	if not user:
 		user = getpass.getuser()
-	config = get_config()
+
+	config = get_config(bench=bench)
 
 	config = template.render(**{
 		"bench_dir": bench_dir,
@@ -40,7 +42,11 @@ def generate_supervisor_config(bench='.', user=None):
 		"node": find_executable('node') or find_executable('nodejs'),
 		"redis_cache_config": os.path.join(bench_dir, 'config', 'redis_cache.conf'),
 		"redis_async_broker_config": os.path.join(bench_dir, 'config', 'redis_async_broker.conf'),
-		"frappe_version": get_current_frappe_version()
+		"redis_celery_broker_config": os.path.join(bench_dir, 'config', 'redis_celery_broker.conf'),
+		"frappe_version": get_current_frappe_version(),
+		"webserver_port": config.get('webserver_port', 8000),
+		"gunicorn_workers": config.get('gunicorn_workers', 2),
+		"bench_name": get_bench_name(bench)
 	})
 	write_config_file(bench, 'supervisor.conf', config)
 	update_config({'restart_supervisor_on_update': True})
@@ -48,6 +54,27 @@ def generate_supervisor_config(bench='.', user=None):
 def get_site_config(site, bench='.'):
 	with open(os.path.join(bench, 'sites', site, 'site_config.json')) as f:
 		return json.load(f)
+
+def generate_common_site_config(bench='.'):
+	'''Generates the default common_site_config.json while a new bench is created'''
+	config = get_config(bench=bench)
+	common_site_config = {}
+
+	for bench_config_field, site_config_field in (
+			("redis_celery_broker_port", "celery_broker"),
+			("redis_async_broker_port", "async_redis_server"),
+			("redis_cache_port", "cache_redis_server")
+		):
+
+		port = config.get(bench_config_field)
+		if config.get(bench_config_field):
+			redis_url = "redis://localhost:{0}".format(port)
+			common_site_config[site_config_field] = redis_url
+
+	# TODO Optionally we need to add the host or domain name in case dns_multitenant is false
+
+	if common_site_config:
+		update_common_site_config(common_site_config, bench=bench)
 
 def get_sites_with_config(bench='.'):
 	sites = get_sites(bench=bench)
@@ -68,8 +95,9 @@ def generate_nginx_config(bench='.'):
 	sites_dir = os.path.join(bench_dir, "sites")
 	sites = get_sites_with_config(bench=bench)
 	user = getpass.getuser()
+	config = get_config(bench)
 
-	if get_config().get('serve_default_site'):
+	if config.get('serve_default_site'):
 		try:
 			with open("sites/currentsite.txt") as f:
 				default_site = {'name': f.read().strip()}
@@ -80,29 +108,56 @@ def generate_nginx_config(bench='.'):
 
 	config = template.render(**{
 		"sites_dir": sites_dir,
-		"http_timeout": get_config().get("http_timeout", 120),
+		"http_timeout": config.get("http_timeout", 120),
 		"default_site": default_site,
-		"dns_multitenant": get_config().get('dns_multitenant'),
-		"sites": sites
+		"dns_multitenant": config.get('dns_multitenant'),
+		"sites": sites,
+		"webserver_port": config.get('webserver_port', 8000),
+		"socketio_port": config.get('socketio_port', 3000),
+		"bench_name": get_bench_name(bench)
 	})
 	write_config_file(bench, 'nginx.conf', config)
 
-def generate_redis_cache_config(bench='.'):
-	template = env.get_template('redis_cache.conf')
-	conf = {
-		"maxmemory": get_config().get('cache_maxmemory', '50'),
-		"port": get_config().get('redis_cache_port', '11311'),
-		"redis_version": get_redis_version()
-	}
-	config = template.render(**conf)
-	write_config_file(bench, 'redis_cache.conf', config)
-
+def generate_redis_celery_broker_config(bench='.'):
+	"""Redis that is used for queueing celery tasks"""
+	_generate_redis_config(
+		template_name='redis_celery_broker.conf',
+		context={
+			"port": get_config(bench).get('redis_celery_broker_port', '11311'),
+			"bench_path": os.path.abspath(bench),
+		},
+		bench=bench
+	)
 
 def generate_redis_async_broker_config(bench='.'):
-	template = env.get_template('redis_async_broker.conf')
-	conf = {
-		"port": get_config().get('redis_async_broker_port', '12311'),
-		"redis_version": get_redis_version()
-	}
-	config = template.render(**conf)
-	write_config_file(bench, 'redis_async_broker.conf', config)
+	"""Redis that is used to do pub/sub"""
+	_generate_redis_config(
+		template_name='redis_async_broker.conf',
+		context={
+			"port": get_config(bench).get('redis_async_broker_port', '12311'),
+		},
+		bench=bench
+	)
+
+def generate_redis_cache_config(bench='.'):
+	"""Redis that is used and optimized for caching"""
+	config = get_config(bench=bench)
+
+	_generate_redis_config(
+		template_name='redis_cache.conf',
+		context={
+			"maxmemory": config.get('cache_maxmemory', '50'),
+			"port": config.get('redis_cache_port', '13311'),
+			"redis_version": get_redis_version(),
+		},
+		bench=bench
+	)
+
+def _generate_redis_config(template_name, context, bench):
+	template = env.get_template(template_name)
+
+	if "pid_path" not in context:
+		context["pid_path"] = os.path.abspath(os.path.join(bench, "config", "pids"))
+
+	redis_config = template.render(**context)
+	write_config_file(bench, template_name, redis_config)

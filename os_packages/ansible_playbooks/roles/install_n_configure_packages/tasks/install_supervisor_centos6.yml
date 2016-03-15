@@ -1,0 +1,51 @@
+---
+     - name: "Check if supervisor is already installed CentOS 6"
+       shell: rpm -q supervisor | grep "not installed" | wc -l       
+       register: supervisor_installed
+
+     - name: "easy_install supervisor CentOS 6"
+       shell: easy_install supervisor
+       when: (supervisor_installed.stdout == "1")
+
+     - name: "Check if supervisor init config already exists"
+       stat: path=/etc/init.d/supervisord
+       register: init_supervisor
+
+     - name: "Fill in supervisor init config"
+       shell: curl -Ss https://raw.githubusercontent.com/pdvyas/supervisor-initscripts/master/redhat-init-jkoppe > /etc/init.d/supervisord
+       when: (init_supervisor.stat.exists == False)
+
+     - name: "Check if supervisor sysconfig already exists"
+       stat: path=/etc/sysconfig/supervisord
+       register: sysconfig_supervisor
+
+     - name: "Fill in supervisor sysconfig"
+       shell: curl -Ss https://raw.githubusercontent.com/pdvyas/supervisor-initscripts/master/redhat-sysconfig-jkoppe > /etc/sysconfig/supervisord
+       when: (sysconfig_supervisor.stat.exists == False)
+
+     - name: "Check if supervisor etc conf already exists"
+       stat: path=/etc/supervisord.conf
+       register: etc_supervisor
+
+     - name: "Fill in supervisor etc conf"
+       shell: curl -Ss https://raw.githubusercontent.com/pdvyas/supervisor-initscripts/master/supervisord.conf > /etc/supervisord.conf
+       when: (etc_supervisor.stat.exists == False)
+
+     - name: "Check if supervisor.d already exists"
+       stat: path=/etc/supervisor.d
+       register: supervisor_d
+
+     - name: "Create supervisor.d"
+       shell: mkdir /etc/supervisor.d
+       when: (supervisor_d.stat.exists == False)
+ 
+     - name: "Check attributes of /etc/init.d/supervisord"
+       stat: path=/etc/init.d/supervisord
+       register: init_supervisor_file
+
+     - name: "Set /etc/init.d/supervisord executable"
+       shell: chmod +x /etc/init.d/supervisord
+       when: (init_supervisor_file.stat.xoth == False or init_supervisor_file.stat.xusr == False or init_supervisor_file.stat.xgrp == False)
+
+     - name: "Start supervisord service CentOS6"
+       shell: service supervisord start || true
