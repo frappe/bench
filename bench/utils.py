@@ -388,12 +388,12 @@ def set_ssl_certificate_key(site, ssl_certificate_key, bench='.', gen_config=Tru
 	set_site_config_nginx_property(site, {"ssl_certificate_key": ssl_certificate_key}, bench=bench, gen_config=gen_config)
 
 def set_site_config_nginx_property(site, config, bench='.', gen_config=True):
-	from .config import generate_nginx_config
+	from .config.nginx import make_nginx_conf
 	if site not in get_sites(bench=bench):
 		raise Exception("No such site")
 	update_site_config(site, config, bench=bench)
 	if gen_config:
-		generate_nginx_config(bench=bench)
+		make_nginx_conf(bench=bench)
 
 def set_url_root(site, url_root, bench='.'):
 	update_site_config(site, {"host_name": url_root}, bench=bench)
@@ -426,18 +426,6 @@ def backup_site(site, bench='.'):
 def backup_all_sites(bench='.'):
 	for site in get_sites(bench=bench):
 		backup_site(site, bench=bench)
-
-def prime_wheel_cache(bench='.'):
-	conf = get_config(bench=bench)
-	wheel_cache_dir = conf.get('wheel_cache_dir')
-	if not wheel_cache_dir:
-		raise Exception("Wheel cache dir not configured")
-	requirements = os.path.join(os.path.dirname(__file__), 'templates', 'cached_requirements.txt')
-	cmd =  "{pip} wheel --find-links {wheelhouse} --wheel-dir {wheelhouse} -r {requirements}".format(
-				pip=os.path.join(bench, 'env', 'bin', 'pip'),
-				wheelhouse=wheel_cache_dir,
-				requirements=requirements)
-	exec_cmd(cmd)
 
 def is_root():
 	if os.getuid() == 0:
@@ -581,7 +569,8 @@ def pre_upgrade(from_ver, to_ver, bench='.'):
 				exec_cmd("{pip} install --upgrade -e {app}".format(pip=pip, app=cwd))
 
 def post_upgrade(from_ver, to_ver, bench='.'):
-	from .config import generate_nginx_config, generate_supervisor_config, generate_redis_cache_config, generate_redis_async_broker_config
+	from .config import generate_supervisor_config, generate_redis_cache_config, generate_redis_async_broker_config
+	from .config.nginx import make_nginx_conf
 	conf = get_config(bench=bench)
 	print "-"*80
 	print "Your bench was upgraded to version {0}".format(to_ver)
@@ -589,7 +578,7 @@ def post_upgrade(from_ver, to_ver, bench='.'):
 	if conf.get('restart_supervisor_on_update'):
 		generate_redis_cache_config(bench=bench)
 		generate_supervisor_config(bench=bench)
-		generate_nginx_config(bench=bench)
+		make_nginx_conf(bench=bench)
 
 		if from_ver == 4 and to_ver == 5:
 			setup_backups(bench=bench)
