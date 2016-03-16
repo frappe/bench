@@ -7,7 +7,7 @@
     mysql_conf_dir: /usr/local/etc/my.cnf.d
 
   tasks:
-    
+
   # install pre-requisites
   - name: install prequisites
     homebrew: name={{ item }} state=present
@@ -16,18 +16,16 @@
       - redis
       - mariadb
       - nodejs
-      - npm
-  
+
   # install wkhtmltopdf
   - name: cask installs
     homebrew_cask: name={{ item }} state=present
     with_items:
       - wkhtmltopdf
-  
+
   # setup MariaDB
   - include: includes/setup_mariadb.yml
-  
+
   # setup frappe-bench
   - include: includes/setup_bench.yml
-  
-  
+

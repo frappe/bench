@@ -1,0 +1,7 @@
+---
+  - name: Add apt repositry
+    apt_repository: repo='deb [arch=amd64,i386] http://nyc2.mirrors.digitalocean.com/mariadb/repo/10.1/ubuntu {{ ansible_distribution_release }} main' state=present
+
+  - name: apt-get install
+    apt: pkg=mariadb-server state=present
+

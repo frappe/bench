@@ -66,6 +66,7 @@
           - git
           - htop
           - libcrypto++-dev
+
           - libfreetype6-dev
           - libjpeg8-dev
           - liblcms2-dev
@@ -76,6 +77,11 @@
           - libxrender1
           - libxslt1-dev
           - libxslt1.1
+          - tcl8.6-dev
+          - tk8.6-dev
+          - zlib1g-dev
+          - libopenjpeg-dev
+
           - nodejs
           - npm
           - ntp
@@ -86,10 +92,8 @@
           - redis-server
           - screen
           - supervisor
-          - tcl8.6-dev
-          - tk8.6-dev
           - vim
           - xfonts-75dpi
           - xfonts-base
-          - zlib1g-dev
+
         when: ansible_os_family == 'Debian'
