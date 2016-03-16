@@ -16,7 +16,7 @@ get_passwd() {
 }
 
 set_opts () {
-	OPTS=`getopt -o v --long verbose,mysql-root-password:,frappe-user:,bench-branch:,setup-production,skip-setup-bench,help -n 'parse-options' -- "$@"`
+	OPTS=`getopt -o v --long verbose,mysql-root-password:,frappe-user:,site:,bench-branch:,setup-production,skip-setup-bench,help -n 'parse-options' -- "$@"`
 
 	if [ $? != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
 
@@ -26,6 +26,7 @@ set_opts () {
 	HELP=false
 	FRAPPE_USER=false
 	BENCH_BRANCH="master"
+	SITE="site1.local"
 	SETUP_PROD=false
 	SETUP_BENCH=true
 
@@ -47,6 +48,7 @@ set_opts () {
 	-h | --help ) HELP=true; shift ;;
 	--mysql-root-password ) MSQ_PASS="$2"; shift; shift ;;
 	--frappe-user ) FRAPPE_USER="$2"; shift; shift ;;
+	--site ) SITE="$2"; shift; shift ;;
 	--setup-production ) SETUP_PROD=true; shift;;
 	--bench-branch ) BENCH_BRANCH="$2"; shift;;
 	--skip-setup-bench ) SETUP_BENCH=false; shift;;
@@ -398,7 +400,7 @@ setup_bench() {
 	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER && bench init frappe-bench --frappe-branch $FRAPPE_BRANCH --apps_path $ERPNEXT_APPS_JSON"
 	echo Setting up first site
 	echo /home/$FRAPPE_USER/frappe-bench > /etc/frappe_bench_dir
-	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench new-site site1.local --mariadb-root-password $MSQ_PASS --admin-password $ADMIN_PASS"
+	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench new-site $SITE --mariadb-root-password $MSQ_PASS --admin-password $ADMIN_PASS"
 	run_cmd sudo su $FRAPPE_USER -c "cd /home/$FRAPPE_USER/frappe-bench && bench install-app erpnext"
 	run_cmd bash -c "cd /home/$FRAPPE_USER/frappe-bench && bench setup sudoers $FRAPPE_USER"
 	if $SETUP_PROD; then
