@@ -1,0 +1,16 @@
+---
+- hosts: localhost
+  vars:
+    bench_repo_path: "/usr/local/frappe/bench-repo"
+    bench_path: "/home/{{ ansible_user_id }}/frappe/frappe-bench"
+    mysql_config_template: "templates/simple_mariadb_config.cnf"
+    mysql_conf_dir: /etc/my.cnf.d
+
+  tasks:
+  
+  # setup MariaDB
+  - include: includes/setup_mariadb.yml
+  
+  # setup frappe-bench
+  - include: includes/setup_bench.yml
+  

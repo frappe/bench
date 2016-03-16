@@ -17,19 +17,17 @@
       - mariadb
       - nodejs
       - npm
-    when: ansible_os_family == 'Darwin'
   
   # install wkhtmltopdf
   - name: cask installs
     homebrew_cask: name={{ item }} state=present
     with_items:
       - wkhtmltopdf
-    when: ansible_os_family == 'Darwin'
   
   # setup MariaDB
-  - include: setup_mariadb.yml
+  - include: includes/setup_mariadb.yml
   
   # setup frappe-bench
-  - include: setup_bench.yml
+  - include: includes/setup_bench.yml
   
   

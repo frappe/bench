@@ -1,4 +1,6 @@
 ---
 - hosts: localhost
 - include: macosx.yml
-  when: ansible_os_family == 'Darwin'
+  when: ansible_distribution == 'MacOSX'
+- include: ubuntu.yml
+  when: ansible_distribution == 'Ubuntu'
