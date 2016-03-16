@@ -24,6 +24,13 @@
 
   # setup procfile
   - name: setup procfile
+    command: bench setup socketio
+    args:
+      creates: "{{ bench_path }}/node_modules"
+      chdir: "{{ bench_path }}"
+
+  # setup procfile
+  - name: setup procfile
     command: bench setup procfile
     args:
       creates: "{{ bench_path }}/Procfile"

@@ -44,7 +44,7 @@ def write_appstxt(apps, bench='.'):
 
 def get_app(app, git_url, branch=None, bench='.', build_asset_files=True, verbose=False):
 	logger.info('getting app {}'.format(app))
-	shallow_clone = '--depth 1' if check_git_for_shallow_clone() and get_config(bench).get('shallow_clone') else ''
+	shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
 	branch = '--branch {branch}'.format(branch=branch) if branch else ''
 	exec_cmd("git clone {git_url} {branch} {shallow_clone} --origin upstream {app}".format(
 				git_url=git_url,

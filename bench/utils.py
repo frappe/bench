@@ -246,12 +246,15 @@ def check_cmd(cmd, cwd='.'):
 		return False
 
 def get_git_version():
-	version = get_cmd_output("git --version")
-	return version.strip().split()[-1]
+	'''returns git version from `git --version`
+	extracts version number from string `get version 1.9.1` etc'''
+	version = get_cmd_output("git --version").strip().split()[2]
+	version = '.'.join(version.split('.')[0:2])
+	return float(version)
 
 def check_git_for_shallow_clone():
 	git_version = get_git_version()
-	if git_version.startswith('1.9') or git_version.startswith('2'):
+	if git_version > 1.9:
 		return True
 	return False
 
