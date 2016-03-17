@@ -4,7 +4,7 @@
     bench_repo_path: "/usr/local/frappe/bench-repo"
     bench_path: "/home/{{ ansible_user_id }}/frappe/frappe-bench"
     mysql_config_template: "templates/simple_mariadb_config.cnf"
-    mysql_conf_dir: /etc/my.cnf.d
+    mysql_conf_dir: /etc/mysql/conf.d/
     wkhtmltopdf_version: 0.12.2.1
 
   tasks:
@@ -13,7 +13,13 @@
   - name: install prequisites
     apt: pkg={{ item }} state=present
     with_items:
-      - redis
+      # basic installs
+      - build-essential
+      - python-setuptools
+      - python-dev
+      - python-pip
+
+      - redis-server
       - nodejs
       - npm
 
@@ -44,6 +50,8 @@
       - tcl8.5-dev
       - tk8.5-dev
     when: ansible_distribution_version < 14.04
+    become: yes
+    become_user: root
 
   - name: install pillow prerequisites for Ubuntu > 14.04
     apt: pkg={{ item }} state=present
@@ -52,12 +60,14 @@
       - tcl8.6-dev
       - tk8.6-dev
     when: ansible_distribution_version >= 14.04
+    become: yes
+    become_user: root
 
   # install MariaDB
   - include: includes/mariadb_ubuntu.yml
 
   # install WKHTMLtoPDF
-  - include: includes/install_wkhtml.yml
+  - include: includes/wkhtmltopdf_ubuntu_debian.yml
 
   # setup MariaDB
   - include: includes/setup_mariadb.yml

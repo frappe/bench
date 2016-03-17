@@ -4,7 +4,6 @@ import sys
 import subprocess
 
 from distutils.spawn import find_executable
-from setuptools.command import easy_install as easy_install
 
 bench_repo = '/usr/local/frappe/bench-repo'
 
@@ -13,6 +12,9 @@ def install_bench(args):
 	install_pip()
 	install_ansible()
 	install_git()
+
+	if is_sudo_user():
+		raise Exception("Please run this script as a non-root user with sudo privileges, but without using sudo")
 
 	# clone bench repo
 	clone_bench_repo()
@@ -61,8 +63,19 @@ def install_pip():
 	"""Install pip for the user or upgrade to latest version if already present"""
 	try:
 		import pip
+
 	except ImportError:
-		easy_install.main(['pip'])
+		print "Installing Pip"
+
+		success = run_os_command({
+			"apt-get": "sudo apt-get install -y build-essential python-setuptools python-dev python-pip",
+		})
+
+		if not success:
+			could_not_install("Python Pip")
+
+		# replace current python with python2.7
+		os.execvp("python2.7", ([] if is_sudo_user() else ["sudo"]) + ["python2.7", __file__] + sys.argv[1:])
 
 def install_ansible():
 	try:
@@ -76,7 +89,7 @@ def clone_bench_repo():
 
 	if os.path.exists(bench_repo):
 		return 0
-		
+
 	os.makedirs('/usr/local/frappe')
 	success = run_os_command(
 		{"git": "git clone https://github.com/frappe/bench {bench_repo} --depth 1 --branch new-install".format(bench_repo=bench_repo)}
@@ -101,10 +114,11 @@ def could_not_install(package):
 def is_sudo_user():
 	return os.geteuid() == 0
 
-def run_playbook(playbook_name, sudo):
+def run_playbook(playbook_name, sudo=False):
 	args = ["ansible-playbook", "-c", "local",  playbook_name]
 	if sudo:
 		args.append('-K')
+
 	success = subprocess.check_call(args, cwd=os.path.join(bench_repo, 'playbooks'))
 	return success
 
@@ -114,7 +128,6 @@ def parse_commandline_args():
 	parser = argparse.ArgumentParser(description='Frappe Installer')
 	parser.add_argument('--develop', dest='develop', action='store_true', default=False,
 						help="Install developer setup")
-
 	args = parser.parse_args()
 
 	return args

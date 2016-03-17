@@ -1,7 +1,10 @@
 ---
+  - name: Add apt key
+    apt_key: keyserver=hkp://keyserver.ubuntu.com:80 id=0xcbcb082a1bb943db state=present
+
   - name: Add apt repositry
     apt_repository: repo='deb [arch=amd64,i386] http://nyc2.mirrors.digitalocean.com/mariadb/repo/10.1/ubuntu {{ ansible_distribution_release }} main' state=present
 
   - name: apt-get install
-    apt: pkg=mariadb-server state=present
+    apt: pkg=mariadb-server update_cache=yes state=present
 

@@ -1,14 +1,9 @@
 ---
-  - name: Install MySQLdb in global env
-    pip: name=mysql-python version=1.2.5
-    become: yes
-    become_method: sudo
-
   - name: Set root Password
-    mysql_user: 
-      name=root 
-      host={{ item }} 
-      password={{ mysql_root_password }} 
+    mysql_user:
+      name=root
+      host={{ item }}
+      password={{ mysql_root_password }}
       state=present
       login_user=root
     with_items:
@@ -20,4 +15,3 @@
     notify: restart mysql
     become: yes
     become_method: sudo
-  
