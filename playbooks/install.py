@@ -2,16 +2,30 @@
 import os
 import sys
 import subprocess
-
+import getpass
 from distutils.spawn import find_executable
 
 bench_repo = '/usr/local/frappe/bench-repo'
 
 def install_bench(args):
 	# pre-requisites for bench repo cloning
-	install_pip()
-	install_ansible()
-	install_git()
+	run_os_command({
+		"apt-get": "sudo apt-get update",
+	})
+
+	success = run_os_command({
+		"apt-get": "sudo apt-get install -y git build-essential python-setuptools python-dev python-pip",
+		"yum": "sudo yum install -y git",
+		"brew": "brew install git"
+	})
+
+	if not success:
+		print "Could not install pre-requisites. Please check for errors or install them manually."
+		return
+
+	success = run_os_command({
+		"pip": "sudo pip install ansible"
+	})
 
 	if is_sudo_user():
 		raise Exception("Please run this script as a non-root user with sudo privileges, but without using sudo")
@@ -43,54 +57,23 @@ def install_python27():
 	# replace current python with python2.7
 	os.execvp("python2.7", ([] if is_sudo_user() else ["sudo"]) + ["python2.7", __file__] + sys.argv[1:])
 
-def install_git():
-	if find_executable("git"):
-		# git already installed
-		return
-
-	print "Installing Git"
-
-	success = run_os_command({
-		"apt-get": "sudo apt-get install -y git",
-		"yum": "sudo yum install -y git",
-		"brew": "brew install git"
-	})
-
-	if not success:
-		could_not_install("Git")
-
-def install_pip():
-	"""Install pip for the user or upgrade to latest version if already present"""
-	try:
-		import pip
-
-	except ImportError:
-		print "Installing Pip"
-
-		success = run_os_command({
-			"apt-get": "sudo apt-get install -y build-essential python-setuptools python-dev python-pip",
-		})
-
-		if not success:
-			could_not_install("Python Pip")
-
-		# replace current python with python2.7
-		os.execvp("python2.7", ([] if is_sudo_user() else ["sudo"]) + ["python2.7", __file__] + sys.argv[1:])
-
-def install_ansible():
-	try:
-		import ansible
-	except ImportError:
-		import pip
-		pip.main(["install", "ansible"])
-
 def clone_bench_repo():
 	"""Clones the bench repository in the user folder"""
 
 	if os.path.exists(bench_repo):
 		return 0
 
-	os.makedirs('/usr/local/frappe')
+	run_os_command({
+		'brew': 'mkdir -p /usr/local/frappe',
+		'apt-get': 'sudo mkdir -p /usr/local/frappe',
+		'yum': 'sudo mkdir -p /usr/local/frappe',
+	})
+
+	# change user
+	run_os_command({
+		'ls': 'sudo chown -R {user}:{user} /usr/local/frappe'.format(user=getpass.getuser()),
+	})
+
 	success = run_os_command(
 		{"git": "git clone https://github.com/frappe/bench {bench_repo} --depth 1 --branch new-install".format(bench_repo=bench_repo)}
 	)

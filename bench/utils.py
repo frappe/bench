@@ -113,7 +113,7 @@ def setup_env(bench='.'):
 	exec_cmd('virtualenv -q {} -p {}'.format('env', sys.executable), cwd=bench)
 	exec_cmd('./env/bin/pip -q install --upgrade pip', cwd=bench)
 	exec_cmd('./env/bin/pip -q install wheel', cwd=bench)
-	exec_cmd('./env/bin/pip -q install https://github.com/frappe/MySQLdb1/archive/MySQLdb-1.2.5-patched.tar.gz', cwd=bench)
+	# exec_cmd('./env/bin/pip -q install https://github.com/frappe/MySQLdb1/archive/MySQLdb-1.2.5-patched.tar.gz', cwd=bench)
 	exec_cmd('./env/bin/pip -q install -e git+https://github.com/frappe/python-pdfkit.git#egg=pdfkit', cwd=bench)
 
 def setup_socketio(bench='.'):

@@ -1,6 +1,8 @@
 ---
   - name: install bench
     pip: name={{ bench_repo_path }} extra_args='-e'
+    become: yes
+    become_user: root
 
   - name: init bench
     command: bench init {{ bench_path }}

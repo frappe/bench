@@ -7,6 +7,10 @@
     mysql_conf_dir: /etc/mysql/conf.d/
     wkhtmltopdf_version: 0.12.2.1
 
+  vars_prompt:
+    - name: mysql_root_password
+      prompt: "MySQL Root Password"
+
   tasks:
 
   # install pre-requisites
