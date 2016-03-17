@@ -10,7 +10,12 @@
     become_user: root
 
   - name: apt-get install
-    apt: pkg=mariadb-server update_cache=yes state=present
+    apt: pkg={{ item }} update_cache=yes state=present
+    with_items:
+      - mariadb-server
+      - mariadb-client
+      - mariadb-common
+      - libmariadbclient-dev
     become: yes
     become_user: root
 
