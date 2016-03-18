@@ -11,11 +11,12 @@ def install_bench(args):
 	# pre-requisites for bench repo cloning
 	run_os_command({
 		"apt-get": "sudo apt-get update",
+		"yum": "yum groupinstall 'Development Tools'"
 	})
 
 	success = run_os_command({
 		"apt-get": "sudo apt-get install -y git build-essential python-setuptools python-dev python-pip",
-		"yum": "sudo yum install -y git",
+		"yum": "sudo yum install -y git python-setuptools python-devel python-pip",
 		"brew": "brew install git"
 	})
 
