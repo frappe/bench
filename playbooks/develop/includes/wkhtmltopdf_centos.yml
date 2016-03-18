@@ -1,0 +1,12 @@
+---
+  - name: Download wkhtmltopdf
+    get_url:
+      url=http://download.gna.org/wkhtmltopdf/0.12/{{ wkhtmltopdf_version }}/wkhtmltox-{{ wkhtmltopdf_version }}_linux-centos{{ ansible_lsb.major_release }}-{{ "amd64" if ansible_architecture == "x86_64" else "i386"}}.rpm
+      dest="/tmp/"
+    become: yes
+    become_user: root
+
+  - name: Install wkhtmltopdf deb
+    yum: name=/tmp/wkhtmltox-{{ wkhtmltopdf_version }}_linux-centos{{ ansible_lsb.major_release }}-{{ "amd64" if ansible_architecture == "x86_64" else "i386"}}.rpm state=present
+    become: yes
+    become_user: root
