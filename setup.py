@@ -15,7 +15,8 @@ setup(
 		'requests',
 		'honcho',
 		'semantic_version',
-		'GitPython==0.3.2.RC1'
+		'GitPython==0.3.2.RC1',
+		'websocket'
 	],
 	entry_points='''
 [console_scripts]
