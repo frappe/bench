@@ -18,14 +18,14 @@ def setup_sudoers(user):
 def setup_nginx():
 	"generate config for nginx"
 	from bench.config.nginx import make_nginx_conf
-	make_nginx_conf(bench=".")
+	make_nginx_conf(bench_path=".")
 
 
 @click.command('supervisor')
 def setup_supervisor():
 	"generate config for supervisor"
 	from bench.config.supervisor import generate_supervisor_config
-	generate_supervisor_config()
+	generate_supervisor_config(bench_path=".")
 
 
 @click.command('redis')

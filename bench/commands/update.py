@@ -1,6 +1,6 @@
 import click
 import sys, os
-from bench.config.common_site_config import get_config
+from bench.config.common_site_config import get_config, deprecate_old_config
 from bench.app import pull_all_apps, is_version_upgrade
 from bench.utils import (update_bench, validate_upgrade, pre_upgrade, post_upgrade, before_update,
 	update_requirements, backup_all_sites, patch_sites, build_assets, restart_supervisor_processes)
@@ -22,6 +22,8 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 
 	if not (pull or patch or build or bench or requirements):
 		pull, patch, build, bench, requirements = True, True, True, True, True
+
+	deprecate_old_config(".")
 
 	conf = get_config(".")
 

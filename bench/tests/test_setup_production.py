@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
-from bench.tests.test_init import TestBenchInit
-from bench.production_setup import setup_production, get_supervisor_confdir
+from bench.tests import test_init
+from bench.config.production_setup import setup_production, get_supervisor_confdir
 import bench.utils
 import os
 import getpass
@@ -8,7 +8,7 @@ import re
 import unittest
 import time
 
-class TestSetupProduction(TestBenchInit):
+class TestSetupProduction(test_init.TestBenchInit):
 	# setUp, tearDown and other tests are defiend in TestBenchInit
 
 	def test_setup_production(self):
@@ -17,7 +17,8 @@ class TestSetupProduction(TestBenchInit):
 		user = getpass.getuser()
 
 		for bench_name in ("test-bench-1", "test-bench-2"):
-			setup_production(user, bench_name)
+			bench_path = os.path.join(os.path.abspath(self.benches_path), bench_name)
+			setup_production(user, bench_path)
 			self.assert_nginx_config(bench_name)
 			self.assert_supervisor_config(bench_name)
 
@@ -28,7 +29,7 @@ class TestSetupProduction(TestBenchInit):
 		self.assert_nginx_process()
 
 	def assert_nginx_config(self, bench_name):
-		conf_src = os.path.join(os.path.abspath(bench_name), 'config', 'nginx.conf')
+		conf_src = os.path.join(os.path.abspath(self.benches_path), bench_name, 'config', 'nginx.conf')
 		conf_dest = "/etc/nginx/conf.d/{bench_name}.conf".format(bench_name=bench_name)
 
 		self.assertTrue(os.path.exists(conf_src))
@@ -48,7 +49,7 @@ class TestSetupProduction(TestBenchInit):
 				self.assertTrue(key.format(bench_name=bench_name) in f)
 
 	def assert_supervisor_config(self, bench_name):
-		conf_src = os.path.join(os.path.abspath(bench_name), 'config', 'supervisor.conf')
+		conf_src = os.path.join(os.path.abspath(self.benches_path), bench_name, 'config', 'supervisor.conf')
 
 		supervisor_conf_dir = get_supervisor_confdir()
 		conf_dest = "{supervisor_conf_dir}/{bench_name}.conf".format(supervisor_conf_dir=supervisor_conf_dir, bench_name=bench_name)
@@ -70,8 +71,8 @@ class TestSetupProduction(TestBenchInit):
 					"program:{bench_name}-frappe-async-worker",
 					"program:{bench_name}-frappe-workerbeat",
 					"program:{bench_name}-redis-cache",
-					"program:{bench_name}-redis-celery-broker",
-					"program:{bench_name}-redis-async-broker",
+					"program:{bench_name}-redis-queue",
+					"program:{bench_name}-redis-socketio",
 					"program:{bench_name}-node-socketio",
 					"group:{bench_name}-processes",
 					"group:{bench_name}-redis"
@@ -93,8 +94,8 @@ class TestSetupProduction(TestBenchInit):
 				"{bench_name}-processes:{bench_name}-frappe-workerbeat[\s]+RUNNING",
 				"{bench_name}-processes:{bench_name}-node-socketio[\s]+RUNNING",
 				"{bench_name}-redis:{bench_name}-redis-cache[\s]+RUNNING",
-				"{bench_name}-redis:{bench_name}-redis-celery-broker[\s]+RUNNING",
-				"{bench_name}-redis:{bench_name}-redis-async-broker[\s]+RUNNING",
+				"{bench_name}-redis:{bench_name}-redis-queue[\s]+RUNNING",
+				"{bench_name}-redis:{bench_name}-redis-socketio[\s]+RUNNING",
 			):
 			self.assertTrue(re.search(key.format(bench_name=bench_name), out))
 

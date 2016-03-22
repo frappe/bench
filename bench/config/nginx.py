@@ -2,16 +2,16 @@ import os
 import json
 from bench.utils import get_sites, get_bench_name
 
-def make_nginx_conf(bench):
-	from bench.config import env, write_config_file
+def make_nginx_conf(bench_path):
+	from bench import env
 	from bench.config.common_site_config import get_config
 
 	template = env.get_template('nginx.conf')
-	bench_path = os.path.abspath(bench)
+	bench_path = os.path.abspath(bench_path)
 	sites_path = os.path.join(bench_path, "sites")
 
-	config = get_config(bench)
-	sites = prepare_sites(config, bench)
+	config = get_config(bench_path)
+	sites = prepare_sites(config, bench_path)
 
 	nginx_conf = template.render(**{
 		"sites_path": sites_path,
@@ -19,12 +19,13 @@ def make_nginx_conf(bench):
 		"sites": sites,
 		"webserver_port": config.get('webserver_port'),
 		"socketio_port": config.get('socketio_port'),
-		"bench_name": get_bench_name(bench)
+		"bench_name": get_bench_name(bench_path)
 	})
 
-	write_config_file(bench, 'nginx.conf', nginx_conf)
+	with open(os.path.join(bench_path, "config", "nginx.conf"), "w") as f:
+		f.write(nginx_conf)
 
-def prepare_sites(config, bench):
+def prepare_sites(config, bench_path):
 	sites = {
 		"that_use_dns": [],
 		"that_use_ssl": [],
@@ -33,7 +34,7 @@ def prepare_sites(config, bench):
 	ports_in_use = {}
 	dns_multitenant = config.get('dns_multitenant')
 
-	for site in get_sites_with_config(bench=bench):
+	for site in get_sites_with_config(bench_path=bench_path):
 		if dns_multitenant:
 			# assumes site's folder name is same as the domain name
 
@@ -55,11 +56,11 @@ def prepare_sites(config, bench):
 
 	return sites
 
-def get_sites_with_config(bench):
-	sites = get_sites(bench=bench)
+def get_sites_with_config(bench_path):
+	sites = get_sites(bench=bench_path)
 	ret = []
 	for site in sites:
-		site_config = get_site_config(site, bench=bench)
+		site_config = get_site_config(site, bench_path=bench_path)
 		ret.append({
 			"name": site,
 			"port": site_config.get('nginx_port'),
@@ -68,6 +69,6 @@ def get_sites_with_config(bench):
 		})
 	return ret
 
-def get_site_config(site, bench='.'):
-	with open(os.path.join(bench, 'sites', site, 'site_config.json')) as f:
+def get_site_config(site, bench_path='.'):
+	with open(os.path.join(bench_path, 'sites', site, 'site_config.json')) as f:
 		return json.load(f)

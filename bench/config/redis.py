@@ -1,14 +1,14 @@
 from .common_site_config import get_config
-import re, os, subprocess, urlparse
+import re, os, subprocess, urlparse, semantic_version
 import bench
 
 def generate_config(bench_path):
 	config = get_config(bench_path)
-	
+
 	ports = {}
 	for key in ('redis_cache', 'redis_queue', 'redis_socketio'):
 		ports[key] = urlparse.urlparse(config[key]).port
-	
+
 	write_redis_config(
 		template_name='redis_queue.conf',
 		context={
@@ -25,7 +25,7 @@ def generate_config(bench_path):
 		},
 		bench_path=bench_path
 	)
-	
+
 	write_redis_config(
 		template_name='redis_cache.conf',
 		context={
@@ -35,6 +35,11 @@ def generate_config(bench_path):
 		},
 		bench_path=bench_path
 	)
+
+	# make pids folder
+	pid_path = os.path.join(bench_path, "config", "pids")
+	if not os.path.exists(pid_path):
+		os.makedirs(pid_path)
 
 def write_redis_config(template_name, context, bench_path):
 	template = bench.env.get_template(template_name)
@@ -47,9 +52,11 @@ def write_redis_config(template_name, context, bench_path):
 
 def get_redis_version():
 	version_string = subprocess.check_output('redis-server --version', shell=True).strip()
-	if re.search("Redis server version 2.4", version_string):
-		return "2.4"
-	if re.search("Redis server v=2.6", version_string):
-		return "2.6"
-	if re.search("Redis server v=2.8", version_string):
-		return "2.8"
+
+	# extract version number from string
+	version = re.findall("\d+\.\d+", version_string)
+	if not version:
+		return None
+
+	version = semantic_version.Version(version[0], partial=True)
+	return float('{major}.{minor}'.format(major=version.major, minor=version.minor))

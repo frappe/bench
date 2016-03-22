@@ -152,7 +152,7 @@ External services
 -----------------
 
 	* MariaDB (Datastore for frappe)
-	* Redis (Broker for frappe background workers)
+	* Redis (Queue for frappe background workers and caching)
 	* nginx (for production deployment)
 	* supervisor (for production deployment)
 

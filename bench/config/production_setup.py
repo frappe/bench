@@ -1,7 +1,31 @@
-from .utils import get_program, exec_cmd, get_cmd_output, fix_prod_setup_perms, get_bench_name
-from .config.supervisor import generate_supervisor_config
-from .config.nginx import make_nginx_conf
+from bench.utils import get_program, exec_cmd, get_cmd_output, fix_prod_setup_perms, get_bench_name
+from bench.config.supervisor import generate_supervisor_config
+from bench.config.nginx import make_nginx_conf
 import os
+
+def setup_production(user, bench='.'):
+	generate_supervisor_config(bench_path=bench, user=user)
+	make_nginx_conf(bench_path=bench)
+	fix_prod_setup_perms(bench, frappe_user=user)
+	remove_default_nginx_configs()
+
+	bench_name = get_bench_name(bench)
+	nginx_conf = '/etc/nginx/conf.d/{bench_name}.conf'.format(bench_name=bench_name)
+
+	supervisor_conf_extn = "ini" if is_centos7() else "conf"
+	supervisor_conf = os.path.join(get_supervisor_confdir(), '{bench_name}.{extn}'.format(
+		bench_name=bench_name, extn=supervisor_conf_extn))
+
+
+	os.symlink(os.path.abspath(os.path.join(bench, 'config', 'supervisor.conf')), supervisor_conf)
+	os.symlink(os.path.abspath(os.path.join(bench, 'config', 'nginx.conf')), nginx_conf)
+
+	exec_cmd('supervisorctl reload')
+	if os.environ.get('NO_SERVICE_RESTART'):
+		return
+
+	restart_service('nginx')
+
 
 def restart_service(service):
 	if os.path.basename(get_program(['systemctl']) or '') == 'systemctl' and is_running_systemd():
@@ -44,24 +68,3 @@ def is_running_systemd():
 	elif comm == "systemd":
 		return True
 	return False
-
-def setup_production(user, bench='.'):
-	generate_supervisor_config(bench=bench, user=user)
-	make_nginx_conf(bench=bench)
-	fix_prod_setup_perms(bench, frappe_user=user)
-	remove_default_nginx_configs()
-
-	bench_name = get_bench_name(bench)
-	nginx_conf = '/etc/nginx/conf.d/{bench_name}.conf'.format(bench_name=bench_name)
-
-	supervisor_conf_extn = "ini" if is_centos7() else "conf"
-	supervisor_conf = os.path.join(get_supervisor_confdir(), '{bench_name}.{extn}'.format(
-		bench_name=bench_name, extn=supervisor_conf_extn))
-
-
-	os.symlink(os.path.abspath(os.path.join(bench, 'config', 'supervisor.conf')), os.path.join(get_supervisor_confdir(), supervisor_conf_filename))
-	os.symlink(os.path.abspath(os.path.join(bench, 'config', 'nginx.conf')), '/etc/nginx/conf.d/frappe.conf')
-	exec_cmd('supervisorctl reload')
-	if os.environ.get('NO_SERVICE_RESTART'):
-		return
-	restart_service('nginx')

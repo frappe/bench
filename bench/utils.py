@@ -1,7 +1,6 @@
 import os
 import sys
 import subprocess
-import getpass
 import logging
 import itertools
 import requests
@@ -21,16 +20,6 @@ class CommandFailedError(Exception):
 
 logger = logging.getLogger(__name__)
 
-
-default_config = {
-	'restart_supervisor_on_update': False,
-	'auto_update': False,
-	'serve_default_site': True,
-	'rebase_on_pull': False,
-	'update_bench_on_update': True,
-	'frappe_user': getpass.getuser(),
-	'shallow_clone': True,
-}
 
 folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 
@@ -196,8 +185,11 @@ def read_crontab():
 	return out
 
 def update_bench():
-	logger.info('setting up sudoers')
-	cwd = os.path.dirname(os.path.abspath(__file__))
+	logger.info('updating bench')
+
+	# bench-repo folder
+	cwd = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 	exec_cmd("git pull", cwd=cwd)
 
 def setup_sudoers(user):
@@ -306,7 +298,7 @@ def set_site_config_nginx_property(site, config, bench='.', gen_config=True):
 		raise Exception("No such site")
 	update_site_config(site, config, bench=bench)
 	if gen_config:
-		make_nginx_conf(bench=bench)
+		make_nginx_conf(bench_path=bench)
 
 def set_url_root(site, url_root, bench='.'):
 	update_site_config(site, {"host_name": url_root}, bench=bench)
@@ -475,22 +467,22 @@ def pre_upgrade(from_ver, to_ver, bench='.'):
 
 def post_upgrade(from_ver, to_ver, bench='.'):
 	from .config.common_site_config import get_config
-	from .config import generate_supervisor_config, generate_redis_cache_config, generate_redis_async_broker_config
+	from .config import redis
+	from .config.supervisor import generate_supervisor_config
 	from .config.nginx import make_nginx_conf
 	conf = get_config(bench=bench)
 	print "-"*80
 	print "Your bench was upgraded to version {0}".format(to_ver)
 
 	if conf.get('restart_supervisor_on_update'):
-		generate_redis_cache_config(bench=bench)
-		generate_supervisor_config(bench=bench)
-		make_nginx_conf(bench=bench)
+		redis.generate_config(bench_path=bench)
+		generate_supervisor_config(bench_path=bench)
+		make_nginx_conf(bench_path=bench)
 
 		if from_ver == 4 and to_ver == 5:
 			setup_backups(bench=bench)
 
 		if from_ver <= 5 and to_ver == 6:
-			generate_redis_async_broker_config(bench=bench)
 			setup_socketio(bench=bench)
 
 		print "As you have setup your bench for production, you will have to reload configuration for nginx and supervisor"
@@ -520,7 +512,6 @@ def download_translations():
 	for app, lang in itertools.product(apps, langs):
 		update_translations(app, lang)
 
-
 def get_langs():
 	lang_file = 'apps/frappe/frappe/data/languages.txt'
 	with open(lang_file) as f:
@@ -528,7 +519,6 @@ def get_langs():
 	langs = [line.split()[0] for line in lang_data.splitlines()]
 	langs.remove('en')
 	return langs
-
 
 def update_translations(app, lang):
 	translations_dir = os.path.join('apps', app, app, 'translations')
