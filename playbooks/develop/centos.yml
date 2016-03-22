@@ -7,24 +7,23 @@
     mysql_conf_dir: /etc/my.cnf.d/
     wkhtmltopdf_version: 0.12.2.1
 
-  vars_prompt:
-    - name: mysql_root_password
-      prompt: "MySQL Root Password"
-
   tasks:
 
   # install pre-requisites
+  - name: add epel repo
+    yum: name="https://dl.fedoraproject.org/pub/epel/{{ ansible_lsb.major_release }}/x86_64/e/epel-release-*.rpm" state=present
+    become: yes
+    become_user: root
+
   - name: development tools package
     yum: name="@Development tools" state=present
+    become: yes
+    become_user: root
 
   - name: install prequisites
     yum: pkg={{ item }} state=present
     with_items:
       # basic installs
-      - python-setuptools
-      - python-devel
-      - python-pip
-
       - redis
       - nodejs
       - npm
