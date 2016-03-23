@@ -195,7 +195,7 @@ def update_bench():
 def setup_sudoers(user):
 	sudoers_file = '/etc/sudoers.d/frappe'
 	with open(sudoers_file, 'w') as f:
-		f.write("{user} ALL=(ALL) NOPASSWD: {supervisorctl} restart frappe\:\n".format(
+		f.write("{user} ALL=(ALL) NOPASSWD: {supervisorctl}\n".format(
 					user=user,
 					supervisorctl=subprocess.check_output('which supervisorctl', shell=True).strip()))
 	os.chmod(sudoers_file, 0440)
