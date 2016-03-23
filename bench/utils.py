@@ -264,7 +264,15 @@ def restart_supervisor_processes(bench='.'):
 	bench_name = get_bench_name(bench)
 	cmd = conf.get('supervisor_restart_cmd',
 				   'sudo supervisorctl restart {bench_name}-processes:'.format(bench_name=bench_name))
-	exec_cmd(cmd, cwd=bench)
+
+	try:
+		exec_cmd(cmd, cwd=bench)
+	except CommandFailedError:
+		if cmd.endswith('{bench_name}-processes:'.format(bench_name=bench_name)):
+			# backward compatibility
+			exec_cmd('sudo supervisorctl restart frappe:', cwd=bench)
+		else:
+			raise
 
 def get_site_config(site, bench='.'):
 	config_path = os.path.join(bench, 'sites', site, 'site_config.json')
