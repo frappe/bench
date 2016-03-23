@@ -1,0 +1,9 @@
+---
+- name: Install ntpd
+  yum: name="{{item}}" state=installed
+  with_items:
+    - ntp
+    - ntpdate
+
+- name: enable ntpd
+  service: name=ntpd enabled=yes state=started

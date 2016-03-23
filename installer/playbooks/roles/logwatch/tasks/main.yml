@@ -1,0 +1,6 @@
+---
+- name: Install logwatch
+  yum: name=logwatch state=present
+
+- name: Copy logwatch config
+  template: src=logwatch.conf.j2 dest=/etc/logwatch/conf/logwatch.conf backup=yes

@@ -1,0 +1,12 @@
+---
+  - name: Add repository
+    template: src=templates/mariadb_centos.repo dest=/etc/yum.repos.d/MariaDB.repo owner=root mode=0644
+    become: yes
+    become_user: root
+
+  - name: Install MariaDB
+    yum: pkg={{ item }} state=present
+      - MariaDB-server
+      - MariaDB-client
+    become: yes
+    become_user: root

@@ -1,0 +1,7 @@
+Click
+jinja2
+virtualenv
+requests
+honcho
+semantic_version
+GitPython==0.3.2.rc1

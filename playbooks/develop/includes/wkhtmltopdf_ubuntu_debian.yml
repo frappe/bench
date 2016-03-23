@@ -1,0 +1,28 @@
+---
+  - name: Download wkhtmltopdf
+    get_url:
+      url=http://download.gna.org/wkhtmltopdf/0.12/{{ wkhtmltopdf_version }}/wkhtmltox-{{ wkhtmltopdf_version }}_linux-{{ ansible_distribution_release }}-{{ "amd64" if ansible_architecture == "x86_64" else "i386"}}.deb
+      dest="/tmp/"
+    become: yes
+    become_user: root
+    when: ansible_distribution_release in ("jessie", "precise", "trusty", "wheezy")
+
+  - name: Install wkhtmltopdf deb
+    apt: deb=/tmp/wkhtmltox-{{ wkhtmltopdf_version }}_linux-{{ ansible_distribution_release }}-{{ "amd64" if ansible_architecture == "x86_64" else "i386"}}.deb
+    become: yes
+    become_user: root
+    when: ansible_distribution_release in ("jessie", "precise", "trusty", "wheezy")
+
+  - name: Download wkhtmltopdf for Ubuntu Wily
+    get_url:
+      url=http://download.gna.org/wkhtmltopdf/0.12/{{ wkhtmltopdf_version }}/wkhtmltox-{{ wkhtmltopdf_version }}_linux-trusty-{{ "amd64" if ansible_architecture == "x86_64" else "i386"}}.deb
+      dest="/tmp/"
+    become: yes
+    become_user: root
+    when: ansible_distribution_release=="wily"
+
+  - name: Install wkhtmltopdf deb for Ubuntu Wily
+    apt: deb=/tmp/wkhtmltox-{{ wkhtmltopdf_version }}_linux-trusty-{{ "amd64" if ansible_architecture == "x86_64" else "i386"}}.deb
+    become: yes
+    become_user: root
+    when: ansible_distribution_release=="wily"

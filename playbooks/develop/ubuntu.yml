@@ -1,0 +1,72 @@
+---
+- hosts: localhost
+  vars:
+    bench_repo_path: "/usr/local/frappe/bench-repo"
+    bench_path: "/home/{{ ansible_user_id }}/frappe/frappe-bench"
+    mysql_config_template: "templates/simple_mariadb_config.cnf"
+    mysql_conf_dir: /etc/mysql/conf.d/
+    wkhtmltopdf_version: 0.12.2.1
+
+  tasks:
+
+  # install pre-requisites
+  - name: install prequisites
+    apt: pkg={{ item }} state=present
+    with_items:
+      # basic installs
+      - build-essential
+      - redis-server
+      - nodejs
+      - npm
+
+      # for mariadb
+      - software-properties-common
+
+      # for wkhtmltopdf
+      - libxrender1
+      - libxext6
+      - xfonts-75dpi
+      - xfonts-base
+
+      # for Pillow
+      - libjpeg8-dev
+      - zlib1g-dev
+      - libfreetype6-dev
+      - liblcms2-dev
+      - libwebp-dev
+      - python-tk
+
+    become: yes
+    become_user: root
+
+  - name: install pillow prerequisites for Ubuntu < 14.04
+    apt: pkg={{ item }} state=present
+    with_items:
+      - libtiff4-dev
+      - tcl8.5-dev
+      - tk8.5-dev
+    when: ansible_distribution_version < 14.04
+    become: yes
+    become_user: root
+
+  - name: install pillow prerequisites for Ubuntu > 14.04
+    apt: pkg={{ item }} state=present
+    with_items:
+      - libtiff5-dev
+      - tcl8.6-dev
+      - tk8.6-dev
+    when: ansible_distribution_version >= 14.04
+    become: yes
+    become_user: root
+
+  # install MariaDB
+  - include: includes/mariadb_ubuntu.yml
+
+  # install WKHTMLtoPDF
+  - include: includes/wkhtmltopdf_ubuntu_debian.yml
+
+  # setup MariaDB
+  - include: includes/setup_mariadb.yml
+
+  # setup frappe-bench
+  - include: includes/setup_bench.yml

@@ -1,0 +1,99 @@
+---
+  - name: Install dependencies
+    hosts: localhost
+    become: yes
+    become_user: root
+    vars:
+      - mysql_conf_tpl: ../templates/mariadb_config.cnf
+      - nginx_conf_file: ../templates/nginx.conf
+      - mysql_secure_installation: True
+    roles:
+      - locale
+      - swap
+      - mariadb
+      - { role: epel, when: "ansible_os_family == 'RedHat'" }
+      - nginx
+      - logwatch
+      - fail2ban
+      - bash_screen_wall
+      - frappe_selinux
+      - dns_caching
+      - wkhtmltopdf
+      - ntpd
+    tasks:
+      - name: Set hostname
+        hostname: name='{{ hostname }}'
+      - name: Install the 'Development tools' package group (Redhat)
+        yum: name="@Development tools" state=present
+        when: ansible_os_family == 'RedHat'
+      - name: Install packages
+        yum: name={{ item }} state=present
+        with_items:
+          - bzip2-devel
+          - cronie
+          - freetype-devel
+          - git
+          - lcms2-devel
+          - libjpeg-devel
+          - libtiff-devel
+          - libwebp-devel
+          - libXext
+          - libXrender
+          - libzip-devel
+          - nodejs
+          - npm
+          - openssl-devel
+          - postfix
+          - python-devel
+          - python-pip
+          - redis
+          - screen
+          - sudo
+          - supervisor
+          - tcl-devel
+          - tk-devel
+          - vim
+          - which
+          - xorg-x11-fonts-75dpi
+          - xorg-x11-fonts-Type1
+          - zlib-devel
+        when: ansible_os_family == 'RedHat'
+      - name: Install packages
+        apt: pkg={{ item }} state=present force=yes
+        with_items:
+          - build-essential
+          - fontconfig
+          - git
+          - htop
+          - libcrypto++-dev
+
+          - libfreetype6-dev
+          - libjpeg8-dev
+          - liblcms2-dev
+          - libssl-dev
+          - libtiff5-dev
+          - libwebp-dev
+          - libxext6
+          - libxrender1
+          - libxslt1-dev
+          - libxslt1.1
+          - tcl8.6-dev
+          - tk8.6-dev
+          - zlib1g-dev
+          - libopenjpeg-dev
+
+          - nodejs
+          - npm
+          - ntp
+          - postfix
+          - python-dev
+          - python-pip
+          - python-tk
+          - redis-server
+          - screen
+          - supervisor
+          - vim
+          - xfonts-75dpi
+          - xfonts-base
+
+        when: ansible_os_family == 'Debian'

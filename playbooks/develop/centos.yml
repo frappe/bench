@@ -1,0 +1,64 @@
+---
+- hosts: localhost
+  vars:
+    bench_repo_path: "/usr/local/frappe/bench-repo"
+    bench_path: "/home/{{ ansible_user_id }}/frappe/frappe-bench"
+    mysql_config_template: "templates/simple_mariadb_config.cnf"
+    mysql_conf_dir: /etc/my.cnf.d/
+    wkhtmltopdf_version: 0.12.2.1
+
+  tasks:
+
+  # install pre-requisites
+  - name: add epel repo
+    yum: name="https://dl.fedoraproject.org/pub/epel/{{ ansible_lsb.major_release }}/x86_64/e/epel-release-*.rpm" state=present
+    become: yes
+    become_user: root
+
+  - name: development tools package
+    yum: name="@Development tools" state=present
+    become: yes
+    become_user: root
+
+  - name: install prequisites
+    yum: pkg={{ item }} state=present
+    with_items:
+      # basic installs
+      - redis
+      - nodejs
+      - npm
+
+      # for mariadb
+      - software-properties-common
+
+      # for wkhtmltopdf
+      - libXrender
+      - libXext
+      - xorg-x11-fonts-75dpi
+      - xorg-x11-fonts-Type1
+
+      # for Pillow
+      - libjpeg-devel
+      - zlib-devel
+      - libzip-devel
+      - freetype-devel
+      - lcms2-devel
+      - libwebp-devel
+      - libtiff-devel
+      - tcl-devel
+      - tk-devel
+
+    become: yes
+    become_user: root
+
+  # install MariaDB
+  - include: includes/mariadb_centos.yml
+
+  # install WKHTMLtoPDF
+  - include: includes/wkhtmltopdf_centos.yml
+
+  # setup MariaDB
+  - include: includes/setup_mariadb.yml
+
+  # setup frappe-bench
+  - include: includes/setup_bench.yml

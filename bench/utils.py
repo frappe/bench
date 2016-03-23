@@ -1,8 +1,6 @@
 import os
-import re
 import sys
 import subprocess
-import getpass
 import logging
 import itertools
 import requests
@@ -23,15 +21,7 @@ class CommandFailedError(Exception):
 logger = logging.getLogger(__name__)
 
 
-default_config = {
-	'restart_supervisor_on_update': False,
-	'auto_update': False,
-	'serve_default_site': True,
-	'rebase_on_pull': False,
-	'update_bench_on_update': True,
-	'frappe_user': getpass.getuser(),
-	'shallow_clone': True
-}
+folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 
 def get_frappe(bench='.'):
 	frappe = get_env_cmd('frappe', bench=bench)
@@ -47,7 +37,9 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None,
 		verbose=False):
 	from .app import get_app, install_apps_from_path
-	from .config import generate_redis_cache_config, generate_redis_async_broker_config
+	from .config.common_site_config import make_config
+	from .config import redis
+	from .config.procfile import setup_procfile
 	global FRAPPE_VERSION
 
 	if os.path.exists(path):
@@ -55,35 +47,37 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		raise Exception("Site directory already exists")
 		# sys.exit(1)
 
-	os.mkdir(path)
-	for dirname in ('apps', 'sites', 'config', 'logs'):
+	os.makedirs(path)
+	for dirname in folders_in_bench:
 		os.mkdir(os.path.join(path, dirname))
 
 	setup_logging()
 
 	setup_env(bench=path)
-	put_config(default_config, bench=path)
-	# if wheel_cache_dir:
-	# 	update_config({"wheel_cache_dir":wheel_cache_dir}, bench=path)
-	# 	prime_wheel_cache(bench=path)
+
+	make_config(path)
 
 	if not frappe_path:
 		frappe_path = 'https://github.com/frappe/frappe.git'
 	get_app('frappe', frappe_path, branch=frappe_branch, bench=path, build_asset_files=False, verbose=verbose)
+
+	if apps_path:
+		install_apps_from_path(apps_path, bench=path)
+
+	FRAPPE_VERSION = get_current_frappe_version(bench=path)
+	if FRAPPE_VERSION > 5:
+		setup_socketio(bench=path)
+
+	build_assets(bench=path)
+	redis.generate_config(path)
+
 	if not no_procfile:
-		setup_procfile(bench=path)
+		setup_procfile(path)
 	if not no_backups:
 		setup_backups(bench=path)
 	if not no_auto_update:
 		setup_auto_update(bench=path)
-	if apps_path:
-		install_apps_from_path(apps_path, bench=path)
-	FRAPPE_VERSION = get_current_frappe_version(bench=path)
-	if FRAPPE_VERSION > 5:
-		setup_socketio(bench=path)
-	build_assets(bench=path)
-	generate_redis_cache_config(bench=path)
-	generate_redis_async_broker_config(bench=path)
+
 
 def exec_cmd(cmd, cwd='.'):
 	from .cli import from_command_line
@@ -108,37 +102,11 @@ def setup_env(bench='.'):
 	exec_cmd('virtualenv -q {} -p {}'.format('env', sys.executable), cwd=bench)
 	exec_cmd('./env/bin/pip -q install --upgrade pip', cwd=bench)
 	exec_cmd('./env/bin/pip -q install wheel', cwd=bench)
-	exec_cmd('./env/bin/pip -q install https://github.com/frappe/MySQLdb1/archive/MySQLdb-1.2.5-patched.tar.gz', cwd=bench)
+	# exec_cmd('./env/bin/pip -q install https://github.com/frappe/MySQLdb1/archive/MySQLdb-1.2.5-patched.tar.gz', cwd=bench)
 	exec_cmd('./env/bin/pip -q install -e git+https://github.com/frappe/python-pdfkit.git#egg=pdfkit', cwd=bench)
 
 def setup_socketio(bench='.'):
 	exec_cmd("npm install socket.io redis express superagent cookie", cwd=bench)
-
-def setup_procfile(with_celery_broker=False, with_watch=False, bench='.'):
-	from .app import get_current_frappe_version
-	frappe_version = get_current_frappe_version()
-	procfile_contents = {
-		'web': "./env/bin/frappe --serve --sites_path sites",
-		'worker': "sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app worker'",
-		'longjob_worker': "sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app -n longjobs@%h worker'",
-		'async_worker': "sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app -n async@%h worker'",
-		'workerbeat': "sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app beat -s scheduler.schedule'"
-	}
-	if frappe_version > 4:
-		procfile_contents['redis_cache'] = "redis-server config/redis_cache.conf"
-		procfile_contents['redis_async_broker'] = "redis-server config/redis_async_broker.conf"
-		procfile_contents['web'] = "bench serve"
-		if with_celery_broker:
-			procfile_contents['redis_celery'] = "redis-server"
-		if with_watch:
-			procfile_contents['watch'] = "bench watch"
-	if frappe_version > 5:
-		procfile_contents['socketio'] = "{0} apps/frappe/socketio.js".format(find_executable("node") or find_executable("nodejs"))
-
-	procfile = '\n'.join(["{0}: {1}".format(k, v) for k, v in procfile_contents.items()])
-
-	with open(os.path.join(bench, 'Procfile'), 'w') as f:
-		f.write(procfile)
 
 def new_site(site, mariadb_root_password=None, admin_password=None, bench='.'):
 	import hashlib
@@ -217,8 +185,11 @@ def read_crontab():
 	return out
 
 def update_bench():
-	logger.info('setting up sudoers')
-	cwd = os.path.dirname(os.path.abspath(__file__))
+	logger.info('updating bench')
+
+	# bench-repo folder
+	cwd = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 	exec_cmd("git pull", cwd=cwd)
 
 def setup_sudoers(user):
@@ -238,22 +209,6 @@ def setup_logging(bench='.'):
 		hdlr.setFormatter(formatter)
 		logger.addHandler(hdlr)
 		logger.setLevel(logging.DEBUG)
-
-def get_config(bench='.'):
-	config_path = os.path.join(bench, 'config.json')
-	if not os.path.exists(config_path):
-		return {}
-	with open(config_path) as f:
-		return json.load(f)
-
-def put_config(config, bench='.'):
-	with open(os.path.join(bench, 'config.json'), 'w') as f:
-		return json.dump(config, f, indent=1)
-
-def update_config(new_config, bench='.'):
-	config = get_config(bench=bench)
-	config.update(new_config)
-	put_config(config, bench=bench)
 
 def get_program(programs):
 	program = None
@@ -283,12 +238,15 @@ def check_cmd(cmd, cwd='.'):
 		return False
 
 def get_git_version():
-	version = get_cmd_output("git --version")
-	return version.strip().split()[-1]
+	'''returns git version from `git --version`
+	extracts version number from string `get version 1.9.1` etc'''
+	version = get_cmd_output("git --version").strip().split()[2]
+	version = '.'.join(version.split('.')[0:2])
+	return float(version)
 
 def check_git_for_shallow_clone():
 	git_version = get_git_version()
-	if git_version.startswith('1.9') or git_version.startswith('2'):
+	if git_version > 1.9:
 		return True
 	return False
 
@@ -301,8 +259,11 @@ def get_cmd_output(cmd, cwd='.'):
 		raise
 
 def restart_supervisor_processes(bench='.'):
+	from .config.common_site_config import get_config
 	conf = get_config(bench=bench)
-	cmd = conf.get('supervisor_restart_cmd', 'sudo supervisorctl restart frappe:')
+	bench_name = get_bench_name(bench)
+	cmd = conf.get('supervisor_restart_cmd',
+				   'sudo supervisorctl restart {bench_name}-processes:'.format(bench_name=bench_name))
 	exec_cmd(cmd, cwd=bench)
 
 def get_site_config(site, bench='.'):
@@ -332,12 +293,12 @@ def set_ssl_certificate_key(site, ssl_certificate_key, bench='.', gen_config=Tru
 	set_site_config_nginx_property(site, {"ssl_certificate_key": ssl_certificate_key}, bench=bench, gen_config=gen_config)
 
 def set_site_config_nginx_property(site, config, bench='.', gen_config=True):
-	from .config import generate_nginx_config
+	from .config.nginx import make_nginx_conf
 	if site not in get_sites(bench=bench):
 		raise Exception("No such site")
 	update_site_config(site, config, bench=bench)
 	if gen_config:
-		generate_nginx_config(bench=bench)
+		make_nginx_conf(bench_path=bench)
 
 def set_url_root(site, url_root, bench='.'):
 	update_site_config(site, {"host_name": url_root}, bench=bench)
@@ -371,18 +332,6 @@ def backup_all_sites(bench='.'):
 	for site in get_sites(bench=bench):
 		backup_site(site, bench=bench)
 
-def prime_wheel_cache(bench='.'):
-	conf = get_config(bench=bench)
-	wheel_cache_dir = conf.get('wheel_cache_dir')
-	if not wheel_cache_dir:
-		raise Exception("Wheel cache dir not configured")
-	requirements = os.path.join(os.path.dirname(__file__), 'templates', 'cached_requirements.txt')
-	cmd =  "{pip} wheel --find-links {wheelhouse} --wheel-dir {wheelhouse} -r {requirements}".format(
-				pip=os.path.join(bench, 'env', 'bin', 'pip'),
-				wheelhouse=wheel_cache_dir,
-				requirements=requirements)
-	exec_cmd(cmd)
-
 def is_root():
 	if os.getuid() == 0:
 		return True
@@ -395,11 +344,16 @@ def update_common_site_config(ddict, bench='.'):
 	update_json_file(os.path.join(bench, 'sites', 'common_site_config.json'), ddict)
 
 def update_json_file(filename, ddict):
-	with open(filename, 'r') as f:
-		content = json.load(f)
+	if os.path.exists(filename):
+		with open(filename, 'r') as f:
+			content = json.load(f)
+
+	else:
+		content = {}
+
 	content.update(ddict)
 	with open(filename, 'w') as f:
-		content = json.dump(content, f, indent=1)
+		content = json.dump(content, f, indent=1, sort_keys=True)
 
 def drop_privileges(uid_name='nobody', gid_name='nogroup'):
 	# from http://stackoverflow.com/a/2699996
@@ -421,7 +375,8 @@ def drop_privileges(uid_name='nobody', gid_name='nogroup'):
 	# Ensure a very conservative umask
 	os.umask(022)
 
-def fix_prod_setup_perms(frappe_user=None):
+def fix_prod_setup_perms(bench='.', frappe_user=None):
+	from .config.common_site_config import get_config
 	files = [
 		"logs/web.error.log",
 		"logs/web.log",
@@ -434,7 +389,7 @@ def fix_prod_setup_perms(frappe_user=None):
 	]
 
 	if not frappe_user:
-		frappe_user = get_config().get('frappe_user')
+		frappe_user = get_config(bench).get('frappe_user')
 
 	if not frappe_user:
 		print "frappe user not set"
@@ -457,15 +412,6 @@ def fix_file_perms():
 		for _file in os.listdir(bin_dir):
 			if not _file.startswith('activate'):
 				os.chmod(os.path.join(bin_dir, _file), 0755)
-
-def get_redis_version():
-	version_string = subprocess.check_output('redis-server --version', shell=True).strip()
-	if re.search("Redis server version 2.4", version_string):
-		return "2.4"
-	if re.search("Redis server v=2.6", version_string):
-		return "2.6"
-	if re.search("Redis server v=2.8", version_string):
-		return "2.8"
 
 def get_current_frappe_version(bench='.'):
 	from .app import get_current_frappe_version as fv
@@ -520,21 +466,23 @@ def pre_upgrade(from_ver, to_ver, bench='.'):
 				exec_cmd("{pip} install --upgrade -e {app}".format(pip=pip, app=cwd))
 
 def post_upgrade(from_ver, to_ver, bench='.'):
-	from .config import generate_nginx_config, generate_supervisor_config, generate_redis_cache_config, generate_redis_async_broker_config
+	from .config.common_site_config import get_config
+	from .config import redis
+	from .config.supervisor import generate_supervisor_config
+	from .config.nginx import make_nginx_conf
 	conf = get_config(bench=bench)
 	print "-"*80
 	print "Your bench was upgraded to version {0}".format(to_ver)
 
 	if conf.get('restart_supervisor_on_update'):
-		generate_redis_cache_config(bench=bench)
-		generate_supervisor_config(bench=bench)
-		generate_nginx_config(bench=bench)
+		redis.generate_config(bench_path=bench)
+		generate_supervisor_config(bench_path=bench)
+		make_nginx_conf(bench_path=bench)
 
 		if from_ver == 4 and to_ver == 5:
 			setup_backups(bench=bench)
 
 		if from_ver <= 5 and to_ver == 6:
-			generate_redis_async_broker_config(bench=bench)
 			setup_socketio(bench=bench)
 
 		print "As you have setup your bench for production, you will have to reload configuration for nginx and supervisor"
@@ -542,10 +490,6 @@ def post_upgrade(from_ver, to_ver, bench='.'):
 		print
 		print "sudo service nginx restart"
 		print "sudo supervisorctl reload"
-
-	if to_ver >= 5:
-		# For dev server. Always set this up incase someone wants to start a dev server.
-		setup_procfile(bench=bench)
 
 def update_translations_p(args):
 	try:
@@ -568,7 +512,6 @@ def download_translations():
 	for app, lang in itertools.product(apps, langs):
 		update_translations(app, lang)
 
-
 def get_langs():
 	lang_file = 'apps/frappe/frappe/data/languages.txt'
 	with open(lang_file) as f:
@@ -576,7 +519,6 @@ def get_langs():
 	langs = [line.split()[0] for line in lang_data.splitlines()]
 	langs.remove('en')
 	return langs
-
 
 def update_translations(app, lang):
 	translations_dir = os.path.join('apps', app, app, 'translations')
@@ -658,3 +600,6 @@ def validate_pillow_dependencies(bench, requirements):
 				print "sudo apt-get install -y libtiff5-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python-tk"
 
 			raise
+
+def get_bench_name(bench_path):
+	return os.path.basename(os.path.abspath(bench_path))

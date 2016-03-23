@@ -12,7 +12,8 @@ import re
 from requests.auth import HTTPBasicAuth
 import requests.exceptions
 from time import sleep
-from .utils import get_config
+from .config.common_site_config import get_config
+
 
 github_username = None
 github_password = None
@@ -173,7 +174,7 @@ def bump(repo, bump_type, develop='develop', master='master', remote='upstream')
 	print 'Released {tag} for {repo}'.format(tag=tag_name, repo=repo)
 
 def release(repo, bump_type, develop, master):
-	if not get_config().get('release_bench'):
+	if not get_config(".").get('release_bench'):
 		print 'bench not configured to release'
 		sys.exit(1)
 	global github_username, github_password

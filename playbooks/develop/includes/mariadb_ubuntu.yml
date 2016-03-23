@@ -1,0 +1,21 @@
+---
+  - name: Add apt key
+    apt_key: keyserver=hkp://keyserver.ubuntu.com:80 id=0xcbcb082a1bb943db state=present
+    become: yes
+    become_user: root
+
+  - name: Add apt repositry
+    apt_repository: repo='deb [arch=amd64,i386] http://nyc2.mirrors.digitalocean.com/mariadb/repo/10.1/ubuntu {{ ansible_distribution_release }} main' state=present
+    become: yes
+    become_user: root
+
+  - name: apt-get install
+    apt: pkg={{ item }} update_cache=yes state=present
+    with_items:
+      - mariadb-server
+      - mariadb-client
+      - mariadb-common
+      - libmariadbclient-dev
+    become: yes
+    become_user: root
+

@@ -1,0 +1,33 @@
+---
+  - name: Install MySQLdb in global env
+    pip: name=mysql-python version=1.2.5
+    become: yes
+    become_method: sudo
+
+  - name: Set root Password
+    mysql_user:
+      name=root
+      host={{ item }}
+      password={{ mysql_root_password }}
+      state=present
+      login_user=root
+    with_items:
+      - localhost
+    when: mysql_root_password is defined
+    become: yes
+    become_method: sudo
+
+    # when you have already defined mysql root password
+    ignore_errors: yes
+
+  - name: Add configuration
+    template: src={{ mysql_config_template }} dest={{ mysql_conf_dir }}/frappe.cnf owner=root mode=0644
+    notify:
+      - restart mysql
+    become: yes
+    become_method: sudo
+
+  - name: restart mysql
+    service: name=mysql state=restarted
+    become: yes
+    become_method: sudo

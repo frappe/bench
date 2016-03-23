@@ -1,0 +1,46 @@
+---
+  - name: install bench
+    pip: name={{ bench_repo_path }} extra_args='-e'
+    become: yes
+    become_user: root
+
+  - name: init bench
+    command: bench init {{ bench_path }}
+    args:
+      creates: "{{ bench_path }}"
+
+  # setup common_site_config
+  - name: setup config
+    command: bench setup config
+    args:
+      creates: "{{ bench_path }}/sites/common_site_config.json"
+      chdir: "{{ bench_path }}"
+
+  - name: install frappe app
+    command: bench get-app frappe https://github.com/frappe/frappe
+    args:
+      creates: "{{ bench_path }}/apps/frappe"
+      chdir: "{{ bench_path }}"
+
+  # setup procfile
+  - name: setup procfile
+    command: bench setup socketio
+    args:
+      creates: "{{ bench_path }}/node_modules"
+      chdir: "{{ bench_path }}"
+
+  # setup procfile
+  - name: setup procfile
+    command: bench setup procfile
+    args:
+      creates: "{{ bench_path }}/Procfile"
+      chdir: "{{ bench_path }}"
+
+
+  # setup config for redis/socketio
+  - name: setup redis
+    command: bench setup redis
+    args:
+      creates: "{{ bench_path }}/config/redis_socketio.conf"
+      chdir: "{{ bench_path }}"
+

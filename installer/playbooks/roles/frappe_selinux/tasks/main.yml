@@ -1,0 +1,21 @@
+---
+- name: Install deps
+  yum: name="{{item}}" state=present
+  with_items:
+    - policycoreutils-python
+    - selinux-policy-devel
+
+- name: Check enabled SELinux modules
+  shell: semanage module -l
+  register: enabled_modules
+
+- name: Copy frappe_selinux policy
+  copy: src=frappe_selinux.te dest=/root/frappe_selinux.te
+  register: dest_frappe_selinux_te
+
+- name: Compile frappe_selinux policy
+  shell: "make -f /usr/share/selinux/devel/Makefile frappe_selinux.pp && semodule -i frappe_selinux.pp"
+  args:
+    chdir: /root/
+  when: "enabled_modules.stdout.find('frappe_selinux') == -1 or dest_frappe_selinux_te.changed" 
+
