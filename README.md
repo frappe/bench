@@ -5,15 +5,15 @@ The bench allows you to setup Frappe / ERPNext apps on your local Linux (CentOS 
 
 To do this install, you must have basic information on how Linux works and should be able to use the command-line. If you are looking easier ways to get started and evaluate ERPNext, [download the Virtual Machine or take a free trial on ERPNext.com](https://erpnext.com/pricing).
 
-For questions, please join the [developer forum](https://discuss.frappe.io/).
+If you have questions, please ask them on our [forum](https://discuss.erpnext.com/).
 
 Installation
 ============
 
-Easy way
---------
-
-Supported for CentOS 6, CentOS 7, Debian 7 and Ubuntu 12.04+
+Easy Production Setup 
+---------------------
+> For production use and which also installs ERPNext. Supported for CentOS 6, CentOS 7, Debian 7 and Ubuntu 12.04+
+> This is an opinionated setup with logging and SE Linux. So, it is best to setup on a blank server.
 
 Open your Terminal and enter:
 
@@ -22,11 +22,40 @@ wget https://raw.githubusercontent.com/frappe/bench/master/install_scripts/setup
 sudo bash setup_frappe.sh --setup-production
 ```
 
-This script should install the pre-requisites, install bench and setup an ERPNext site. This will setup ERPNext with nginx, with Supervisor enabled and checkout the master branch of the ERPNext repo. Passwords for Frappe, Frappe Administrator and MariaDB (root) will be generated. You can then login as Administrator with the Administrator password printed. 
+- This script will install the pre-requisites, install bench and setup an ERPNext site
+- This will setup ERPNext with nginx, with Supervisor enabled and checkout the master branch of the ERPNext repo
+- Passwords for Frappe, Frappe Administrator and MariaDB (root) will be generated
+- You can then login as **Administrator** with the Administrator password printed 
 
 If you want to develop ERPNext or any Frappe App, you can omit the "--setup-production" part from the command. This will setup ERPNext as well. Use ```bench start``` to run the server.
 
-Note: If you are using a DigitalOcean droplet or any other cloud provider's vps, make sure it has >= 1gb of ram or has swap setup properly.
+> Note: If you are using a DigitalOcean droplet or any other cloud provider's vps, make sure it has >= 1gb of ram or has swap setup properly.
+
+Development Setup (Beta)
+------------------------
+
+Tested on Ubuntu 14.04+ and MacOS X. If you find any problems, post them on our forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
+
+```
+wget https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py
+python install.py
+```
+
+This script requires Python2.7+ installed on your machine. You need to run this with a user that is **not** `root`, but can `sudo`. If you don't have such a user, you can search the web for *How to add a new user in { your OS }* and *How to add an existing user to sudoers in { your OS }*.
+
+This script will:
+
+- Install pre-requisites like git and ansible
+- Shallow clones this bench repository under `/usr/local/frappe/bench-repo`
+- Runs the Ansible playbook 'playbooks/develop/install.yml', which:
+	- Installs
+		- MariaDB and its config
+		- Redis
+		- NodeJS
+		- WKHTMLtoPDF with patched QT
+	- Initializes a new Bench at `~/frappe/frappe-bench` with `frappe` framework already installed under `apps`.
+	
+You will have to manually create a new site (`bench new-site`) and get apps that you need (`bench get-app`, `bench install-app`).
 
 Manual Install
 --------------
@@ -36,7 +65,7 @@ Install pre-requisites,
 * [Python 2.7](https://www.python.org/download/releases/2.7/)
 * [MariaDB](https://mariadb.org/)
 * [Redis](http://redis.io/topics/quickstart)
-* [wkhtmltopdf](http://wkhtmltopdf.org/downloads.html) (optional, required for pdf generation)
+* [WKHTMLtoPDF with patched QT](http://wkhtmltopdf.org/downloads.html) (required for pdf generation)
 
 [Installing pre-requisites on OSX](https://github.com/frappe/bench/wiki/Installing-Bench-Pre-requisites-on-MacOSX)
 
@@ -46,6 +75,9 @@ Install bench as a *non root* user,
 		sudo pip install -e bench-repo
 
 Note: Please do not remove the bench directory the above commands will create
+
+Initialize Bench using: `bench init frappe-bench`. Here you can replace `frappe-bench` with a name of your choice for your bench.
+
 
 Installing ERPNext
 ------------------
@@ -75,9 +107,11 @@ Basic Usage
 * Add apps
 
 	The get-app command gets and installs frappe apps. Examples include
-	[erpnext](https://github.com/frappe/erpnext) and
-	[shopping-cart](https://github.com/frappe/shopping-cart)
-
+	
+	- [erpnext](https://github.com/frappe/erpnext)
+	- [erpnext_shopify](https://github.com/frappe/erpnext_shopify)
+	- [paypal_integration](https://github.com/frappe/paypal_integration)
+	
 		bench get-app erpnext https://github.com/frappe/erpnext
 
 * Add site
@@ -117,12 +151,6 @@ You can now either use `bench start` or setup the bench for production use.
 
 Updating
 ========
-
-On initializing a new bench, a cronjob is added to automatically update the bench
-at 1000hrs (as per the time on your machine). You can disable this by running
-`bench config auto_update off` and run `bench config auto_update on` to switch
-it on again. To change the time of update, you will have to edit the cronjob
-manually using `crontab -e`.
 
 To manually update the bench, run `bench update` to update all the apps, run
 patches, build JS and CSS files and restart supervisor (if configured to).
@@ -183,10 +211,10 @@ Production Deployment
 =====================
 
 
-You can setup the bench for production use by configuring two programs
-, Supervisor and nginx. These steps are automated if you pass
-`--setup-production` to the easy install script or run `sudo bench
-setup production`
+You can setup the bench for production use by configuring two programs, Supervisor and nginx. 
+
+> These steps are automated if you pass `--setup-production` to the easy install script 
+> or run `sudo bench setup production`
 
 Supervisor
 ----------
@@ -202,13 +230,13 @@ eg,
 
 ```
 bench setup supervisor
-sudo ln -s `pwd`/config/supervisor.conf /etc/supervisor/conf.d/frappe.conf
+sudo ln -s `pwd`/config/supervisor.conf /etc/supervisor/conf.d/frappe-bench.conf
 ```
 
 Note: For CentOS 7, the extension should be `ini`, thus the command becomes
 ```
 bench setup supervisor
-sudo ln -s `pwd`/config/supervisor.conf /etc/supervisor/conf.d/frappe.ini #for CentOS 7 only
+sudo ln -s `pwd`/config/supervisor.conf /etc/supervisor/conf.d/frappe-bench.ini #for CentOS 7 only
 ```
 
 The bench will also need to restart the processes managed by supervisor when you
@@ -228,7 +256,7 @@ eg,
 
 ```
 bench setup nginx
-sudo ln -s `pwd`/config/nginx.conf /etc/nginx/conf.d/frappe.conf
+sudo ln -s `pwd`/config/nginx.conf /etc/nginx/conf.d/frappe-bench.conf
 ```
 
 Note: When you restart nginx after the configuration change, it might fail if
