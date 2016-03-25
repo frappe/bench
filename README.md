@@ -38,7 +38,7 @@ Tested on Ubuntu 14.04+ and MacOS X. If you find any problems, post them on our 
 
 ```
 wget https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py
-python install.py
+python install.py --develop
 ```
 
 This script requires Python2.7+ installed on your machine. You need to run this with a user that is **not** `root`, but can `sudo`. If you don't have such a user, you can search the web for *How to add a new user in { your OS }* and *How to add an existing user to sudoers in { your OS }*.
