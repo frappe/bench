@@ -15,10 +15,17 @@ Easy Production Setup
 > For production use and which also installs ERPNext. Supported for CentOS 6, CentOS 7, Debian 7 and Ubuntu 12.04+
 > This is an opinionated setup with logging and SE Linux. So, it is best to setup on a blank server.
 
-Open your Terminal and enter:
+On Linux, open your Terminal and enter:
 
 ```
 wget https://raw.githubusercontent.com/frappe/bench/master/install_scripts/setup_frappe.sh
+sudo bash setup_frappe.sh --setup-production
+```
+
+On Mac OS X, open your Terminal and enter:
+
+```
+curl "https://raw.githubusercontent.com/frappe/bench/master/install_scripts/setup_frappe.sh" -o "setup_frappe.sh"
 sudo bash setup_frappe.sh --setup-production
 ```
 
@@ -36,8 +43,17 @@ Development Setup (Beta)
 
 Tested on Ubuntu 14.04+ and MacOS X. If you find any problems, post them on our forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
 
+On Linux, open your Terminal and enter:
+
 ```
 wget https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py
+python install.py --develop
+```
+
+On Mac OS X, open your Terminal and enter:
+
+```
+curl "https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py" -o install.py
 python install.py --develop
 ```
 
