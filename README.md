@@ -57,7 +57,7 @@ curl "https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py
 python install.py --develop
 ```
 
-This script requires Python2.7+ installed on your machine. You need to run this with a user that is **not** `root`, but can `sudo`. If you don't have such a user, you can search the web for *How to add a new user in { your OS }* and *How to add an existing user to sudoers in { your OS }*. In addition, on Mac OS X, you will have to create a group with the same name as { your USER}. On creating this group, you have to assign {your USER} to it. You can do this by going to *"System preferences" -> "Users & Groups" -> "+" (as if you were adding new account) -> Under "New account" select "Group" -> Type in group name -> "Create group"*
+This script requires Python2.7+ installed on your machine. You need to run this with a user that is **not** `root`, but can `sudo`. If you don't have such a user, you can search the web for *How to add a new user in { your OS }* and *How to add an existing user to sudoers in { your OS }*. In addition, on Mac OS X, you will have to create a group with the same name as { your USER}. On creating this group, you have to assign {your USER} to it. You can do this by going to **"System preferences" -> "Users & Groups" -> "+" (as if you were adding new account) -> Under "New account" select "Group" -> Type in group name -> "Create group"**
 
 
 This script will:
