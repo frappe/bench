@@ -16,9 +16,12 @@ def setup_production(user, bench='.'):
 	supervisor_conf = os.path.join(get_supervisor_confdir(), '{bench_name}.{extn}'.format(
 		bench_name=bench_name, extn=supervisor_conf_extn))
 
+	# Check if symlink exists, If not then create it.
+	if not os.path.islink(supervisor_conf):
+		os.symlink(os.path.abspath(os.path.join(bench, 'config', 'supervisor.conf')), supervisor_conf)
 
-	os.symlink(os.path.abspath(os.path.join(bench, 'config', 'supervisor.conf')), supervisor_conf)
-	os.symlink(os.path.abspath(os.path.join(bench, 'config', 'nginx.conf')), nginx_conf)
+	if not os.path.islink(nginx_conf):
+		os.symlink(os.path.abspath(os.path.join(bench, 'config', 'nginx.conf')), nginx_conf)
 
 	exec_cmd('supervisorctl reload')
 	if os.environ.get('NO_SERVICE_RESTART'):
