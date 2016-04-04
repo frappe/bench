@@ -16,7 +16,7 @@ setup(
 		'honcho',
 		'semantic_version',
 		'GitPython==0.3.2.RC1',
-		'websocket'
+		'websocket-client'
 	],
 	entry_points='''
 [console_scripts]
