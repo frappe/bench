@@ -31,6 +31,10 @@
     become_method: sudo
     when: ansible_os_family == 'RedHat' or ansible_os_family == 'Debian'
 
+  - name: add launchagents folder mac
+    file: path=~/Library/LaunchAgents state=directory
+    when: ansible_distribution == 'MacOSX'
+
   - name: add mysql to mac startup
     file: src=/usr/local/opt/mariadb/homebrew.mxcl.mariadb.plist path=~/Library/LaunchAgents/homebrew.mxcl.mariadb.plist state=link force=yes
     when: ansible_distribution == 'MacOSX'
