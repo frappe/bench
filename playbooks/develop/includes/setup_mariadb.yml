@@ -22,12 +22,23 @@
 
   - name: Add configuration
     template: src={{ mysql_config_template }} dest={{ mysql_conf_dir }}/frappe.cnf owner=root mode=0644
-    notify:
-      - restart mysql
     become: yes
     become_method: sudo
 
-  - name: restart mysql
+  - name: restart mysql linux
     service: name=mysql state=restarted
     become: yes
     become_method: sudo
+    when: ansible_os_family == 'RedHat' or ansible_os_family == 'Debian'
+
+  - name: add mysql to mac startup
+    file: src=/usr/local/opt/mariadb/homebrew.mxcl.mariadb.plist path=~/Library/LaunchAgents/homebrew.mxcl.mariadb.plist state=link force=yes
+    when: ansible_distribution == 'MacOSX'
+
+  - name: stop mysql mac
+    command: launchctl unload ~/Library/LaunchAgents/homebrew.mxcl.mariadb.plist
+    when: ansible_distribution == 'MacOSX'
+
+  - name: start mysql mac
+    command: launchctl load ~/Library/LaunchAgents/homebrew.mxcl.mariadb.plist
+    when: ansible_distribution == 'MacOSX'

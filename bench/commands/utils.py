@@ -116,7 +116,7 @@ def backup_all_sites():
 @click.option('--master', default='master')
 def release(app, bump_type, develop, master):
 	"Release app (internal to the Frappe team)"
-	from .release import release
+	from bench.release import release
 	repo = os.path.join('apps', app)
 	release(repo, bump_type, develop, master)
 

@@ -34,6 +34,11 @@ def create_release(repo_path, version, remote='origin', develop_branch='develop'
 	repo.create_tag(tag_name, message='Release {}'.format(version))
 	g.checkout(develop_branch)
 	g.merge(master_branch)
+
+	if develop_branch != 'develop':
+		g.checkout('develop')
+		g.merge(master_branch)
+
 	return tag_name
 
 def push_release(repo_path, develop_branch='develop', master_branch='master'):
