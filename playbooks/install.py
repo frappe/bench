@@ -96,7 +96,7 @@ def clone_bench_repo():
 	})
 
 	success = run_os_command(
-		{'git': 'git clone https://github.com/frappe/bench {bench_repo} --depth 1 --branch new-install'.format(bench_repo=bench_repo)}
+		{'git': 'git clone https://github.com/frappe/bench {bench_repo} --depth 1'.format(bench_repo=bench_repo)}
 	)
 
 	return success
