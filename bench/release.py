@@ -22,7 +22,8 @@ repo_map = {
 	'frappe': 'frappe',
 	'erpnext': 'erpnext',
 	'erpnext_shopify': 'erpnext_shopify',
-	'paypal_integration': 'paypal_integration'
+	'paypal_integration': 'paypal_integration',
+	'schools': 'schools'
 }
 
 def create_release(repo_path, version, remote='origin', develop_branch='develop', master_branch='master'):

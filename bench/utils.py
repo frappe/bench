@@ -245,6 +245,10 @@ def get_git_version():
 	return float(version)
 
 def check_git_for_shallow_clone():
+	from .config.common_site_config import get_config
+	if get_config(".").get('release_bench'):
+		return False
+
 	git_version = get_git_version()
 	if git_version > 1.9:
 		return True

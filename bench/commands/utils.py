@@ -110,7 +110,7 @@ def backup_all_sites():
 
 
 @click.command('release')
-@click.argument('app', type=click.Choice(['frappe', 'erpnext', 'erpnext_shopify', 'paypal_integration']))
+@click.argument('app', type=click.Choice(['frappe', 'erpnext', 'erpnext_shopify', 'paypal_integration', 'schools']))
 @click.argument('bump-type', type=click.Choice(['major', 'minor', 'patch']))
 @click.option('--develop', default='develop')
 @click.option('--master', default='master')
