@@ -37,7 +37,7 @@ Development Setup (Beta)
 Tested on Ubuntu 14.04+ and MacOS X. If you find any problems, post them on our forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
 
 ```
-wget https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py
+wget https://raw.githubusercontent.com/frappe/bench/develop/playbooks/install.py
 python install.py --develop
 ```
 
