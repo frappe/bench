@@ -221,14 +221,19 @@ def get_program(programs):
 def get_process_manager():
 	return get_program(['foreman', 'forego', 'honcho'])
 
-def start(no_dev=False):
+def start(no_dev=False, concurrency=None):
 	program = get_process_manager()
 	if not program:
 		raise Exception("No process manager found")
 	os.environ['PYTHONUNBUFFERED'] = "true"
 	if not no_dev:
 		os.environ['DEV_SERVER'] = "true"
-	os.execv(program, [program, 'start'])
+
+	command = [program, 'start']
+	if concurrency:
+		command.extend(['-c', concurrency])
+
+	os.execv(program, command)
 
 def check_cmd(cmd, cwd='.'):
 	try:

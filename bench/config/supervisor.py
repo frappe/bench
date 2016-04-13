@@ -1,6 +1,7 @@
-import os, getpass, bench
+import os, getpass, click
+import bench
 
-def generate_supervisor_config(bench_path, user=None):
+def generate_supervisor_config(bench_path, user=None, force=False):
 	from bench.app import get_current_frappe_version
 	from bench.utils import get_bench_name, find_executable
 	from bench.config.common_site_config import get_config, update_config, get_gunicorn_workers
@@ -26,10 +27,16 @@ def generate_supervisor_config(bench_path, user=None):
 		"frappe_version": get_current_frappe_version(),
 		"webserver_port": config.get('webserver_port', 8000),
 		"gunicorn_workers": config.get('gunicorn_workers', get_gunicorn_workers()["gunicorn_workers"]),
-		"bench_name": get_bench_name(bench_path)
+		"bench_name": get_bench_name(bench_path),
+		"background_workers": config.get('background_workers') or 1
 	})
 
-	with open(os.path.join(bench_path, 'config', 'supervisor.conf'), 'w') as f:
+	conf_path = os.path.join(bench_path, 'config', 'supervisor.conf')
+	if not force and os.path.exists(conf_path):
+		click.confirm('supervisor.conf already exists and this will overwrite it. Do you want to continue?',
+			abort=True)
+
+	with open(conf_path, 'w') as f:
 		f.write(config)
 
 	update_config({'restart_supervisor_on_update': True}, bench=bench_path)
