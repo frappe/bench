@@ -66,7 +66,6 @@ class TestSetupProduction(test_init.TestBenchInit):
 
 			for key in (
 					"program:{bench_name}-frappe-web",
-					"program:{bench_name}-frappe-worker",
 					"program:{bench_name}-frappe-default-worker",
 					"program:{bench_name}-frappe-short-worker",
 					"program:{bench_name}-frappe-long-worker",
