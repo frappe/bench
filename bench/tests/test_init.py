@@ -123,8 +123,8 @@ class TestBenchInit(unittest.TestCase):
 		subprocess.check_output(drop_site_cmd, cwd=test_bench_path)
 
 		# Check whether site was archived from the bench
-		dropped_site_path = os.path.join(test_bench_path, 'sites', site_name)
-		self.assertFalse(os.path.exists(dropped_site_path))
+		site_path = os.path.join(test_bench_path, 'sites', site_name)
+		self.assertFalse(os.path.exists(site_path))
 
 		self.assert_archived_sites(site_name, test_bench_path)
 
