@@ -181,22 +181,21 @@ class TestBenchInit(unittest.TestCase):
 			self.assertEquals(config.get(key), value)
 
 	def assert_archived_sites(self, site_name, bench_path):
-		user_home_dir = os.path.abspath(os.path.expanduser('~'))
-
-		# Check for site in the archived location
-		archived_site_path = os.path.join(user_home_dir, 'archived_sites', site_name)
-
-		print os.listdir(user_home_dir)
+		# TODO Need to implement assertion to check for archived sites folder in the user's home
+		# directory.
+		
+		# user_home_dir = os.path.abspath(os.path.expanduser('~'))
+		# archived_site_path = os.path.join(user_home_dir, 'archived_sites', site_name)
 		# self.assertTrue(os.path.exists(archived_site_path))
-		#
-		# # Check for archived path and archived site name in common_site_config.json
-		# common_site_config_path = os.path.join(bench_path, 'sites', 'common_site_config.json')
-		#
-		# with open(common_site_config_path, 'r') as f:
-		# 	config = json.load(f)
-		#
-		# self.assertTrue(hasattr(config, 'archived_sites_path'))
-		# self.assertTrue(hasattr(config, 'archived_sites'))
+
+		# Check for archived path and archived site name in common_site_config.json
+		common_site_config_path = os.path.join(bench_path, 'sites', 'common_site_config.json')
+
+		with open(common_site_config_path, 'r') as f:
+			config = json.load(f)
+
+		self.assertTrue(hasattr(config, 'archived_sites_path'))
+		self.assertTrue(hasattr(config, 'archived_sites'))
 
 	def assert_exists(self, *args):
 		self.assertTrue(os.path.exists(os.path.join(*args)))
