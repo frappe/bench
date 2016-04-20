@@ -3,11 +3,12 @@ import sys, os, copy
 
 
 @click.command('start')
-@click.option('--no-dev', is_flag=True)
-def start(no_dev=False):
+@click.option('--no-dev', is_flag=True, default=False)
+@click.option('--concurrency', '-c', type=str)
+def start(no_dev, concurrency):
 	"Start Frappe development processes"
 	from bench.utils import start
-	start(no_dev=no_dev)
+	start(no_dev=no_dev, concurrency=concurrency)
 
 
 @click.command('restart')

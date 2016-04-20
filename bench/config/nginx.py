@@ -1,8 +1,7 @@
-import os
-import json
+import os, json, click
 from bench.utils import get_sites, get_bench_name
 
-def make_nginx_conf(bench_path):
+def make_nginx_conf(bench_path, force=False):
 	from bench import env
 	from bench.config.common_site_config import get_config
 
@@ -22,7 +21,12 @@ def make_nginx_conf(bench_path):
 		"bench_name": get_bench_name(bench_path)
 	})
 
-	with open(os.path.join(bench_path, "config", "nginx.conf"), "w") as f:
+	conf_path = os.path.join(bench_path, "config", "nginx.conf")
+	if not force and os.path.exists(conf_path):
+		click.confirm('nginx.conf already exists and this will overwrite it. Do you want to continue?',
+			abort=True)
+
+	with open(conf_path, "w") as f:
 		f.write(nginx_conf)
 
 def prepare_sites(config, bench_path):
