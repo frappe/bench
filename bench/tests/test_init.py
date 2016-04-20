@@ -108,25 +108,41 @@ class TestBenchInit(unittest.TestCase):
 		self.assertTrue("erpnext" in out)
 
 	def test_drop_site(self):
-		self.drop_site("test-drop.site")
+		# Check without archive_path given to drop-site command
+		self.drop_site("test-drop-without-archive-path")
 
-	def drop_site(self, site_name):
+		# Check with archive_path given to drop-site command
+		home = os.path.abspath(os.path.expanduser('~'))
+		archive_path = os.path.join(home, 'archived_sites')
+
+		self.drop_site("test-drop-with-archive-path", archive_path=archive_path)
+
+	def drop_site(self, site_name, archive_path=None):
+		"""Test case for verifying bench drop-site {site_name}"""
 		self.new_site(site_name)
 
-		# Drop site
-		drop_site_cmd = ["bench", "drop-site", site_name]
+		drop_site_cmd = ['bench', 'drop-site', site_name]
+
+		if archive_path:
+			drop_site_cmd.extend(['--archive-path', archive_path])
 
 		if os.environ.get('TRAVIS'):
 			drop_site_cmd.extend(['--root-password', 'travis'])
 
-		test_bench_path = os.path.join(self.benches_path, "test-bench")
-		subprocess.check_output(drop_site_cmd, cwd=test_bench_path)
+		bench_path = os.path.join(self.benches_path, 'test-bench')
+		try:
+			subprocess.check_output(drop_site_cmd, cwd=bench_path)
+		except subprocess.CalledProcessError as err:
+			print err.output
 
-		# Check whether site was archived from the bench
-		site_path = os.path.join(test_bench_path, 'sites', site_name)
-		self.assertFalse(os.path.exists(site_path))
+		if not archive_path:
+			archived_sites_path = os.path.join(bench_path, 'archived_sites')
+			self.assertTrue(os.path.exists(archived_sites_path))
+			self.assertTrue(os.path.exists(os.path.join(archived_sites_path, site_name)))
 
-		self.assert_archived_sites(site_name, test_bench_path)
+		else:
+			self.assertTrue(os.path.exists(archive_path))
+			self.assertTrue(os.path.exists(os.path.join(archive_path, site_name)))
 
 	def init_bench(self, bench_name):
 		self.benches.append(bench_name)
@@ -179,23 +195,6 @@ class TestBenchInit(unittest.TestCase):
 
 		for key, value in expected_config.items():
 			self.assertEquals(config.get(key), value)
-
-	def assert_archived_sites(self, site_name, bench_path):
-		# TODO Need to implement assertion to check for archived sites folder in the user's home
-		# directory.
-		
-		# user_home_dir = os.path.abspath(os.path.expanduser('~'))
-		# archived_site_path = os.path.join(user_home_dir, 'archived_sites', site_name)
-		# self.assertTrue(os.path.exists(archived_site_path))
-
-		# Check for archived path and archived site name in common_site_config.json
-		common_site_config_path = os.path.join(bench_path, 'sites', 'common_site_config.json')
-
-		with open(common_site_config_path, 'r') as f:
-			config = json.load(f)
-
-		self.assertTrue(hasattr(config, 'archived_sites_path'))
-		self.assertTrue(hasattr(config, 'archived_sites'))
 
 	def assert_exists(self, *args):
 		self.assertTrue(os.path.exists(os.path.join(*args)))
