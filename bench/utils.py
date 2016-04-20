@@ -272,12 +272,13 @@ def restart_supervisor_processes(bench='.'):
 	conf = get_config(bench=bench)
 	bench_name = get_bench_name(bench)
 	cmd = conf.get('supervisor_restart_cmd',
-				   'sudo supervisorctl restart {bench_name}-processes:'.format(bench_name=bench_name))
+				   'sudo supervisorctl restart {bench_name}-web: {bench_name}-workers:'.format(bench_name=bench_name))
 
 	try:
 		exec_cmd(cmd, cwd=bench)
+
 	except CommandFailedError:
-		if cmd.endswith('{bench_name}-processes:'.format(bench_name=bench_name)):
+		if '{bench_name}-workers:'.format(bench_name=bench_name) in cmd:
 			# backward compatibility
 			exec_cmd('sudo supervisorctl restart frappe:', cwd=bench)
 		else:
