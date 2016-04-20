@@ -62,6 +62,9 @@ def bump(repo, bump_type, develop='develop', master='master', remote='upstream')
 def update_branches_and_check_for_changelog(repo, bump_type, develop='develop', master='master', remote='upstream'):
 	update_branch(repo, master, remote=remote)
 	update_branch(repo, develop, remote=remote)
+	if develop != 'develop':
+		update_branch(repo, 'develop', remote=remote)
+	
 	git.Repo(repo).git.checkout(develop)
 	check_for_unmerged_changelog(repo)
 
@@ -182,7 +185,18 @@ def push_release(repo_path, develop_branch='develop', master_branch='master'):
 	print 'pushing branches', master_branch, develop_branch, 'of', repo_path
 	repo = git.Repo(repo_path)
 	g = repo.git
-	print g.push('upstream', '{master}:{master}'.format(master=master_branch), '{develop}:{develop}'.format(develop=develop_branch), '--tags')
+	args = [
+		'{master}:{master}'.format(master=master_branch),
+		'{develop}:{develop}'.format(develop=develop_branch)
+	]
+	
+	if develop_branch != 'develop':
+		print 'pushing develop branch of', repo_path
+		args.append('develop:develop')
+		
+	args.append('--tags')
+	
+	print g.push('upstream', *args)
 
 def create_github_release(owner, repo, tag_name, log, gh_username=None, gh_password=None):
 	print 'creating release on github'

@@ -66,15 +66,16 @@ class TestSetupProduction(test_init.TestBenchInit):
 
 			for key in (
 					"program:{bench_name}-frappe-web",
-					"program:{bench_name}-frappe-worker",
-					"program:{bench_name}-frappe-longjob-worker",
-					"program:{bench_name}-frappe-async-worker",
-					"program:{bench_name}-frappe-workerbeat",
+					"program:{bench_name}-frappe-default-worker",
+					"program:{bench_name}-frappe-short-worker",
+					"program:{bench_name}-frappe-long-worker",
+					"program:{bench_name}-frappe-schedule",
 					"program:{bench_name}-redis-cache",
 					"program:{bench_name}-redis-queue",
 					"program:{bench_name}-redis-socketio",
 					"program:{bench_name}-node-socketio",
-					"group:{bench_name}-processes",
+					"group:{bench_name}-web",
+					"group:{bench_name}-workers",
 					"group:{bench_name}-redis"
 				):
 				self.assertTrue(key.format(bench_name=bench_name) in f)
@@ -87,12 +88,12 @@ class TestSetupProduction(test_init.TestBenchInit):
 			out = bench.utils.get_cmd_output("sudo supervisorctl status")
 
 		for key in (
-				"{bench_name}-processes:{bench_name}-frappe-web[\s]+RUNNING",
-				"{bench_name}-processes:{bench_name}-frappe-worker[\s]+RUNNING",
-				"{bench_name}-processes:{bench_name}-frappe-longjob-worker[\s]+RUNNING",
-				"{bench_name}-processes:{bench_name}-frappe-async-worker[\s]+RUNNING",
-				"{bench_name}-processes:{bench_name}-frappe-workerbeat[\s]+RUNNING",
-				"{bench_name}-processes:{bench_name}-node-socketio[\s]+RUNNING",
+				"{bench_name}-web:{bench_name}-frappe-web[\s]+RUNNING",
+				"{bench_name}-web:{bench_name}-node-socketio[\s]+RUNNING",
+				"{bench_name}-workers:{bench_name}-frappe-default-worker-0[\s]+RUNNING",
+				"{bench_name}-workers:{bench_name}-frappe-short-worker-0[\s]+RUNNING",
+				"{bench_name}-workers:{bench_name}-frappe-long-worker-0[\s]+RUNNING",
+				"{bench_name}-workers:{bench_name}-frappe-schedule[\s]+RUNNING",
 				"{bench_name}-redis:{bench_name}-redis-cache[\s]+RUNNING",
 				"{bench_name}-redis:{bench_name}-redis-queue[\s]+RUNNING",
 				"{bench_name}-redis:{bench_name}-redis-socketio[\s]+RUNNING",
