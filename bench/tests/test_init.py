@@ -57,7 +57,7 @@ class TestBenchInit(unittest.TestCase):
 		})
 
 	def test_new_site(self):
-		self.test_init()
+		self.init_bench('test-bench')
 		self.new_site("test-site-1.dev")
 
 	def new_site(self, site_name):
@@ -88,6 +88,7 @@ class TestBenchInit(unittest.TestCase):
 	def test_install_app(self):
 		site_name = "test-site-2.dev"
 
+		self.init_bench('test-bench')
 		self.new_site(site_name)
 
 		bench_path = os.path.join(self.benches_path, "test-bench")
@@ -111,6 +112,7 @@ class TestBenchInit(unittest.TestCase):
 		bench.utils.init(bench_name)
 
 	def test_drop_site(self):
+		self.init_bench('test-bench')
 		# Check without archive_path given to drop-site command
 		self.drop_site("test-drop-without-archive-path")
 
@@ -144,7 +146,7 @@ class TestBenchInit(unittest.TestCase):
 
 		else:
 			self.assertTrue(os.path.exists(archived_sites_path))
-			self.assertTrue(os.path.exists(os.path.join(archive_path, site_name)))
+			self.assertTrue(os.path.exists(os.path.join(archived_sites_path, site_name)))
 
 	def assert_folders(self, bench_name):
 		for folder in bench.utils.folders_in_bench:
