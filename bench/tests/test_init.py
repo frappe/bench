@@ -111,6 +111,42 @@ class TestBenchInit(unittest.TestCase):
 		self.benches.append(bench_name)
 		bench.utils.init(bench_name)
 
+	def test_drop_site(self):
+		# Check without archive_path given to drop-site command
+		self.drop_site("test-drop-without-archive-path")
+
+		# Check with archive_path given to drop-site command
+		home = os.path.abspath(os.path.expanduser('~'))
+		archive_path = os.path.join(home, 'archived_sites')
+
+		self.drop_site("test-drop-with-archive-path", archived_sites_path=archived_sites_path)
+
+	def drop_site(self, site_name, archived_sites_path=None):
+		self.new_site(site_name)
+
+		drop_site_cmd = ['bench', 'drop-site', site_name]
+
+		if archived_sites_path:
+			drop_site_cmd.extend(['--archived-sites-path', archived_sites_path])
+
+		if os.environ.get('TRAVIS'):
+			drop_site_cmd.extend(['--root-password', 'travis'])
+
+		bench_path = os.path.join(self.benches_path, 'test-bench')
+		try:
+			subprocess.check_output(drop_site_cmd, cwd=bench_path)
+		except subprocess.CalledProcessError as err:
+			print err.output
+
+		if not archived_sites_path:
+			archived_sites_path = os.path.join(bench_path, 'archived_sites')
+			self.assertTrue(os.path.exists(archived_sites_path))
+			self.assertTrue(os.path.exists(os.path.join(archived_sites_path, site_name)))
+
+		else:
+			self.assertTrue(os.path.exists(archived_sites_path))
+			self.assertTrue(os.path.exists(os.path.join(archive_path, site_name)))
+
 	def assert_folders(self, bench_name):
 		for folder in bench.utils.folders_in_bench:
 			self.assert_exists(bench_name, folder)
