@@ -57,11 +57,10 @@ class TestBenchInit(unittest.TestCase):
 		})
 
 	def test_new_site(self):
+		self.test_init()
 		self.new_site("test-site-1.dev")
 
 	def new_site(self, site_name):
-		self.test_init()
-
 		new_site_cmd = ["bench", "new-site", site_name, "--admin-password", "admin"]
 
 		# set in travis
@@ -117,7 +116,7 @@ class TestBenchInit(unittest.TestCase):
 
 		# Check with archive_path given to drop-site command
 		home = os.path.abspath(os.path.expanduser('~'))
-		archive_path = os.path.join(home, 'archived_sites')
+		archived_sites_path = os.path.join(home, 'archived_sites')
 
 		self.drop_site("test-drop-with-archive-path", archived_sites_path=archived_sites_path)
 
