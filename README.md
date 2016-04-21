@@ -15,10 +15,17 @@ Easy Production Setup
 > For production use and which also installs ERPNext. Supported for CentOS 6, CentOS 7, Debian 7 and Ubuntu 12.04+
 > This is an opinionated setup with logging and SE Linux. So, it is best to setup on a blank server.
 
-Open your Terminal and enter:
+On Linux, open your Terminal and enter:
 
 ```
 wget https://raw.githubusercontent.com/frappe/bench/master/install_scripts/setup_frappe.sh
+sudo bash setup_frappe.sh --setup-production
+```
+
+On Mac OS X, open your Terminal and enter:
+
+```
+curl "https://raw.githubusercontent.com/frappe/bench/master/install_scripts/setup_frappe.sh" -o "setup_frappe.sh"
 sudo bash setup_frappe.sh --setup-production
 ```
 
@@ -36,12 +43,22 @@ Development Setup (Beta)
 
 Tested on Ubuntu 14.04+ and MacOS X. If you find any problems, post them on our forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
 
+On Linux, open your Terminal and enter:
+
 ```
 wget https://raw.githubusercontent.com/frappe/bench/develop/playbooks/install.py
 python install.py --develop
 ```
 
-This script requires Python2.7+ installed on your machine. You need to run this with a user that is **not** `root`, but can `sudo`. If you don't have such a user, you can search the web for *How to add a new user in { your OS }* and *How to add an existing user to sudoers in { your OS }*.
+On Mac OS X, open your Terminal and enter:
+
+```
+curl "https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py" -o install.py
+python install.py --develop
+```
+
+This script requires Python2.7+ installed on your machine. You need to run this with a user that is **not** `root`, but can `sudo`. If you don't have such a user, you can search the web for *How to add a new user in { your OS }* and *How to add an existing user to sudoers in { your OS }*. In addition, on Mac OS X, you will have to create a group with the same name as *{ your USER}*. On creating this group, you have to assign *{your USER}* to it. You can do this by going to **"System preferences" -> "Users & Groups" -> "+" (as if you were adding new account) -> Under "New account" select "Group" -> Type in group name -> "Create group"**
+
 
 This script will:
 
