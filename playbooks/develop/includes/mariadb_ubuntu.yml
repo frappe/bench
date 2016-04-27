@@ -3,13 +3,14 @@
     apt_key: keyserver=hkp://keyserver.ubuntu.com:80 id=0xcbcb082a1bb943db state=present
     become: yes
     become_user: root
-    when: ansible_distribution_version < 16.04
+    # Version compare filter, http://docs.ansible.com/ansible/playbooks_filters.html#version-comparison-filters
+    when: {{ ansible_distribution_version | version_compare('16.04', '<') }}
 
   - name: Add apt key for Ubuntu 16.04 Xenial
     apt_key: keyserver=hkp://keyserver.ubuntu.com:80 id=0xF1656F24C74CD1D8 state=present
     become: yes
     become_user: root
-    when: ansible_distribution_version >= 16.04
+    when: {{ ansible_distribution_version | version_compare('16.04', '>=') }}
 
   - name: Add apt repositry
     apt_repository: repo='deb [arch=amd64,i386] http://nyc2.mirrors.digitalocean.com/mariadb/repo/10.1/ubuntu {{ ansible_distribution_release }} main' state=present
@@ -25,4 +26,3 @@
       - libmariadbclient-dev
     become: yes
     become_user: root
-

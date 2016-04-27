@@ -3,6 +3,7 @@ import os
 import sys
 import subprocess
 import getpass
+import json
 from distutils.spawn import find_executable
 
 bench_repo = '/usr/local/frappe/bench-repo'
@@ -54,8 +55,8 @@ def install_bench(args):
 	# clone bench repo
 	clone_bench_repo()
 
-	if args.develop:
-		run_playbook('develop/install.yml', sudo=True)
+	if args.develop or args.setup_production:
+		run_playbook('develop/install.yml', sudo=True, args=args)
 
 def install_python27():
 	version = (sys.version_info[0], sys.version_info[1])
@@ -96,7 +97,7 @@ def clone_bench_repo():
 	})
 
 	success = run_os_command(
-		{'git': 'git clone https://github.com/frappe/bench {bench_repo} --depth 1 --branch develop'.format(bench_repo=bench_repo)}
+		{'git': 'git clone https://github.com/shreyasp/bench {bench_repo} --depth 1 --branch ubuntu-16-mariadb-install'.format(bench_repo=bench_repo)}
 	)
 
 	return success
@@ -123,8 +124,16 @@ def could_not_install(package):
 def is_sudo_user():
 	return os.geteuid() == 0
 
-def run_playbook(playbook_name, sudo=False):
-	args = ['ansible-playbook', '-c', 'local',  playbook_name]
+def run_playbook(playbook_name, sudo=False, args=None):
+	# Extra variables can be passed to playbook in json format. So we will load all the args passed
+	# to the script as json and pass it as extra vars.
+	extra_vars_json = os.path.join(os.path.abspath(os.path.expanduser('~')), 'extra_vars.json')
+	with open(extra_vars_json, mode='w') as f:
+		json.dump(vars(args), f, indent=1, sort_keys=True)
+
+	extra_vars = "@" + extra_vars_json
+
+	args = ['ansible-playbook', '-c', 'local',  playbook_name, "-e", extra_vars]
 	if sudo:
 		args.append('-K')
 
@@ -137,6 +146,8 @@ def parse_commandline_args():
 	parser = argparse.ArgumentParser(description='Frappe Installer')
 	parser.add_argument('--develop', dest='develop', action='store_true', default=False,
 						help='Install developer setup')
+	parser.add_argument('--setup-production', dest='setup_production', action='store_true',
+						default=False, help='Setup production environment')
 	args = parser.parse_args()
 
 	return args
