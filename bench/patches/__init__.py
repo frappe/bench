@@ -18,8 +18,10 @@ def run(bench_path):
 			if patch not in executed_patches:
 				module = importlib.import_module(patch.split()[0])
 				execute = getattr(module, 'execute')
-				execute(bench_path)
-				executed_patches.append(patch)
+				result = execute(bench_path)
+
+				if result != False:
+					executed_patches.append(patch)
 
 	finally:
 		with open(target_patch_file, 'w') as f:

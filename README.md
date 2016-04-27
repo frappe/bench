@@ -15,8 +15,8 @@ Production vs Development
 
 | Production                                                               | Development                                                       |
 |--------------------------------------------------------------------------|-------------------------------------------------------------------|
-| The Production setup uses Nginx and Supervisor                           | The development setup uses Socketio.                                |
-| This setup isn't meant for instant updates in code.                      | Any code changes will be reflected instantly.            |
+| The Production setup uses Nginx and Supervisor                           | The development setup uses Socketio.                              |
+| This setup isn't meant for instant updates in code.                      | Any code changes will be reflected instantly.                     |
 | Background services handle all the work, and they start with the system. | You need to explicitly start your server by running `bench start` |
 | Uses Celery for job queuing                                              | Uses RQ for queuing                                               |
 | Installs with master branch                                              | Installs with develop branch                                      |
