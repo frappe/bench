@@ -12,7 +12,7 @@ def setup_procfile(bench_path, force=False):
 
 	procfile = bench.env.get_template('Procfile').render(
 		node=find_executable("node") or find_executable("nodejs"),
-		frappe_version=get_current_frappe_version(),
+		frappe_version=get_current_frappe_version(bench_path),
 		frappe_branch=get_current_branch('frappe', bench_path),
 		webserver_port=config.get('webserver_port'))
 

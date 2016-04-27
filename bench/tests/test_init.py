@@ -20,8 +20,8 @@ class TestBenchInit(unittest.TestCase):
 			if os.path.exists(bench_path):
 				shutil.rmtree(bench_path, ignore_errors=True)
 
-	def test_init(self, bench_name="test-bench"):
-		self.init_bench(bench_name)
+	def test_init(self, bench_name="test-bench", **kwargs):
+		self.init_bench(bench_name, **kwargs)
 
 		self.assert_folders(bench_name)
 
@@ -107,9 +107,9 @@ class TestBenchInit(unittest.TestCase):
 		out = subprocess.check_output(["bench", "--site", site_name, "list-apps"], cwd=bench_path)
 		self.assertTrue("erpnext" in out)
 
-	def init_bench(self, bench_name):
+	def init_bench(self, bench_name, **kwargs):
 		self.benches.append(bench_name)
-		bench.utils.init(bench_name)
+		bench.utils.init(bench_name, **kwargs)
 
 	def test_drop_site(self):
 		self.init_bench('test-bench')

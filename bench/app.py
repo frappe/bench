@@ -1,5 +1,5 @@
 import os
-from .utils import (exec_cmd, get_frappe, check_git_for_shallow_clone, build_assets, 
+from .utils import (exec_cmd, get_frappe, check_git_for_shallow_clone, build_assets,
 	restart_supervisor_processes, get_cmd_output, run_frappe_cmd)
 from .config.common_site_config import get_config
 
@@ -46,6 +46,7 @@ def get_app(app, git_url, branch=None, bench='.', build_asset_files=True, verbos
 	logger.info('getting app {}'.format(app))
 	shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
 	branch = '--branch {branch}'.format(branch=branch) if branch else ''
+
 	exec_cmd("git clone {git_url} {branch} {shallow_clone} --origin upstream {app}".format(
 				git_url=git_url,
 				app=app,
@@ -110,7 +111,7 @@ def get_current_frappe_version(bench='.'):
 	try:
 		return get_major_version(get_current_version('frappe', bench=bench))
 	except IOError:
-		return ''
+		return 0
 
 def get_current_branch(app, bench='.'):
 	repo_dir = get_repo_dir(app, bench=bench)

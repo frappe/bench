@@ -18,7 +18,7 @@ def generate_supervisor_config(bench_path, user=None, force=False):
 		"bench_dir": bench_dir,
 		"sites_dir": os.path.join(bench_dir, 'sites'),
 		"user": user,
-		"frappe_version": get_current_frappe_version(),
+		"frappe_version": get_current_frappe_version(bench_path),
 		"frappe_branch": get_current_branch('frappe', bench_path),
 		"http_timeout": config.get("http_timeout", 120),
 		"redis_server": find_executable('redis-server'),
