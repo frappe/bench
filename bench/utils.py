@@ -271,18 +271,26 @@ def restart_supervisor_processes(bench='.'):
 	from .config.common_site_config import get_config
 	conf = get_config(bench=bench)
 	bench_name = get_bench_name(bench)
-	cmd = conf.get('supervisor_restart_cmd',
-				   'sudo supervisorctl restart {bench_name}-web: {bench_name}-workers:'.format(bench_name=bench_name))
 
-	try:
+	cmd = conf.get('supervisor_restart_cmd')
+	if cmd:
 		exec_cmd(cmd, cwd=bench)
 
-	except CommandFailedError:
-		if '{bench_name}-workers:'.format(bench_name=bench_name) in cmd:
-			# backward compatibility
-			exec_cmd('sudo supervisorctl restart frappe:', cwd=bench)
+	else:
+		supervisor_status = subprocess.check_output(['sudo', 'supervisorctl', 'status'], cwd=bench)
+
+		if '{bench_name}-workers:'.format(bench_name=bench_name) in supervisor_status:
+			group = '{bench_name}-web: {bench_name}-workers:'.format(bench_name=bench_name)
+
+		# backward compatibility
+		elif '{bench_name}-processes:'.format(bench_name=bench_name) in supervisor_status:
+			group = '{bench_name}-processes:'.format(bench_name=bench_name)
+
+		# backward compatibility
 		else:
-			raise
+			group = 'frappe:'
+
+		exec_cmd('sudo supervisorctl restart {group}'.format(group=group), cwd=bench)
 
 def get_site_config(site, bench='.'):
 	config_path = os.path.join(bench, 'sites', site, 'site_config.json')
