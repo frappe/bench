@@ -39,13 +39,30 @@
     become: yes
     become_user: root
 
+  - name: Install Production environment
+    apt: pkg={{ item }} state=present
+    with_items:
+      - nginx
+      - supervisor
+      - vim
+      - screen
+      - htop
+      - ntp
+      - git
+      # There can be more packages that might be added for setup production, This are packages taken
+      # by diff'ing setup_frappe.sh
+    when: '{{ setup_production }}'
+    become: yes
+    become_user: root
+
   - name: install pillow prerequisites for Ubuntu < 14.04
     apt: pkg={{ item }} state=present
     with_items:
       - libtiff4-dev
       - tcl8.5-dev
       - tk8.5-dev
-    when: ansible_distribution_version < 14.04
+    # Version compare filter, http://docs.ansible.com/ansible/playbooks_filters.html#version-comparison-filters
+    when: {{ ansible_distribution_version | version_compare('14.04', '<') }}
     become: yes
     become_user: root
 
@@ -55,7 +72,7 @@
       - libtiff5-dev
       - tcl8.6-dev
       - tk8.6-dev
-    when: ansible_distribution_version >= 14.04
+    when: {{ ansible_distribution_version | version_compare('14.04', '>=') }}
     become: yes
     become_user: root
 

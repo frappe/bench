@@ -11,7 +11,7 @@
 
   # install pre-requisites
   - name: add epel repo
-    yum: name="https://dl.fedoraproject.org/pub/epel/{{ ansible_lsb.major_release }}/x86_64/e/epel-release-*.rpm" state=present
+    yum: name=epel-release state=present
     become: yes
     become_user: root
 
