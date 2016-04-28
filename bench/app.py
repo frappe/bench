@@ -1,6 +1,6 @@
 import os
 from .utils import (exec_cmd, get_frappe, check_git_for_shallow_clone, build_assets,
-	restart_supervisor_processes, get_cmd_output, run_frappe_cmd)
+	restart_supervisor_processes, get_cmd_output, run_frappe_cmd, CommandFailedError)
 from .config.common_site_config import get_config
 
 import logging
@@ -18,6 +18,12 @@ class MajorVersionUpgradeException(Exception):
 		super(MajorVersionUpgradeException, self).__init__(message)
 		self.upstream_version = upstream_version
 		self.local_version = local_version
+
+class InvalidBranchException(Exception):
+	pass
+
+class InvalidRemoteException(Exception):
+	pass
 
 def get_apps(bench='.'):
 	try:
@@ -102,19 +108,21 @@ def pull_all_apps(bench='.'):
 		if os.path.exists(os.path.join(app_dir, '.git')):
 			logger.info('pulling {0}'.format(app))
 			exec_cmd("git pull {rebase} upstream {branch}".format(rebase=rebase, branch=get_current_branch(app, bench=bench)), cwd=app_dir)
-
-			# remove pyc files
 			exec_cmd('find . -name "*.pyc" -delete', cwd=app_dir)
 
 
-def is_version_upgrade(bench='.', branch=None):
-	fetch_upstream('frappe', bench=bench)
-	upstream_version = get_upstream_version('frappe', bench=bench, branch=branch)
+def is_version_upgrade(app='frappe', bench='.', branch=None):
+	try:
+		fetch_upstream(app, bench=bench)
+	except CommandFailedError, e:
+		raise InvalidRemoteException("No remote named Upstream for "+app)
+
+	upstream_version = get_upstream_version(app=app, branch=branch, bench=bench)
 
 	if not upstream_version:
-		raise Exception("Current branch of 'frappe' not in upstream")
+		raise InvalidBranchException("Specified branch of app {} is not in upstream".format(app))
 
-	local_version = get_major_version(get_current_version('frappe', bench=bench))
+	local_version = get_major_version(get_current_version(app, bench=bench))
 	upstream_version = get_major_version(upstream_version)
 
 	if upstream_version - local_version > 0:
@@ -139,7 +147,7 @@ def use_rq(bench_path):
 
 def fetch_upstream(app, bench='.'):
 	repo_dir = get_repo_dir(app, bench=bench)
-	return exec_cmd("git fetch upstream", cwd=repo_dir)
+	return subprocess.call(["git", "fetch", "upstream"], cwd=repo_dir)
 
 def get_current_version(app, bench='.'):
 	repo_dir = get_repo_dir(app, bench=bench)
@@ -152,6 +160,7 @@ def get_upstream_version(app, branch=None, bench='.'):
 		branch = get_current_branch(app, bench=bench)
 	try:
 		contents = subprocess.check_output(['git', 'show', 'upstream/{branch}:setup.py'.format(branch=branch)], cwd=repo_dir, stderr=subprocess.STDOUT)
+		print contents
 	except subprocess.CalledProcessError, e:
 		if "Invalid object" in e.output:
 			return None
@@ -166,28 +175,44 @@ def get_upstream_url(app, bench='.'):
 def get_repo_dir(app, bench='.'):
 	return os.path.join(bench, 'apps', app)
 
-def switch_branch(branch, apps=None, bench='.', upgrade=False):
+def switch_branch(branch, apps=None, bench='.', upgrade=False, check_upgrade=True):
 	from .utils import update_requirements, backup_all_sites, patch_sites, build_assets, pre_upgrade, post_upgrade
 	import utils
 	apps_dir = os.path.join(bench, 'apps')
-	version_upgrade = is_version_upgrade(bench=bench, branch=branch)
-	if version_upgrade[0] and not upgrade:
-		raise MajorVersionUpgradeException("Switching to {0} will cause upgrade from {1} to {2}. Pass --upgrade to confirm".format(branch, version_upgrade[1], version_upgrade[2]), version_upgrade[1], version_upgrade[2])
+	version_upgrade = (False,)
+	switched_apps = []
 
 	if not apps:
-		apps = ['frappe', 'erpnext']
+		apps = [name for name in os.listdir(apps_dir)
+			if os.path.isdir(os.path.join(apps_dir, name))]
 		if branch=="v4.x.x":
 			apps.append('shopping_cart')
-
+	
 	for app in apps:
 		app_dir = os.path.join(apps_dir, app)
 		if os.path.exists(app_dir):
-			unshallow = "--unshallow" if os.path.exists(os.path.join(app_dir, ".git", "shallow")) else ""
-			exec_cmd("git config --unset-all remote.upstream.fetch", cwd=app_dir)
-			exec_cmd("git config --add remote.upstream.fetch '+refs/heads/*:refs/remotes/upstream/*'", cwd=app_dir)
-			exec_cmd("git fetch upstream {unshallow}".format(unshallow=unshallow), cwd=app_dir)
-			exec_cmd("git checkout {branch}".format(branch=branch), cwd=app_dir)
-			exec_cmd("git merge upstream/{branch}".format(branch=branch), cwd=app_dir)
+			try:
+				if check_upgrade:
+					version_upgrade = is_version_upgrade(app=app, bench=bench, branch=branch)
+					if version_upgrade[0] and not upgrade:
+						raise MajorVersionUpgradeException("Switching to {0} will cause upgrade from {1} to {2}. Pass --upgrade to confirm".format(branch, version_upgrade[1], version_upgrade[2]), version_upgrade[1], version_upgrade[2])
+				print "Switching for "+app
+				unshallow = "--unshallow" if os.path.exists(os.path.join(app_dir, ".git", "shallow")) else ""
+				exec_cmd("git config --unset-all remote.upstream.fetch", cwd=app_dir)
+				exec_cmd("git config --add remote.upstream.fetch '+refs/heads/*:refs/remotes/upstream/*'", cwd=app_dir)
+				exec_cmd("git fetch upstream {unshallow}".format(unshallow=unshallow), cwd=app_dir)
+				exec_cmd("git checkout {branch}".format(branch=branch), cwd=app_dir)
+				exec_cmd("git merge upstream/{branch}".format(branch=branch), cwd=app_dir)
+				switched_apps.append(app)
+			except CommandFailedError:
+				print "Error switching to branch {0} for {1}".format(branch, app)
+			except InvalidRemoteException:
+				print "Remote does not exist for app "+app
+			except InvalidBranchException:
+				print "Branch {0} does not exist in Upstream for {1}".format(branch, app)
+
+	if switched_apps:
+		print "Successfully switched branches for:\n" + "\n".join(switched_apps)
 
 	if version_upgrade[0] and upgrade:
 		update_requirements()
@@ -197,6 +222,9 @@ def switch_branch(branch, apps=None, bench='.', upgrade=False):
 		patch_sites()
 		build_assets()
 		post_upgrade(version_upgrade[1], version_upgrade[2])
+
+def switch_to_branch(branch=None, apps=None, bench='.', upgrade=False):
+	switch_branch(branch, apps=apps, bench=bench, upgrade=upgrade)
 
 def switch_to_master(apps=None, bench='.', upgrade=False):
 	switch_branch('master', apps=apps, bench=bench, upgrade=upgrade)
