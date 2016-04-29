@@ -107,12 +107,12 @@ You can also run the parts of the bench selectively.
 Guides
 =======
 - [Configuring HTTPS](https://frappe.github.io/frappe/user/en/bench/guides/configuring-https.html)
+- [Using Let's Encrypt to setup HTTPS](https://frappe.github.io/frappe/user/en/bench/guides/lets-encrypt-ssl-setup.html)
 - [Diagnosing the Scheduler](https://frappe.github.io/frappe/user/en/bench/guides/diagnosing-the-scheduler.html)
 - [Change Hostname](https://frappe.github.io/frappe/user/en/bench/guides/how-to-change-host-name-from-localhost.html)
 - [Manual Setup](https://frappe.github.io/frappe/user/en/bench/guides/manual-setup.html)
 - [Setup Production](https://frappe.github.io/frappe/user/en/bench/guides/setup-production.html)
 - [Setup Multitenancy](https://frappe.github.io/frappe/user/en/bench/guides/setup-multitenancy.html)
-- [Setup SSL](https://frappe.github.io/frappe/user/en/bench/guides/setup-ssl.html)
 - [Stopping Production](https://frappe.github.io/frappe/user/en/bench/guides/stop-production-and-start-development.html)
 
 
