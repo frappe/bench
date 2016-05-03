@@ -45,7 +45,8 @@
       - libtiff4-dev
       - tcl8.5-dev
       - tk8.5-dev
-    when: ansible_distribution_version < 14.04
+   # Version compare filter, http://docs.ansible.com/ansible/playbooks_filters.html#version-comparison-filters
+    when: ansible_distribution_version | version_compare('14.04', 'lt')
     become: yes
     become_user: root
 
@@ -55,7 +56,7 @@
       - libtiff5-dev
       - tcl8.6-dev
       - tk8.6-dev
-    when: ansible_distribution_version >= 14.04
+    when: ansible_distribution_version | version_compare('14.04', 'ge')
     become: yes
     become_user: root
 
@@ -70,3 +71,7 @@
 
   # setup frappe-bench
   - include: includes/setup_bench.yml
+
+  # While setting up, production environment install additional packages (nginx, supervisor etc.)
+  - include: includes/setup_production.yml
+    when: '{{ setup_production }}'

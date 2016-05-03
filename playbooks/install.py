@@ -3,6 +3,7 @@ import os
 import sys
 import subprocess
 import getpass
+import json
 from distutils.spawn import find_executable
 
 bench_repo = '/usr/local/frappe/bench-repo'
@@ -12,7 +13,7 @@ def install_bench(args):
 	success = run_os_command({
 		'apt-get': [
 			'sudo apt-get update',
-			'sudo apt-get install -y git build-essential python-setuptools python-dev'
+			'sudo apt-get install -y git build-essential python-setuptools python-dev libssl-dev libffi-dev'
 		],
 		'yum': [
 			'sudo yum groupinstall -y "Development tools"',
@@ -41,6 +42,12 @@ def install_bench(args):
 		'yum': 'sudo python get-pip.py',
 	})
 
+	# In certain cases, we might have older setuptools which results in installation failures and
+	# so, we will upgrade it.
+	run_os_command({
+		'pip': 'sudo pip install --upgrade setuptools'
+	})
+
 	success = run_os_command({
 		'pip': 'sudo pip install ansible'
 	})
@@ -54,8 +61,9 @@ def install_bench(args):
 	# clone bench repo
 	clone_bench_repo()
 
-	if args.develop:
-		run_playbook('develop/install.yml', sudo=True)
+	# args is namespace, but we would like to use it as dict in calling function, so use vars()
+	if args.develop or args.setup_production:
+		run_playbook('develop/install.yml', sudo=True, extra_args=vars(args))
 
 def install_python27():
 	version = (sys.version_info[0], sys.version_info[1])
@@ -96,7 +104,7 @@ def clone_bench_repo():
 	})
 
 	success = run_os_command(
-		{'git': 'git clone https://github.com/frappe/bench {bench_repo} --depth 1 --branch develop'.format(bench_repo=bench_repo)}
+		{'git': 'git clone https://github.com/shreyasp/bench {bench_repo} --depth 1 --branch setup-prod-ansible'.format(bench_repo=bench_repo)}
 	)
 
 	return success
@@ -123,8 +131,54 @@ def could_not_install(package):
 def is_sudo_user():
 	return os.geteuid() == 0
 
-def run_playbook(playbook_name, sudo=False):
-	args = ['ansible-playbook', '-c', 'local',  playbook_name]
+def get_passwords():
+	import uuid
+	# Generate the admin & mysql root password for the site using uuid.uuid4().hex
+	# We will have 32 character passwords
+	# If re-running the script we have saved the passwords, use them
+	passwords_json = os.path.join(os.path.abspath(os.path.expanduser('~')), 'frappe_passwords.json')
+	if os.path.exists(passwords_json):
+		with open(passwords_json, 'r') as f:
+			passwords = json.load(f)
+
+	else:
+		# Generate new paswords, If running for the first time
+		passwords = {
+			"admin_password": "",
+			"mysql_root_password": ""
+			# Frappe password can be added, when we might think of creating a one.
+		}
+
+		for key in passwords.keys():
+			passwords[key] = uuid.uuid4().hex
+
+		with open(passwords_json, mode='w') as f:
+			json.dump(passwords, f)
+
+	return passwords
+
+def get_extra_vars_json(extra_args):
+	# We need to pass setup_production as extra_vars to the playbook to execute conditionals in the
+	# playbook. Extra variables can passed as json or key=value pair. Here, we will use JSON.
+	json_path = os.path.join(os.path.abspath(os.path.expanduser('~')), 'extra_vars.json')
+	extra_vars = dict(extra_args.items())
+
+	passwords = get_passwords()
+	extra_vars.update(passwords.items())
+
+	# Decide for branch to be cloned depending upon whether we setting up production
+	branch = 'master' if extra_args['setup_production'] else 'develop'
+	extra_vars.update(branch=branch)
+
+	with open(json_path, mode='w') as j:
+		json.dump(extra_vars, j, indent=1, sort_keys=True)
+
+	return ('@' + json_path)
+
+def run_playbook(playbook_name, sudo=False, extra_args=None):
+	extra_vars = get_extra_vars_json(extra_args)
+	args = ['ansible-playbook', '-c', 'local',  playbook_name, '-e', extra_vars]
+
 	if sudo:
 		args.append('-K')
 
@@ -137,6 +191,8 @@ def parse_commandline_args():
 	parser = argparse.ArgumentParser(description='Frappe Installer')
 	parser.add_argument('--develop', dest='develop', action='store_true', default=False,
 						help='Install developer setup')
+	parser.add_argument('--setup-production', dest='setup_production', action='store_true',
+						default=False, help='Setup Production environment for bench')
 	args = parser.parse_args()
 
 	return args
