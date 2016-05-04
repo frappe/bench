@@ -104,7 +104,7 @@ def clone_bench_repo():
 	})
 
 	success = run_os_command(
-		{'git': 'git clone https://github.com/shreyasp/bench {bench_repo} --depth 1 --branch setup-prod-ansible'.format(bench_repo=bench_repo)}
+		{'git': 'git clone https://github.com/frappe/bench {bench_repo} --depth 1 --branch develop'.format(bench_repo=bench_repo)}
 	)
 
 	return success
@@ -145,7 +145,7 @@ def get_passwords():
 		# Generate new paswords, If running for the first time
 		passwords = {
 			"admin_password": "",
-			"mysql_root_password": ""
+			"mysql_root_password": "" # This has issue while taken at the vars_prompt.
 			# Frappe password can be added, when we might think of creating a one.
 		}
 
