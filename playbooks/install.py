@@ -62,8 +62,10 @@ def install_bench(args):
 	clone_bench_repo()
 
 	# args is namespace, but we would like to use it as dict in calling function, so use vars()
-	if args.develop or args.setup_production:
+	if args.develop:
 		run_playbook('develop/install.yml', sudo=True, extra_args=vars(args))
+	elif args.setup_production:
+		run_playbook('develop/includes/setup_production.yml', sudo=True, extra_args=vars(args))
 
 def install_python27():
 	version = (sys.version_info[0], sys.version_info[1])
@@ -132,17 +134,6 @@ def is_sudo_user():
 	return os.geteuid() == 0
 
 def get_passwords():
-	import uuid
-	# Generate the admin & mysql root password for the site using uuid.uuid4().hex
-	# We will have 32 character passwords
-	# If re-running the script we have saved the passwords, use them
-	passwords_json = os.path.join(os.path.abspath(os.path.expanduser('~')), 'frappe_passwords.json')
-	if os.path.exists(passwords_json):
-		with open(passwords_json, 'r') as f:
-			passwords = json.load(f)
-
-	else:
-		# Generate new paswords, If running for the first time
 		passwords = {
 			"admin_password": "",
 			"mysql_root_password": "" # This has issue while taken at the vars_prompt.
@@ -150,10 +141,7 @@ def get_passwords():
 		}
 
 		for key in passwords.keys():
-			passwords[key] = uuid.uuid4().hex
-
-		with open(passwords_json, mode='w') as f:
-			json.dump(passwords, f)
+			passwords[key] = raw_input(prompt=['Please enter password for ', passwords[key]])
 
 	return passwords
 

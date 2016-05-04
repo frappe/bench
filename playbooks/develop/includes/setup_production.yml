@@ -1,4 +1,6 @@
 ---
+  - include: ../install.yml
+  
   - name: Install production pre-requisites
     become: yes
     become_user: root
@@ -11,13 +13,24 @@
       - htop
       - git
 
+  - name: Start supervisord with default configuration
+    command: supervisord -c /etc/supervisor/supervisord.conf
+    become: yes
+    become_user: root
+    when: ansible_distribution_version | version_compare('16.04', 'ge')
+
+  - name: Check ERPNext App exists
+    stat: path="{{ bench_path }}/apps/erpnext"
+    register: app
+
   - name: Get-app erpnext app
     command: bench get-app erpnext https://github.com/frappe/erpnext.git --branch {{ branch }}
     args:
       chdir: '{{ bench_path }}'
+    when: app.stat.exists is defined and not app.stat.exists
 
   - name: Install erpnext app
-    command: bench --site site1.local install-app erpnext # assumming we have created site1.local
+    command: bench --site site1.local install-app erpnext
     args:
       chdir: '{{ bench_path }}'
 
@@ -31,6 +44,6 @@
   - name: Setup Sudoers
     become: yes
     become_user: root
-    command: bench setup sudoers {{ ansible_user_id }} # Assumption that we are using frappe user
+    command: bench setup sudoers {{ ansible_user_id }}
     args:
       chdir: '{{ bench_path }}'

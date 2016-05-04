@@ -45,12 +45,11 @@
       - libtiff4-dev
       - tcl8.5-dev
       - tk8.5-dev
-   # Version compare filter, http://docs.ansible.com/ansible/playbooks_filters.html#version-comparison-filters
     when: ansible_distribution_version | version_compare('14.04', 'lt')
     become: yes
     become_user: root
 
-  - name: install pillow prerequisites for Ubuntu > 14.04
+  - name: install pillow prerequisites for Ubuntu >= 14.04
     apt: pkg={{ item }} state=present
     with_items:
       - libtiff5-dev
