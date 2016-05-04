@@ -1,0 +1,38 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Install SELinux for CentOS
+      yum: name="{{item}}" state=present
+      with_items:
+        - policycoreutils-python
+        - selinux-policy-devel
+      become: yes
+      become_user: root
+      when: ansible_distribution == 'CentOS'
+
+    - name: Install SELinux for Ubuntu
+      apt: name={{ item }} state=present
+      with_items:
+       - selinux
+       - selinux-policy-dev
+      become: yes
+      become_user: root
+      when: ansible_distribution == 'Ubuntu'
+
+    - name: Check enabled SELinux modules
+     shell: semanage module -l
+     register: enabled_modules
+
+    - name: Copy frappe_selinux policy
+      copy: src=templates/frappe_selinux.te dest=/root/frappe_selinux.te
+      register: dest_frappe_selinux_te
+      become: yes
+      become_user: root
+
+    - name: Compile frappe_selinux policy
+      shell: "make -f /usr/share/selinux/devel/Makefile frappe_selinux.pp && semodule -i frappe_selinux.pp"
+      args:
+      chdir: /root/
+      become: yes
+      become_user: root
+      when: "enabled_modules.stdout.find('frappe_selinux') == -1 or dest_frappe_selinux_te.changed"

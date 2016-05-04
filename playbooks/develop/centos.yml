@@ -9,12 +9,6 @@
 
   tasks:
 
-  # install pre-requisites
-  - name: add epel repo
-    yum: name="https://dl.fedoraproject.org/pub/epel/{{ ansible_lsb.major_release }}/x86_64/e/epel-release-*.rpm" state=present
-    become: yes
-    become_user: root
-
   - name: development tools package
     yum: name="@Development tools" state=present
     become: yes
@@ -23,13 +17,17 @@
   - name: install prequisites
     yum: pkg={{ item }} state=present
     with_items:
+      # Install epel-release
+      - epel-release
+
       # basic installs
       - redis
       - nodejs
       - npm
 
       # for mariadb
-      - software-properties-common
+      - mysql-devel
+      - mysql-libs
 
       # for wkhtmltopdf
       - libXrender
@@ -48,6 +46,8 @@
       - tcl-devel
       - tk-devel
 
+    #   To ensure that ansible_lsb is set
+      - redhat-lsb-core  
     become: yes
     become_user: root
 
