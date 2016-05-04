@@ -60,7 +60,7 @@ def main():
             if module.check_mode:
                 module.exit_json(changed=True)
 
-            get_app(app['name'], app['url'], app.get('branch', 'master'), bench_path)
+            get_app(app['url'], app.get('branch', 'master'), bench_path)
             changed = True
 
     for site in module.params['sites']:
