@@ -25,7 +25,7 @@ Production vs Development
 Easy Setup 
 ---------------------
 - This is an opinionated setup with logging and SE Linux. So, it is best to setup on a blank server.
-- Supported for CentOS 6, CentOS 7, Debian 7 and Ubuntu 12.04+
+- Supported for CentOS 6, CentOS 7, Debian 7 and Ubuntu 12.04 to 15.x
 - This script will install the pre-requisites, install bench and setup an ERPNext site
 - Passwords for Frappe, Frappe Administrator and MariaDB (root) will be generated
 - You can then login as **Administrator** with the Administrator password printed 
@@ -64,7 +64,7 @@ This will install with Socketio and Redis Queue. You have to explicitly start se
 Beta Development Setup
 ------------------------
 
-Tested on Ubuntu 14.04+, Debian 7+, CentOS 7+, and MacOS X. If you find any problems, post them on our forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
+Tested on Ubuntu 14.04 to 15.x, Debian 7+, CentOS 7+, and MacOS X. If you find any problems, post them on our forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
 
 ```
 wget https://raw.githubusercontent.com/frappe/bench/develop/playbooks/install.py
