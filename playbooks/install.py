@@ -65,7 +65,7 @@ def install_bench(args):
 	if args.develop:
 		run_playbook('develop/install.yml', sudo=True, extra_args=vars(args))
 	elif args.setup_production:
-		run_playbook('develop/includes/setup_production.yml', sudo=True, extra_args=vars(args))
+		run_playbook('develop/setup_production.yml', sudo=True, extra_args=vars(args))
 
 def install_python27():
 	version = (sys.version_info[0], sys.version_info[1])
@@ -134,14 +134,14 @@ def is_sudo_user():
 	return os.geteuid() == 0
 
 def get_passwords():
-		passwords = {
-			"admin_password": "",
-			"mysql_root_password": "" # This has issue while taken at the vars_prompt.
-			# Frappe password can be added, when we might think of creating a one.
-		}
+	passwords = {
+		"admin_password": "",
+		"mysql_root_password": "" # This has issue while taken at the vars_prompt.
+		# Frappe password can be added, when we might think of creating a one.
+	}
 
-		for key in passwords.keys():
-			passwords[key] = raw_input(prompt=['Please enter password for ', passwords[key]])
+	for key in passwords.keys():
+		passwords[key] = raw_input(prompt=['Please enter password for ', passwords[key]])
 
 	return passwords
 
