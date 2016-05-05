@@ -1,4 +1,3 @@
-{%- set use_rq = (frappe_branch=='develop' or frappe_version >= 7) -%}
 redis_cache: redis-server config/redis_cache.conf
 redis_socketio: redis-server config/redis_socketio.conf
 redis_queue: redis-server config/redis_queue.conf
