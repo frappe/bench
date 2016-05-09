@@ -62,7 +62,8 @@ def get_app(app, git_url, branch=None, bench='.', build_asset_files=True, verbos
 		restart_supervisor_processes(bench=bench)
 
 def new_app(app, bench='.'):
-	app = app.lower().replace(" ", "_")
+	# For backwards compatibility
+	app = app.lower().replace(" ", "_").replace("-", "_") 
 	logger.info('creating new app {}'.format(app))
 	apps = os.path.abspath(os.path.join(bench, 'apps'))
 	if FRAPPE_VERSION == 4:
