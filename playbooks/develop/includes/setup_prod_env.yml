@@ -1,0 +1,80 @@
+---
+- hosts: localhost
+
+  tasks:
+
+  - name: Install production pre-requisites
+    become: yes
+    become_user: root
+    apt: pkg={{ item }} state=present
+    with_items:
+      - nginx
+      - screen
+      - vim
+      - htop
+      - git
+      - postfix
+      - supervisor
+    when: ansible_distribution == 'Ubuntu'
+
+  - name: Install production pre-requisites
+    become: yes
+    become_user: root
+    yum: pkg={{ item }} state=present
+    with_items:
+      - nginx
+      - screen
+      - vim
+      - htop
+      - git
+      - postfix
+      - MySQL-python
+    when: ansible_distribution == 'CentOS'
+
+  - name: Install supervisor using easy_install CentOS 6
+    easy_install: name=supervisor state=present
+    become: yes
+    become_user: root
+    when: ansible_distribution == 'CentOS' and ansible_distribution_release | version_compare('6', 'eq')
+
+  - name: Install supervisor using yum for Centos 7
+    yum: pkg=supervisor state=present
+    become: yes
+    become_user: root
+    when: ansible_distribution == 'CentOS' and ansible_distribution_release | version_compare('7', 'ge')
+
+  - name: Enable nginx, mysql, and redis
+    service:
+      name: '{{ item }}'
+      enabled: yes
+    with_items:
+      - nginx
+      - mysql
+    become: yes
+    become_user: root
+
+  - name: Enable redis-server.service on ubuntu
+    service:
+      name: redis-server
+      enabled: yes
+    become: yes
+    become_user: root
+    when: ansible_distribution == 'Ubuntu'
+
+  - name: Enable redis.service on centos
+    service:
+      name: redis
+      enabled: yes
+    become: yes
+    become_user: root
+    when: ansible_distribution == 'CentOS'
+
+  - name: Stat supervisor.conf
+    stat:
+      path: /etc/supervisor/supervisord.conf
+    register: supervisor_conf
+
+  # This needs to be discussed, whether we need to append some default, if its not present
+  - name: Check whether default supervisor.conf exists
+    debug: msg="supervisor.conf exists"
+    when: supervisor_conf.stat.exists

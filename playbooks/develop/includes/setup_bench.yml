@@ -5,7 +5,7 @@
     become_user: root
 
   - name: Check whether bench exists
-    stat: {{ bench_path }}
+    stat: path="{{ bench_path }}"
     register: bench_stat
 
   - name: init bench

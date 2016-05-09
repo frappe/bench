@@ -17,8 +17,10 @@ def install_bench(args):
 		],
 		'yum': [
 			'sudo yum groupinstall -y "Development tools"',
-			'sudo yum install -y git python-setuptools python-devel'
+			'sudo yum install -y git python-setuptools python-devel openssl-devel libffi-devel redhat-lsb-core epel-release'
 		],
+		# epel-release is required to install redis, so installing it before the playbook-run.
+		# redhat-lsb-core is required, so that ansible can set ansible_lsb variable
 	})
 
 	if not find_executable("git"):
