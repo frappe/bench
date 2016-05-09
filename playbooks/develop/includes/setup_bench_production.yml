@@ -14,7 +14,7 @@
       command: bench new-site {{ site }} --admin-password {{ admin_password }} --mariadb-root-password {{ mysql_root_password }}
       args:
         chdir: "{{ bench_path }}"
-      when: site.stat.exists is defined and not site.stat.exists
+      when: not site.stat.exists
 
     - name: Check ERPNext App exists
       stat: path="{{ bench_path }}/apps/erpnext"
@@ -24,7 +24,7 @@
       command: bench get-app erpnext https://github.com/frappe/erpnext.git --branch {{ branch }}
       args:
         chdir: '{{ bench_path }}'
-      when: app.stat.exists is defined and not app.stat.exists
+      when: not app.stat.exists
 
     - name: Install erpnext app
       command: bench --site {{ site }} install-app erpnext

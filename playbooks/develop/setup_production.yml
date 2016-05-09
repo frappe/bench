@@ -12,3 +12,6 @@
 
   # Setup Bench for production environment
   - include: includes/setup_bench_production.yml
+
+  # Setup SELinux Policy
+  - include: includes/setup_selinux_policy.yml
