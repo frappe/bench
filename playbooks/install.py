@@ -163,20 +163,26 @@ def parse_commandline_args():
 
 	parser = argparse.ArgumentParser(description='Frappe Installer')
 
-	parser.add_argument('--develop', dest='develop', action='store_true', default=False,
-						help='Install developer setup')
+	# Arguments develop and setup-production are mutually exclusive both can't be specified together.
+	# Hence, we need to create a group for discouraging use of both options at the same time.
+	args_group = parser.add_mutually_exclusive_group()
 
-	parser.add_argument('--setup-production', dest='setup_production', action='store_true',
-						default=False, help='Setup Production environment for bench')
+	args_group.add_argument('--develop', dest='develop', action='store_true', default=False,
+		help='Install developer setup')
+
+	args_group.add_argument('--setup-production', dest='setup_production', action='store_true',
+		default=False, help='Setup Production environment for bench')
 
 	parser.add_argument('--site', dest='site', action='store', default='site1.local',
-						help='Specifiy name for your first ERPNext site')
+		help='Specifiy name for your first ERPNext site')
 
-	parser.add_argument('--mysql-root-password', dest='mysql_root_password', action='store',
-						default="", help='Specify root password for mysql')
+	# Users are required to specify the password for mysql root and the administrator password. So,
+	# both the arguments should specified as required
+	parser.add_argument('--mariadb-root-password', dest='mysql_root_password', action='store',
+		help='Specify root password for mysql', required=True)
 
-	parser.add_argument('--admin-password', dest='admin_password', action='store', default="",
-						help='Specify administrator password for sites')
+	parser.add_argument('--admin-password', dest='admin_password', action='store',
+		help='Specify administrator password for sites', required=True)
 
 	args = parser.parse_args()
 

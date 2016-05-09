@@ -8,13 +8,13 @@
     # In case we are re-running the script, we would like to skip the site creation
     - name: Check whether a site exists
       stat: path="{{ bench_path }}/sites/{{ site }}"
-      register: site
+      register: site_folder
 
     - name: Create new site
       command: bench new-site {{ site }} --admin-password {{ admin_password }} --mariadb-root-password {{ mysql_root_password }}
       args:
         chdir: "{{ bench_path }}"
-      when: not site.stat.exists
+      when: not site_folder.stat.exists
 
     - name: Check ERPNext App exists
       stat: path="{{ bench_path }}/apps/erpnext"

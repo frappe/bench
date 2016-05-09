@@ -14,9 +14,3 @@
       - vim
       - htop
       - git
-
-  - name: Start supervisord with default configuration
-    command: supervisord -c /etc/supervisor/supervisord.conf
-    become: yes
-    become_user: root
-    when: ansible_distribution_version | version_compare('16.04', 'ge')

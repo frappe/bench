@@ -14,4 +14,4 @@
   - include: includes/setup_bench_production.yml
 
   # Setup SELinux Policy
-  - include: includes/setup_selinux_policy.yml
+  # - include: includes/setup_selinux_policy.yml
