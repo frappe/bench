@@ -138,7 +138,6 @@ def get_extra_vars_json(extra_args):
 	# playbook. Extra variables can passed as json or key=value pair. Here, we will use JSON.
 	json_path = os.path.join(os.path.abspath(os.path.expanduser('~')), 'extra_vars.json')
 	extra_vars = dict(extra_args.items())
-	extra_vars.update(passwords.items())
 
 	# Decide for branch to be cloned depending upon whether we setting up production
 	branch = 'master' if extra_args['setup_production'] else 'develop'

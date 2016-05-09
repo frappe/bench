@@ -1,7 +1,5 @@
 ---
   - hosts: localhost
-    vars:
-      bench_path: "/home/{{ ansible_user_id }}/frappe/frappe-bench"
 
   # Install the common pre-requisites for the setting up bench
   - include: install.yml
