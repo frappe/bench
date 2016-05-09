@@ -70,7 +70,3 @@
 
   # setup frappe-bench
   - include: includes/setup_bench.yml
-
-  # While setting up, production environment install additional packages (nginx, supervisor etc.)
-  - include: includes/setup_production.yml
-    when: '{{ setup_production }}'

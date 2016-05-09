@@ -1,49 +1,16 @@
 ---
-  - include: ../install.yml
-  
-  - name: Install production pre-requisites
-    become: yes
-    become_user: root
-    apt: pkg={{ item }} state=present
-    with_items:
-      - nginx
-      - supervisor
-      - screen
-      - vim
-      - htop
-      - git
+  - hosts: localhost
+    vars:
+      bench_path: "/home/{{ ansible_user_id }}/frappe/frappe-bench"
 
-  - name: Start supervisord with default configuration
-    command: supervisord -c /etc/supervisor/supervisord.conf
-    become: yes
-    become_user: root
-    when: ansible_distribution_version | version_compare('16.04', 'ge')
+  # Install the common pre-requisites for the setting up bench
+  - include: install.yml
 
-  - name: Check ERPNext App exists
-    stat: path="{{ bench_path }}/apps/erpnext"
-    register: app
+  - include: includes/setup_production_ubuntu.yml
+    when: ansible_distribution == 'Ubuntu'
 
-  - name: Get-app erpnext app
-    command: bench get-app erpnext https://github.com/frappe/erpnext.git --branch {{ branch }}
-    args:
-      chdir: '{{ bench_path }}'
-    when: app.stat.exists is defined and not app.stat.exists
+  # - include: includes/setup_production_centos.yml
+  #   when: ansible_distribution == 'CentOS'
 
-  - name: Install erpnext app
-    command: bench --site site1.local install-app erpnext
-    args:
-      chdir: '{{ bench_path }}'
-
-  - name: Setup production
-    become: yes
-    become_user: root
-    command: bench setup production {{ ansible_user_id }}
-    args:
-      chdir: '{{ bench_path }}'
-
-  - name: Setup Sudoers
-    become: yes
-    become_user: root
-    command: bench setup sudoers {{ ansible_user_id }}
-    args:
-      chdir: '{{ bench_path }}'
+  # Setup Bench for production environment
+  - include: includes/setup_bench_production.yml

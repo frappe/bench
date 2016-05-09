@@ -133,25 +133,11 @@ def could_not_install(package):
 def is_sudo_user():
 	return os.geteuid() == 0
 
-def get_passwords():
-	passwords = {
-		"admin_password": "",
-		"mysql_root_password": "" # This has issue while taken at the vars_prompt.
-		# Frappe password can be added, when we might think of creating a one.
-	}
-
-	for key in passwords.keys():
-		passwords[key] = raw_input(prompt=['Please enter password for ', passwords[key]])
-
-	return passwords
-
 def get_extra_vars_json(extra_args):
 	# We need to pass setup_production as extra_vars to the playbook to execute conditionals in the
 	# playbook. Extra variables can passed as json or key=value pair. Here, we will use JSON.
 	json_path = os.path.join(os.path.abspath(os.path.expanduser('~')), 'extra_vars.json')
 	extra_vars = dict(extra_args.items())
-
-	passwords = get_passwords()
 	extra_vars.update(passwords.items())
 
 	# Decide for branch to be cloned depending upon whether we setting up production
@@ -181,6 +167,10 @@ def parse_commandline_args():
 						help='Install developer setup')
 	parser.add_argument('--setup-production', dest='setup_production', action='store_true',
 						default=False, help='Setup Production environment for bench')
+	parser.add_argument('--mysql-root-password', dest='mysql_root_password', action='store',
+						default=" ", help='Specify root password for mysql')
+	parser.add_argument('--admin-password', dest='admin_password', action='store', default=" ",
+						help='Specify administrator password for sites')
 	args = parser.parse_args()
 
 	return args
