@@ -16,18 +16,6 @@
       creates: "{{ bench_path }}/sites/common_site_config.json"
       chdir: "{{ bench_path }}"
 
-  # In case we are re-running the script, we would like to skip the site creation
-  - name: Check whether a site exists
-    stat: path="{{ bench_path }}/sites/site1.local"
-    register: site
-
-  - name: Create new site
-    command: bench new-site site1.local --admin-password {{ admin_password }} --mariadb-root-password {{ mysql_root_password }}
-    args:
-      chdir: "{{ bench_path }}"
-    when: site.stat.exists is defined and not site.stat.exists
-
-
   - name: install frappe app
     command: bench get-app frappe https://github.com/frappe/frappe
     args:

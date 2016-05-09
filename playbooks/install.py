@@ -162,14 +162,22 @@ def parse_commandline_args():
 	import argparse
 
 	parser = argparse.ArgumentParser(description='Frappe Installer')
+
 	parser.add_argument('--develop', dest='develop', action='store_true', default=False,
 						help='Install developer setup')
+
 	parser.add_argument('--setup-production', dest='setup_production', action='store_true',
 						default=False, help='Setup Production environment for bench')
+
+	parser.add_argument('--site', dest='site', action='store', default='site1.local',
+						help='Specifiy name for your first ERPNext site')
+
 	parser.add_argument('--mysql-root-password', dest='mysql_root_password', action='store',
-						default=" ", help='Specify root password for mysql')
-	parser.add_argument('--admin-password', dest='admin_password', action='store', default=" ",
+						default="", help='Specify root password for mysql')
+
+	parser.add_argument('--admin-password', dest='admin_password', action='store', default="",
 						help='Specify administrator password for sites')
+
 	args = parser.parse_args()
 
 	return args

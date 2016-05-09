@@ -5,6 +5,17 @@
 
     tasks:
 
+    # In case we are re-running the script, we would like to skip the site creation
+    - name: Check whether a site exists
+      stat: path="{{ bench_path }}/sites/{{ site }}"
+      register: site
+
+    - name: Create new site
+      command: bench new-site {{ site }} --admin-password {{ admin_password }} --mariadb-root-password {{ mysql_root_password }}
+      args:
+        chdir: "{{ bench_path }}"
+      when: site.stat.exists is defined and not site.stat.exists
+
     - name: Check ERPNext App exists
       stat: path="{{ bench_path }}/apps/erpnext"
       register: app
@@ -16,7 +27,7 @@
       when: app.stat.exists is defined and not app.stat.exists
 
     - name: Install erpnext app
-      command: bench --site site1.local install-app erpnext
+      command: bench --site {{ site }} install-app erpnext
       args:
         chdir: '{{ bench_path }}'
 
