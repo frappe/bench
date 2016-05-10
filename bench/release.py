@@ -27,7 +27,7 @@ repo_map = {
 	'schools': 'schools'
 }
 
-def release(repo, bump_type, develop, master):
+def release(repo, bump_type, develop, master, owner):
 	if not get_config(".").get('release_bench'):
 		print 'bench not configured to release'
 		sys.exit(1)
@@ -36,9 +36,9 @@ def release(repo, bump_type, develop, master):
 	github_password = getpass.getpass()
 	r = requests.get('https://api.github.com/user', auth=HTTPBasicAuth(github_username, github_password))
 	r.raise_for_status()
-	bump(repo, bump_type, develop=develop, master=master)
+	bump(repo, bump_type, develop=develop, master=master, owner=owner)
 
-def bump(repo, bump_type, develop='develop', master='master', remote='upstream'):
+def bump(repo, bump_type, develop='develop', master='master', remote='upstream', owner='frappe'):
 	assert bump_type in ['minor', 'major', 'patch']
 	update_branches_and_check_for_changelog(repo, bump_type, develop=develop, master=master, remote=remote)
 	message = get_release_message(repo, develop_branch=develop, master_branch=master)
@@ -56,7 +56,7 @@ def bump(repo, bump_type, develop='develop', master='master', remote='upstream')
 	commit_changes(repo, new_version)
 	tag_name = create_release(repo, new_version, develop_branch=develop, master_branch=master)
 	push_release(repo, develop_branch=develop, master_branch=master)
-	create_github_release('frappe', repo, tag_name, message)
+	create_github_release(owner, repo, tag_name, message)
 	print 'Released {tag} for {repo}'.format(tag=tag_name, repo=repo)
 
 def update_branches_and_check_for_changelog(repo, bump_type, develop='develop', master='master', remote='upstream'):
