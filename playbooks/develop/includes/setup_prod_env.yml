@@ -3,6 +3,8 @@
 
   tasks:
 
+  #####################################
+  # Ubuntu Production Environment Setup
   - name: Install production pre-requisites
     become: yes
     become_user: root
@@ -17,6 +19,8 @@
       - supervisor
     when: ansible_distribution == 'Ubuntu'
 
+  #####################################
+  # CentOS Production Environment Setup
   - name: Install production pre-requisites
     become: yes
     become_user: root
@@ -31,18 +35,14 @@
       - MySQL-python
     when: ansible_distribution == 'CentOS'
 
-  - name: Install supervisor using easy_install CentOS 6
-    easy_install: name=supervisor state=present
-    become: yes
-    become_user: root
-    when: ansible_distribution == 'CentOS' and ansible_distribution_release | version_compare('6', 'eq')
-
   - name: Install supervisor using yum for Centos 7
     yum: pkg=supervisor state=present
     become: yes
     become_user: root
-    when: ansible_distribution == 'CentOS' and ansible_distribution_release | version_compare('7', 'ge')
+    when: ansible_distribution == 'CentOS' and ansible_lsb.major_release == '7'
 
+  ####################################################
+  # Enable nginx, mysql, redis and supevisord services
   - name: Enable nginx, mysql, and redis
     service:
       name: '{{ item }}'
@@ -53,6 +53,16 @@
     become: yes
     become_user: root
 
+  - name: Enable redis.service on centos
+    service:
+      name: {{ item }}
+      enabled: yes
+    with_items:
+      - redis
+    become: yes
+    become_user: root
+    when: ansible_distribution == 'CentOS'
+
   - name: Enable redis-server.service on ubuntu
     service:
       name: redis-server
@@ -61,20 +71,19 @@
     become_user: root
     when: ansible_distribution == 'Ubuntu'
 
-  - name: Enable redis.service on centos
-    service:
-      name: redis
-      enabled: yes
-    become: yes
-    become_user: root
-    when: ansible_distribution == 'CentOS'
-
   - name: Stat supervisor.conf
     stat:
       path: /etc/supervisor/supervisord.conf
     register: supervisor_conf
 
-  # This needs to be discussed, whether we need to append some default, if its not present
   - name: Check whether default supervisor.conf exists
-    debug: msg="supervisor.conf exists"
+    service:
+      name: supervisord
+      state: started
+      enabled: yes
     when: supervisor_conf.stat.exists
+
+  #########################################################################
+  # Supervisor for CentOS 6 needs to be installed and configured separately
+  - include: includes/configure_supervisor_centos6.yml
+    when: ansible_distribution == 'CentOS' and ansible_lsb.major_release == '6'
