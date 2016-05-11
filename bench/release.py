@@ -19,14 +19,6 @@ import click
 github_username = None
 github_password = None
 
-repo_map = {
-	'frappe': 'frappe',
-	'erpnext': 'erpnext',
-	'erpnext_shopify': 'erpnext_shopify',
-	'paypal_integration': 'paypal_integration',
-	'schools': 'schools'
-}
-
 def release(repo, bump_type, develop, master, owner):
 	if not get_config(".").get('release_bench'):
 		print 'bench not configured to release'
@@ -207,7 +199,7 @@ def create_github_release(owner, repo, tag_name, log, gh_username=None, gh_passw
 			raise Exception, "No credentials"
 		gh_username = github_username
 		gh_password = github_password
-	repo = repo_map[os.path.basename(repo)]
+	repo = os.path.basename(repo)
 	data = {
 		'tag_name': tag_name,
 		'target_commitish': 'master',
