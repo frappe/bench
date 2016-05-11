@@ -1,0 +1,18 @@
+{% if service %}
+{{ user }} ALL = (root) {{ service }}
+{{ user }} ALL = (root) NOPASSWD: {{ service }} nginx *
+{{ user }} ALL = (root) NOPASSWD: {{ service }} supervisord *
+{% endif %}
+{% if systemctl %}
+{{ user }} ALL = (root) {{ systemctl }}
+{{ user }} ALL = (root) NOPASSWD: {{ systemctl }} * nginx
+{{ user }} ALL = (root) NOPASSWD: {{ systemctl }} * supervisord
+{% endif %}
+{% if supervisorctl %}
+{{ user }} ALL = (root) NOPASSWD: {{ supervisorctl }}
+{% endif %}
+{% if nginx %}
+{{ user }} ALL = (root) NOPASSWD: {{ nginx }}
+{% endif %}
+Defaults:{{ user }} !requiretty
+
