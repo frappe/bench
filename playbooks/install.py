@@ -180,11 +180,11 @@ def parse_commandline_args():
 
 	# Users are required to specify the password for mysql root and the administrator password. So,
 	# both the arguments should specified as required
-	parser.add_argument('--mariadb-root-password', dest='mysql_root_password', action='store',
-		help='Specify root password for mysql', required=True)
-
-	parser.add_argument('--admin-password', dest='admin_password', action='store',
-		help='Specify administrator password for sites', required=True)
+	# parser.add_argument('--mariadb-root-password', dest='mysql_root_password', action='store',
+	# 	help='Specify root password for mysql', required=True)
+	#
+	# parser.add_argument('--admin-password', dest='admin_password', action='store',
+	# 	help='Specify administrator password for sites', required=True)
 
 	args = parser.parse_args()
 

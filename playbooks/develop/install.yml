@@ -1,9 +1,15 @@
 ---
 - hosts: localhost
-  # vars_prompt:
-  #   - name: mysql_root_password
-  #     prompt: "MySQL Root Password"
-  #     when: ansible_distribution == 'Ubuntu'
+  vars_prompt:
+    - name: mysql_root_password
+      prompt: "Enter mysql root password"
+      confirm: yes
+      private: yes
+
+    - name: admin_password
+      prompt: "Enter administrator password for site"
+      confirm: yes
+      private: yes
 
 - include: macosx.yml
   when: ansible_distribution == 'MacOSX'
