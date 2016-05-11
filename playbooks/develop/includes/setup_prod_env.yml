@@ -55,10 +55,8 @@
 
   - name: Enable redis.service on centos
     service:
-      name: {{ item }}
+      name: redis
       enabled: yes
-    with_items:
-      - redis
     become: yes
     become_user: root
     when: ansible_distribution == 'CentOS'
@@ -82,8 +80,3 @@
       state: started
       enabled: yes
     when: supervisor_conf.stat.exists
-
-  #########################################################################
-  # Supervisor for CentOS 6 needs to be installed and configured separately
-  - include: includes/configure_supervisor_centos6.yml
-    when: ansible_distribution == 'CentOS' and ansible_lsb.major_release == '6'
