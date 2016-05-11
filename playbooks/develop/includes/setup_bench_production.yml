@@ -32,9 +32,9 @@
       args:
         chdir: '{{ bench_path }}'
 
-    - name: Transfer ownership of the folders to 'frappe' user
+    - name: Change permissions for frappe home folder
       file:
-        dest: '{{ bench_path }}'
+        dest: /home/{{ ansible_user_id }}
         owner: '{{ ansible_user_id }}'
         group: '{{ ansible_user_id }}'
         mode: 0755
