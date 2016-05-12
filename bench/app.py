@@ -62,7 +62,8 @@ def get_app(app, git_url, branch=None, bench='.', build_asset_files=True, verbos
 		restart_supervisor_processes(bench=bench)
 
 def new_app(app, bench='.'):
-	app = app.lower().replace(" ", "_")
+	# For backwards compatibility
+	app = app.lower().replace(" ", "_").replace("-", "_") 
 	logger.info('creating new app {}'.format(app))
 	apps = os.path.abspath(os.path.join(bench, 'apps'))
 	if FRAPPE_VERSION == 4:
@@ -116,6 +117,11 @@ def get_current_frappe_version(bench='.'):
 def get_current_branch(app, bench='.'):
 	repo_dir = get_repo_dir(app, bench=bench)
 	return get_cmd_output("basename $(git symbolic-ref -q HEAD)", cwd=repo_dir)
+
+def use_rq(bench_path):
+	bench_path = os.path.abspath(bench_path)
+	celery_app = os.path.join(bench_path, 'apps', 'frappe', 'frappe', 'celery_app.py')
+	return not os.path.exists(celery_app)
 
 def fetch_upstream(app, bench='.'):
 	repo_dir = get_repo_dir(app, bench=bench)
