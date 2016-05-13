@@ -135,11 +135,25 @@ def could_not_install(package):
 def is_sudo_user():
 	return os.geteuid() == 0
 
+def get_passwords():
+	# mysql root password
+	mysql_root_password = getpass.unix_getpass(prompt='Please enter mysql root password: ')
+	# admin password
+	admin_password = getpass.unix_getpass(prompt='Please enter admin password for your site: ')
+
+	return {
+		'mysql_root_password': mysql_root_password,
+		'admin_password': admin_password
+	}
+
 def get_extra_vars_json(extra_args):
 	# We need to pass setup_production as extra_vars to the playbook to execute conditionals in the
 	# playbook. Extra variables can passed as json or key=value pair. Here, we will use JSON.
 	json_path = os.path.join(os.path.abspath(os.path.expanduser('~')), 'extra_vars.json')
 	extra_vars = dict(extra_args.items())
+
+	# Get mysql root password and admin password
+	extra_vars.update(get_passwords())
 
 	# Decide for branch to be cloned depending upon whether we setting up production
 	branch = 'master' if extra_args['setup_production'] else 'develop'
@@ -177,14 +191,6 @@ def parse_commandline_args():
 
 	parser.add_argument('--site', dest='site', action='store', default='site1.local',
 		help='Specifiy name for your first ERPNext site')
-
-	# Users are required to specify the password for mysql root and the administrator password. So,
-	# both the arguments should specified as required
-	# parser.add_argument('--mariadb-root-password', dest='mysql_root_password', action='store',
-	# 	help='Specify root password for mysql', required=True)
-	#
-	# parser.add_argument('--admin-password', dest='admin_password', action='store',
-	# 	help='Specify administrator password for sites', required=True)
 
 	args = parser.parse_args()
 
