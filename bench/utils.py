@@ -10,6 +10,7 @@ import select
 import multiprocessing
 from distutils.spawn import find_executable
 import pwd, grp
+from bench import env
 
 class PatchError(Exception):
 	pass
@@ -193,11 +194,33 @@ def update_bench():
 	exec_cmd("git pull", cwd=cwd)
 
 def setup_sudoers(user):
+	if not os.path.exists('/etc/sudoers.d'):
+		os.makedirs('/etc/sudoers.d')
+
+		set_permissions = False
+		if not os.path.exists('/etc/sudoers'):
+			set_permissions = True
+
+		with open('/etc/sudoers', 'a') as f:
+			f.write('\n#includedir /etc/sudoers.d\n')
+
+		if set_permissions:
+			os.chmod('/etc/sudoers', 0440)
+
 	sudoers_file = '/etc/sudoers.d/frappe'
+
+	template = env.get_template('frappe_sudoers')
+	frappe_sudoers = template.render(**{
+		'user': user,
+		'service': find_executable('service'),
+		'systemctl': find_executable('systemctl'),
+		'supervisorctl': find_executable('supervisorctl'),
+		'nginx': find_executable('nginx'),
+	})
+
 	with open(sudoers_file, 'w') as f:
-		f.write("{user} ALL=(ALL) NOPASSWD: {supervisorctl}\n".format(
-					user=user,
-					supervisorctl=subprocess.check_output('which supervisorctl', shell=True).strip()))
+		f.write(frappe_sudoers.encode('utf-8'))
+
 	os.chmod(sudoers_file, 0440)
 
 def setup_logging(bench='.'):
