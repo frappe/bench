@@ -3,6 +3,7 @@ import os
 import sys
 import subprocess
 import getpass
+import json
 from distutils.spawn import find_executable
 
 bench_repo = '/usr/local/frappe/bench-repo'
@@ -12,12 +13,14 @@ def install_bench(args):
 	success = run_os_command({
 		'apt-get': [
 			'sudo apt-get update',
-			'sudo apt-get install -y git build-essential python-setuptools python-dev'
+			'sudo apt-get install -y git build-essential python-setuptools python-dev libssl-dev libffi-dev'
 		],
 		'yum': [
 			'sudo yum groupinstall -y "Development tools"',
-			'sudo yum install -y git python-setuptools python-devel'
+			'sudo yum install -y git python-setuptools python-devel openssl-devel libffi-devel redhat-lsb-core epel-release'
 		],
+		# epel-release is required to install redis, so installing it before the playbook-run.
+		# redhat-lsb-core is required, so that ansible can set ansible_lsb variable
 	})
 
 	if not find_executable("git"):
@@ -41,6 +44,12 @@ def install_bench(args):
 		'yum': 'sudo python get-pip.py',
 	})
 
+	# In certain cases, we might have older setuptools which results in installation failures and
+	# so, we will upgrade it.
+	run_os_command({
+		'pip': 'sudo pip install --upgrade setuptools'
+	})
+
 	success = run_os_command({
 		'pip': 'sudo pip install ansible'
 	})
@@ -54,8 +63,11 @@ def install_bench(args):
 	# clone bench repo
 	clone_bench_repo()
 
+	# args is namespace, but we would like to use it as dict in calling function, so use vars()
 	if args.develop:
-		run_playbook('develop/install.yml', sudo=True)
+		run_playbook('develop/install.yml', sudo=True, extra_args=vars(args))
+	elif args.setup_production:
+		run_playbook('develop/setup_production.yml', sudo=True, extra_args=vars(args))
 
 def install_python27():
 	version = (sys.version_info[0], sys.version_info[1])
@@ -123,10 +135,66 @@ def could_not_install(package):
 def is_sudo_user():
 	return os.geteuid() == 0
 
-def run_playbook(playbook_name, sudo=False):
-	args = ['ansible-playbook', '-c', 'local',  playbook_name]
+def get_passwords(run_travis=False):
+	if not run_travis:
+		mysql_root_password, admin_password = '', ''
+		pass_set = True
+		while pass_set:
+			# mysql root password
+			if not mysql_root_password:
+				mysql_root_password = getpass.unix_getpass(prompt='Please enter mysql root password: ')
+				conf_mysql_passwd = getpass.unix_getpass(prompt='Re-enter mysql root password: ')
+
+				if mysql_root_password != conf_mysql_passwd:
+					mysql_root_password = ''
+					continue
+
+			# admin password
+			if not admin_password:
+				admin_password = getpass.unix_getpass(prompt='Please enter Administrator password: ')
+				conf_admin_passswd = getpass.unix_getpass(prompt='Re-enter Administrator password: ')
+
+				if admin_password != conf_admin_passswd:
+					admin_password = ''
+					continue
+
+			pass_set = False
+	else:
+		mysql_root_password = admin_password = 'travis'
+
+	return {
+		'mysql_root_password': mysql_root_password,
+		'admin_password': admin_password
+	}
+
+def get_extra_vars_json(extra_args, run_travis=False):
+	# We need to pass setup_production as extra_vars to the playbook to execute conditionals in the
+	# playbook. Extra variables can passed as json or key=value pair. Here, we will use JSON.
+	json_path = os.path.join(os.path.abspath(os.path.expanduser('~')), 'extra_vars.json')
+	extra_vars = dict(extra_args.items())
+
+	# Get mysql root password and admin password
+	run_travis = extra_args.get('run_travis')
+	extra_vars.update(get_passwords(run_travis))
+
+	# Decide for branch to be cloned depending upon whether we setting up production
+	branch = 'master' if extra_args['setup_production'] else 'develop'
+	extra_vars.update(branch=branch)
+
+	with open(json_path, mode='w') as j:
+		json.dump(extra_vars, j, indent=1, sort_keys=True)
+
+	return ('@' + json_path)
+
+def run_playbook(playbook_name, sudo=False, verbose=False, extra_args=None):
+	extra_vars = get_extra_vars_json(extra_args)
+	args = ['ansible-playbook', '-c', 'local',  playbook_name, '-e', extra_vars]
+
 	if sudo:
-		args.append('-K')
+		args.extend(['--become', '--become-user=root'])
+
+	if extra_args.get('verbose'):
+		args.append('-vvvv')
 
 	success = subprocess.check_call(args, cwd=os.path.join(bench_repo, 'playbooks'))
 	return success
@@ -135,8 +203,26 @@ def parse_commandline_args():
 	import argparse
 
 	parser = argparse.ArgumentParser(description='Frappe Installer')
-	parser.add_argument('--develop', dest='develop', action='store_true', default=False,
-						help='Install developer setup')
+
+	# Arguments develop and setup-production are mutually exclusive both can't be specified together.
+	# Hence, we need to create a group for discouraging use of both options at the same time.
+	args_group = parser.add_mutually_exclusive_group()
+
+	args_group.add_argument('--develop', dest='develop', action='store_true', default=False,
+		help='Install developer setup')
+
+	args_group.add_argument('--setup-production', dest='setup_production', action='store_true',
+		default=False, help='Setup Production environment for bench')
+
+	parser.add_argument('--site', dest='site', action='store', default='site1.local',
+		help='Specifiy name for your first ERPNext site')
+
+	# Hidden arguments to the argsparse
+	parser.add_argument('--verbose', dest='verbose', action='store_true', help=argparse.SUPPRESS)
+
+	# To enable testing of script using Travis, this should skip the prompt
+	parser.add_argument('--run-travis', dest='run_travis', action='store_true', help=argparse.SUPPRESS)
+
 	args = parser.parse_args()
 
 	return args
