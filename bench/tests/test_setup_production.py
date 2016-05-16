@@ -28,6 +28,10 @@ class TestSetupProduction(test_init.TestBenchInit):
 
 		self.assert_nginx_process()
 
+		# sudoers
+		bench.utils.setup_sudoers(user)
+		self.assert_sudoers(user)
+
 	def test_setup_production_v6(self):
 		bench_name = 'test-bench-v6'
 		self.test_init(bench_name, frappe_branch='master')
@@ -66,6 +70,17 @@ class TestSetupProduction(test_init.TestBenchInit):
 	def assert_nginx_process(self):
 		out = bench.utils.get_cmd_output("sudo nginx -t 2>&1")
 		self.assertTrue("nginx: configuration file /etc/nginx/nginx.conf test is successful" in out)
+
+	def assert_sudoers(self, user):
+		sudoers_file = '/etc/sudoers.d/frappe'
+		self.assertTrue(os.path.exists(sudoers_file))
+
+		with open(sudoers_file, 'r') as f:
+			sudoers = f.read().decode('utf-8')
+
+		self.assertTrue('{user} ALL = (root) NOPASSWD: /usr/sbin/service nginx *'.format(user=user) in sudoers)
+		self.assertTrue('{user} ALL = (root) NOPASSWD: /usr/bin/supervisorctl'.format(user=user) in sudoers)
+		self.assertTrue('{user} ALL = (root) NOPASSWD: /usr/sbin/nginx'.format(user=user) in sudoers)
 
 	def assert_supervisor_config(self, bench_name, use_rq=True):
 		conf_src = os.path.join(os.path.abspath(self.benches_path), bench_name, 'config', 'supervisor.conf')
