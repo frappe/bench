@@ -135,25 +135,47 @@ def could_not_install(package):
 def is_sudo_user():
 	return os.geteuid() == 0
 
-def get_passwords():
-	# mysql root password
-	mysql_root_password = getpass.unix_getpass(prompt='Please enter mysql root password: ')
-	# admin password
-	admin_password = getpass.unix_getpass(prompt='Please enter admin password for your site: ')
+def get_passwords(run_travis=False):
+	if not run_travis:
+		mysql_root_password, admin_password = '', ''
+		pass_set = True
+		while pass_set:
+			# mysql root password
+			if not mysql_root_password:
+				mysql_root_password = getpass.unix_getpass(prompt='Please enter mysql root password: ')
+				conf_mysql_passwd = getpass.unix_getpass(prompt='Re-enter mysql root password: ')
+
+				if mysql_root_password != conf_mysql_passwd:
+					mysql_root_password = ''
+					continue
+
+			# admin password
+			if not admin_password:
+				admin_password = getpass.unix_getpass(prompt='Please enter Administrator password: ')
+				conf_admin_passswd = getpass.unix_getpass(prompt='Re-enter Administrator password: ')
+
+				if admin_password != conf_admin_passswd:
+					admin_password = ''
+					continue
+
+			pass_set = False
+	else:
+		mysql_root_password = admin_password = 'travis'
 
 	return {
 		'mysql_root_password': mysql_root_password,
 		'admin_password': admin_password
 	}
 
-def get_extra_vars_json(extra_args):
+def get_extra_vars_json(extra_args, run_travis=False):
 	# We need to pass setup_production as extra_vars to the playbook to execute conditionals in the
 	# playbook. Extra variables can passed as json or key=value pair. Here, we will use JSON.
 	json_path = os.path.join(os.path.abspath(os.path.expanduser('~')), 'extra_vars.json')
 	extra_vars = dict(extra_args.items())
 
 	# Get mysql root password and admin password
-	extra_vars.update(get_passwords())
+	run_travis = extra_args.get('run_travis')
+	extra_vars.update(get_passwords(run_travis))
 
 	# Decide for branch to be cloned depending upon whether we setting up production
 	branch = 'master' if extra_args['setup_production'] else 'develop'
@@ -164,12 +186,15 @@ def get_extra_vars_json(extra_args):
 
 	return ('@' + json_path)
 
-def run_playbook(playbook_name, sudo=False, extra_args=None):
+def run_playbook(playbook_name, sudo=False, verbose=False, extra_args=None):
 	extra_vars = get_extra_vars_json(extra_args)
 	args = ['ansible-playbook', '-c', 'local',  playbook_name, '-e', extra_vars]
 
 	if sudo:
-		args.append('-K')
+		args.extend(['--become', '--become-user=root'])
+
+	if extra_args.get('verbose'):
+		args.append('-vvvv')
 
 	success = subprocess.check_call(args, cwd=os.path.join(bench_repo, 'playbooks'))
 	return success
@@ -191,6 +216,12 @@ def parse_commandline_args():
 
 	parser.add_argument('--site', dest='site', action='store', default='site1.local',
 		help='Specifiy name for your first ERPNext site')
+
+	# Hidden arguments to the argsparse
+	parser.add_argument('--verbose', dest='verbose', action='store_true', help=argparse.SUPPRESS)
+
+	# To enable testing of script using Travis, this should skip the prompt
+	parser.add_argument('--run-travis', dest='run_travis', action='store_true', help=argparse.SUPPRESS)
 
 	args = parser.parse_args()
 

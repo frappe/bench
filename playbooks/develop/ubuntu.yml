@@ -2,7 +2,7 @@
 - hosts: localhost
   vars:
     bench_repo_path: "/usr/local/frappe/bench-repo"
-    bench_path: "/home/{{ ansible_user_id }}/frappe/frappe-bench"
+    bench_path: "/home/{{ ansible_user_id }}/benches/frappe-bench"
     mysql_config_template: "templates/simple_mariadb_config.cnf"
     mysql_conf_dir: /etc/mysql/conf.d/
     wkhtmltopdf_version: 0.12.2.1
