@@ -19,7 +19,7 @@ import click
 github_username = None
 github_password = None
 
-def release(repo, bump_type, develop, master, owner):
+def release(repo, bump_type, develop, master, owner, app):
 	if not get_config(".").get('release_bench'):
 		print 'bench not configured to release'
 		sys.exit(1)
@@ -28,12 +28,14 @@ def release(repo, bump_type, develop, master, owner):
 	github_password = getpass.getpass()
 	r = requests.get('https://api.github.com/user', auth=HTTPBasicAuth(github_username, github_password))
 	r.raise_for_status()
-	bump(repo, bump_type, develop=develop, master=master, owner=owner)
+	
+	bump(repo, bump_type, develop=develop, master=master, owner=owner, app=app)
 
-def bump(repo, bump_type, develop='develop', master='master', remote='upstream', owner='frappe'):
+def bump(repo, bump_type, develop='develop', master='master', remote='upstream', owner='frappe', app=None):
+
 	assert bump_type in ['minor', 'major', 'patch']
-	update_branches_and_check_for_changelog(repo, bump_type, develop=develop, master=master, remote=remote)
-	message = get_release_message(repo, develop_branch=develop, master_branch=master)
+	update_branches_and_check_for_changelog(repo, bump_type, develop=develop, master=master, remote=remote, app=app)
+	message = get_release_message(repo, develop_branch=develop, master_branch=master, app=app)
 	if not message:
 		print 'No commits to release'
 		return
@@ -44,24 +46,33 @@ def bump(repo, bump_type, develop='develop', master='master', remote='upstream',
 
 	click.confirm('Do you want to continue?', abort=True)
 
-	new_version = bump_repo(repo, bump_type, develop=develop, master=master, remote=remote)
-	commit_changes(repo, new_version)
-	tag_name = create_release(repo, new_version, develop_branch=develop, master_branch=master)
-	push_release(repo, develop_branch=develop, master_branch=master)
-	create_github_release(owner, repo, tag_name, message)
+	new_version = bump_repo(repo, bump_type, develop=develop, master=master, remote=remote, app=app)
+	commit_changes(repo, new_version, app=app)
+	tag_name = create_release(repo, new_version, develop_branch=develop, master_branch=master, app=app)
+	push_release(repo, develop_branch=develop, master_branch=master, app=app)
+	create_github_release(owner, repo, tag_name, message, app)
 	print 'Released {tag} for {repo}'.format(tag=tag_name, repo=repo)
 
-def update_branches_and_check_for_changelog(repo, bump_type, develop='develop', master='master', remote='upstream'):
-	update_branch(repo, master, remote=remote)
-	update_branch(repo, develop, remote=remote)
+def update_branches_and_check_for_changelog(repo, bump_type, develop='develop', master='master', remote='upstream', app=None):
+
+	update_branch(repo, master, remote=remote, app=app)
+	update_branch(repo, develop, remote=remote, app=app)
 	if develop != 'develop':
-		update_branch(repo, 'develop', remote=remote)
-	
+		update_branch(repo, 'develop', remote=remote, app=app)
+
+	if os.path.basename(repo) != app:
+		repo = app
+		repo = os.path.join('apps', repo)
+
 	git.Repo(repo).git.checkout(develop)
 	check_for_unmerged_changelog(repo)
 
-def update_branch(repo_path, branch, remote='origin'):
+def update_branch(repo_path, branch, remote='origin', app=None):
 	print "updating local branch of", repo_path, 'using', remote + '/' + branch
+
+	if os.path.basename(repo_path) != app:
+		repo_path = app
+		repo_path = os.path.join('apps', repo_path)
 
 	repo = git.Repo(repo_path)
 	g = repo.git
@@ -74,7 +85,13 @@ def check_for_unmerged_changelog(repo):
 	if os.path.exists(current) and [f for f in os.listdir(current) if f != "readme.md"]:
 		raise Exception("Unmerged change log! in " + repo)
 
-def get_release_message(repo_path, develop_branch='develop', master_branch='master'):
+def get_release_message(repo_path, develop_branch='develop', master_branch='master', app=None):
+
+	if os.path.basename(repo_path) != app:
+		repo_path = app
+		repo_path = os.path.join('apps', repo_path)
+
+
 	print 'getting release message for', repo_path, 'comparing', master_branch, '...', develop_branch
 	repo = git.Repo(repo_path)
 	g = repo.git
@@ -83,7 +100,11 @@ def get_release_message(repo_path, develop_branch='develop', master_branch='mast
 		return "* " + log.replace('\n', '\n* ')
 
 
-def bump_repo(repo, bump_type, develop='develop', master='master', remote='upstream'):
+def bump_repo(repo, bump_type, develop='develop', master='master', remote='upstream', app=None):
+	if os.path.basename(repo) != app:
+		repo = app
+		repo = os.path.join('apps', repo)
+	
 	current_version = get_current_version(repo)
 	new_version = get_bumped_version(current_version, bump_type)
 
@@ -145,7 +166,11 @@ def set_filename_version(filename, version_number, pattern):
 	with open(filename, 'w') as f:
 		f.write(contents)
 
-def commit_changes(repo_path, version):
+def commit_changes(repo_path, version, app=None):
+	if os.path.basename(repo_path) != app:
+		repo_path = app
+		repo_path = os.path.join('apps', repo_path)
+
 	print 'committing version change to', repo_path
 
 	repo = git.Repo(repo_path)
@@ -155,7 +180,12 @@ def commit_changes(repo_path, version):
 	repo.index.add([os.path.join(repo_name, 'hooks.py')])
 	repo.index.commit('bumped to version {}'.format(version))
 
-def create_release(repo_path, version, remote='origin', develop_branch='develop', master_branch='master'):
+def create_release(repo_path, version, remote='origin', develop_branch='develop', master_branch='master', app=None):
+
+	if os.path.basename(repo_path) != app:
+		repo_path = app
+		repo_path = os.path.join('apps', repo_path)
+
 	print 'creating release for version', version
 	repo = git.Repo(repo_path)
 	g = repo.git
@@ -173,7 +203,12 @@ def create_release(repo_path, version, remote='origin', develop_branch='develop'
 
 	return tag_name
 
-def push_release(repo_path, develop_branch='develop', master_branch='master'):
+def push_release(repo_path, develop_branch='develop', master_branch='master', app=None):
+
+	if os.path.basename(repo_path) != app:
+		repo_path = app
+		repo_path = os.path.join('apps', repo_path)
+
 	print 'pushing branches', master_branch, develop_branch, 'of', repo_path
 	repo = git.Repo(repo_path)
 	g = repo.git
@@ -191,6 +226,7 @@ def push_release(repo_path, develop_branch='develop', master_branch='master'):
 	print g.push('upstream', *args)
 
 def create_github_release(owner, repo, tag_name, log, gh_username=None, gh_password=None):
+
 	print 'creating release on github'
 
 	global github_username, github_password
