@@ -60,10 +60,8 @@ def update_branches_and_check_for_changelog(repo, bump_type, develop='develop', 
 	if develop != 'develop':
 		update_branch(repo, 'develop', remote=remote, app=app)
 
-	if os.path.basename(repo) != app:
-		repo = app
-		repo = os.path.join('apps', repo)
-
+	repo = os.path.join('apps', app) if os.path.basename(repo) != app else repo
+	
 	git.Repo(repo).git.checkout(develop)
 	check_for_unmerged_changelog(repo)
 
@@ -87,11 +85,8 @@ def check_for_unmerged_changelog(repo):
 
 def get_release_message(repo_path, develop_branch='develop', master_branch='master', app=None):
 
-	if os.path.basename(repo_path) != app:
-		repo_path = app
-		repo_path = os.path.join('apps', repo_path)
-
-
+	repo_path = os.path.join('apps', app) if os.path.basename(repo_path) != app else repo_path
+	
 	print 'getting release message for', repo_path, 'comparing', master_branch, '...', develop_branch
 	repo = git.Repo(repo_path)
 	g = repo.git
@@ -101,10 +96,8 @@ def get_release_message(repo_path, develop_branch='develop', master_branch='mast
 
 
 def bump_repo(repo, bump_type, develop='develop', master='master', remote='upstream', app=None):
-	if os.path.basename(repo) != app:
-		repo = app
-		repo = os.path.join('apps', repo)
-	
+	repo = os.path.join('apps', app) if os.path.basename(repo) != app else repo
+
 	current_version = get_current_version(repo)
 	new_version = get_bumped_version(current_version, bump_type)
 
@@ -167,9 +160,7 @@ def set_filename_version(filename, version_number, pattern):
 		f.write(contents)
 
 def commit_changes(repo_path, version, app=None):
-	if os.path.basename(repo_path) != app:
-		repo_path = app
-		repo_path = os.path.join('apps', repo_path)
+	repo_path = os.path.join('apps', app) if os.path.basename(repo_path) != app else repo_path
 
 	print 'committing version change to', repo_path
 
@@ -182,9 +173,7 @@ def commit_changes(repo_path, version, app=None):
 
 def create_release(repo_path, version, remote='origin', develop_branch='develop', master_branch='master', app=None):
 
-	if os.path.basename(repo_path) != app:
-		repo_path = app
-		repo_path = os.path.join('apps', repo_path)
+	repo_path = os.path.join('apps', app) if os.path.basename(repo_path) != app else repo_path
 
 	print 'creating release for version', version
 	repo = git.Repo(repo_path)
@@ -205,9 +194,7 @@ def create_release(repo_path, version, remote='origin', develop_branch='develop'
 
 def push_release(repo_path, develop_branch='develop', master_branch='master', app=None):
 
-	if os.path.basename(repo_path) != app:
-		repo_path = app
-		repo_path = os.path.join('apps', repo_path)
+	repo_path = os.path.join('apps', app) if os.path.basename(repo_path) != app else repo_path
 
 	print 'pushing branches', master_branch, develop_branch, 'of', repo_path
 	repo = git.Repo(repo_path)
