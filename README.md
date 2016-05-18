@@ -110,6 +110,8 @@ You can also run the parts of the bench selectively.
 
 `bench update --bench` will only update the bench utility (this project)
 
+`bench update --requirements` will only update dependencies (python packages) for the apps installed
+
 
 Guides
 =======
