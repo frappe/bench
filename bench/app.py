@@ -63,7 +63,7 @@ def get_app(app, git_url, branch=None, bench='.', build_asset_files=True, verbos
 
 def new_app(app, bench='.'):
 	# For backwards compatibility
-	app = app.lower().replace(" ", "_").replace("-", "_") 
+	app = app.lower().replace(" ", "_").replace("-", "_")
 	logger.info('creating new app {}'.format(app))
 	apps = os.path.abspath(os.path.join(bench, 'apps'))
 	if FRAPPE_VERSION == 4:
@@ -92,6 +92,10 @@ def pull_all_apps(bench='.'):
 		if os.path.exists(os.path.join(app_dir, '.git')):
 			logger.info('pulling {0}'.format(app))
 			exec_cmd("git pull {rebase} upstream {branch}".format(rebase=rebase, branch=get_current_branch(app, bench=bench)), cwd=app_dir)
+
+			# remove pyc files
+			exec_cmd('find . -name "*.pyc" -delete', cwd=app_dir)
+
 
 def is_version_upgrade(bench='.', branch=None):
 	fetch_upstream('frappe', bench=bench)
