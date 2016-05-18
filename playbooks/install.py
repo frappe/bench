@@ -66,7 +66,7 @@ def install_bench(args):
 	if args.develop:
 		run_playbook('develop/install.yml', sudo=True, extra_args=vars(args))
 	elif args.setup_production:
-		run_playbook('develop/setup_production.yml', sudo=True, extra_args=vars(args))
+		run_playbook('production/install.yml', sudo=True, extra_args=vars(args))
 
 def install_python27():
 	version = (sys.version_info[0], sys.version_info[1])
@@ -197,7 +197,7 @@ def run_playbook(playbook_name, sudo=False, extra_args=None):
 	if sudo:
 		args.extend(['--become', '--become-user=frappe'])
 
-	if extra_args.get('run_verbose'):
+	if extra_args.get('verbosity'):
 		args.append('-vvvv')
 
 	success = subprocess.check_call(args, cwd=os.path.join(bench_repo, 'playbooks'))
@@ -220,10 +220,9 @@ def parse_commandline_args():
 
 	parser.add_argument('--site', dest='site', action='store', default='site1.local',
 		help='Specifiy name for your first ERPNext site')
-
-	# Hidden arguments to the argsparse
-	parser.add_argument('--run-verbose', dest='run_verbose', action='store_true', default=False,
-		help=argparse.SUPPRESS)
+		
+	parser.add_argument('--verbose', dest='verbosity', action='store_true', default=False,
+		help='Run the script in verbose mode')
 
 	# To enable testing of script using Travis, this should skip the prompt
 	parser.add_argument('--run-travis', dest='run_travis', action='store_true', default=False,
