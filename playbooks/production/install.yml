@@ -5,10 +5,10 @@
   - include: ../develop/install.yml
 
   # Install the production environment
-  - include: ../develop/includes/setup_prod_env.yml
+  - include: includes/setup_prod_env.yml
 
   # Setup Bench for production environment
-  - include: ../develop/includes/setup_bench_production.yml
+  - include: includes/setup_bench_production.yml
 
   # Setup SELinux Policy, Optional can be done later
   # - include: includes/setup_selinux_policy.yml
