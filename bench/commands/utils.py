@@ -76,6 +76,11 @@ def download_translations():
 	from bench.utils import download_translations_p
 	download_translations_p()
 
+@click.command('renew-lets-encrypt')
+def renew_lets_encrypt():
+	"Renew Let's Encrypt certificate"
+	from bench.config.lets_encrypt import renew_certs
+	renew_certs()
 
 @click.command()
 def shell(bench='.'):

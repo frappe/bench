@@ -47,9 +47,10 @@ def check_uid():
 		sys.exit(1)
 
 def cmd_requires_root():
-	if len(sys.argv) > 2 and sys.argv[2] in ('production', 'sudoers'):
+	if len(sys.argv) > 2 and sys.argv[2] in ('production', 'sudoers', 'lets-encrypt'):
 	    return True
-	if len(sys.argv) > 2 and sys.argv[1] in ('patch',):
+	    #Changed > to >=, unsure if will cause the apolcaypse
+	if len(sys.argv) >= 2 and sys.argv[1] in ('patch', 'renew-lets-encrypt'):
 	    return True
 
 def change_dir():
