@@ -12,8 +12,8 @@ Installation
 
 <table>
   <tr>
-    <th>Production Setup</th>
-    <th>Development Setup</th>
+    <th width=50%>Production Setup</th>
+    <th width=50%>Development Setup</th>
   </tr>
   <tr>
     <td>Installs with master branch</td>
