@@ -10,17 +10,32 @@ If you have questions, please ask them on our [forum](https://discuss.erpnext.co
 Installation
 ============
 
-Production vs Development
---------------------
-
-| Production                                                               | Development                                                       |
-|--------------------------------------------------------------------------|-------------------------------------------------------------------|
-| The Production setup uses Nginx and Supervisor                           | The development setup uses Socketio.                              |
-| This setup isn't meant for instant updates in code.                      | Any code changes will be reflected instantly.                     |
-| Background services handle all the work, and they start with the system. | You need to explicitly start your server by running `bench start` |
-| Uses Celery for job queuing                                              | Uses RQ for queuing                                               |
-| Installs with master branch                                              | Installs with develop branch                                      |
-
+<table>
+  <tr>
+    <th>Production Setup</th>
+    <th>Development Setup</th>
+  </tr>
+  <tr>
+    <td>Installs with master branch</td>
+    <td>Installs with develop branch</td>
+  </tr>
+  <tr>
+    <td>The Production setup uses Nginx, and uses Supervisor to manage processes</td>
+    <td>The development setup uses Honcho to manage processes (bench start)</td>
+  </tr>
+  <tr>
+    <td>This setup isn't meant for instant updates in code.</td>
+    <td>Any code changes will be reflected instantly.</td>
+  </tr>
+  <tr>
+    <td>Background services handle all the work, and they start with the system.</td>
+    <td>You need to explicitly start your server</td>
+  </tr>
+  <tr>
+    <td>Uses Celery for job queuing (Frappe 6)</td>
+    <td>Uses RQ for job queuing (Frappe 7)</td>
+  </tr>
+</table>
 
 Easy Setup 
 ---------------------
@@ -34,20 +49,29 @@ Open your Terminal and enter:
 
 
 ####For Production:
+
 ```
+Mac OSX:
+curl "https://raw.githubusercontent.com/frappe/bench/master/install_scripts/setup_frappe.sh" -o "setup_frappe.sh"
+
+Linux: 
 wget https://raw.githubusercontent.com/frappe/bench/master/install_scripts/setup_frappe.sh
+
 sudo bash setup_frappe.sh --setup-production
 ```
-This will install Frappe and ERPNext with Supervisor, Nginx and Celery. Supervisor will keep all services working in the background and make sure they all run.
 
 ####For Development:
 > We recommend using the [Beta Development Setup](#beta-development-setup) if it supports your OS
 
 ```
+Mac OSX:
+curl "https://raw.githubusercontent.com/frappe/bench/master/install_scripts/setup_frappe.sh" -o "setup_frappe.sh"
+
+Linux: 
 wget https://raw.githubusercontent.com/frappe/bench/master/install_scripts/setup_frappe.sh
 sudo bash setup_frappe.sh --bench-branch develop
 ```
-This will install with Socketio and Redis Queue. You have to explicitly start services by running `bench start`.
+You have to explicitly start services by running `bench start`.
 
 ####Script Options:
 ```
@@ -75,7 +99,7 @@ curl "https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py
 
 python install.py --develop
 ```
-This will install with Socketio and Redis Queue. You have to explicitly start services by running `bench start`. This script requires Python2.7+ installed on your machine. You need to run this with a user that is **not** `root`, but can `sudo`. If you don't have such a user, you can search the web for *How to add a new user in { your OS }* and *How to add an existing user to sudoers in { your OS }*.
+You have to explicitly start services by running `bench start`. This script requires Python2.7+ installed on your machine. You need to run this with a user that is **not** `root`, but can `sudo`. If you don't have such a user, you can search the web for *How to add a new user in { your OS }* and *How to add an existing user to sudoers in { your OS }*.
 
 On Mac OS X, you will have to create a group with the same name as *{ your User }*. On creating this group, you have to assign *{ your User }* to it. You can do this by going to "System preferences" -> "Users & Groups" -> "+" (as if you were adding new account) -> Under "New account" select "Group" -> Type in group name -> "Create group"
 
