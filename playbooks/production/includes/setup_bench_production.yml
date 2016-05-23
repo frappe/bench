@@ -1,7 +1,7 @@
 ---
   - hosts: localhost
     vars:
-      bench_path: "/home/{{ ansible_user_id }}/benches/frappe-bench"
+      bench_path: "/home/{{ ansible_user_id }}/frappe/frappe-bench"
 
     tasks:
 

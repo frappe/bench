@@ -70,3 +70,7 @@
 
   # setup frappe-bench
   - include: includes/setup_bench.yml
+
+  # setup development environment
+  - include: includes/setup_dev_env.yml
+    when: not setup_production
