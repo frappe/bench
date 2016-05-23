@@ -216,6 +216,7 @@ def setup_sudoers(user):
 		'systemctl': find_executable('systemctl'),
 		'supervisorctl': find_executable('supervisorctl'),
 		'nginx': find_executable('nginx'),
+		'bench': find_executable('bench')
 	})
 
 	with open(sudoers_file, 'w') as f:
