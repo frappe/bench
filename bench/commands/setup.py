@@ -15,10 +15,11 @@ def setup_sudoers(user):
 
 
 @click.command('nginx')
-def setup_nginx():
+@click.option('--force', help='Force regeneration of nginx config file', default=False, is_flag=True)
+def setup_nginx(force=None):
 	"generate config for nginx"
 	from bench.config.nginx import make_nginx_conf
-	make_nginx_conf(bench_path=".")
+	make_nginx_conf(bench_path=".", force=force)
 
 
 @click.command('supervisor')
