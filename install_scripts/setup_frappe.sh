@@ -209,7 +209,7 @@ install_packages() {
 		run_cmd sudo apt-get install -y python-dev python-setuptools build-essential python-mysqldb git \
 			ntp vim screen htop mariadb-server mariadb-common libmariadbclient-dev \
 			libxslt1.1 libxslt1-dev redis-server libssl-dev libcrypto++-dev postfix nginx \
-			supervisor python-pip fontconfig libxrender1 libxext6 xfonts-75dpi xfonts-base nodejs
+			supervisor python-pip fontconfig libxrender1 libxext6 xfonts-75dpi xfonts-base nodejs npm
 
 		if [ $OS_VER == "precise" ]; then
 			run_cmd sudo apt-get install -y libtiff4-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.5-dev tk8.5-dev python-tk
