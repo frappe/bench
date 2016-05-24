@@ -2,34 +2,39 @@
   - name: Install MySQLdb in global env
     pip: name=mysql-python version=1.2.5
     become: yes
-    become_method: sudo
+    become_user: root
 
-  - name: Set root Password
+  - name: Set root Password for Ubuntu
     mysql_user:
-      name=root
-      host={{ item }}
-      password={{ mysql_root_password }}
-      state=present
-      login_user=root
+      name: root
+      host: '{{ item }}'
+      password: '{{ mysql_root_password }}'
+      state: present
+      login_user: root
     with_items:
       - localhost
-    when: mysql_root_password is defined
     become: yes
-    become_method: sudo
-
+    become_user: root
     # when you have already defined mysql root password
     ignore_errors: yes
+    when: mysql_root_password is defined and ansible_distribution == 'Ubuntu'
 
   - name: Add configuration
     template: src={{ mysql_config_template }} dest={{ mysql_conf_dir }}/frappe.cnf owner=root mode=0644
     become: yes
-    become_method: sudo
+    become_user: root
 
   - name: restart mysql linux
     service: name=mysql state=restarted
     become: yes
-    become_method: sudo
+    become_user: root
     when: ansible_os_family == 'RedHat' or ansible_os_family == 'Debian'
+
+  - name: Set root password on CentOS
+    command: mysqladmin -u root password '{{ mysql_root_password }}'
+    become: yes
+    become_user: root
+    when: mysql_root_password is defined and ansible_distribution == 'CentOS'
 
   - name: add launchagents folder mac
     file: path=~/Library/LaunchAgents state=directory

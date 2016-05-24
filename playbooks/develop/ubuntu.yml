@@ -45,11 +45,11 @@
       - libtiff4-dev
       - tcl8.5-dev
       - tk8.5-dev
-    when: ansible_distribution_version < 14.04
+    when: ansible_distribution_version | version_compare('14.04', 'lt')
     become: yes
     become_user: root
 
-  - name: install pillow prerequisites for Ubuntu > 14.04
+  - name: install pillow prerequisites for Ubuntu >= 14.04
     apt: pkg={{ item }} state=present
     with_items:
       - libtiff5-dev
@@ -70,3 +70,7 @@
 
   # setup frappe-bench
   - include: includes/setup_bench.yml
+
+  # setup development environment
+  - include: includes/setup_dev_env.yml
+    when: not setup_production

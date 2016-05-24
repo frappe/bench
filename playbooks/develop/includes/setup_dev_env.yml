@@ -1,0 +1,22 @@
+---
+ # Setup Socketio
+ - name: setup procfile
+   command: bench setup socketio
+   args:
+     creates: "{{ bench_path }}/node_modules"
+     chdir: "{{ bench_path }}"
+
+ # Setup Procfile
+ - name: setup procfile
+   command: bench setup procfile
+   args:
+     creates: "{{ bench_path }}/Procfile"
+     chdir: "{{ bench_path }}"
+
+
+ # Setup Redis env for RQ
+ - name: setup redis
+   command: bench setup redis
+   args:
+     creates: "{{ bench_path }}/config/redis_socketio.conf"
+     chdir: "{{ bench_path }}"
