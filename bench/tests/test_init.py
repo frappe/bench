@@ -20,6 +20,8 @@ class TestBenchInit(unittest.TestCase):
 			if os.path.exists(bench_path):
 				shutil.rmtree(bench_path, ignore_errors=True)
 
+
+
 	def test_init(self, bench_name="test-bench", **kwargs):
 		self.init_bench(bench_name, **kwargs)
 
@@ -85,16 +87,25 @@ class TestBenchInit(unittest.TestCase):
 			self.assertTrue(key in site_config)
 			self.assertTrue(site_config[key])
 
-	def test_install_app(self):
+	def test_get_app(self):
 		site_name = "test-site-2.dev"
-
 		self.init_bench('test-bench')
+		
 		self.new_site(site_name)
+		bench_path = os.path.join(self.benches_path, "test-bench")
+		
+		bench.app.get_app("https://github.com/frappe/frappe-client", bench=bench_path)
+		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", "frappeclient")))
 
+	def test_install_app(self):
+		site_name = "test-site-3.dev"
+		self.init_bench('test-bench')
+		
+		self.new_site(site_name)
 		bench_path = os.path.join(self.benches_path, "test-bench")
 
 		# get app
-		bench.app.get_app("erpnext", "https://github.com/frappe/erpnext", "develop", bench=bench_path)
+		bench.app.get_app("https://github.com/frappe/erpnext", "develop", bench=bench_path)
 
 		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", "erpnext")))
 

@@ -28,7 +28,7 @@ def get_frappe(bench='.'):
 	frappe = get_env_cmd('frappe', bench=bench)
 	if not os.path.exists(frappe):
 		print 'frappe app is not installed. Run the following command to install frappe'
-		print 'bench get-app frappe https://github.com/frappe/frappe.git'
+		print 'bench get-app https://github.com/frappe/frappe.git'
 	return frappe
 
 def get_env_cmd(cmd, bench='.'):
@@ -60,7 +60,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	if not frappe_path:
 		frappe_path = 'https://github.com/frappe/frappe.git'
-	get_app('frappe', frappe_path, branch=frappe_branch, bench=path, build_asset_files=False, verbose=verbose)
+	get_app(frappe_path, branch=frappe_branch, bench=path, build_asset_files=False, verbose=verbose)
 
 	if apps_path:
 		install_apps_from_path(apps_path, bench=path)
@@ -216,6 +216,7 @@ def setup_sudoers(user):
 		'systemctl': find_executable('systemctl'),
 		'supervisorctl': find_executable('supervisorctl'),
 		'nginx': find_executable('nginx'),
+		'bench': find_executable('bench')
 	})
 
 	with open(sudoers_file, 'w') as f:

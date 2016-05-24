@@ -42,19 +42,29 @@ def write_appstxt(apps, bench='.'):
 	with open(os.path.join(bench, 'sites', 'apps.txt'), 'w') as f:
 		return f.write('\n'.join(apps))
 
-def get_app(app, git_url, branch=None, bench='.', build_asset_files=True, verbose=False):
-	logger.info('getting app {}'.format(app))
+def get_app(git_url, branch=None, bench='.', build_asset_files=True, verbose=False):
+	#Gets repo name from URL
+	repo_name = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
+	logger.info('getting app {}'.format(repo_name))
 	shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
 	branch = '--branch {branch}'.format(branch=branch) if branch else ''
 
-	exec_cmd("git clone {git_url} {branch} {shallow_clone} --origin upstream {app}".format(
+	exec_cmd("git clone {git_url} {branch} {shallow_clone} --origin upstream".format(
 				git_url=git_url,
-				app=app,
 				shallow_clone=shallow_clone,
 				branch=branch),
 			cwd=os.path.join(bench, 'apps'))
-	print 'installing', app
-	install_app(app, bench=bench, verbose=verbose)
+
+	#Retrieves app name from setup.py
+	app_path = os.path.join(bench, 'apps', repo_name, 'setup.py')
+	with open(app_path, 'rb') as f:
+		app_name = re.search(r'name\s*=\s*[\'"](.*)[\'"]', f.read().decode('utf-8')).group(1)
+		if repo_name != app_name:
+			apps_path = os.path.join(os.path.abspath(bench), 'apps')
+			os.rename(os.path.join(apps_path, repo_name), os.path.join(apps_path, app_name))	
+
+	print 'installing', app_name
+	install_app(app=app_name, bench=bench, verbose=verbose)
 	if build_asset_files:
 		build_assets(bench=bench)
 	conf = get_config(bench=bench)
@@ -63,7 +73,7 @@ def get_app(app, git_url, branch=None, bench='.', build_asset_files=True, verbos
 
 def new_app(app, bench='.'):
 	# For backwards compatibility
-	app = app.lower().replace(" ", "_").replace("-", "_") 
+	app = app.lower().replace(" ", "_").replace("-", "_")
 	logger.info('creating new app {}'.format(app))
 	apps = os.path.abspath(os.path.join(bench, 'apps'))
 	if FRAPPE_VERSION == 4:
@@ -92,6 +102,10 @@ def pull_all_apps(bench='.'):
 		if os.path.exists(os.path.join(app_dir, '.git')):
 			logger.info('pulling {0}'.format(app))
 			exec_cmd("git pull {rebase} upstream {branch}".format(rebase=rebase, branch=get_current_branch(app, bench=bench)), cwd=app_dir)
+
+			# remove pyc files
+			exec_cmd('find . -name "*.pyc" -delete', cwd=app_dir)
+
 
 def is_version_upgrade(bench='.', branch=None):
 	fetch_upstream('frappe', bench=bench)
@@ -207,7 +221,7 @@ def get_major_version(version):
 def install_apps_from_path(path, bench='.'):
 	apps = get_apps_json(path)
 	for app in apps:
-		get_app(app['name'], app['url'], branch=app.get('branch'), bench=bench, build_asset_files=False)
+		get_app(app['url'], branch=app.get('branch'), bench=bench, build_asset_files=False)
 
 def get_apps_json(path):
 	if path.startswith('http'):
