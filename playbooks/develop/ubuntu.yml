@@ -1,8 +1,8 @@
 ---
 - hosts: localhost
   vars:
-    bench_repo_path: "/usr/local/frappe/bench-repo"
-    bench_path: "/home/{{ ansible_user_id }}/frappe/frappe-bench"
+    bench_repo_path: "/home/{{ ansible_user_id }}/.bench"
+    bench_path: "/home/{{ ansible_user_id }}/frappe-bench"
     mysql_config_template: "templates/simple_mariadb_config.cnf"
     mysql_conf_dir: /etc/mysql/conf.d/
     wkhtmltopdf_version: 0.12.2.1
@@ -73,4 +73,4 @@
 
   # setup development environment
   - include: includes/setup_dev_env.yml
-    when: not setup_production
+    when: not production
