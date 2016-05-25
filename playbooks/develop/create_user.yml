@@ -1,0 +1,22 @@
+---
+  - hosts: localhost
+    tasks:
+    - name: Create user
+      user:
+        name: '{{ frappe_user }}'
+        generate_ssh_key: yes
+
+    - name: Set home folder perms
+      file:
+        path: '/home/{{ frappe_user }}'
+        mode: 'o+rx'
+      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'CentOS'
+
+    - name: Set home folder perms
+      file:
+        path: '/Users/{{ frappe_user }}'
+        mode: 'o+rx'
+      when: ansible_distribution == 'MacOSX'
+
+    - name: Set /tmp/.bench folder perms
+      command: 'chown -R {{ frappe_user }}:{{ frappe_user }} /tmp/.bench'

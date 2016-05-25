@@ -10,9 +10,11 @@
       host: '{{ item }}'
       password: '{{ mysql_root_password }}'
       state: present
-      login_user: root
     with_items:
       - localhost
+      - 127.0.0.1
+      - ::1
+
     become: yes
     become_user: root
     # when you have already defined mysql root password
@@ -30,11 +32,11 @@
     become_user: root
     when: ansible_os_family == 'RedHat' or ansible_os_family == 'Debian'
 
-  - name: Set root password on CentOS
-    command: mysqladmin -u root password '{{ mysql_root_password }}'
-    become: yes
-    become_user: root
-    when: mysql_root_password is defined and ansible_distribution == 'CentOS'
+  # - name: Set root password on CentOS
+  #   command: mysqladmin -u root password '{{ mysql_root_password }}'
+  #   become: yes
+  #   become_user: root
+  #   when: mysql_root_password is defined and ansible_distribution == 'CentOS'
 
   - name: add launchagents folder mac
     file: path=~/Library/LaunchAgents state=directory

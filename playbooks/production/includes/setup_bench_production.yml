@@ -1,7 +1,7 @@
 ---
   - hosts: localhost
     vars:
-      bench_path: "/home/{{ ansible_user_id }}/frappe/frappe-bench"
+      bench_path: "/home/{{ ansible_user_id }}/frappe-bench"
 
     tasks:
 
@@ -34,11 +34,12 @@
 
     - name: Change permissions for frappe home folder
       file:
-        dest: /home/{{ ansible_user_id }}
+        dest: '{{ ansible_env.HOME }}'
         owner: '{{ ansible_user_id }}'
         group: '{{ ansible_user_id }}'
         mode: 0755
         recurse: yes
+        state: directory
 
     - name: Setup production
       become: yes

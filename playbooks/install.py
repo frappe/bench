@@ -1,12 +1,8 @@
 # wget setup_frappe.py | python
-import os
-import sys
-import subprocess
-import getpass
-import json, multiprocessing
+import os, sys, subprocess, getpass, json, multiprocessing, shutil
 from distutils.spawn import find_executable
 
-bench_repo = '/usr/local/frappe/bench-repo'
+tmp_bench_repo = '/tmp/.bench'
 
 def install_bench(args):
 	# pre-requisites for bench repo cloning
@@ -17,7 +13,7 @@ def install_bench(args):
 		],
 		'yum': [
 			'sudo yum groupinstall -y "Development tools"',
-			'sudo yum install -y git python-setuptools python-devel openssl-devel libffi-devel'
+			'sudo yum install -y epel-release redhat-lsb-core git python-setuptools python-devel openssl-devel libffi-devel'
 		],
 		# epel-release is required to install redis, so installing it before the playbook-run.
 		# redhat-lsb-core is required, so that ansible can set ansible_lsb variable
@@ -56,17 +52,26 @@ def install_bench(args):
 	if not success:
 		could_not_install('Ansible')
 
-	if is_sudo_user():
-		raise Exception('Please run this script as a non-root user with sudo privileges, but without using sudo')
-
 	# clone bench repo
-	clone_bench_repo()
+	clone_bench_repo(args)
+
+	if is_sudo_user() and not args.user and not args.production:
+		raise Exception('Please run this script as a non-root user with sudo privileges, but without using sudo or pass --user=USER')
+
+	# create user if not exists
+	run_playbook('develop/create_user.yml', user=args.user, extra_args=vars(args))
 
 	# args is namespace, but we would like to use it as dict in calling function, so use vars()
 	if args.develop:
-		run_playbook('develop/install.yml', sudo=True, extra_args=vars(args))
-	elif args.setup_production:
-		run_playbook('production/install.yml', sudo=True, extra_args=vars(args))
+		run_playbook('develop/install.yml', sudo=True, user=args.user, extra_args=vars(args))
+
+	elif args.production:
+		if not args.user:
+			args.user = 'frappe'
+
+		run_playbook('production/install.yml', sudo=True, user=args.user, extra_args=vars(args))
+
+	shutil.rmtree(tmp_bench_repo)
 
 def install_python27():
 	version = (sys.version_info[0], sys.version_info[1])
@@ -89,25 +94,16 @@ def install_python27():
 	# replace current python with python2.7
 	os.execvp('python2.7', ([] if is_sudo_user() else ['sudo']) + ['python2.7', __file__] + sys.argv[1:])
 
-def clone_bench_repo():
+def clone_bench_repo(args):
 	'''Clones the bench repository in the user folder'''
-
-	if os.path.exists(bench_repo):
+	if os.path.exists(tmp_bench_repo):
 		return 0
 
-	run_os_command({
-		'brew': 'mkdir -p /usr/local/frappe',
-		'apt-get': 'sudo mkdir -p /usr/local/frappe',
-		'yum': 'sudo mkdir -p /usr/local/frappe',
-	})
-
-	# change user
-	run_os_command({
-		'ls': 'sudo chown -R {user}:{user} /usr/local/frappe'.format(user=getpass.getuser()),
-	})
+	branch = args.bench_branch or 'develop'
 
 	success = run_os_command(
-		{'git': 'git clone https://github.com/frappe/bench {bench_repo} --depth 1 --branch develop'.format(bench_repo=bench_repo)}
+		{'git': 'git clone https://github.com/frappe/bench {bench_repo} --depth 1 --branch {branch}'.format(
+			bench_repo=tmp_bench_repo, branch=branch)}
 	)
 
 	return success
@@ -167,7 +163,7 @@ def get_passwords(run_travis=False):
 	}
 
 def get_extra_vars_json(extra_args, run_travis=False):
-	# We need to pass setup_production as extra_vars to the playbook to execute conditionals in the
+	# We need to pass production as extra_vars to the playbook to execute conditionals in the
 	# playbook. Extra variables can passed as json or key=value pair. Here, we will use JSON.
 	json_path = os.path.join(os.path.abspath(os.path.expanduser('~')), 'extra_vars.json')
 	extra_vars = dict(extra_args.items())
@@ -177,7 +173,7 @@ def get_extra_vars_json(extra_args, run_travis=False):
 	extra_vars.update(get_passwords(run_travis))
 
 	# Decide for branch to be cloned depending upon whether we setting up production
-	branch = 'master' if extra_args.get('setup_production') else 'develop'
+	branch = 'master' if extra_args.get('production') else 'develop'
 	extra_vars.update(branch=branch)
 
 	# Get max worker_connections in nginx.
@@ -190,17 +186,23 @@ def get_extra_vars_json(extra_args, run_travis=False):
 
 	return ('@' + json_path)
 
-def run_playbook(playbook_name, sudo=False, extra_args=None):
+def run_playbook(playbook_name, sudo=False, user=None, extra_args=None):
+	user = user or getpass.getuser()
+	if user == 'root':
+		raise Exception('--user cannot be root')
+
+	extra_args['frappe_user'] = user
 	extra_vars = get_extra_vars_json(extra_args)
+
 	args = ['ansible-playbook', '-c', 'local',  playbook_name, '-e', extra_vars]
 
 	if sudo:
-		args.extend(['--become', '--become-user=frappe'])
+		args.extend(['--become', '--become-user={0}'.format(user)])
 
 	if extra_args.get('verbosity'):
 		args.append('-vvvv')
 
-	success = subprocess.check_call(args, cwd=os.path.join(bench_repo, 'playbooks'))
+	success = subprocess.check_call(args, cwd=os.path.join(tmp_bench_repo, 'playbooks'))
 	return success
 
 def parse_commandline_args():
@@ -208,14 +210,14 @@ def parse_commandline_args():
 
 	parser = argparse.ArgumentParser(description='Frappe Installer')
 
-	# Arguments develop and setup-production are mutually exclusive both can't be specified together.
+	# Arguments develop and production are mutually exclusive both can't be specified together.
 	# Hence, we need to create a group for discouraging use of both options at the same time.
 	args_group = parser.add_mutually_exclusive_group()
 
 	args_group.add_argument('--develop', dest='develop', action='store_true', default=False,
 		help='Install developer setup')
 
-	args_group.add_argument('--setup-production', dest='setup_production', action='store_true',
+	args_group.add_argument('--production', dest='production', action='store_true',
 		default=False, help='Setup Production environment for bench')
 
 	parser.add_argument('--site', dest='site', action='store', default='site1.local',
@@ -223,6 +225,10 @@ def parse_commandline_args():
 
 	parser.add_argument('--verbose', dest='verbosity', action='store_true', default=False,
 		help='Run the script in verbose mode')
+
+	parser.add_argument('--user', dest='user', help='Install frappe-bench for this user')
+
+	parser.add_argument('--bench-branch', dest='bench_branch', help='Clone a particular branch of bench repository')
 
 	# To enable testing of script using Travis, this should skip the prompt
 	parser.add_argument('--run-travis', dest='run_travis', action='store_true', default=False,
