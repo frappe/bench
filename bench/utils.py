@@ -304,7 +304,7 @@ def restart_supervisor_processes(bench='.'):
 		supervisor_status = subprocess.check_output(['sudo', 'supervisorctl', 'status'], cwd=bench)
 
 		if '{bench_name}-workers:'.format(bench_name=bench_name) in supervisor_status:
-			group = '{bench_name}-web: {bench_name}-workers:'.format(bench_name=bench_name)
+			group = '{bench_name}-workers: {bench_name}-web:'.format(bench_name=bench_name)
 
 		# backward compatibility
 		elif '{bench_name}-processes:'.format(bench_name=bench_name) in supervisor_status:
