@@ -23,10 +23,11 @@ def setup_nginx(force=None):
 
 
 @click.command('supervisor')
-def setup_supervisor():
+@click.option('--force', help='Force regeneration of supervisor config', is_flag=True, default=False)
+def setup_supervisor(force=None):
 	"generate config for supervisor"
 	from bench.config.supervisor import generate_supervisor_config
-	generate_supervisor_config(bench_path=".")
+	generate_supervisor_config(bench_path=".", force=force)
 
 
 @click.command('redis')
