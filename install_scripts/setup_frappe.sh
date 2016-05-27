@@ -204,11 +204,7 @@ install_packages() {
 	elif [ $OS == "debian" ] || [ $OS == "Ubuntu" ]; then
 		export DEBIAN_FRONTEND=noninteractive
 		setup_debconf
-
-		if [ $OS_VER == "8" ]; then
-			run_cmd sudo apt-get install -y curl
-
-		run_cmd bash -c "curl -sL https://deb.nodesource.com/setup_0.12 | sudo bash -"
+		run_cmd bash -c "wget -qO- https://deb.nodesource.com/setup_0.12 | bash -"
 		run_cmd sudo apt-get update
 		run_cmd sudo apt-get install -y python-dev python-setuptools build-essential python-mysqldb git \
 			ntp vim screen htop mariadb-server mariadb-common libmariadbclient-dev \
