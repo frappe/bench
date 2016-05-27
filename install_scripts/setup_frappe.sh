@@ -204,6 +204,10 @@ install_packages() {
 	elif [ $OS == "debian" ] || [ $OS == "Ubuntu" ]; then
 		export DEBIAN_FRONTEND=noninteractive
 		setup_debconf
+
+		if [ $OS_VER == "8" ]; then
+			run_cmd sudo apt-get install -y curl
+
 		run_cmd bash -c "curl -sL https://deb.nodesource.com/setup_0.12 | sudo bash -"
 		run_cmd sudo apt-get update
 		run_cmd sudo apt-get install -y python-dev python-setuptools build-essential python-mysqldb git \
@@ -216,7 +220,7 @@ install_packages() {
 				liblcms2-dev libwebp-dev tcl8.5-dev tk8.5-dev python-tk
 		elif [ $OS_VER == "8" ]; then
 			run_cmd sudo apt-get install -y libtiff5-dev libjpeg62-turbo-dev zlib1g-dev libfreetype6-dev \
-				liblcms2-dev libwebp-dev tcl8.5-dev tk8.5-dev python-tk npm
+				liblcms2-dev libwebp-dev tcl8.5-dev tk8.5-dev python-tk
 		else
 			run_cmd sudo apt-get install -y libtiff5-dev libjpeg8-dev zlib1g-dev libfreetype6-dev \
 				liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python-tk
