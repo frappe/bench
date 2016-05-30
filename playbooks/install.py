@@ -41,9 +41,14 @@ def install_bench(args):
 	})
 
 	# In some cases setup_tools are not updated, We will force update it.
-	run_os_command({
-		'pip': 'sudo pip install --upgrade setuptools'
+	success = run_os_command({
+		'python': 'wget https://bootstrap.pypa.io/ez_setup.py'
 	})
+
+	if success:
+		run_os_command({
+			'python': 'sudo python ez_setup.py --user python'
+		})
 
 	# Restricting ansible version due to following bug in ansible 2.1
 	# https://github.com/ansible/ansible-modules-core/issues/3752
@@ -65,9 +70,9 @@ def install_bench(args):
 	if args.production and not args.user:
 		args.user = 'frappe'
 
-	extra_vars = get_extra_vars(vars(args))
-
 	# create user if not exists
+	extra_vars = vars(args)
+
 	run_playbook('develop/create_user.yml', extra_vars=extra_vars)
 
 	if args.develop:
@@ -105,7 +110,7 @@ def clone_bench_repo(args):
 		return 0
 
 	branch = args.bench_branch or 'develop'
-	repo_url = args.bench_repo_url or 'https://github.com/frappe/bench'
+	repo_url = args.repo_url or 'https://github.com/frappe/bench'
 
 	success = run_os_command(
 		{'git': 'git clone {repo_url} {bench_repo} --depth 1 --branch {branch}'.format(
@@ -168,45 +173,42 @@ def get_passwords(run_travis=False):
 		'admin_password': admin_password
 	}
 
-def get_vars_json_path(extra_vars):
-	json_path = os.path.join(os.path.abspath(os.path.expanduser('~')), 'extra_vars.json')
+def get_extra_vars_json(extra_args, run_travis=False):
+	# We need to pass production as extra_vars to the playbook to execute conditionals in the
+	# playbook. Extra variables can passed as json or key=value pair. Here, we will use JSON.
+	json_path = os.path.join('/tmp', 'extra_vars.json')
+	extra_vars = dict(extra_args.items())
+
+	if extra_args.get('production'):
+		run_travis = extra_args.get('run_travis')
+		extra_vars.update(get_passwords(run_travis))
+		extra_vars.update(max_worker_connections=multiprocessing.cpu_count() * 1024)
+
+	branch = 'master' if extra_args.get('setup_production') else 'develop'
+	extra_vars.update(branch=branch)
+
+	user = args.user or getpass.getuser()
+	if user == 'root':
+		raise Exception('--user cannot be root')
+
+	extra_vars['frappe_user'] = user
 
 	with open(json_path, mode='w') as j:
 		json.dump(extra_vars, j, indent=1, sort_keys=True)
 
 	return ('@' + json_path)
 
-def get_extra_vars(extra_args):
-	extra_vars = dict(extra_args.items())
-
-	run_travis = extra_args.get('run_travis')
-	extra_vars.update(get_passwords(run_travis))
-
-	branch = 'master' if extra_args.get('setup_production') else 'develop'
-	extra_vars.update(branch=branch)
-
- 	extra_vars.update(max_worker_connections=multiprocessing.cpu_count() * 1024)
-
-	user = args.user or getpass.getuser()
-
-	if user == 'root':
-		raise Exception('--user cannot be root')
-
-	extra_vars['frappe_user'] = user
-
-	return extra_vars
-
 def run_playbook(playbook_name, sudo=False, extra_vars=None):
 	args = ['ansible-playbook', '-c', 'local',  playbook_name]
 
 	if extra_vars:
-		args.extend(['-e', get_vars_json_path(extra_vars=extra_vars)])
+		args.extend(['-e', get_extra_vars_json(extra_vars)])
 
 		if extra_vars.get('verbosity'):
 			args.append('-vvvv')
 
 	if sudo:
-		user = extra_vars.get('user')
+		user = extra_vars.get('user') or getpass.getuser()
 		args.extend(['--become', '--become-user={0}'.format(user)])
 
 	success = subprocess.check_call(args, cwd=os.path.join(tmp_bench_repo, 'playbooks'))
@@ -237,7 +239,7 @@ def parse_commandline_args():
 
 	parser.add_argument('--bench-branch', dest='bench_branch', help='Clone a particular branch of bench repository')
 
-	parser.add_argument('--bench-repo-url', dest='bench_repo_url', help='Clones bench repository from the given url')
+	parser.add_argument('--repo-url', dest='repo_url', help='Clone bench from the given url')
 
 	# To enable testing of script using Travis, this should skip the prompt
 	parser.add_argument('--run-travis', dest='run_travis', action='store_true', default=False,
