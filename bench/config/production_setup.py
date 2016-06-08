@@ -27,14 +27,14 @@ def setup_production(user, bench='.'):
 	if os.environ.get('NO_SERVICE_RESTART'):
 		return
 
-	restart_service('nginx')
+	service('nginx', 'restart')
 
 
-def restart_service(service):
+def service(service, option):
 	if os.path.basename(get_program(['systemctl']) or '') == 'systemctl' and is_running_systemd():
-		exec_cmd("{service_manager} restart {service}".format(service_manager='systemctl', service=service))
+		exec_cmd("{service_manager} {option} {service}".format(service_manager='systemctl', option=option, service=service))
 	elif os.path.basename(get_program(['service']) or '') == 'service':
-		exec_cmd("{service_manager} {service} restart ".format(service_manager='service', service=service))
+		exec_cmd("{service_manager} {service} {option} ".format(service_manager='service', service=service, option=option))
 	else:
 		# look for 'service_manager' and 'service_manager_command' in environment
 		service_manager = os.environ.get("BENCH_SERVICE_MANAGER")

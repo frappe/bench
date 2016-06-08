@@ -65,6 +65,14 @@ def setup_env():
 	setup_env()
 
 
+@click.command('lets-encrypt')
+@click.argument('site')
+def setup_letsencrypt(site):
+	"Setup lets-encrypt for site"
+	from bench.config.lets_encrypt import setup_letsencrypt
+	setup_letsencrypt(site, bench_path='.')
+
+
 @click.command('procfile')
 def setup_procfile():
 	"Setup Procfile for bench start"
@@ -90,6 +98,7 @@ setup.add_command(setup_sudoers)
 setup.add_command(setup_nginx)
 setup.add_command(setup_supervisor)
 setup.add_command(setup_redis)
+setup.add_command(setup_letsencrypt)
 setup.add_command(setup_production)
 setup.add_command(setup_auto_update)
 setup.add_command(setup_backups)

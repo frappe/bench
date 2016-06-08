@@ -3,5 +3,6 @@ jinja2
 virtualenv
 requests
 honcho
+python-crontab
 semantic_version
 GitPython==0.3.2.rc1

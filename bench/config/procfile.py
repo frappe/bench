@@ -1,6 +1,6 @@
 import bench, os, click
-from bench.utils import find_executable
-from bench.app import use_rq
+from bench.utils import find_executable		
+from bench.app import use_rq		
 from bench.config.common_site_config import get_config
 
 def setup_procfile(bench_path, force=False):
