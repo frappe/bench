@@ -45,8 +45,10 @@ def install_bench(args):
 		'pip': 'sudo pip install --upgrade setuptools'
 	})
 
+	# Restricting ansible version due to following bug in ansible 2.1
+	# https://github.com/ansible/ansible-modules-core/issues/3752
 	success = run_os_command({
-		'pip': 'sudo pip install ansible'
+		'pip': "sudo pip install 'ansible==2.0.2.0'"
 	})
 
 	if not success:
@@ -58,18 +60,21 @@ def install_bench(args):
 	if is_sudo_user() and not args.user and not args.production:
 		raise Exception('Please run this script as a non-root user with sudo privileges, but without using sudo or pass --user=USER')
 
-	# create user if not exists
-	run_playbook('develop/create_user.yml', user=args.user, extra_args=vars(args))
 
 	# args is namespace, but we would like to use it as dict in calling function, so use vars()
+	if args.production and not args.user:
+		args.user = 'frappe'
+
+	extra_vars = get_extra_vars(vars(args))
+
+	# create user if not exists
+	run_playbook('develop/create_user.yml', extra_vars=extra_vars)
+
 	if args.develop:
-		run_playbook('develop/install.yml', sudo=True, user=args.user, extra_args=vars(args))
+		run_playbook('develop/install.yml', sudo=True, extra_vars=extra_vars)
 
 	elif args.production:
-		if not args.user:
-			args.user = 'frappe'
-
-		run_playbook('production/install.yml', sudo=True, user=args.user, extra_args=vars(args))
+		run_playbook('production/install.yml', sudo=True, extra_vars=extra_vars)
 
 	shutil.rmtree(tmp_bench_repo)
 
@@ -100,10 +105,11 @@ def clone_bench_repo(args):
 		return 0
 
 	branch = args.bench_branch or 'develop'
+	repo_url = args.bench_repo_url or 'https://github.com/frappe/bench'
 
 	success = run_os_command(
-		{'git': 'git clone https://github.com/frappe/bench {bench_repo} --depth 1 --branch {branch}'.format(
-			bench_repo=tmp_bench_repo, branch=branch)}
+		{'git': 'git clone {repo_url} {bench_repo} --depth 1 --branch {branch}'.format(
+			repo_url=repo_url, bench_repo=tmp_bench_repo, branch=branch)}
 	)
 
 	return success
@@ -162,45 +168,46 @@ def get_passwords(run_travis=False):
 		'admin_password': admin_password
 	}
 
-def get_extra_vars_json(extra_args, run_travis=False):
-	# We need to pass production as extra_vars to the playbook to execute conditionals in the
-	# playbook. Extra variables can passed as json or key=value pair. Here, we will use JSON.
+def get_vars_json_path(extra_vars):
 	json_path = os.path.join(os.path.abspath(os.path.expanduser('~')), 'extra_vars.json')
-	extra_vars = dict(extra_args.items())
-
-	# Get mysql root password and admin password
-	run_travis = extra_args.get('run_travis')
-	extra_vars.update(get_passwords(run_travis))
-
-	# Decide for branch to be cloned depending upon whether we setting up production
-	branch = 'master' if extra_args.get('production') else 'develop'
-	extra_vars.update(branch=branch)
-
-	# Get max worker_connections in nginx.
-	# https://www.digitalocean.com/community/tutorials/how-to-optimize-nginx-configuration
-	# The amount of clients that can be served can be multiplied by the amount of cores.
- 	extra_vars.update(max_worker_connections=multiprocessing.cpu_count() * 1024)
 
 	with open(json_path, mode='w') as j:
 		json.dump(extra_vars, j, indent=1, sort_keys=True)
 
 	return ('@' + json_path)
 
-def run_playbook(playbook_name, sudo=False, user=None, extra_args=None):
-	user = user or getpass.getuser()
+def get_extra_vars(extra_args):
+	extra_vars = dict(extra_args.items())
+
+	run_travis = extra_args.get('run_travis')
+	extra_vars.update(get_passwords(run_travis))
+
+	branch = 'master' if extra_args.get('setup_production') else 'develop'
+	extra_vars.update(branch=branch)
+
+ 	extra_vars.update(max_worker_connections=multiprocessing.cpu_count() * 1024)
+
+	user = args.user or getpass.getuser()
+
 	if user == 'root':
 		raise Exception('--user cannot be root')
 
-	extra_args['frappe_user'] = user
-	extra_vars = get_extra_vars_json(extra_args)
+	extra_vars['frappe_user'] = user
 
-	args = ['ansible-playbook', '-c', 'local',  playbook_name, '-e', extra_vars]
+	return extra_vars
+
+def run_playbook(playbook_name, sudo=False, extra_vars=None):
+	args = ['ansible-playbook', '-c', 'local',  playbook_name]
+
+	if extra_vars:
+		args.extend(['-e', get_vars_json_path(extra_vars=extra_vars)])
+
+		if extra_vars.get('verbosity'):
+			args.append('-vvvv')
 
 	if sudo:
+		user = extra_vars.get('user')
 		args.extend(['--become', '--become-user={0}'.format(user)])
-
-	if extra_args.get('verbosity'):
-		args.append('-vvvv')
 
 	success = subprocess.check_call(args, cwd=os.path.join(tmp_bench_repo, 'playbooks'))
 	return success
@@ -229,6 +236,8 @@ def parse_commandline_args():
 	parser.add_argument('--user', dest='user', help='Install frappe-bench for this user')
 
 	parser.add_argument('--bench-branch', dest='bench_branch', help='Clone a particular branch of bench repository')
+
+	parser.add_argument('--bench-repo-url', dest='bench_repo_url', help='Clones bench repository from the given url')
 
 	# To enable testing of script using Travis, this should skip the prompt
 	parser.add_argument('--run-travis', dest='run_travis', action='store_true', default=False,
