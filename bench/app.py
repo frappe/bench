@@ -13,17 +13,14 @@ import subprocess
 logging.basicConfig(level="DEBUG")
 logger = logging.getLogger(__name__)
 
+class InvalidBranchException(Exception): pass
+class InvalidRemoteException(Exception): pass
+
 class MajorVersionUpgradeException(Exception):
 	def __init__(self, message, upstream_version, local_version):
 		super(MajorVersionUpgradeException, self).__init__(message)
 		self.upstream_version = upstream_version
 		self.local_version = local_version
-
-class InvalidBranchException(Exception):
-	pass
-
-class InvalidRemoteException(Exception):
-	pass
 
 def get_apps(bench='.'):
 	try:
@@ -67,7 +64,7 @@ def get_app(git_url, branch=None, bench='.', build_asset_files=True, verbose=Fal
 		app_name = re.search(r'name\s*=\s*[\'"](.*)[\'"]', f.read().decode('utf-8')).group(1)
 		if repo_name != app_name:
 			apps_path = os.path.join(os.path.abspath(bench), 'apps')
-			os.rename(os.path.join(apps_path, repo_name), os.path.join(apps_path, app_name))	
+			os.rename(os.path.join(apps_path, repo_name), os.path.join(apps_path, app_name))
 
 	print 'installing', app_name
 	install_app(app=app_name, bench=bench, verbose=verbose)
@@ -115,12 +112,12 @@ def is_version_upgrade(app='frappe', bench='.', branch=None):
 	try:
 		fetch_upstream(app, bench=bench)
 	except CommandFailedError, e:
-		raise InvalidRemoteException("No remote named Upstream for "+app)
+		raise InvalidRemoteException("No remote named upstream for {0}".format(app))
 
 	upstream_version = get_upstream_version(app=app, branch=branch, bench=bench)
 
 	if not upstream_version:
-		raise InvalidBranchException("Specified branch of app {} is not in upstream".format(app))
+		raise InvalidBranchException("Specified branch of app {0} is not in upstream".format(app))
 
 	local_version = get_major_version(get_current_version(app, bench=bench))
 	upstream_version = get_major_version(upstream_version)
@@ -187,7 +184,7 @@ def switch_branch(branch, apps=None, bench='.', upgrade=False, check_upgrade=Tru
 			if os.path.isdir(os.path.join(apps_dir, name))]
 		if branch=="v4.x.x":
 			apps.append('shopping_cart')
-	
+
 	for app in apps:
 		app_dir = os.path.join(apps_dir, app)
 		if os.path.exists(app_dir):
