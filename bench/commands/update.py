@@ -115,12 +115,24 @@ def restart_update(kwargs):
 	os.execv(sys.argv[0], sys.argv[:2] + args)
 
 
+@click.command('switch-to-branch')
+@click.argument('branch')
+@click.argument('apps', nargs=-1)
+@click.option('--upgrade',is_flag=True)
+def switch_to_branch(branch, apps, upgrade=False):
+	"Switch all apps to specified branch, or specify apps separated by space"
+	from bench.app import switch_to_branch
+	switch_to_branch(branch=branch, apps=list(apps), upgrade=upgrade)
+	print 'Switched to ' + branch 
+	print 'Please run `bench update --patch` to be safe from any differences in database schema'
+
+
 @click.command('switch-to-master')
 @click.option('--upgrade',is_flag=True)
 def switch_to_master(upgrade=False):
 	"Switch frappe and erpnext to master branch"
 	from bench.app import switch_to_master
-	switch_to_master(upgrade=upgrade)
+	switch_to_master(upgrade=upgrade, apps=['frappe', 'erpnext'])
 	print
 	print 'Switched to master'
 	print 'Please run `bench update --patch` to be safe from any differences in database schema'
@@ -131,7 +143,7 @@ def switch_to_master(upgrade=False):
 def switch_to_develop(upgrade=False):
 	"Switch frappe and erpnext to develop branch"
 	from bench.app import switch_to_develop
-	switch_to_develop(upgrade=upgrade)
+	switch_to_develop(upgrade=upgrade, apps=['frappe', 'erpnext'])
 	print
 	print 'Switched to develop'
 	print 'Please run `bench update --patch` to be safe from any differences in database schema'

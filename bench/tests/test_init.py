@@ -20,8 +20,6 @@ class TestBenchInit(unittest.TestCase):
 			if os.path.exists(bench_path):
 				shutil.rmtree(bench_path, ignore_errors=True)
 
-
-
 	def test_init(self, bench_name="test-bench", **kwargs):
 		self.init_bench(bench_name, **kwargs)
 
@@ -90,17 +88,17 @@ class TestBenchInit(unittest.TestCase):
 	def test_get_app(self):
 		site_name = "test-site-2.dev"
 		self.init_bench('test-bench')
-		
+
 		self.new_site(site_name)
 		bench_path = os.path.join(self.benches_path, "test-bench")
-		
+
 		bench.app.get_app("https://github.com/frappe/frappe-client", bench=bench_path)
 		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", "frappeclient")))
 
 	def test_install_app(self):
 		site_name = "test-site-3.dev"
 		self.init_bench('test-bench')
-		
+
 		self.new_site(site_name)
 		bench_path = os.path.join(self.benches_path, "test-bench")
 
@@ -117,6 +115,21 @@ class TestBenchInit(unittest.TestCase):
 
 		out = subprocess.check_output(["bench", "--site", site_name, "list-apps"], cwd=bench_path)
 		self.assertTrue("erpnext" in out)
+
+	def test_switch_to_branch(self):
+		self.init_bench('test-bench')
+
+		bench_path = os.path.join(self.benches_path, "test-bench")
+		app_path = os.path.join(bench_path, "apps", "frappe")
+
+		bench.app.switch_branch(branch="master", apps=["frappe"], bench=bench_path, check_upgrade=False)
+		out = subprocess.check_output(['git', 'status'], cwd=app_path)
+		self.assertTrue("master" in out)
+
+		# bring it back to develop!
+		bench.app.switch_branch(branch="develop", apps=["frappe"], bench=bench_path, check_upgrade=False)
+		out = subprocess.check_output(['git', 'status'], cwd=app_path)
+		self.assertTrue("develop" in out)
 
 	def init_bench(self, bench_name, **kwargs):
 		self.benches.append(bench_name)

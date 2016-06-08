@@ -7,6 +7,7 @@ python:
 
 install:
   - sudo apt-get purge -y mysql-common mysql-server mysql-client
+  - sudo apt-get install --only-upgrade -y git
   # - sudo python $TRAVIS_BUILD_DIR/installer/install.py --user travis --skip-bench-setup
   - sudo bash $TRAVIS_BUILD_DIR/install_scripts/setup_frappe.sh --skip-install-bench --mysql-root-password travis
   - mkdir -p ~/bench-repo
