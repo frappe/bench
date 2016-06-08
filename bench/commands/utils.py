@@ -116,13 +116,14 @@ def backup_all_sites():
 
 
 @click.command('release')
-@click.argument('app', type=click.Choice(['frappe', 'erpnext', 'erpnext_shopify', 'paypal_integration', 'schools']))
+@click.argument('app')
 @click.argument('bump-type', type=click.Choice(['major', 'minor', 'patch']))
 @click.option('--develop', default='develop')
 @click.option('--master', default='master')
-def release(app, bump_type, develop, master):
+@click.option('--owner', default='frappe')
+@click.option('--repo-name')
+def release(app, bump_type, develop, master, owner, repo_name):
 	"Release app (internal to the Frappe team)"
 	from bench.release import release
-	repo = os.path.join('apps', app)
-	release(repo, bump_type, develop, master)
-
+	repo = os.path.join('apps', repo_name) if repo_name else os.path.join('apps', app)
+	release(repo, bump_type, develop, master, owner, app)
