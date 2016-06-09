@@ -76,6 +76,11 @@ def download_translations():
 	from bench.utils import download_translations_p
 	download_translations_p()
 
+@click.command('renew-lets-encrypt')
+def renew_lets_encrypt():
+	"Renew Let's Encrypt certificate"
+	from bench.config.lets_encrypt import renew_certs
+	renew_certs()
 
 @click.command()
 def shell(bench='.'):
@@ -111,13 +116,15 @@ def backup_all_sites():
 
 
 @click.command('release')
-@click.argument('app', type=click.Choice(['frappe', 'erpnext', 'erpnext_shopify', 'paypal_integration', 'schools']))
-@click.argument('bump-type', type=click.Choice(['major', 'minor', 'patch']))
+@click.argument('app')
+@click.argument('bump-type', type=click.Choice(['major', 'minor', 'patch', 'stable', 'prerelease']))
 @click.option('--develop', default='develop')
 @click.option('--master', default='master')
-def release(app, bump_type, develop, master):
+@click.option('--remote', default='upstream')
+@click.option('--owner', default='frappe')
+@click.option('--repo-name')
+def release(app, bump_type, develop, master, owner, repo_name, remote):
 	"Release app (internal to the Frappe team)"
 	from bench.release import release
-	repo = os.path.join('apps', app)
-	release(repo, bump_type, develop, master)
-
+	release(bench_path='.', app=app, bump_type=bump_type, develop=develop, master=master,
+		remote=remote, owner=owner, repo_name=repo_name)
