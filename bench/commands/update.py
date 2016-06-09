@@ -60,7 +60,7 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 	_update(pull, patch, build, bench, auto, restart_supervisor, requirements, no_backup, upgrade, force=force)
 
 
-def _update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, requirements=False, no_backup=False, upgrade=False, bench_path='.', force=False):
+def _update(pull=False, patch=False, build=False, update_bench=False, auto=False, restart_supervisor=False, requirements=False, no_backup=False, upgrade=False, bench_path='.', force=False):
 	conf = get_config(bench=bench_path)
 	version_upgrade = is_version_upgrade(bench=bench_path)
 
@@ -80,9 +80,9 @@ def _update(pull=False, patch=False, build=False, bench=False, auto=False, resta
 
 	if upgrade and (version_upgrade[0] or (not version_upgrade[0] and force)):
 		pre_upgrade(version_upgrade[1], version_upgrade[2], bench=bench_path)
-		import utils, app
-		reload(utils)
-		reload(app)
+		import bench.utils, bench.app
+		reload(bench.utils)
+		reload(bench.app)
 
 	if patch:
 		if not no_backup:
