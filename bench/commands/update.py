@@ -24,27 +24,11 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 	if not (pull or patch or build or bench or requirements):
 		pull, patch, build, bench, requirements = True, True, True, True, True
 
-	patches.run(bench_path='.')
-
-	conf = get_config(".")
-
-	version_upgrade = is_version_upgrade()
-
-	if version_upgrade[0] and not upgrade:
-		print
-		print
-		print "This update will cause a major version change in Frappe/ERPNext from {0} to {1}.".format(*version_upgrade[1:])
-		print "This would take significant time to migrate and might break custom apps. Please run `bench update --upgrade` to confirm."
-		print
-		print "You can stay on the latest stable release by running `bench switch-to-master` or pin your bench to {0} by running `bench switch-to-v{0}`".format(version_upgrade[1])
-		sys.exit(1)
-
-	if conf.get('release_bench'):
-		print 'Release bench, cannot update'
-		sys.exit(1)
-
 	if auto:
 		sys.exit(1)
+
+	patches.run(bench_path='.')
+	conf = get_config(".")
 
 	if bench and conf.get('update_bench_on_update'):
 		update_bench()
@@ -57,6 +41,21 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 				'restart-supervisor': restart_supervisor,
 				'upgrade': upgrade
 		})
+
+	if conf.get('release_bench'):
+		print 'Release bench, cannot update'
+		sys.exit(1)
+
+	version_upgrade = is_version_upgrade()
+
+	if version_upgrade[0] and not upgrade:
+		print
+		print
+		print "This update will cause a major version change in Frappe/ERPNext from {0} to {1}.".format(*version_upgrade[1:])
+		print "This would take significant time to migrate and might break custom apps. Please run `bench update --upgrade` to confirm."
+		print
+		print "You can stay on the latest stable release by running `bench switch-to-master` or pin your bench to {0} by running `bench switch-to-v{0}`".format(version_upgrade[1])
+		sys.exit(1)
 
 	_update(pull, patch, build, bench, auto, restart_supervisor, requirements, no_backup, upgrade, force=force)
 
