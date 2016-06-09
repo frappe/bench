@@ -133,8 +133,14 @@ def fetch_upstream(app, bench='.'):
 
 def get_current_version(app, bench='.'):
 	repo_dir = get_repo_dir(app, bench=bench)
-	with open(os.path.join(repo_dir, os.path.basename(repo_dir), '__init__.py')) as f:
-		return get_version_from_string(f.read())
+	try:
+		with open(os.path.join(repo_dir, os.path.basename(repo_dir), '__init__.py')) as f:
+			return get_version_from_string(f.read())
+
+	except AttributeError:
+		# backward compatibility
+		with open(os.path.join(repo_dir, 'setup.py')) as f:
+			return get_version_from_string(f.read())
 
 def get_upstream_version(app, branch=None, bench='.'):
 	repo_dir = get_repo_dir(app, bench=bench)
