@@ -133,7 +133,7 @@ def fetch_upstream(app, bench='.'):
 
 def get_current_version(app, bench='.'):
 	repo_dir = get_repo_dir(app, bench=bench)
-	with open(os.path.join(repo_dir, 'setup.py')) as f:
+	with open(os.path.join(repo_dir, os.path.basename(repo_dir), '__init__.py')) as f:
 		return get_version_from_string(f.read())
 
 def get_upstream_version(app, branch=None, bench='.'):
@@ -141,7 +141,7 @@ def get_upstream_version(app, branch=None, bench='.'):
 	if not branch:
 		branch = get_current_branch(app, bench=bench)
 	try:
-		contents = subprocess.check_output(['git', 'show', 'upstream/{branch}:setup.py'.format(branch=branch)], cwd=repo_dir, stderr=subprocess.STDOUT)
+		contents = subprocess.check_output(['git', 'show', 'upstream/{branch}:{app}/__init__.py'.format(branch=branch)], cwd=repo_dir, stderr=subprocess.STDOUT, app=app)
 	except subprocess.CalledProcessError, e:
 		if "Invalid object" in e.output:
 			return None
@@ -201,7 +201,7 @@ def switch_to_v5(apps=None, bench='.', upgrade=False):
 	switch_branch('v5.x.x', apps=apps, bench=bench, upgrade=upgrade)
 
 def get_version_from_string(contents):
-	match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % 'version',
+	match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % '__version__',
 			contents)
 	return match.group(2)
 
