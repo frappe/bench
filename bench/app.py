@@ -156,7 +156,7 @@ def get_upstream_version(app, branch=None, bench='.'):
 	if not branch:
 		branch = get_current_branch(app, bench=bench)
 	try:
-		contents = subprocess.check_output(['git', 'show', 'upstream/{branch}:{app}/__init__.py'.format(branch=branch)], cwd=repo_dir, stderr=subprocess.STDOUT, app=app)
+		contents = subprocess.check_output(['git', 'show', 'upstream/{branch}:{app}/__init__.py'.format(branch=branch, app=app)], cwd=repo_dir, stderr=subprocess.STDOUT)
 	except subprocess.CalledProcessError, e:
 		if "Invalid object" in e.output:
 			return None
