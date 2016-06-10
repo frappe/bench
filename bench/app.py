@@ -155,7 +155,7 @@ def get_current_version(app, bench='.'):
 	except AttributeError:
 		# backward compatibility
 		with open(os.path.join(repo_dir, 'setup.py')) as f:
-			return get_version_from_string(f.read())
+			return get_version_from_string(f.read(), field='version')
 
 def get_upstream_version(app, branch=None, bench='.'):
 	repo_dir = get_repo_dir(app, bench=bench)
@@ -240,8 +240,8 @@ def switch_to_v4(apps=None, bench='.', upgrade=False):
 def switch_to_v5(apps=None, bench='.', upgrade=False):
 	switch_branch('v5.x.x', apps=apps, bench=bench, upgrade=upgrade)
 
-def get_version_from_string(contents):
-	match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % '__version__',
+def get_version_from_string(contents, field='__version__'):
+	match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % field,
 			contents)
 	return match.group(2)
 
