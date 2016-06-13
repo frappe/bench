@@ -103,15 +103,25 @@ def pull_all_apps(bench='.'):
 	for app in get_apps(bench=bench):
 		app_dir = get_repo_dir(app, bench=bench)
 		if os.path.exists(os.path.join(app_dir, '.git')):
+			contents = subprocess.check_output(['git', 'remote', '-v'], cwd=app_dir,
+				stderr=subprocess.STDOUT)
+
+			if 'upstream ' in contents:
+				remote = 'upstream'
+			else:
+				# get the first remote
+				remote = contents.splitlines()[0].split()[0]
+
 			logger.info('pulling {0}'.format(app))
-			exec_cmd("git pull {rebase} upstream {branch}".format(rebase=rebase, branch=get_current_branch(app, bench=bench)), cwd=app_dir)
+			exec_cmd("git pull {rebase} {remote} {branch}".format(rebase=rebase,
+				remote=remote, branch=get_current_branch(app, bench=bench)), cwd=app_dir)
 			exec_cmd('find . -name "*.pyc" -delete', cwd=app_dir)
 
 
 def is_version_upgrade(app='frappe', bench='.', branch=None):
 	try:
 		fetch_upstream(app, bench=bench)
-	except CommandFailedError, e:
+	except CommandFailedError:
 		raise InvalidRemoteException("No remote named upstream for {0}".format(app))
 
 	upstream_version = get_upstream_version(app=app, branch=branch, bench=bench)

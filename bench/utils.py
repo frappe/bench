@@ -88,7 +88,6 @@ def exec_cmd(cmd, cwd='.'):
 		stderr = stdout = subprocess.PIPE
 	else:
 		stderr = stdout = None
-
 	p = subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=stdout, stderr=stderr)
 
 	if async:
