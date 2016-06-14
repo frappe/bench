@@ -106,7 +106,7 @@ def pull_all_apps(bench='.'):
 			contents = subprocess.check_output(['git', 'remote', '-v'], cwd=app_dir,
 				stderr=subprocess.STDOUT)
 
-			if 'upstream ' in contents:
+			if re.findall('upstream[\s]+', contents):
 				remote = 'upstream'
 			else:
 				# get the first remote
