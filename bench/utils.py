@@ -502,9 +502,9 @@ def validate_upgrade(from_ver, to_ver, bench='.'):
 			raise Exception("Please install nodejs and npm")
 
 def pre_upgrade(from_ver, to_ver, bench='.'):
-	from .migrate_to_v5 import remove_shopping_cart
 	pip = os.path.join(bench, 'env', 'bin', 'pip')
 	if from_ver <= 4 and to_ver >= 5:
+		from .migrate_to_v5 import remove_shopping_cart
 		apps = ('frappe', 'erpnext')
 		remove_shopping_cart(bench=bench)
 
