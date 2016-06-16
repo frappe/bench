@@ -22,7 +22,7 @@ def setup_letsencrypt(site, bench_path):
 		return
 
 	create_config(site)
-	run_certbot_and_setup_ssl(site, bench_path)	
+	run_certbot_and_setup_ssl(site, bench_path)
 	setup_crontab()
 
 
@@ -38,7 +38,7 @@ def create_config(site):
 def run_certbot_and_setup_ssl(site, bench_path):
 	service('nginx', 'stop')
 	get_certbot()
-	
+
 	try:
 		exec_cmd("{path} --config /etc/letsencrypt/configs/{site}.cfg certonly".format(path=get_certbot_path(), site=site))
 	except CommandFailedError:
@@ -48,10 +48,10 @@ def run_certbot_and_setup_ssl(site, bench_path):
 
 	ssl_path = "/etc/letsencrypt/live/{site}/".format(site=site)
 
-	ssl_config = { "ssl_certificate": os.path.join(ssl_path, "fullchain.pem"), 
+	ssl_config = { "ssl_certificate": os.path.join(ssl_path, "fullchain.pem"),
 					"ssl_certificate_key": os.path.join(ssl_path, "privkey.pem") }
 
-	update_site_config(site, ssl_config, bench=bench_path)
+	update_site_config(site, ssl_config, bench_path=bench_path)
 	make_nginx_conf(bench_path)
 
 	service('nginx', 'start')
@@ -77,7 +77,7 @@ def get_certbot():
 	create_dir_if_missing(certbot_path)
 
 	if not os.path.isfile(certbot_path):
-		urllib.urlretrieve ("https://dl.eff.org/certbot-auto", certbot_path)	
+		urllib.urlretrieve ("https://dl.eff.org/certbot-auto", certbot_path)
 		os.chmod(certbot_path, 0744)
 
 

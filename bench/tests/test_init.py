@@ -92,7 +92,7 @@ class TestBenchInit(unittest.TestCase):
 		self.new_site(site_name)
 		bench_path = os.path.join(self.benches_path, "test-bench")
 
-		bench.app.get_app("https://github.com/frappe/frappe-client", bench=bench_path)
+		bench.app.get_app("https://github.com/frappe/frappe-client", bench_path=bench_path)
 		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", "frappeclient")))
 
 	def test_install_app(self):
@@ -122,12 +122,12 @@ class TestBenchInit(unittest.TestCase):
 		bench_path = os.path.join(self.benches_path, "test-bench")
 		app_path = os.path.join(bench_path, "apps", "frappe")
 
-		bench.app.switch_branch(branch="master", apps=["frappe"], bench=bench_path, check_upgrade=False)
+		bench.app.switch_branch(branch="master", apps=["frappe"], bench_path=bench_path, check_upgrade=False)
 		out = subprocess.check_output(['git', 'status'], cwd=app_path)
 		self.assertTrue("master" in out)
 
 		# bring it back to develop!
-		bench.app.switch_branch(branch="develop", apps=["frappe"], bench=bench_path, check_upgrade=False)
+		bench.app.switch_branch(branch="develop", apps=["frappe"], bench_path=bench_path, check_upgrade=False)
 		out = subprocess.check_output(['git', 'status'], cwd=app_path)
 		self.assertTrue("develop" in out)
 
