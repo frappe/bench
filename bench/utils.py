@@ -10,6 +10,7 @@ import select
 import multiprocessing
 from distutils.spawn import find_executable
 import pwd, grp
+import bench
 from bench import env
 
 class PatchError(Exception):
@@ -24,15 +25,15 @@ logger = logging.getLogger(__name__)
 
 folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 
-def get_frappe(bench='.'):
-	frappe = get_env_cmd('frappe', bench=bench)
+def get_frappe(bench_path='.'):
+	frappe = get_env_cmd('frappe', bench_path=bench_path)
 	if not os.path.exists(frappe):
 		print 'frappe app is not installed. Run the following command to install frappe'
 		print 'bench get-app frappe https://github.com/frappe/frappe.git'
 	return frappe
 
-def get_env_cmd(cmd, bench='.'):
-	return os.path.abspath(os.path.join(bench, 'env', 'bin', cmd))
+def get_env_cmd(cmd, bench_path='.'):
+	return os.path.abspath(os.path.join(bench_path, 'env', 'bin', cmd))
 
 def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None,
@@ -41,7 +42,6 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	from .config.common_site_config import make_config
 	from .config import redis
 	from .config.procfile import setup_procfile
-	global FRAPPE_VERSION
 
 	if os.path.exists(path):
 		print 'Directory {} already exists!'.format(path)
@@ -54,30 +54,30 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	setup_logging()
 
-	setup_env(bench=path)
+	setup_env(bench_path=path)
 
 	make_config(path)
 
 	if not frappe_path:
 		frappe_path = 'https://github.com/frappe/frappe.git'
-	get_app('frappe', frappe_path, branch=frappe_branch, bench=path, build_asset_files=False, verbose=verbose)
+	get_app('frappe', frappe_path, branch=frappe_branch, bench_path=path, build_asset_files=False, verbose=verbose)
 
 	if apps_path:
-		install_apps_from_path(apps_path, bench=path)
+		install_apps_from_path(apps_path, bench_path=path)
 
-	FRAPPE_VERSION = get_current_frappe_version(bench=path)
-	if FRAPPE_VERSION > 5:
-		setup_socketio(bench=path)
+	bench.set_frappe_version(bench_path=path)
+	if bench.FRAPPE_VERSION > 5:
+		setup_socketio(bench_path=path)
 
-	build_assets(bench=path)
+	build_assets(bench_path=path)
 	redis.generate_config(path)
 
 	if not no_procfile:
 		setup_procfile(path)
 	if not no_backups:
-		setup_backups(bench=path)
+		setup_backups(bench_path=path)
 	if not no_auto_update:
-		setup_auto_update(bench=path)
+		setup_auto_update(bench_path=path)
 
 
 def exec_cmd(cmd, cwd='.'):
@@ -99,74 +99,80 @@ def exec_cmd(cmd, cwd='.'):
 	if return_code > 0:
 		raise CommandFailedError(cmd)
 
-def setup_env(bench='.'):
-	exec_cmd('virtualenv -q {} -p {}'.format('env', sys.executable), cwd=bench)
-	exec_cmd('./env/bin/pip -q install --upgrade pip', cwd=bench)
-	exec_cmd('./env/bin/pip -q install wheel', cwd=bench)
-	# exec_cmd('./env/bin/pip -q install https://github.com/frappe/MySQLdb1/archive/MySQLdb-1.2.5-patched.tar.gz', cwd=bench)
-	exec_cmd('./env/bin/pip -q install -e git+https://github.com/frappe/python-pdfkit.git#egg=pdfkit', cwd=bench)
+def setup_env(bench_path='.'):
+	exec_cmd('virtualenv -q {} -p {}'.format('env', sys.executable), cwd=bench_path)
+	exec_cmd('./env/bin/pip -q install --upgrade pip', cwd=bench_path)
+	exec_cmd('./env/bin/pip -q install wheel', cwd=bench_path)
+	# exec_cmd('./env/bin/pip -q install https://github.com/frappe/MySQLdb1/archive/MySQLdb-1.2.5-patched.tar.gz', cwd=bench_path)
+	exec_cmd('./env/bin/pip -q install -e git+https://github.com/frappe/python-pdfkit.git#egg=pdfkit', cwd=bench_path)
 
-def setup_socketio(bench='.'):
-	exec_cmd("npm install socket.io redis express superagent cookie", cwd=bench)
+def setup_socketio(bench_path='.'):
+	exec_cmd("npm install socket.io redis express superagent cookie", cwd=bench_path)
 
-def new_site(site, mariadb_root_password=None, admin_password=None, bench='.'):
+def new_site(site, mariadb_root_password=None, admin_password=None, bench_path='.'):
 	import hashlib
 	logger.info('creating new site {}'.format(site))
 	mariadb_root_password_fragment = '--root_password {}'.format(mariadb_root_password) if mariadb_root_password else ''
 	admin_password_fragment = '--admin_password {}'.format(admin_password) if admin_password else ''
 	exec_cmd("{frappe} {site} --install {db_name} {mariadb_root_password_fragment} {admin_password_fragment}".format(
-				frappe=get_frappe(bench=bench),
+				frappe=get_frappe(bench_path=bench_path),
 				site=site,
 				db_name = hashlib.sha1(site).hexdigest()[:10],
 				mariadb_root_password_fragment=mariadb_root_password_fragment,
 				admin_password_fragment=admin_password_fragment
-			), cwd=os.path.join(bench, 'sites'))
-	if len(get_sites(bench=bench)) == 1:
-		exec_cmd("{frappe} --use {site}".format(frappe=get_frappe(bench=bench), site=site), cwd=os.path.join(bench, 'sites'))
+			), cwd=os.path.join(bench_path, 'sites'))
+	if len(get_sites(bench_path=bench_path)) == 1:
+		exec_cmd("{frappe} --use {site}".format(frappe=get_frappe(bench_path=bench_path), site=site), cwd=os.path.join(bench_path, 'sites'))
 
-def patch_sites(bench='.'):
+def patch_sites(bench_path='.'):
+	bench.set_frappe_version(bench_path=bench_path)
+
 	try:
-		if FRAPPE_VERSION == 4:
-			exec_cmd("{frappe} --latest all".format(frappe=get_frappe(bench=bench)), cwd=os.path.join(bench, 'sites'))
+		if bench.FRAPPE_VERSION == 4:
+			exec_cmd("{frappe} --latest all".format(frappe=get_frappe(bench_path=bench_path)), cwd=os.path.join(bench_path, 'sites'))
 		else:
-			run_frappe_cmd('--site', 'all', 'migrate', bench=bench)
+			run_frappe_cmd('--site', 'all', 'migrate', bench_path=bench_path)
 	except subprocess.CalledProcessError:
 		raise PatchError
 
-def build_assets(bench='.'):
-	if FRAPPE_VERSION == 4:
-		exec_cmd("{frappe} --build".format(frappe=get_frappe(bench=bench)), cwd=os.path.join(bench, 'sites'))
-	else:
-		run_frappe_cmd('build', bench=bench)
+def build_assets(bench_path='.'):
+	bench.set_frappe_version(bench_path=bench_path)
 
-def get_sites(bench='.'):
-	sites_dir = os.path.join(bench, "sites")
+	if bench.FRAPPE_VERSION == 4:
+		exec_cmd("{frappe} --build".format(frappe=get_frappe(bench_path=bench_path)), cwd=os.path.join(bench_path, 'sites'))
+	else:
+		run_frappe_cmd('build', bench_path=bench_path)
+
+def get_sites(bench_path='.'):
+	sites_dir = os.path.join(bench_path, "sites")
 	sites = [site for site in os.listdir(sites_dir)
 		if os.path.isdir(os.path.join(sites_dir, site)) and site not in ('assets',)]
 	return sites
 
-def get_sites_dir(bench='.'):
-	return os.path.abspath(os.path.join(bench, 'sites'))
+def get_sites_dir(bench_path='.'):
+	return os.path.abspath(os.path.join(bench_path, 'sites'))
 
-def get_bench_dir(bench='.'):
-	return os.path.abspath(bench)
+def get_bench_dir(bench_path='.'):
+	return os.path.abspath(bench_path)
 
-def setup_auto_update(bench='.'):
+def setup_auto_update(bench_path='.'):
 	logger.info('setting up auto update')
-	add_to_crontab('0 10 * * * cd {bench_dir} &&  {bench} update --auto >> {logfile} 2>&1'.format(bench_dir=get_bench_dir(bench=bench),
-		bench=os.path.join(get_bench_dir(bench=bench), 'env', 'bin', 'bench'),
-		logfile=os.path.join(get_bench_dir(bench=bench), 'logs', 'auto_update_log.log')))
+	add_to_crontab('0 10 * * * cd {bench_dir} &&  {bench} update --auto >> {logfile} 2>&1'.format(bench_dir=get_bench_dir(bench_path=bench_path),
+		bench=os.path.join(get_bench_dir(bench_path=bench_path), 'env', 'bin', 'bench'),
+		logfile=os.path.join(get_bench_dir(bench_path=bench_path), 'logs', 'auto_update_log.log')))
 
-def setup_backups(bench='.'):
+def setup_backups(bench_path='.'):
 	logger.info('setting up backups')
-	bench_dir = get_bench_dir(bench=bench)
-	if FRAPPE_VERSION == 4:
-		backup_command = "cd {sites_dir} && {frappe} --backup all".format(frappe=get_frappe(bench=bench),)
+	bench_dir = get_bench_dir(bench_path=bench_path)
+	bench.set_frappe_version(bench_path=bench_path)
+
+	if bench.FRAPPE_VERSION == 4:
+		backup_command = "cd {sites_dir} && {frappe} --backup all".format(frappe=get_frappe(bench_path=bench_path),)
 	else:
 		backup_command = "cd {bench_dir} && {bench} --site all backup".format(bench_dir=bench_dir, bench=sys.argv[0])
 
 	add_to_crontab('0 */6 * * *  {backup_command} >> {logfile} 2>&1'.format(backup_command=backup_command,
-		logfile=os.path.join(get_bench_dir(bench=bench), 'logs', 'backup.log')))
+		logfile=os.path.join(get_bench_dir(bench_path=bench_path), 'logs', 'backup.log')))
 
 def add_to_crontab(line):
 	current_crontab = read_crontab()
@@ -223,10 +229,10 @@ def setup_sudoers(user):
 
 	os.chmod(sudoers_file, 0440)
 
-def setup_logging(bench='.'):
-	if os.path.exists(os.path.join(bench, 'logs')):
+def setup_logging(bench_path='.'):
+	if os.path.exists(os.path.join(bench_path, 'logs')):
 		logger = logging.getLogger('bench')
-		log_file = os.path.join(bench, 'logs', 'bench.log')
+		log_file = os.path.join(bench_path, 'logs', 'bench.log')
 		formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 		hdlr = logging.FileHandler(log_file)
 		hdlr.setFormatter(formatter)
@@ -290,17 +296,17 @@ def get_cmd_output(cmd, cwd='.'):
 			print e.output
 		raise
 
-def restart_supervisor_processes(bench='.'):
+def restart_supervisor_processes(bench_path='.'):
 	from .config.common_site_config import get_config
-	conf = get_config(bench=bench)
-	bench_name = get_bench_name(bench)
+	conf = get_config(bench_path=bench_path)
+	bench_name = get_bench_name(bench_path)
 
 	cmd = conf.get('supervisor_restart_cmd')
 	if cmd:
-		exec_cmd(cmd, cwd=bench)
+		exec_cmd(cmd, cwd=bench_path)
 
 	else:
-		supervisor_status = subprocess.check_output(['sudo', 'supervisorctl', 'status'], cwd=bench)
+		supervisor_status = subprocess.check_output(['sudo', 'supervisorctl', 'status'], cwd=bench_path)
 
 		if '{bench_name}-workers:'.format(bench_name=bench_name) in supervisor_status:
 			group = '{bench_name}-web: {bench_name}-workers:'.format(bench_name=bench_name)
@@ -313,84 +319,86 @@ def restart_supervisor_processes(bench='.'):
 		else:
 			group = 'frappe:'
 
-		exec_cmd('sudo supervisorctl restart {group}'.format(group=group), cwd=bench)
+		exec_cmd('sudo supervisorctl restart {group}'.format(group=group), cwd=bench_path)
 
-def get_site_config(site, bench='.'):
-	config_path = os.path.join(bench, 'sites', site, 'site_config.json')
+def get_site_config(site, bench_path='.'):
+	config_path = os.path.join(bench_path, 'sites', site, 'site_config.json')
 	if not os.path.exists(config_path):
 		return {}
 	with open(config_path) as f:
 		return json.load(f)
 
-def put_site_config(site, config, bench='.'):
-	config_path = os.path.join(bench, 'sites', site, 'site_config.json')
+def put_site_config(site, config, bench_path='.'):
+	config_path = os.path.join(bench_path, 'sites', site, 'site_config.json')
 	with open(config_path, 'w') as f:
 		return json.dump(config, f, indent=1)
 
-def update_site_config(site, new_config, bench='.'):
-	config = get_site_config(site, bench=bench)
+def update_site_config(site, new_config, bench_path='.'):
+	config = get_site_config(site, bench_path=bench_path)
 	config.update(new_config)
-	put_site_config(site, config, bench=bench)
+	put_site_config(site, config, bench_path=bench_path)
 
-def set_nginx_port(site, port, bench='.', gen_config=True):
-	set_site_config_nginx_property(site, {"nginx_port": port}, bench=bench, gen_config=gen_config)
+def set_nginx_port(site, port, bench_path='.', gen_config=True):
+	set_site_config_nginx_property(site, {"nginx_port": port}, bench_path=bench_path, gen_config=gen_config)
 
-def set_ssl_certificate(site, ssl_certificate, bench='.', gen_config=True):
-	set_site_config_nginx_property(site, {"ssl_certificate": ssl_certificate}, bench=bench, gen_config=gen_config)
+def set_ssl_certificate(site, ssl_certificate, bench_path='.', gen_config=True):
+	set_site_config_nginx_property(site, {"ssl_certificate": ssl_certificate}, bench_path=bench_path, gen_config=gen_config)
 
-def set_ssl_certificate_key(site, ssl_certificate_key, bench='.', gen_config=True):
-	set_site_config_nginx_property(site, {"ssl_certificate_key": ssl_certificate_key}, bench=bench, gen_config=gen_config)
+def set_ssl_certificate_key(site, ssl_certificate_key, bench_path='.', gen_config=True):
+	set_site_config_nginx_property(site, {"ssl_certificate_key": ssl_certificate_key}, bench_path=bench_path, gen_config=gen_config)
 
-def set_site_config_nginx_property(site, config, bench='.', gen_config=True):
+def set_site_config_nginx_property(site, config, bench_path='.', gen_config=True):
 	from .config.nginx import make_nginx_conf
-	if site not in get_sites(bench=bench):
+	if site not in get_sites(bench_path=bench_path):
 		raise Exception("No such site")
-	update_site_config(site, config, bench=bench)
+	update_site_config(site, config, bench_path=bench_path)
 	if gen_config:
-		make_nginx_conf(bench_path=bench)
+		make_nginx_conf(bench_path=bench_path)
 
-def set_url_root(site, url_root, bench='.'):
-	update_site_config(site, {"host_name": url_root}, bench=bench)
+def set_url_root(site, url_root, bench_path='.'):
+	update_site_config(site, {"host_name": url_root}, bench_path=bench_path)
 
-def set_default_site(site, bench='.'):
-	if not site in get_sites(bench=bench):
+def set_default_site(site, bench_path='.'):
+	if not site in get_sites(bench_path=bench_path):
 		raise Exception("Site not in bench")
-	exec_cmd("{frappe} --use {site}".format(frappe=get_frappe(bench=bench), site=site),
-			cwd=os.path.join(bench, 'sites'))
+	exec_cmd("{frappe} --use {site}".format(frappe=get_frappe(bench_path=bench_path), site=site),
+			cwd=os.path.join(bench_path, 'sites'))
 
-def update_requirements(bench='.'):
-	pip = os.path.join(bench, 'env', 'bin', 'pip')
+def update_requirements(bench_path='.'):
+	pip = os.path.join(bench_path, 'env', 'bin', 'pip')
 
 	# upgrade pip to latest
 	exec_cmd("{pip} install --upgrade pip".format(pip=pip))
 
-	apps_dir = os.path.join(bench, 'apps')
+	apps_dir = os.path.join(bench_path, 'apps')
 	for app in os.listdir(apps_dir):
 		req_file = os.path.join(apps_dir, app, 'requirements.txt')
 		if os.path.exists(req_file):
 			exec_cmd("{pip} install -q -r {req_file}".format(pip=pip, req_file=req_file))
 
-def backup_site(site, bench='.'):
-	if FRAPPE_VERSION == 4:
-		exec_cmd("{frappe} --backup {site}".format(frappe=get_frappe(bench=bench), site=site),
-				cwd=os.path.join(bench, 'sites'))
-	else:
-		run_frappe_cmd('--site', site, 'backup', bench=bench)
+def backup_site(site, bench_path='.'):
+	bench.set_frappe_version(bench_path=bench_path)
 
-def backup_all_sites(bench='.'):
-	for site in get_sites(bench=bench):
-		backup_site(site, bench=bench)
+	if bench.FRAPPE_VERSION == 4:
+		exec_cmd("{frappe} --backup {site}".format(frappe=get_frappe(bench_path=bench_path), site=site),
+				cwd=os.path.join(bench_path, 'sites'))
+	else:
+		run_frappe_cmd('--site', site, 'backup', bench_path=bench_path)
+
+def backup_all_sites(bench_path='.'):
+	for site in get_sites(bench_path=bench_path):
+		backup_site(site, bench_path=bench_path)
 
 def is_root():
 	if os.getuid() == 0:
 		return True
 	return False
 
-def set_mariadb_host(host, bench='.'):
-	update_common_site_config({'db_host': host}, bench=bench)
+def set_mariadb_host(host, bench_path='.'):
+	update_common_site_config({'db_host': host}, bench_path=bench_path)
 
-def update_common_site_config(ddict, bench='.'):
-	update_json_file(os.path.join(bench, 'sites', 'common_site_config.json'), ddict)
+def update_common_site_config(ddict, bench_path='.'):
+	update_json_file(os.path.join(bench_path, 'sites', 'common_site_config.json'), ddict)
 
 def update_json_file(filename, ddict):
 	if os.path.exists(filename):
@@ -424,7 +432,7 @@ def drop_privileges(uid_name='nobody', gid_name='nogroup'):
 	# Ensure a very conservative umask
 	os.umask(022)
 
-def fix_prod_setup_perms(bench='.', frappe_user=None):
+def fix_prod_setup_perms(bench_path='.', frappe_user=None):
 	from .config.common_site_config import get_config
 	files = [
 		"logs/web.error.log",
@@ -438,7 +446,7 @@ def fix_prod_setup_perms(bench='.', frappe_user=None):
 	]
 
 	if not frappe_user:
-		frappe_user = get_config(bench).get('frappe_user')
+		frappe_user = get_config(bench_path).get('frappe_user')
 
 	if not frappe_user:
 		print "frappe user not set"
@@ -462,16 +470,16 @@ def fix_file_perms():
 			if not _file.startswith('activate'):
 				os.chmod(os.path.join(bin_dir, _file), 0755)
 
-def get_current_frappe_version(bench='.'):
+def get_current_frappe_version(bench_path='.'):
 	from .app import get_current_frappe_version as fv
-	return fv(bench=bench)
+	return fv(bench_path=bench_path)
 
 def run_frappe_cmd(*args, **kwargs):
 	from .cli import from_command_line
 
-	bench = kwargs.get('bench', '.')
-	f = get_env_cmd('python', bench=bench)
-	sites_dir = os.path.join(bench, 'sites')
+	bench_path = kwargs.get('bench_path', '.')
+	f = get_env_cmd('python', bench_path=bench_path)
+	sites_dir = os.path.join(bench_path, 'sites')
 
 	async = False if from_command_line else True
 	if async:
@@ -491,48 +499,48 @@ def run_frappe_cmd(*args, **kwargs):
 		raise CommandFailedError(args)
 
 def get_frappe_cmd_output(*args, **kwargs):
-	bench = kwargs.get('bench', '.')
-	f = get_env_cmd('python', bench=bench)
-	sites_dir = os.path.join(bench, 'sites')
+	bench_path = kwargs.get('bench_path', '.')
+	f = get_env_cmd('python', bench_path=bench_path)
+	sites_dir = os.path.join(bench_path, 'sites')
 	return subprocess.check_output((f, '-m', 'frappe.utils.bench_helper', 'frappe') + args, cwd=sites_dir)
 
-def validate_upgrade(from_ver, to_ver, bench='.'):
+def validate_upgrade(from_ver, to_ver, bench_path='.'):
 	if to_ver >= 6:
 		if not find_executable('npm') and not (find_executable('node') or find_executable('nodejs')):
 			raise Exception("Please install nodejs and npm")
 
-def pre_upgrade(from_ver, to_ver, bench='.'):
+def pre_upgrade(from_ver, to_ver, bench_path='.'):
 	from .migrate_to_v5 import remove_shopping_cart
-	pip = os.path.join(bench, 'env', 'bin', 'pip')
+	pip = os.path.join(bench_path, 'env', 'bin', 'pip')
 	if from_ver <= 4 and to_ver >= 5:
 		apps = ('frappe', 'erpnext')
-		remove_shopping_cart(bench=bench)
+		remove_shopping_cart(bench_path=bench_path)
 
 		for app in apps:
-			cwd = os.path.abspath(os.path.join(bench, 'apps', app))
+			cwd = os.path.abspath(os.path.join(bench_path, 'apps', app))
 			if os.path.exists(cwd):
 				exec_cmd("git clean -dxf", cwd=cwd)
 				exec_cmd("{pip} install --upgrade -e {app}".format(pip=pip, app=cwd))
 
-def post_upgrade(from_ver, to_ver, bench='.'):
+def post_upgrade(from_ver, to_ver, bench_path='.'):
 	from .config.common_site_config import get_config
 	from .config import redis
 	from .config.supervisor import generate_supervisor_config
 	from .config.nginx import make_nginx_conf
-	conf = get_config(bench=bench)
+	conf = get_config(bench_path=bench_path)
 	print "-"*80
 	print "Your bench was upgraded to version {0}".format(to_ver)
 
 	if conf.get('restart_supervisor_on_update'):
-		redis.generate_config(bench_path=bench)
-		generate_supervisor_config(bench_path=bench)
-		make_nginx_conf(bench_path=bench)
+		redis.generate_config(bench_path=bench_path)
+		generate_supervisor_config(bench_path=bench_path)
+		make_nginx_conf(bench_path=bench_path)
 
 		if from_ver == 4 and to_ver == 5:
-			setup_backups(bench=bench)
+			setup_backups(bench_path=bench_path)
 
 		if from_ver <= 5 and to_ver == 6:
-			setup_socketio(bench=bench)
+			setup_socketio(bench_path=bench_path)
 
 		print "As you have setup your bench for production, you will have to reload configuration for nginx and supervisor"
 		print "To complete the migration, please run the following commands"
@@ -618,17 +626,15 @@ def get_output(*cmd):
 	s.stdout.close()
 	return out
 
-FRAPPE_VERSION = get_current_frappe_version()
+def before_update(bench_path, requirements):
+	validate_pillow_dependencies(bench_path, requirements)
 
-def before_update(bench, requirements):
-	validate_pillow_dependencies(bench, requirements)
-
-def validate_pillow_dependencies(bench, requirements):
+def validate_pillow_dependencies(bench_path, requirements):
 	if not requirements:
 		return
 
 	try:
-		pip = os.path.join(bench, 'env', 'bin', 'pip')
+		pip = os.path.join(bench_path, 'env', 'bin', 'pip')
 		exec_cmd("{pip} install Pillow".format(pip=pip))
 
 	except CommandFailedError:

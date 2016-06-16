@@ -9,6 +9,7 @@ import semantic_version
 import json
 import re
 import subprocess
+import bench
 
 logging.basicConfig(level="DEBUG")
 logger = logging.getLogger(__name__)
@@ -19,30 +20,30 @@ class MajorVersionUpgradeException(Exception):
 		self.upstream_version = upstream_version
 		self.local_version = local_version
 
-def get_apps(bench='.'):
+def get_apps(bench_path='.'):
 	try:
-		with open(os.path.join(bench, 'sites', 'apps.txt')) as f:
+		with open(os.path.join(bench_path, 'sites', 'apps.txt')) as f:
 			return f.read().strip().split('\n')
 	except IOError:
 		return []
 
-def add_to_appstxt(app, bench='.'):
-	apps = get_apps(bench=bench)
+def add_to_appstxt(app, bench_path='.'):
+	apps = get_apps(bench_path=bench_path)
 	if app not in apps:
 		apps.append(app)
-		return write_appstxt(apps, bench=bench)
+		return write_appstxt(apps, bench_path=bench_path)
 
-def remove_from_appstxt(app, bench='.'):
-	apps = get_apps(bench=bench)
+def remove_from_appstxt(app, bench_path='.'):
+	apps = get_apps(bench_path=bench_path)
 	if app in apps:
 		apps.remove(app)
-		return write_appstxt(apps, bench=bench)
+		return write_appstxt(apps, bench_path=bench_path)
 
-def write_appstxt(apps, bench='.'):
-	with open(os.path.join(bench, 'sites', 'apps.txt'), 'w') as f:
+def write_appstxt(apps, bench_path='.'):
+	with open(os.path.join(bench_path, 'sites', 'apps.txt'), 'w') as f:
 		return f.write('\n'.join(apps))
 
-def get_app(app, git_url, branch=None, bench='.', build_asset_files=True, verbose=False):
+def get_app(app, git_url, branch=None, bench_path='.', build_asset_files=True, verbose=False):
 	logger.info('getting app {}'.format(app))
 	shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
 	branch = '--branch {branch}'.format(branch=branch) if branch else ''
@@ -52,59 +53,61 @@ def get_app(app, git_url, branch=None, bench='.', build_asset_files=True, verbos
 				app=app,
 				shallow_clone=shallow_clone,
 				branch=branch),
-			cwd=os.path.join(bench, 'apps'))
+			cwd=os.path.join(bench_path, 'apps'))
 	print 'installing', app
-	install_app(app, bench=bench, verbose=verbose)
+	install_app(app, bench_path=bench_path, verbose=verbose)
 	if build_asset_files:
-		build_assets(bench=bench)
-	conf = get_config(bench=bench)
+		build_assets(bench_path=bench_path)
+	conf = get_config(bench_path=bench_path)
 	if conf.get('restart_supervisor_on_update'):
-		restart_supervisor_processes(bench=bench)
+		restart_supervisor_processes(bench_path=bench_path)
 
-def new_app(app, bench='.'):
+def new_app(app, bench_path='.'):
 	# For backwards compatibility
 	app = app.lower().replace(" ", "_").replace("-", "_")
 	logger.info('creating new app {}'.format(app))
-	apps = os.path.abspath(os.path.join(bench, 'apps'))
-	if FRAPPE_VERSION == 4:
-		exec_cmd("{frappe} --make_app {apps} {app}".format(frappe=get_frappe(bench=bench),
+	apps = os.path.abspath(os.path.join(bench_path, 'apps'))
+	bench.set_frappe_version(bench_path=bench_path)
+
+	if bench.FRAPPE_VERSION == 4:
+		exec_cmd("{frappe} --make_app {apps} {app}".format(frappe=get_frappe(bench_path=bench_path),
 			apps=apps, app=app))
 	else:
-		run_frappe_cmd('make-app', apps, app, bench=bench)
-	install_app(app, bench=bench)
+		run_frappe_cmd('make-app', apps, app, bench_path=bench_path)
+	install_app(app, bench_path=bench_path)
 
-def install_app(app, bench='.', verbose=False):
+def install_app(app, bench_path='.', verbose=False):
 	logger.info('installing {}'.format(app))
 	# find_links = '--find-links={}'.format(conf.get('wheel_cache_dir')) if conf.get('wheel_cache_dir') else ''
 	find_links = ''
 	exec_cmd("{pip} install {quiet} {find_links} -e {app}".format(
-				pip=os.path.join(bench, 'env', 'bin', 'pip'),
+				pip=os.path.join(bench_path, 'env', 'bin', 'pip'),
 				quiet="-q" if not verbose else "",
-				app=os.path.join(bench, 'apps', app),
+				app=os.path.join(bench_path, 'apps', app),
 				find_links=find_links))
-	add_to_appstxt(app, bench=bench)
+	add_to_appstxt(app, bench_path=bench_path)
 
-def pull_all_apps(bench='.'):
-	rebase = '--rebase' if get_config(bench).get('rebase_on_pull') else ''
+def pull_all_apps(bench_path='.'):
+	rebase = '--rebase' if get_config(bench_path).get('rebase_on_pull') else ''
 
-	for app in get_apps(bench=bench):
-		app_dir = get_repo_dir(app, bench=bench)
+	for app in get_apps(bench_path=bench_path):
+		app_dir = get_repo_dir(app, bench_path=bench_path)
 		if os.path.exists(os.path.join(app_dir, '.git')):
 			logger.info('pulling {0}'.format(app))
-			exec_cmd("git pull {rebase} upstream {branch}".format(rebase=rebase, branch=get_current_branch(app, bench=bench)), cwd=app_dir)
+			exec_cmd("git pull {rebase} upstream {branch}".format(rebase=rebase, branch=get_current_branch(app, bench_path=bench_path)), cwd=app_dir)
 
 			# remove pyc files
 			exec_cmd('find . -name "*.pyc" -delete', cwd=app_dir)
 
 
-def is_version_upgrade(bench='.', branch=None):
-	fetch_upstream('frappe', bench=bench)
-	upstream_version = get_upstream_version('frappe', bench=bench, branch=branch)
+def is_version_upgrade(bench_path='.', branch=None):
+	fetch_upstream('frappe', bench_path=bench_path)
+	upstream_version = get_upstream_version('frappe', bench_path=bench_path, branch=branch)
 
 	if not upstream_version:
 		raise Exception("Current branch of 'frappe' not in upstream")
 
-	local_version = get_major_version(get_current_version('frappe', bench=bench))
+	local_version = get_major_version(get_current_version('frappe', bench_path=bench_path))
 	upstream_version = get_major_version(upstream_version)
 
 	if upstream_version - local_version > 0:
@@ -112,14 +115,14 @@ def is_version_upgrade(bench='.', branch=None):
 
 	return (False, local_version, upstream_version)
 
-def get_current_frappe_version(bench='.'):
+def get_current_frappe_version(bench_path='.'):
 	try:
-		return get_major_version(get_current_version('frappe', bench=bench))
+		return get_major_version(get_current_version('frappe', bench_path=bench_path))
 	except IOError:
 		return 0
 
-def get_current_branch(app, bench='.'):
-	repo_dir = get_repo_dir(app, bench=bench)
+def get_current_branch(app, bench_path='.'):
+	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	return get_cmd_output("basename $(git symbolic-ref -q HEAD)", cwd=repo_dir)
 
 def use_rq(bench_path):
@@ -127,12 +130,12 @@ def use_rq(bench_path):
 	celery_app = os.path.join(bench_path, 'apps', 'frappe', 'frappe', 'celery_app.py')
 	return not os.path.exists(celery_app)
 
-def fetch_upstream(app, bench='.'):
-	repo_dir = get_repo_dir(app, bench=bench)
+def fetch_upstream(app, bench_path='.'):
+	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	return exec_cmd("git fetch upstream", cwd=repo_dir)
 
-def get_current_version(app, bench='.'):
-	repo_dir = get_repo_dir(app, bench=bench)
+def get_current_version(app, bench_path='.'):
+	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	try:
 		with open(os.path.join(repo_dir, os.path.basename(repo_dir), '__init__.py')) as f:
 			return get_version_from_string(f.read())
@@ -142,10 +145,10 @@ def get_current_version(app, bench='.'):
 		with open(os.path.join(repo_dir, 'setup.py')) as f:
 			return get_version_from_string(f.read(), field='version')
 
-def get_upstream_version(app, branch=None, bench='.'):
-	repo_dir = get_repo_dir(app, bench=bench)
+def get_upstream_version(app, branch=None, bench_path='.'):
+	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	if not branch:
-		branch = get_current_branch(app, bench=bench)
+		branch = get_current_branch(app, bench_path=bench_path)
 	try:
 		contents = subprocess.check_output(['git', 'show', 'upstream/{branch}:{app}/__init__.py'.format(branch=branch, app=app)], cwd=repo_dir, stderr=subprocess.STDOUT)
 	except subprocess.CalledProcessError, e:
@@ -155,18 +158,18 @@ def get_upstream_version(app, branch=None, bench='.'):
 			raise
 	return get_version_from_string(contents)
 
-def get_upstream_url(app, bench='.'):
-	repo_dir = get_repo_dir(app, bench=bench)
+def get_upstream_url(app, bench_path='.'):
+	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	return subprocess.check_output(['git', 'config', '--get', 'remote.upstream.url'], cwd=repo_dir).strip()
 
-def get_repo_dir(app, bench='.'):
-	return os.path.join(bench, 'apps', app)
+def get_repo_dir(app, bench_path='.'):
+	return os.path.join(bench_path, 'apps', app)
 
-def switch_branch(branch, apps=None, bench='.', upgrade=False):
+def switch_branch(branch, apps=None, bench_path='.', upgrade=False):
 	from .utils import update_requirements, backup_all_sites, patch_sites, build_assets, pre_upgrade, post_upgrade
 	import utils
-	apps_dir = os.path.join(bench, 'apps')
-	version_upgrade = is_version_upgrade(bench=bench, branch=branch)
+	apps_dir = os.path.join(bench_path, 'apps')
+	version_upgrade = is_version_upgrade(bench_path=bench_path, branch=branch)
 	if version_upgrade[0] and not upgrade:
 		raise MajorVersionUpgradeException("Switching to {0} will cause upgrade from {1} to {2}. Pass --upgrade to confirm".format(branch, version_upgrade[1], version_upgrade[2]), version_upgrade[1], version_upgrade[2])
 
@@ -194,17 +197,17 @@ def switch_branch(branch, apps=None, bench='.', upgrade=False):
 		build_assets()
 		post_upgrade(version_upgrade[1], version_upgrade[2])
 
-def switch_to_master(apps=None, bench='.', upgrade=False):
-	switch_branch('master', apps=apps, bench=bench, upgrade=upgrade)
+def switch_to_master(apps=None, bench_path='.', upgrade=False):
+	switch_branch('master', apps=apps, bench_path=bench_path, upgrade=upgrade)
 
-def switch_to_develop(apps=None, bench='.', upgrade=False):
-	switch_branch('develop', apps=apps, bench=bench, upgrade=upgrade)
+def switch_to_develop(apps=None, bench_path='.', upgrade=False):
+	switch_branch('develop', apps=apps, bench_path=bench_path, upgrade=upgrade)
 
-def switch_to_v4(apps=None, bench='.', upgrade=False):
-	switch_branch('v4.x.x', apps=apps, bench=bench, upgrade=upgrade)
+def switch_to_v4(apps=None, bench_path='.', upgrade=False):
+	switch_branch('v4.x.x', apps=apps, bench_path=bench_path, upgrade=upgrade)
 
-def switch_to_v5(apps=None, bench='.', upgrade=False):
-	switch_branch('v5.x.x', apps=apps, bench=bench, upgrade=upgrade)
+def switch_to_v5(apps=None, bench_path='.', upgrade=False):
+	switch_branch('v5.x.x', apps=apps, bench_path=bench_path, upgrade=upgrade)
 
 def get_version_from_string(contents, field='__version__'):
 	match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % field,
@@ -214,10 +217,10 @@ def get_version_from_string(contents, field='__version__'):
 def get_major_version(version):
 	return semantic_version.Version(version).major
 
-def install_apps_from_path(path, bench='.'):
+def install_apps_from_path(path, bench_path='.'):
 	apps = get_apps_json(path)
 	for app in apps:
-		get_app(app['name'], app['url'], branch=app.get('branch'), bench=bench, build_asset_files=False)
+		get_app(app['name'], app['url'], branch=app.get('branch'), bench_path=bench_path, build_asset_files=False)
 
 def get_apps_json(path):
 	if path.startswith('http'):
@@ -226,5 +229,3 @@ def get_apps_json(path):
 	else:
 		with open(path) as f:
 			return json.load(f)
-
-FRAPPE_VERSION = get_current_frappe_version()

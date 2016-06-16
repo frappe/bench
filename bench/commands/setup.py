@@ -22,11 +22,11 @@ def setup_nginx():
 
 
 @click.command('supervisor')
-def setup_supervisor():
-	"generate config for supervisor"
+@click.option('--user')
+def setup_supervisor(user=None):
+	"generate config for supervisor with an optional user argument"
 	from bench.config.supervisor import generate_supervisor_config
-	generate_supervisor_config(bench_path=".")
-
+	generate_supervisor_config(bench_path=".", user=user)
 
 @click.command('redis')
 def setup_redis():
