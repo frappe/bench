@@ -1,16 +1,14 @@
 import click
-global FRAPPE_VERSION
 
 @click.group()
-def bench_command(bench='.'):
+def bench_command(bench_path='.'):
 	"Bench manager for Frappe"
+	import bench
 	from bench.app import get_current_frappe_version
 	from bench.utils import setup_logging
 
-	# TODO add bench path context
-	global FRAPPE_VERSION
-	FRAPPE_VERSION = get_current_frappe_version()
-	setup_logging(bench=bench)
+	bench.set_frappe_version(bench_path=bench_path)
+	setup_logging(bench_path=bench_path)
 
 
 from bench.commands.make import init, get_app, new_app, new_site

@@ -73,24 +73,24 @@ def change_uid():
 			print 'You should not run this command as root'
 			sys.exit(1)
 
-def old_frappe_cli(bench='.'):
-	f = get_frappe(bench=bench)
-	os.chdir(os.path.join(bench, 'sites'))
+def old_frappe_cli(bench_path='.'):
+	f = get_frappe(bench_path=bench_path)
+	os.chdir(os.path.join(bench_path, 'sites'))
 	os.execv(f, [f] + sys.argv[2:])
 
-def app_cmd(bench='.'):
-	f = get_env_cmd('python', bench=bench)
-	os.chdir(os.path.join(bench, 'sites'))
+def app_cmd(bench_path='.'):
+	f = get_env_cmd('python', bench_path=bench_path)
+	os.chdir(os.path.join(bench_path, 'sites'))
 	os.execv(f, [f] + ['-m', 'frappe.utils.bench_helper'] + sys.argv[1:])
 
-def frappe_cmd(bench='.'):
-	f = get_env_cmd('python', bench=bench)
-	os.chdir(os.path.join(bench, 'sites'))
+def frappe_cmd(bench_path='.'):
+	f = get_env_cmd('python', bench_path=bench_path)
+	os.chdir(os.path.join(bench_path, 'sites'))
 	os.execv(f, [f] + ['-m', 'frappe.utils.bench_helper', 'frappe'] + sys.argv[1:])
 
-def get_frappe_commands(bench='.'):
-	python = get_env_cmd('python', bench=bench)
-	sites_path = os.path.join(bench, 'sites')
+def get_frappe_commands(bench_path='.'):
+	python = get_env_cmd('python', bench_path=bench_path)
+	sites_path = os.path.join(bench_path, 'sites')
 	if not os.path.exists(sites_path):
 		return []
 	try:
@@ -98,9 +98,9 @@ def get_frappe_commands(bench='.'):
 	except subprocess.CalledProcessError:
 		return []
 
-def get_frappe_help(bench='.'):
-	python = get_env_cmd('python', bench=bench)
-	sites_path = os.path.join(bench, 'sites')
+def get_frappe_help(bench_path='.'):
+	python = get_env_cmd('python', bench_path=bench_path)
+	sites_path = os.path.join(bench_path, 'sites')
 	if not os.path.exists(sites_path):
 		return []
 	try:

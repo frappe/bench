@@ -4,7 +4,7 @@ from bench.app import use_rq
 from bench.config.common_site_config import get_config
 
 def setup_procfile(bench_path, force=False):
-	config = get_config(bench=bench_path)
+	config = get_config(bench_path=bench_path)
 	procfile_path = os.path.join(bench_path, 'Procfile')
 	if not force and os.path.exists(procfile_path):
 		click.confirm('A Procfile already exists and this will overwrite it. Do you want to continue?',

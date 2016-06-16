@@ -83,7 +83,7 @@ def renew_lets_encrypt():
 	renew_certs()
 
 @click.command()
-def shell(bench='.'):
+def shell(bench_path='.'):
 	if not os.environ.get('SHELL'):
 		print "Cannot get shell"
 		sys.exit(1)
@@ -102,17 +102,17 @@ def shell(bench='.'):
 def backup_site(site):
 	"backup site"
 	from bench.utils import get_sites, backup_site
-	if not site in get_sites(bench='.'):
+	if not site in get_sites(bench_path='.'):
 		print 'site not found'
 		sys.exit(1)
-	backup_site(site, bench='.')
+	backup_site(site, bench_path='.')
 
 
 @click.command('backup-all-sites')
 def backup_all_sites():
 	"backup all sites"
 	from bench.utils import backup_all_sites
-	backup_all_sites(bench='.')
+	backup_all_sites(bench_path='.')
 
 
 @click.command('release')

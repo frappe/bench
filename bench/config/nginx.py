@@ -61,7 +61,7 @@ def prepare_sites(config, bench_path):
 	return sites
 
 def get_sites_with_config(bench_path):
-	sites = get_sites(bench=bench_path)
+	sites = get_sites(bench_path=bench_path)
 	ret = []
 	for site in sites:
 		site_config = get_site_config(site, bench_path=bench_path)

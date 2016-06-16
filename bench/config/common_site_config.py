@@ -20,8 +20,8 @@ def make_config(bench_path):
 
 	put_config(bench_config, bench_path)
 
-def get_config(bench):
-	return get_common_site_config(bench)
+def get_config(bench_path):
+	return get_common_site_config(bench_path)
 
 def get_common_site_config(bench_path):
 	config_path = get_config_path(bench_path)
@@ -30,18 +30,18 @@ def get_common_site_config(bench_path):
 	with open(config_path, 'r') as f:
 		return json.load(f)
 
-def put_config(config, bench='.'):
-	config_path = get_config_path(bench)
+def put_config(config, bench_path='.'):
+	config_path = get_config_path(bench_path)
 	with open(config_path, 'w') as f:
 		return json.dump(config, f, indent=1, sort_keys=True)
 
-def update_config(new_config, bench='.'):
-	config = get_config(bench=bench)
+def update_config(new_config, bench_path='.'):
+	config = get_config(bench_path=bench_path)
 	config.update(new_config)
-	put_config(config, bench=bench)
+	put_config(config, bench_path=bench_path)
 
-def get_config_path(bench):
-	return os.path.join(bench, 'sites', 'common_site_config.json')
+def get_config_path(bench_path):
+	return os.path.join(bench_path, 'sites', 'common_site_config.json')
 
 def get_gunicorn_workers():
 	'''This function will return the maximum workers that can be started depending upon
@@ -78,9 +78,9 @@ def make_ports(bench_path):
 	# collect all existing ports
 	existing_ports = {}
 	for folder in os.listdir(benches_path):
-		bench = os.path.join(benches_path, folder)
-		if os.path.isdir(bench):
-			bench_config = get_config(bench)
+		bench_path = os.path.join(benches_path, folder)
+		if os.path.isdir(bench_path):
+			bench_config = get_config(bench_path)
 			for key in default_ports.keys():
 				value = bench_config.get(key)
 

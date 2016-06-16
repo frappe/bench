@@ -103,12 +103,12 @@ class TestBenchInit(unittest.TestCase):
 		bench_path = os.path.join(self.benches_path, "test-bench")
 
 		# get app
-		bench.app.get_app("https://github.com/frappe/erpnext", "develop", bench=bench_path)
+		bench.app.get_app("https://github.com/frappe/erpnext", "develop", bench_path=bench_path)
 
 		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", "erpnext")))
 
 		# install app
-		bench.app.install_app("erpnext", bench=bench_path)
+		bench.app.install_app("erpnext", bench_path=bench_path)
 
 		# install it to site
 		subprocess.check_output(["bench", "--site", site_name, "install-app", "erpnext"], cwd=bench_path)

@@ -10,7 +10,7 @@ def generate_supervisor_config(bench_path, user=None, force=False):
 	if not user:
 		user = getpass.getuser()
 
-	config = get_config(bench=bench_path)
+	config = get_config(bench_path=bench_path)
 
 	bench_dir = os.path.abspath(bench_path)
 
@@ -41,5 +41,5 @@ def generate_supervisor_config(bench_path, user=None, force=False):
 	with open(conf_path, 'w') as f:
 		f.write(config)
 
-	update_config({'restart_supervisor_on_update': True}, bench=bench_path)
+	update_config({'restart_supervisor_on_update': True}, bench_path=bench_path)
 

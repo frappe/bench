@@ -61,39 +61,39 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 
 
 def _update(pull=False, patch=False, build=False, update_bench=False, auto=False, restart_supervisor=False, requirements=False, no_backup=False, upgrade=False, bench_path='.', force=False):
-	conf = get_config(bench=bench_path)
-	version_upgrade = is_version_upgrade(bench=bench_path)
+	conf = get_config(bench_path=bench_path)
+	version_upgrade = is_version_upgrade(bench_path=bench_path)
 
 	if version_upgrade[0] and not upgrade:
 		raise Exception("Major Version Upgrade")
 
 	if upgrade and (version_upgrade[0] or (not version_upgrade[0] and force)):
-		validate_upgrade(version_upgrade[1], version_upgrade[2], bench=bench_path)
+		validate_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
 
-	before_update(bench=bench_path, requirements=requirements)
+	before_update(bench_path=bench_path, requirements=requirements)
 
 	if pull:
-		pull_all_apps(bench=bench_path)
+		pull_all_apps(bench_path=bench_path)
 
 	if requirements:
-		update_requirements(bench=bench_path)
+		update_requirements(bench_path=bench_path)
 
 	if upgrade and (version_upgrade[0] or (not version_upgrade[0] and force)):
-		pre_upgrade(version_upgrade[1], version_upgrade[2], bench=bench_path)
+		pre_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
 		import bench.utils, bench.app
 		reload(bench.utils)
 		reload(bench.app)
 
 	if patch:
 		if not no_backup:
-			backup_all_sites(bench=bench_path)
-		patch_sites(bench=bench_path)
+			backup_all_sites(bench_path=bench_path)
+		patch_sites(bench_path=bench_path)
 	if build:
-		build_assets(bench=bench_path)
+		build_assets(bench_path=bench_path)
 	if upgrade and (version_upgrade[0] or (not version_upgrade[0] and force)):
-		post_upgrade(version_upgrade[1], version_upgrade[2], bench=bench_path)
+		post_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
 	if restart_supervisor or conf.get('restart_supervisor_on_update'):
-		restart_supervisor_processes(bench=bench_path)
+		restart_supervisor_processes(bench_path=bench_path)
 
 	print "_"*80
 	print "Bench: Open source installer + admin for Frappe and ERPNext (https://erpnext.com)"

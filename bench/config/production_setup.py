@@ -3,13 +3,13 @@ from bench.config.supervisor import generate_supervisor_config
 from bench.config.nginx import make_nginx_conf
 import os
 
-def setup_production(user, bench='.'):
-	generate_supervisor_config(bench_path=bench, user=user)
-	make_nginx_conf(bench_path=bench)
-	fix_prod_setup_perms(bench, frappe_user=user)
+def setup_production(user, bench_path='.'):
+	generate_supervisor_config(bench_path=bench_path, user=user)
+	make_nginx_conf(bench_path=bench_path)
+	fix_prod_setup_perms(bench_path, frappe_user=user)
 	remove_default_nginx_configs()
 
-	bench_name = get_bench_name(bench)
+	bench_name = get_bench_name(bench_path)
 	nginx_conf = '/etc/nginx/conf.d/{bench_name}.conf'.format(bench_name=bench_name)
 
 	supervisor_conf_extn = "ini" if is_centos7() else "conf"
@@ -18,10 +18,10 @@ def setup_production(user, bench='.'):
 
 	# Check if symlink exists, If not then create it.
 	if not os.path.islink(supervisor_conf):
-		os.symlink(os.path.abspath(os.path.join(bench, 'config', 'supervisor.conf')), supervisor_conf)
+		os.symlink(os.path.abspath(os.path.join(bench_path, 'config', 'supervisor.conf')), supervisor_conf)
 
 	if not os.path.islink(nginx_conf):
-		os.symlink(os.path.abspath(os.path.join(bench, 'config', 'nginx.conf')), nginx_conf)
+		os.symlink(os.path.abspath(os.path.join(bench_path, 'config', 'nginx.conf')), nginx_conf)
 
 	exec_cmd('supervisorctl reload')
 	if os.environ.get('NO_SERVICE_RESTART'):
