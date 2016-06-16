@@ -29,7 +29,8 @@ def generate_supervisor_config(bench_path, user=None, force=False):
 		"webserver_port": config.get('webserver_port', 8000),
 		"gunicorn_workers": config.get('gunicorn_workers', get_gunicorn_workers()["gunicorn_workers"]),
 		"bench_name": get_bench_name(bench_path),
-		"background_workers": config.get('background_workers') or 1
+		"background_workers": config.get('background_workers') or 1,
+		"bench_cmd": find_executable('bench')
 	})
 
 	conf_path = os.path.join(bench_path, 'config', 'supervisor.conf')
