@@ -8,7 +8,8 @@ default_config = {
 	'update_bench_on_update': True,
 	'frappe_user': getpass.getuser(),
 	'shallow_clone': True,
-	'background_workers': 1
+	'background_workers': 1,
+	'dns_multitenant': True
 }
 
 def make_config(bench_path):
