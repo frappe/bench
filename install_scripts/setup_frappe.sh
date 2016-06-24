@@ -138,7 +138,11 @@ add_debian_mariadb_repo() {
 	run_cmd sudo apt-get update
 	run_cmd sudo apt-get install -y software-properties-common python-software-properties
 	run_cmd sudo apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 0xcbcb082a1bb943db
-	run_cmd sudo add-apt-repository "deb http://ams2.mirrors.digitalocean.com/mariadb/repo/10.0/debian $CODENAME main"
+	maria_test=$(apt-cache search --names-only 'mariadb-server')
+        if [ -z "$maria_test" ]; then
+                run_cmd sudo add-apt-repository "deb http://ams2.mirrors.digitalocean.com/mariadb/repo/10.0/debian $$
+        fi
+
 }
 
 add_ius_repo() {
