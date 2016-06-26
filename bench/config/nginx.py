@@ -1,4 +1,4 @@
-import os, json, click
+import os, json, click, random, string
 from bench.utils import get_sites, get_bench_name
 
 def make_nginx_conf(bench_path, force=False):
@@ -18,7 +18,10 @@ def make_nginx_conf(bench_path, force=False):
 		"sites": sites,
 		"webserver_port": config.get('webserver_port'),
 		"socketio_port": config.get('socketio_port'),
-		"bench_name": get_bench_name(bench_path)
+		"bench_name": get_bench_name(bench_path),
+
+		# for nginx map variable
+		"random_string": "".join(random.choice(string.ascii_lowercase) for i in xrange(7))
 	})
 
 	conf_path = os.path.join(bench_path, "config", "nginx.conf")
@@ -31,22 +34,39 @@ def make_nginx_conf(bench_path, force=False):
 
 def prepare_sites(config, bench_path):
 	sites = {
+		"that_use_port": [],
 		"that_use_dns": [],
 		"that_use_ssl": [],
-		"that_use_port": []
+		"that_use_wildcard_ssl": []
 	}
+
+	domain_map = {}
 	ports_in_use = {}
+
 	dns_multitenant = config.get('dns_multitenant')
 
 	for site in get_sites_with_config(bench_path=bench_path):
 		if dns_multitenant:
-			# assumes site's folder name is same as the domain name
+			domain = site.get('domain')
 
-			if site.get("ssl_certificate") and site.get("ssl_certificate_key"):
+			if domain:
+				# when site's folder name is different than domain name
+				domain_map[domain] = site['name']
+
+			site_name = domain or site['name']
+
+			if site.get('wildcard'):
+				sites["that_use_wildcard_ssl"].append(site_name)
+
+				if not sites.get('wildcard_ssl_certificate'):
+					sites["wildcard_ssl_certificate"] = site['ssl_certificate']
+					sites["wildcard_ssl_certificate_key"] = site['ssl_certificate_key']
+
+			elif site.get("ssl_certificate") and site.get("ssl_certificate_key"):
 				sites["that_use_ssl"].append(site)
 
 			else:
-				sites["that_use_dns"].append(site["name"])
+				sites["that_use_dns"].append(site_name)
 
 		else:
 			if not site.get("port"):
@@ -58,10 +78,16 @@ def prepare_sites(config, bench_path):
 			ports_in_use[site["port"]] = site["name"]
 			sites["that_use_port"].append(site)
 
+	sites['domain_map'] = domain_map
+
 	return sites
 
 def get_sites_with_config(bench_path):
+	from bench.config.common_site_config import get_config
+
 	sites = get_sites(bench_path=bench_path)
+	dns_multitenant = get_config(bench_path).get('dns_multitenant')
+
 	ret = []
 	for site in sites:
 		site_config = get_site_config(site, bench_path=bench_path)
@@ -71,7 +97,54 @@ def get_sites_with_config(bench_path):
 			"ssl_certificate": site_config.get('ssl_certificate'),
 			"ssl_certificate_key": site_config.get('ssl_certificate_key')
 		})
+
+		if dns_multitenant and site_config.get('domains'):
+			for domain in site_config.get('domains'):
+				# domain can be a string or a dict with 'domain', 'ssl_certificate', 'ssl_certificate_key'
+				if isinstance(domain, basestring):
+					domain = { 'domain': domain }
+
+				domain['name'] = site
+				ret.append(domain)
+
+	use_wildcard_certificate(bench_path, ret)
+
 	return ret
+
+def use_wildcard_certificate(bench_path, ret):
+	'''
+		stored in common_site_config.json as:
+	    "wildcard": {
+			"domain": "*.erpnext.com",
+			"ssl_certificate": "/path/to/erpnext.com.cert",
+			"ssl_certificate_key": "/path/to/erpnext.com.key"
+		}
+	'''
+	from bench.config.common_site_config import get_config
+	config = get_config(bench_path=bench_path)
+	wildcard = config.get('wildcard')
+
+	if not wildcard:
+		return
+
+	domain = wildcard['domain']
+	ssl_certificate = wildcard['ssl_certificate']
+	ssl_certificate_key = wildcard['ssl_certificate_key']
+
+	if domain.startswith('*.'):
+		domain = domain[1:]
+	else:
+		domain = '.' + domain
+
+	for site in ret:
+		if site.get('ssl_certificate'):
+			continue
+
+		if (site.get('domain') or site['name']).endswith(domain):
+			# example: ends with .erpnext.com
+			site['ssl_certificate'] = ssl_certificate
+			site['ssl_certificate_key'] = ssl_certificate_key
+			site['wildcard'] = 1
 
 def get_site_config(site, bench_path='.'):
 	with open(os.path.join(bench_path, 'sites', site, 'site_config.json')) as f:
