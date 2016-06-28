@@ -12,9 +12,14 @@
     when: ansible_distribution_version | version_compare('16.04', 'ge')
 
   - name: Add apt repository
-    apt_repository: repo='deb [arch=amd64,i386] http://nyc2.mirrors.digitalocean.com/mariadb/repo/10.1/ubuntu {{ ansible_distribution_release }} main' state=present
+    apt_repository:
+      repo: 'deb [arch=amd64,i386] http://nyc2.mirrors.digitalocean.com/mariadb/repo/10.1/ubuntu {{ ansible_distribution_release }} main'
+      state: present
     become: yes
     become_user: root
+
+  - name: Unattended package installation
+    shell: export DEBIAN_FRONTEND=noninteractive
 
   - name: apt-get install
     apt: pkg={{ item }} update_cache=yes state=present

@@ -48,6 +48,11 @@ def install_bench(args):
 			'yum': 'sudo python get-pip.py',
 		})
 
+		if success:
+			run_os_command({
+				'pip': 'sudo pip install --upgrade pip setuptools',
+			})
+
 	# Restricting ansible version due to following bug in ansible 2.1
 	# https://github.com/ansible/ansible-modules-core/issues/3752
 	success = run_os_command({
@@ -64,15 +69,27 @@ def install_bench(args):
 	if is_sudo_user() and not args.user and not args.production:
 		raise Exception('Please run this script as a non-root user with sudo privileges, but without using sudo or pass --user=USER')
 
+	if not args.user:
+		if args.production:
+			args.user = 'frappe'
+		else:
+			args.user = getpass.getuser()
 
-	# args is namespace, but we would like to use it as dict in calling function, so use vars()
-	if args.production and not args.user:
-		args.user = 'frappe'
+	if args.user == 'root':
+		raise Exception('--user cannot be root')
 
 	# create user if not exists
 	extra_vars = vars(args)
+	extra_vars.update(frappe_user=args.user)
 
 	run_playbook('develop/create_user.yml', extra_vars=extra_vars)
+
+	extra_vars.update(get_passwords(args.run_travis))
+	if args.production:
+		extra_vars.update(max_worker_connections=multiprocessing.cpu_count() * 1024)
+
+	branch = 'master' if args.production else 'develop'
+	extra_vars.update(branch=branch)
 
 	if args.develop:
 		run_playbook('develop/install.yml', sudo=True, extra_vars=extra_vars)
@@ -173,26 +190,11 @@ def get_passwords(run_travis=False):
 		'admin_password': admin_password
 	}
 
-def get_extra_vars_json(extra_args, run_travis=False):
+def get_extra_vars_json(extra_args):
 	# We need to pass production as extra_vars to the playbook to execute conditionals in the
 	# playbook. Extra variables can passed as json or key=value pair. Here, we will use JSON.
 	json_path = os.path.join('/tmp', 'extra_vars.json')
 	extra_vars = dict(extra_args.items())
-
-	if extra_args.get('production'):
-		run_travis = extra_args.get('run_travis')
-		extra_vars.update(get_passwords(run_travis))
-		extra_vars.update(max_worker_connections=multiprocessing.cpu_count() * 1024)
-
-	branch = 'master' if extra_args.get('production') else 'develop'
-	extra_vars.update(branch=branch)
-
-	user = args.user or getpass.getuser()
-	if user == 'root':
-		raise Exception('--user cannot be root')
-
-	extra_vars['frappe_user'] = user
-
 	with open(json_path, mode='w') as j:
 		json.dump(extra_vars, j, indent=1, sort_keys=True)
 
