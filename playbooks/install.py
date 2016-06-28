@@ -29,21 +29,23 @@ def install_bench(args):
 		return
 
 	# secure pip installation
-	if not os.path.exists("get-pip.py"):
+	if find_executable('pip'):
 		run_os_command({
-			'apt-get': 'wget https://bootstrap.pypa.io/get-pip.py',
-			'yum': 'wget https://bootstrap.pypa.io/get-pip.py'
+			'yum': 'sudo pip install --upgrade setuptools pip',
+			'apt-get': 'sudo pip install --upgrade setuptools pip',
+			'brew': "sudo pip install --upgrade setuptools pip --user"
 		})
 
-	success = run_os_command({
-		'apt-get': 'sudo python get-pip.py',
-		'yum': 'sudo python get-pip.py',
-	})
+	else:
+		if not os.path.exists("get-pip.py"):
+			run_os_command({
+				'apt-get': 'wget https://bootstrap.pypa.io/get-pip.py',
+				'yum': 'wget https://bootstrap.pypa.io/get-pip.py'
+			})
 
-
-	if success:
-		run_os_command({
-			'pip': "sudo pip install --upgrade setuptools --user python"
+		success = run_os_command({
+			'apt-get': 'sudo python get-pip.py',
+			'yum': 'sudo python get-pip.py',
 		})
 
 	# Restricting ansible version due to following bug in ansible 2.1
@@ -56,7 +58,8 @@ def install_bench(args):
 		could_not_install('Ansible')
 
 	# clone bench repo
-	clone_bench_repo(args)
+	if not args.run_travis:
+		clone_bench_repo(args)
 
 	if is_sudo_user() and not args.user and not args.production:
 		raise Exception('Please run this script as a non-root user with sudo privileges, but without using sudo or pass --user=USER')
@@ -77,7 +80,8 @@ def install_bench(args):
 	elif args.production:
 		run_playbook('production/install.yml', sudo=True, extra_vars=extra_vars)
 
-	shutil.rmtree(tmp_bench_repo)
+	if os.path.exists(tmp_bench_repo):
+		shutil.rmtree(tmp_bench_repo)
 
 def install_python27():
 	version = (sys.version_info[0], sys.version_info[1])
@@ -180,7 +184,7 @@ def get_extra_vars_json(extra_args, run_travis=False):
 		extra_vars.update(get_passwords(run_travis))
 		extra_vars.update(max_worker_connections=multiprocessing.cpu_count() * 1024)
 
-	branch = 'master' if extra_args.get('setup_production') else 'develop'
+	branch = 'master' if extra_args.get('production') else 'develop'
 	extra_vars.update(branch=branch)
 
 	user = args.user or getpass.getuser()
