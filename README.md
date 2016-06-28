@@ -98,10 +98,10 @@ Mac OSX:
 curl "https://raw.githubusercontent.com/frappe/bench/develop/playbooks/install.py" -o install.py
 
 # for development
-python install.py --develop
+sudo python install.py --develop
 
 # for production
-python install.py --production
+sudo python install.py --production
 
 ```
 For development, you have to explicitly start services by running `bench start`. This script requires Python2.7+ installed on your machine. You need to run this with a user that is **not** `root`, but can `sudo`. If you don't have such a user, you can search the web for *How to add a new user in { your OS }* and *How to add an existing user to sudoers in { your OS }*.
