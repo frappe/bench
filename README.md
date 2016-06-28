@@ -85,7 +85,7 @@ You have to explicitly start services by running `bench start`.
 ```
 
 
-Beta Development Setup
+Beta Installer
 ------------------------
 
 Tested on Ubuntu 14.04 to 15.x, Debian 7+, CentOS 7+, and MacOS X. If you find any problems, post them on our forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
@@ -95,11 +95,16 @@ Linux:
 wget https://raw.githubusercontent.com/frappe/bench/develop/playbooks/install.py
 
 Mac OSX:
-curl "https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py" -o install.py
+curl "https://raw.githubusercontent.com/frappe/bench/develop/playbooks/install.py" -o install.py
 
+# for development
 python install.py --develop
+
+# for production
+python install.py --production
+
 ```
-You have to explicitly start services by running `bench start`. This script requires Python2.7+ installed on your machine. You need to run this with a user that is **not** `root`, but can `sudo`. If you don't have such a user, you can search the web for *How to add a new user in { your OS }* and *How to add an existing user to sudoers in { your OS }*.
+For development, you have to explicitly start services by running `bench start`. This script requires Python2.7+ installed on your machine. You need to run this with a user that is **not** `root`, but can `sudo`. If you don't have such a user, you can search the web for *How to add a new user in { your OS }* and *How to add an existing user to sudoers in { your OS }*.
 
 On Mac OS X, you will have to create a group with the same name as *{ your User }*. On creating this group, you have to assign *{ your User }* to it. You can do this by going to "System preferences" -> "Users & Groups" -> "+" (as if you were adding new account) -> Under "New account" select "Group" -> Type in group name -> "Create group"
 
@@ -116,7 +121,6 @@ This script will:
 	- Initializes a new Bench at `~/frappe/frappe-bench` with `frappe` framework already installed under `apps`.
 	
 You will have to manually create a new site (`bench new-site`) and get apps that you need (`bench get-app`, `bench install-app`).
-
 
 Updating
 ========
