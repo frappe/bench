@@ -35,19 +35,15 @@ def install_bench(args):
 			'yum': 'wget https://bootstrap.pypa.io/get-pip.py'
 		})
 
-	run_os_command({
+	success = run_os_command({
 		'apt-get': 'sudo python get-pip.py',
 		'yum': 'sudo python get-pip.py',
 	})
 
-	# In some cases setup_tools are not updated, We will force update it.
-	success = run_os_command({
-		'python': 'wget https://bootstrap.pypa.io/ez_setup.py'
-	})
 
 	if success:
 		run_os_command({
-			'python': 'sudo python ez_setup.py --user python'
+			'pip': "sudo pip install --upgrade setuptools --user python"
 		})
 
 	# Restricting ansible version due to following bug in ansible 2.1
