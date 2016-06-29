@@ -93,12 +93,6 @@ def setup_config():
 	from bench.config.common_site_config import make_config
 	make_config('.')
 
-@click.command('disable-production')
-def disable_production():
-	"""Disable production environment for the bench"""
-	from bench.config.production_setup import disbable_production
-	disable_production('.')
-
 setup.add_command(setup_sudoers)
 setup.add_command(setup_nginx)
 setup.add_command(setup_supervisor)

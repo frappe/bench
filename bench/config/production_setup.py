@@ -44,7 +44,7 @@ def disable_production(bench_path='.'):
 	exec_cmd('supervisorctl reload')
 
 	# nginx
-	nginx_conf = '/etc/nginx/conf.f/{bench_name}.conf'.format(bench_name=bench_name)
+	nginx_conf = '/etc/nginx/conf.d/{bench_name}.conf'.format(bench_name=bench_name)
 	if os.path.islink(nginx_conf):
 		os.unlink(nginx_conf)
 

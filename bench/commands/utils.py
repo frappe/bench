@@ -128,3 +128,12 @@ def release(app, bump_type, develop, master, owner, repo_name, remote):
 	from bench.release import release
 	release(bench_path='.', app=app, bump_type=bump_type, develop=develop, master=master,
 		remote=remote, owner=owner, repo_name=repo_name)
+
+
+@click.command('disable-production')
+def disable_production():
+	"""Disables production environment for the bench."""
+	from bench.config.production_setup import disable_production
+	disable_production(bench_path='.')
+	click.echo("Please run 'bench setup procfile'")
+	click.echo("Run 'bench start' to start development environment")
