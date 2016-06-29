@@ -40,19 +40,16 @@ def disable_production(bench_path='.'):
 	if os.path.islink(supervisor_conf):
 		os.unlink(supervisor_conf)
 
-	exec_cmd('supervisorctl reread')
-	exec_cmd('supervisorctl reload')
+	exec_cmd('sudo supervisorctl reread')
+	exec_cmd('sudo supervisorctl update')
 
 	# nginx
 	nginx_conf = '/etc/nginx/conf.d/{bench_name}.conf'.format(bench_name=bench_name)
+
 	if os.path.islink(nginx_conf):
 		os.unlink(nginx_conf)
 
 	service('nginx', 'reload')
-	if os.environ.get('NO_SERVICE_RESTART'):
-		return
-
-	service('nginx', 'restart')
 
 def service(service, option):
 	if os.path.basename(get_program(['systemctl']) or '') == 'systemctl' and is_running_systemd():

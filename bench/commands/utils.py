@@ -135,5 +135,3 @@ def disable_production():
 	"""Disables production environment for the bench."""
 	from bench.config.production_setup import disable_production
 	disable_production(bench_path='.')
-	click.echo("Please run 'bench setup procfile'")
-	click.echo("Run 'bench start' to start development environment")

@@ -93,6 +93,7 @@ def setup_config():
 	from bench.config.common_site_config import make_config
 	make_config('.')
 
+
 setup.add_command(setup_sudoers)
 setup.add_command(setup_nginx)
 setup.add_command(setup_supervisor)
