@@ -29,6 +29,30 @@ def setup_production(user, bench_path='.'):
 
 	service('nginx', 'restart')
 
+def disable_production(bench_path='.'):
+	bench_name = get_bench_name(bench_path)
+
+	# supervisorctl
+	supervisor_conf_extn = "ini" if is_centos7() else "conf"
+	supervisor_conf = os.path.join(get_supervisor_confdir(), '{bench_name}.{extn}'.format(
+		bench_name=bench_name, extn=supervisor_conf_extn))
+
+	if os.path.islink(supervisor_conf):
+		os.unlink(supervisor_conf)
+
+	exec_cmd('supervisorctl reread')
+	exec_cmd('supervisorctl reload')
+
+	# nginx
+	nginx_conf = '/etc/nginx/conf.f/{bench_name}.conf'.format(bench_name=bench_name)
+	if os.path.islink(nginx_conf):
+		os.unlink(nginx_conf)
+
+	service('nginx', 'reload')
+	if os.environ.get('NO_SERVICE_RESTART'):
+		return
+
+	service('nginx', 'restart')
 
 def service(service, option):
 	if os.path.basename(get_program(['systemctl']) or '') == 'systemctl' and is_running_systemd():

@@ -45,8 +45,9 @@ bench_command.add_command(backup_all_sites)
 bench_command.add_command(release)
 bench_command.add_command(renew_lets_encrypt)
 
-from bench.commands.setup import setup
+from bench.commands.setup import setup, disable_production
 bench_command.add_command(setup)
+bench_command.add_command(disable_production)
 
 from bench.commands.config import config
 bench_command.add_command(config)
