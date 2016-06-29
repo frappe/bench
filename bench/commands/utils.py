@@ -128,3 +128,12 @@ def release(app, bump_type, develop, master, owner, repo_name, remote):
 	from bench.release import release
 	release(bench_path='.', app=app, bump_type=bump_type, develop=develop, master=master,
 		remote=remote, owner=owner, repo_name=repo_name)
+
+@click.command('archive-bench')
+@click.argument('bench-path')
+@click.option('--archive-benches-path', default=None)
+@click.option('--force', default=False, is_flag=True, help='Force archiving of bench with sites')
+def archive_bench(bench_path, archive_benches_path, force):
+	"""Archives bench, only if it contains no sites"""
+	from bench.utils import archive_bench
+	archive_bench(bench_path, archive_benches_path, force)

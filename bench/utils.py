@@ -8,10 +8,11 @@ import json
 import platform
 import select
 import multiprocessing
-from distutils.spawn import find_executable
 import pwd, grp
 import bench
+import shutil
 from bench import env
+from distutils.spawn import find_executable
 
 class PatchError(Exception):
 	pass
@@ -660,3 +661,85 @@ def validate_pillow_dependencies(bench_path, requirements):
 
 def get_bench_name(bench_path):
 	return os.path.basename(os.path.abspath(bench_path))
+
+def archive_bench(bench_path, archived_benches_path, force):
+	if bench_path == os.getcwd():
+		# TODO need to add a proper messages
+		print "Cannot archive a bench from within, Please run 'archive-bench' command from different path"
+		sys.exit()
+
+	if not force:
+		paths = []
+		site_exists = False
+		sites_path = os.path.join(os.path.abspath(bench_path), 'sites')
+
+		for directory in os.listdir(sites_path):
+			p = os.path.join(sites_path, directory)
+			if os.path.isdir(p):
+				paths.append(p)
+
+		for path in paths:
+			for f in os.listdir(path):
+				if 'site_config.json' in f:
+					site_exists = True
+					break
+
+			if site_exists:
+				print "Please archive all sites on the bench, before continuing to archive bench."
+				print "If you still want to continue, please use '--force' while running command."
+				sys.exit()
+
+	supervisor_conf_path = '/etc/supervisord.d/'
+	nginx_conf_path = '/etc/nginx/conf.d'
+
+	base_path, bench_name = os.path.split(bench_path)
+
+	if os.path.islink(os.path.join(nginx_conf_path, bench_name)):
+		os.unlink(os.path.join(nginx_conf_path, bench_name))
+		restart_nginx_process()
+
+	if os.path.islink(os.path.join(supervisor_conf_path, bench_name)):
+		os.unlink(os.path.join(supervisor_conf_path, bench_name))
+		reload_supervisor_process()
+
+	if not archived_benches_path:
+		archived_benches_path = os.path.join(base_path, 'archived_benches')
+
+	if not os.path.exists(archived_benches_path):
+		os.makedirs(archived_benches_path)
+
+	shutil.move(bench_path, archived_benches_path)
+
+def restart_nginx_process():
+	cmd = ['sudo', 'service', 'nginx']
+
+	try:
+		cmd.append('reload')
+		subprocess.check_output(cmd, cwd=os.getcwd())
+	except:
+		raise
+	finally:
+		cmd.remove('reload')
+
+	try:
+		cmd.append('restart')
+		subprocess.check_output(cmd, cwd=os.getcwd())
+	except:
+		raise
+
+def reload_supervisor_process():
+	cmd = ['sudo', 'supervisorctl']
+
+	try:
+		cmd.append('reread')
+		subprocess.check_output(cmd, cwd=os.getcwd())
+	except:
+		raise
+	finally:
+		cmd.remove('reread')
+
+	try:
+		cmd.append('reload')
+		subprocess.check_output(cmd, cwd=os.getcwd())
+	except:
+		raise
