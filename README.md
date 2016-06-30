@@ -41,7 +41,7 @@ Easy Setup
 ---------------------
 - This is an opinionated setup with logging and SE Linux. So, it is best to setup on a blank server.
 - Supported for CentOS 6, CentOS 7, Debian 7 and Ubuntu 12.04 to 15.x
-- This script will install the pre-requisites, install bench and setup an ERPNext site
+- This script will install the pre-requisites, install bench and setup an ERPNext site with the name site1.local
 - Passwords for Frappe, Frappe Administrator and MariaDB (root) will be generated
 - You can then login as **Administrator** with the Administrator password printed 
 
@@ -98,10 +98,10 @@ Mac OSX:
 curl "https://raw.githubusercontent.com/frappe/bench/develop/playbooks/install.py" -o install.py
 
 # for development
-sudo python install.py --develop
+python install.py --develop
 
 # for production
-sudo python install.py --production
+python install.py --production
 
 ```
 For development, you have to explicitly start services by running `bench start`. This script requires Python2.7+ installed on your machine. You need to run this with a user that is **not** `root`, but can `sudo`. If you don't have such a user, you can search the web for *How to add a new user in { your OS }* and *How to add an existing user to sudoers in { your OS }*.
