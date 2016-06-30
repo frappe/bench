@@ -23,7 +23,7 @@ def setup_production(user, bench_path='.'):
 	if not os.path.islink(nginx_conf):
 		os.symlink(os.path.abspath(os.path.join(bench_path, 'config', 'nginx.conf')), nginx_conf)
 
-	exec_cmd('supervisorctl reload')
+	exec_cmd('sudo supervisorctl reload')
 	if os.environ.get('NO_SERVICE_RESTART'):
 		return
 
@@ -53,9 +53,9 @@ def disable_production(bench_path='.'):
 
 def service(service, option):
 	if os.path.basename(get_program(['systemctl']) or '') == 'systemctl' and is_running_systemd():
-		exec_cmd("{service_manager} {option} {service}".format(service_manager='systemctl', option=option, service=service))
+		exec_cmd("sudo {service_manager} {option} {service}".format(service_manager='systemctl', option=option, service=service))
 	elif os.path.basename(get_program(['service']) or '') == 'service':
-		exec_cmd("{service_manager} {service} {option} ".format(service_manager='service', service=service, option=option))
+		exec_cmd("sudo {service_manager} {service} {option} ".format(service_manager='service', service=service, option=option))
 	else:
 		# look for 'service_manager' and 'service_manager_command' in environment
 		service_manager = os.environ.get("BENCH_SERVICE_MANAGER")
