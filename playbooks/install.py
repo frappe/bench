@@ -66,17 +66,18 @@ def install_bench(args):
 	if not args.run_travis:
 		clone_bench_repo(args)
 
-	if is_sudo_user() and not args.user and not args.production:
-		raise Exception('Please run this script as a non-root user with sudo privileges, but without using sudo or pass --user=USER')
-
 	if not args.user:
 		if args.production:
 			args.user = 'frappe'
+
+		elif os.environ.has_key('SUDO_USER'):
+			args.user = os.environ['SUDO_USER']
+
 		else:
 			args.user = getpass.getuser()
 
 	if args.user == 'root':
-		raise Exception('--user cannot be root')
+		raise Exception('Please run this script as a non-root user with sudo privileges, but without using sudo or pass --user=USER')
 
 	# create user if not exists
 	extra_vars = vars(args)
