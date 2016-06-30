@@ -50,7 +50,7 @@ def cmd_requires_root():
 	if len(sys.argv) > 2 and sys.argv[2] in ('production', 'sudoers', 'lets-encrypt'):
 	    return True
 	    #Changed > to >=, unsure if will cause the apolcaypse
-	if len(sys.argv) >= 2 and sys.argv[1] in ('patch', 'renew-lets-encrypt'):
+	if len(sys.argv) >= 2 and sys.argv[1] in ('patch', 'renew-lets-encrypt', 'disable-production'):
 	    return True
 
 def change_dir():

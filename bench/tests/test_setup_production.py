@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 from bench.tests import test_init
-from bench.config.production_setup import setup_production, get_supervisor_confdir
+from bench.config.production_setup import setup_production, get_supervisor_confdir, disable_production
 import bench.utils
 import os
 import getpass
@@ -46,6 +46,21 @@ class TestSetupProduction(test_init.TestBenchInit):
 
 		self.assert_supervisor_config(bench_name, use_rq=False)
 		self.assert_supervisor_process(bench_name, use_rq=False)
+
+	def test_disable_production(self):
+		bench_name = 'test-disable-prod'
+		self.test_init(bench_name, frappe_branch='master')
+
+		user = getpass.getuser()
+
+		bench_path = os.path.join(os.path.abspath(self.benches_path), bench_name)
+		setup_production(user, bench_path)
+
+		disable_production(bench_path)
+
+		self.assert_nginx_link(bench_name)
+		self.assert_supervisor_link(bench_name)
+		self.assert_supervisor_process(bench_name=bench_name, disable_production=True)
 
 	def assert_nginx_config(self, bench_name):
 		conf_src = os.path.join(os.path.abspath(self.benches_path), bench_name, 'config', 'nginx.conf')
@@ -128,7 +143,7 @@ class TestSetupProduction(test_init.TestBenchInit):
 			for key in tests:
 				self.assertTrue(key.format(bench_name=bench_name) in f)
 
-	def assert_supervisor_process(self, bench_name, use_rq=True):
+	def assert_supervisor_process(self, bench_name, use_rq=True, disable_production=False):
 		out = bench.utils.get_cmd_output("sudo supervisorctl status")
 
 		if "STARTING" in out:
@@ -160,7 +175,20 @@ class TestSetupProduction(test_init.TestBenchInit):
 			])
 
 		for key in tests:
-			self.assertTrue(re.search(key.format(bench_name=bench_name), out))
+			if disable_production:
+				self.assertFalse(re.search(key.format(bench_name=bench_name), out))
+			else:
+				self.assertTrue(re.search(key.format(bench_name=bench_name), out))
 
+	def assert_nginx_link(self, bench_name):
+		nginx_conf_name = '{bench_name}.conf'.format(bench_name=bench_name)
+		nginx_conf_path = os.path.join('/etc/nginx/conf.d', nginx_conf_name)
 
+		self.assertFalse(os.path.islink(nginx_conf_path))
 
+	def assert_supervisor_link(self, bench_name):
+		supervisor_conf_dir = get_supervisor_confdir()
+		supervisor_conf_name = '{bench_name}.conf'.format(bench_name=bench_name)
+		supervisor_conf_path = os.path.join(supervisor_conf_dir, supervisor_conf_name)
+
+		self.assertFalse(os.path.islink(supervisor_conf_path))

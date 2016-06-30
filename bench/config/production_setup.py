@@ -23,18 +23,39 @@ def setup_production(user, bench_path='.'):
 	if not os.path.islink(nginx_conf):
 		os.symlink(os.path.abspath(os.path.join(bench_path, 'config', 'nginx.conf')), nginx_conf)
 
-	exec_cmd('supervisorctl reload')
+	exec_cmd('sudo supervisorctl reload')
 	if os.environ.get('NO_SERVICE_RESTART'):
 		return
 
 	service('nginx', 'restart')
 
+def disable_production(bench_path='.'):
+	bench_name = get_bench_name(bench_path)
+
+	# supervisorctl
+	supervisor_conf_extn = "ini" if is_centos7() else "conf"
+	supervisor_conf = os.path.join(get_supervisor_confdir(), '{bench_name}.{extn}'.format(
+		bench_name=bench_name, extn=supervisor_conf_extn))
+
+	if os.path.islink(supervisor_conf):
+		os.unlink(supervisor_conf)
+
+	exec_cmd('sudo supervisorctl reread')
+	exec_cmd('sudo supervisorctl update')
+
+	# nginx
+	nginx_conf = '/etc/nginx/conf.d/{bench_name}.conf'.format(bench_name=bench_name)
+
+	if os.path.islink(nginx_conf):
+		os.unlink(nginx_conf)
+
+	service('nginx', 'reload')
 
 def service(service, option):
 	if os.path.basename(get_program(['systemctl']) or '') == 'systemctl' and is_running_systemd():
-		exec_cmd("{service_manager} {option} {service}".format(service_manager='systemctl', option=option, service=service))
+		exec_cmd("sudo {service_manager} {option} {service}".format(service_manager='systemctl', option=option, service=service))
 	elif os.path.basename(get_program(['service']) or '') == 'service':
-		exec_cmd("{service_manager} {service} {option} ".format(service_manager='service', service=service, option=option))
+		exec_cmd("sudo {service_manager} {service} {option} ".format(service_manager='service', service=service, option=option))
 	else:
 		# look for 'service_manager' and 'service_manager_command' in environment
 		service_manager = os.environ.get("BENCH_SERVICE_MANAGER")
