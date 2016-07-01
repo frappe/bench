@@ -37,6 +37,13 @@ def setup_redis():
 	generate_config('.')
 
 
+@click.command('fonts')
+def setup_fonts():
+	"Add frappe fonts to system"
+	from bench.config.fonts import setup_fonts
+	setup_fonts()
+
+
 @click.command('production')
 @click.argument('user')
 def setup_production(user):
@@ -106,3 +113,4 @@ setup.add_command(setup_env)
 setup.add_command(setup_procfile)
 setup.add_command(setup_socketio)
 setup.add_command(setup_config)
+setup.add_command(setup_fonts)
