@@ -135,3 +135,10 @@ def disable_production():
 	"""Disables production environment for the bench."""
 	from bench.config.production_setup import disable_production
 	disable_production(bench_path='.')
+
+
+@click.command('src')
+def bench_src():
+	"""Prints bench source folder path, which can be used as: cd `bench src` """
+	import bench
+	print os.path.dirname(bench.__path__[0])
