@@ -1,4 +1,4 @@
-import click
+import click, sys
 
 @click.group()
 def setup():
@@ -101,6 +101,28 @@ def setup_config():
 	make_config('.')
 
 
+@click.command('domain')
+@click.argument('domain')
+@click.option('--site')
+@click.option('--ssl-certificate-path', help="Path to SSL certificate")
+@click.option('--ssl-certificate-key', help="Path to SSL certificate key")
+def setup_domain(site, domain, ssl_certificate_path=None, ssl_certificate_key=None):
+	"Add custom domain to site"
+	from bench.utils import get_site_domains, update_site_domains
+	if not site:
+		print "Please specify site"
+		sys.exit(1)
+
+	domains = get_site_domains(site)
+	if ssl_certificate_key and ssl_certificate_path:
+		domain = {
+			'domain' : domain,
+			'ssl_certificate_path': ssl_certificate_path,
+			'ssl_certificate_key': ssl_certificate_key
+			}
+	update_site_domains(site, domain)
+
+
 setup.add_command(setup_sudoers)
 setup.add_command(setup_nginx)
 setup.add_command(setup_supervisor)
@@ -114,3 +136,4 @@ setup.add_command(setup_procfile)
 setup.add_command(setup_socketio)
 setup.add_command(setup_config)
 setup.add_command(setup_fonts)
+setup.add_command(setup_domain)
