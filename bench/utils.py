@@ -339,6 +339,14 @@ def update_site_config(site, new_config, bench_path='.'):
 	config.update(new_config)
 	put_site_config(site, config, bench_path=bench_path)
 
+def get_site_domains(site, bench_path='.'):
+	return get_site_config(site, bench_path).get("domains") or []
+
+def update_site_domains(site, domain, bench_path='.'):
+	domains = get_site_domains(site, bench_path)
+	domains.append(domain)
+	update_site_config(site, {"domains": domains})
+
 def set_nginx_port(site, port, bench_path='.', gen_config=True):
 	set_site_config_nginx_property(site, {"nginx_port": port}, bench_path=bench_path, gen_config=gen_config)
 
