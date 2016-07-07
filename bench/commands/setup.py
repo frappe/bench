@@ -1,4 +1,4 @@
-import click, sys
+import click, sys, json
 
 @click.group()
 def setup():
@@ -15,20 +15,24 @@ def setup_sudoers(user):
 
 
 @click.command('nginx')
-@click.option('--force', help='Force regeneration of nginx config file', default=False, is_flag=True)
-def setup_nginx(force=None):
+@click.option('--yes', help='Yes to regeneration of nginx config file', default=False, is_flag=True)
+def setup_nginx(yes=False):
 	"generate config for nginx"
 	from bench.config.nginx import make_nginx_conf
-	make_nginx_conf(bench_path=".", force=force)
+	make_nginx_conf(bench_path=".", yes=yes)
 
+@click.command('reload-nginx')
+def reload_nginx():
+	from bench.config.production_setup import reload_nginx
+	reload_nginx()
 
 @click.command('supervisor')
 @click.option('--user')
-@click.option('--force', help='Force regeneration of supervisor config', is_flag=True, default=False)
-def setup_supervisor(user=None, force=None):
+@click.option('--yes', help='Yes to regeneration of supervisor config', is_flag=True, default=False)
+def setup_supervisor(user=None, yes=False):
 	"generate config for supervisor with an optional user argument"
 	from bench.config.supervisor import generate_supervisor_config
-	generate_supervisor_config(bench_path=".", user=user, force=force)
+	generate_supervisor_config(bench_path=".", user=user, yes=yes)
 
 @click.command('redis')
 def setup_redis():
@@ -40,7 +44,7 @@ def setup_redis():
 @click.command('fonts')
 def setup_fonts():
 	"Add frappe fonts to system"
-	from bench.config.fonts import setup_fonts
+	from bench.utils import setup_fonts
 	setup_fonts()
 
 
@@ -101,27 +105,53 @@ def setup_config():
 	make_config('.')
 
 
-@click.command('domain')
+@click.command('add-domain')
 @click.argument('domain')
-@click.option('--site')
-@click.option('--ssl-certificate-path', help="Path to SSL certificate")
-@click.option('--ssl-certificate-key', help="Path to SSL certificate key")
-def setup_domain(site, domain, ssl_certificate_path=None, ssl_certificate_key=None):
-	"Add custom domain to site"
-	from bench.utils import get_site_domains, update_site_domains
+@click.option('--site', prompt=True)
+@click.option('--ssl-certificate', help="Absolute path to SSL Certificate")
+@click.option('--ssl-certificate-key', help="Absolute path to SSL Certificate Key")
+def add_domain(domain, site=None, ssl_certificate=None, ssl_certificate_key=None):
+	"""Add custom domain to site"""
+	from bench.config.site_config import add_domain
+
 	if not site:
 		print "Please specify site"
 		sys.exit(1)
 
-	domains = get_site_domains(site)
-	if ssl_certificate_key and ssl_certificate_path:
-		domain = {
-			'domain' : domain,
-			'ssl_certificate_path': ssl_certificate_path,
-			'ssl_certificate_key': ssl_certificate_key
-			}
-	update_site_domains(site, domain)
+	add_domain(site, domain, ssl_certificate, ssl_certificate_key, bench_path='.')
 
+@click.command('remove-domain')
+@click.argument('domain')
+@click.option('--site', prompt=True)
+def remove_domain(domain, site=None):
+	"""Remove custom domain from a site"""
+	from bench.config.site_config import remove_domain
+
+	if not site:
+		print "Please specify site"
+		sys.exit(1)
+
+	remove_domain(site, domain, bench_path='.')
+
+@click.command('sync-domains')
+@click.argument('domains')
+@click.option('--site', prompt=True)
+def sync_domains(domains, site=None):
+	from bench.config.site_config import sync_domains
+
+	if not site:
+		print "Please specify site"
+		sys.exit(1)
+
+	domains = json.loads(domains)
+	if not isinstance(domains, list):
+		print "Domains should be a json list of strings or dictionaries"
+		sys.exit(1)
+
+	changed = sync_domains(site, domains, bench_path='.')
+
+	# if changed, success, else failure
+	sys.exit(0 if changed else 1)
 
 setup.add_command(setup_sudoers)
 setup.add_command(setup_nginx)
@@ -136,4 +166,6 @@ setup.add_command(setup_procfile)
 setup.add_command(setup_socketio)
 setup.add_command(setup_config)
 setup.add_command(setup_fonts)
-setup.add_command(setup_domain)
+setup.add_command(add_domain)
+setup.add_command(remove_domain)
+setup.add_command(sync_domains)
