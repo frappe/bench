@@ -1,27 +1,15 @@
-import os
-import sys
-import subprocess
-import logging
-import itertools
-import requests
-import json
-import platform
-import select
-import multiprocessing
+import os, sys, shutil, subprocess, logging, itertools, requests, json, platform, select, pwd, grp, multiprocessing
 from distutils.spawn import find_executable
-import pwd, grp
 import bench
 from bench import env
 
 class PatchError(Exception):
 	pass
 
-
 class CommandFailedError(Exception):
 	pass
 
 logger = logging.getLogger(__name__)
-
 
 folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 
@@ -321,43 +309,6 @@ def restart_supervisor_processes(bench_path='.'):
 			group = 'frappe:'
 
 		exec_cmd('sudo supervisorctl restart {group}'.format(group=group), cwd=bench_path)
-
-def get_site_config(site, bench_path='.'):
-	config_path = os.path.join(bench_path, 'sites', site, 'site_config.json')
-	if not os.path.exists(config_path):
-		return {}
-	with open(config_path) as f:
-		return json.load(f)
-
-def put_site_config(site, config, bench_path='.'):
-	config_path = os.path.join(bench_path, 'sites', site, 'site_config.json')
-	with open(config_path, 'w') as f:
-		return json.dump(config, f, indent=1)
-
-def update_site_config(site, new_config, bench_path='.'):
-	config = get_site_config(site, bench_path=bench_path)
-	config.update(new_config)
-	put_site_config(site, config, bench_path=bench_path)
-
-def set_nginx_port(site, port, bench_path='.', gen_config=True):
-	set_site_config_nginx_property(site, {"nginx_port": port}, bench_path=bench_path, gen_config=gen_config)
-
-def set_ssl_certificate(site, ssl_certificate, bench_path='.', gen_config=True):
-	set_site_config_nginx_property(site, {"ssl_certificate": ssl_certificate}, bench_path=bench_path, gen_config=gen_config)
-
-def set_ssl_certificate_key(site, ssl_certificate_key, bench_path='.', gen_config=True):
-	set_site_config_nginx_property(site, {"ssl_certificate_key": ssl_certificate_key}, bench_path=bench_path, gen_config=gen_config)
-
-def set_site_config_nginx_property(site, config, bench_path='.', gen_config=True):
-	from .config.nginx import make_nginx_conf
-	if site not in get_sites(bench_path=bench_path):
-		raise Exception("No such site")
-	update_site_config(site, config, bench_path=bench_path)
-	if gen_config:
-		make_nginx_conf(bench_path=bench_path)
-
-def set_url_root(site, url_root, bench_path='.'):
-	update_site_config(site, {"host_name": url_root}, bench_path=bench_path)
 
 def set_default_site(site, bench_path='.'):
 	if not site in get_sites(bench_path=bench_path):
@@ -660,3 +611,14 @@ def validate_pillow_dependencies(bench_path, requirements):
 
 def get_bench_name(bench_path):
 	return os.path.basename(os.path.abspath(bench_path))
+
+def setup_fonts():
+	fonts_path = os.path.join('/tmp', 'fonts')
+
+	exec_cmd("git clone https://github.com/frappe/fonts.git", cwd='/tmp')
+	os.rename('/usr/share/fonts', '/usr/share/fonts_backup')
+	os.rename('/etc/fonts', '/etc/fonts_backup')
+	os.rename(os.path.join(fonts_path, 'usr_share_fonts'), '/usr/share/fonts')
+	os.rename(os.path.join(fonts_path, 'etc_fonts'), '/etc/fonts')
+	shutil.rmtree(fonts_path)
+	exec_cmd("fc-cache -fv")

@@ -23,11 +23,12 @@ def setup_production(user, bench_path='.'):
 	if not os.path.islink(nginx_conf):
 		os.symlink(os.path.abspath(os.path.join(bench_path, 'config', 'nginx.conf')), nginx_conf)
 
-	exec_cmd('sudo supervisorctl reload')
+	update_supervisor()
+
 	if os.environ.get('NO_SERVICE_RESTART'):
 		return
 
-	service('nginx', 'restart')
+	reload_nginx()
 
 def disable_production(bench_path='.'):
 	bench_name = get_bench_name(bench_path)
@@ -49,7 +50,7 @@ def disable_production(bench_path='.'):
 	if os.path.islink(nginx_conf):
 		os.unlink(nginx_conf)
 
-	service('nginx', 'reload')
+	reload_nginx()
 
 def service(service, option):
 	if os.path.basename(get_program(['systemctl']) or '') == 'systemctl' and is_running_systemd():
@@ -61,7 +62,7 @@ def service(service, option):
 		service_manager = os.environ.get("BENCH_SERVICE_MANAGER")
 		if service_manager:
 			service_manager_command = (os.environ.get("BENCH_SERVICE_MANAGER_COMMAND")
-				or "{service_manager} restart {service}").format(service_manager=service_manager, service=service)
+				or "{service_manager} {option} {service}").format(service_manager=service_manager, service=service, option=option)
 			exec_cmd(service_manager_command)
 
 		else:
@@ -92,3 +93,11 @@ def is_running_systemd():
 	elif comm == "systemd":
 		return True
 	return False
+
+def update_supervisor():
+	exec_cmd('sudo supervisorctl reread')
+	exec_cmd('sudo supervisorctl update')
+
+def reload_nginx():
+	exec_cmd(['sudo', 'nginx', '-t'])
+	service('nginx', 'reload')

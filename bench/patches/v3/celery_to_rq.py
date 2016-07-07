@@ -18,8 +18,8 @@ def execute(bench_path):
 		'Do you want to continue?',
 		abort=True)
 
-	setup_procfile(bench_path, force=True)
+	setup_procfile(bench_path, yes=True)
 
 	# if production setup
 	if os.path.exists(os.path.join(bench_path, 'config', 'supervisor.conf')):
-		generate_supervisor_config(bench_path, force=True)
+		generate_supervisor_config(bench_path, yes=True)

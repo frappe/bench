@@ -1,7 +1,7 @@
 import os, json, click, random, string
-from bench.utils import get_sites, get_bench_name
+from bench.utils import get_sites, get_bench_name, exec_cmd
 
-def make_nginx_conf(bench_path, force=False):
+def make_nginx_conf(bench_path, yes=False):
 	from bench import env
 	from bench.config.common_site_config import get_config
 
@@ -25,7 +25,7 @@ def make_nginx_conf(bench_path, force=False):
 	})
 
 	conf_path = os.path.join(bench_path, "config", "nginx.conf")
-	if not force and os.path.exists(conf_path):
+	if not yes and os.path.exists(conf_path):
 		click.confirm('nginx.conf already exists and this will overwrite it. Do you want to continue?',
 			abort=True)
 
@@ -84,6 +84,7 @@ def prepare_sites(config, bench_path):
 
 def get_sites_with_config(bench_path):
 	from bench.config.common_site_config import get_config
+	from bench.config.site_config import get_site_config
 
 	sites = get_sites(bench_path=bench_path)
 	dns_multitenant = get_config(bench_path).get('dns_multitenant')
@@ -146,6 +147,3 @@ def use_wildcard_certificate(bench_path, ret):
 			site['ssl_certificate_key'] = ssl_certificate_key
 			site['wildcard'] = 1
 
-def get_site_config(site, bench_path='.'):
-	with open(os.path.join(bench_path, 'sites', site, 'site_config.json')) as f:
-		return json.load(f)

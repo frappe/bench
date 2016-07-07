@@ -1,7 +1,7 @@
 import os, getpass, click
 import bench
 
-def generate_supervisor_config(bench_path, user=None, force=False):
+def generate_supervisor_config(bench_path, user=None, yes=False):
 	from bench.app import get_current_frappe_version, use_rq
 	from bench.utils import get_bench_name, find_executable
 	from bench.config.common_site_config import get_config, update_config, get_gunicorn_workers
@@ -34,7 +34,7 @@ def generate_supervisor_config(bench_path, user=None, force=False):
 	})
 
 	conf_path = os.path.join(bench_path, 'config', 'supervisor.conf')
-	if not force and os.path.exists(conf_path):
+	if not yes and os.path.exists(conf_path):
 		click.confirm('supervisor.conf already exists and this will overwrite it. Do you want to continue?',
 			abort=True)
 

@@ -23,7 +23,7 @@ def restart():
 @click.argument('port', type=int)
 def set_nginx_port(site, port):
 	"Set nginx port for site"
-	from bench.utils import set_nginx_port
+	from bench.config.site_config import set_nginx_port
 	set_nginx_port(site, port)
 
 
@@ -32,7 +32,7 @@ def set_nginx_port(site, port):
 @click.argument('ssl-certificate-path')
 def set_ssl_certificate(site, ssl_certificate_path):
 	"Set ssl certificate path for site"
-	from bench.utils import set_ssl_certificate
+	from bench.config.site_config import set_ssl_certificate
 	set_ssl_certificate(site, ssl_certificate_path)
 
 
@@ -41,7 +41,7 @@ def set_ssl_certificate(site, ssl_certificate_path):
 @click.argument('ssl-certificate-key-path')
 def set_ssl_certificate_key(site, ssl_certificate_key_path):
 	"Set ssl certificate private key path for site"
-	from bench.utils import set_ssl_certificate_key
+	from bench.config.site_config import set_ssl_certificate_key
 	set_ssl_certificate_key(site, ssl_certificate_key_path)
 
 
@@ -50,7 +50,7 @@ def set_ssl_certificate_key(site, ssl_certificate_key_path):
 @click.argument('url-root')
 def set_url_root(site, url_root):
 	"Set url root for site"
-	from bench.utils import set_url_root
+	from bench.config.site_config import set_url_root
 	set_url_root(site, url_root)
 
 
