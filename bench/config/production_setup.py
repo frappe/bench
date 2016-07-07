@@ -23,7 +23,7 @@ def setup_production(user, bench_path='.'):
 	if not os.path.islink(nginx_conf):
 		os.symlink(os.path.abspath(os.path.join(bench_path, 'config', 'nginx.conf')), nginx_conf)
 
-	update_supervisor()
+	reload_supervisor()
 
 	if os.environ.get('NO_SERVICE_RESTART'):
 		return
@@ -94,9 +94,10 @@ def is_running_systemd():
 		return True
 	return False
 
-def update_supervisor():
-	exec_cmd('sudo supervisorctl reread')
-	exec_cmd('sudo supervisorctl update')
+def reload_supervisor():
+	exec_cmd('sudo supervisorctl reload')
+	# exec_cmd('sudo supervisorctl reread')
+	# exec_cmd('sudo supervisorctl update')
 
 def reload_nginx():
 	subprocess.check_output(['sudo', find_executable('nginx'), '-t'])
