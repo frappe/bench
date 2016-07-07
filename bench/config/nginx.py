@@ -1,5 +1,6 @@
 import os, json, click, random, string
-from bench.utils import get_sites, get_bench_name, exec_cmd
+import bench
+from bench.utils import get_sites, get_bench_name
 
 def make_nginx_conf(bench_path, yes=False):
 	from bench import env
@@ -19,6 +20,7 @@ def make_nginx_conf(bench_path, yes=False):
 		"webserver_port": config.get('webserver_port'),
 		"socketio_port": config.get('socketio_port'),
 		"bench_name": get_bench_name(bench_path),
+		"bad_gateway_page": get_path_bad_gateway_page(),
 
 		# for nginx map variable
 		"random_string": "".join(random.choice(string.ascii_lowercase) for i in xrange(7))
@@ -147,3 +149,10 @@ def use_wildcard_certificate(bench_path, ret):
 			site['ssl_certificate_key'] = ssl_certificate_key
 			site['wildcard'] = 1
 
+def get_site_config(site, bench_path='.'):
+	with open(os.path.join(bench_path, 'sites', site, 'site_config.json')) as f:
+		return json.load(f)
+
+def get_path_bad_gateway_page():
+	bench_repo_path = os.path.abspath(bench.__path__[0])
+	return(os.path.join(bench_repo_path, 'config', 'templates', '502.html'))
