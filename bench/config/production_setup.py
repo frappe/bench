@@ -1,7 +1,7 @@
 from bench.utils import get_program, exec_cmd, get_cmd_output, fix_prod_setup_perms, get_bench_name, find_executable
 from bench.config.supervisor import generate_supervisor_config
 from bench.config.nginx import make_nginx_conf
-import os
+import os, subprocess
 
 def setup_production(user, bench_path='.'):
 	generate_supervisor_config(bench_path=bench_path, user=user)
@@ -99,5 +99,5 @@ def update_supervisor():
 	exec_cmd('sudo supervisorctl update')
 
 def reload_nginx():
-	exec_cmd(['sudo', find_executable('nginx'), '-t'])
+	subprocess.check_output(['sudo', find_executable('nginx'), '-t'])
 	service('nginx', 'reload')
