@@ -155,6 +155,7 @@ def sync_domains(domains, site=None):
 
 setup.add_command(setup_sudoers)
 setup.add_command(setup_nginx)
+setup.add_command(reload_nginx)
 setup.add_command(setup_supervisor)
 setup.add_command(setup_redis)
 setup.add_command(setup_letsencrypt)
