@@ -149,10 +149,6 @@ def use_wildcard_certificate(bench_path, ret):
 			site['ssl_certificate_key'] = ssl_certificate_key
 			site['wildcard'] = 1
 
-def get_site_config(site, bench_path='.'):
-	with open(os.path.join(bench_path, 'sites', site, 'site_config.json')) as f:
-		return json.load(f)
-
 def get_path_bad_gateway_page():
 	bench_repo_path = os.path.abspath(bench.__path__[0])
-	return(os.path.join(bench_repo_path, 'config', 'templates', '502.html'))
+	return(os.path.join(bench_repo_path, 'config', 'templates'))
