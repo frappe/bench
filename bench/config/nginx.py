@@ -19,6 +19,7 @@ def make_nginx_conf(bench_path, yes=False):
 		"webserver_port": config.get('webserver_port'),
 		"socketio_port": config.get('socketio_port'),
 		"bench_name": get_bench_name(bench_path),
+		"error_pages": get_error_pages(),
 
 		# for nginx map variable
 		"random_string": "".join(random.choice(string.ascii_lowercase) for i in xrange(7))
@@ -147,3 +148,11 @@ def use_wildcard_certificate(bench_path, ret):
 			site['ssl_certificate_key'] = ssl_certificate_key
 			site['wildcard'] = 1
 
+def get_error_pages():
+	import bench
+	bench_app_path = os.path.abspath(bench.__path__[0])
+	templates = os.path.join(bench_app_path, 'config', 'templates')
+
+	return {
+		502: os.path.join(templates, '502.html')
+	}
