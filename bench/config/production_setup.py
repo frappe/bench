@@ -1,4 +1,4 @@
-from bench.utils import get_program, exec_cmd, get_cmd_output, fix_prod_setup_perms, get_bench_name, find_executable
+from bench.utils import get_program, exec_cmd, get_cmd_output, fix_prod_setup_perms, get_bench_name, find_executable, CommandFailedError
 from bench.config.supervisor import generate_supervisor_config
 from bench.config.nginx import make_nginx_conf
 import os, subprocess
@@ -95,9 +95,12 @@ def is_running_systemd():
 	return False
 
 def reload_supervisor():
-	exec_cmd('sudo supervisorctl reload')
-	# exec_cmd('sudo supervisorctl reread')
-	# exec_cmd('sudo supervisorctl update')
+	try:
+		exec_cmd('sudo supervisorctl reread')
+		exec_cmd('sudo supervisorctl update')
+
+	except CommandFailedError:
+		exec_cmd('sudo supervisorctl reload')
 
 def reload_nginx():
 	subprocess.check_output(['sudo', find_executable('nginx'), '-t'])

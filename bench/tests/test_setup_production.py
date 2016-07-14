@@ -32,6 +32,10 @@ class TestSetupProduction(test_init.TestBenchInit):
 		bench.utils.setup_sudoers(user)
 		self.assert_sudoers(user)
 
+		for bench_name in ("test-bench-1", "test-bench-2"):
+			bench_path = os.path.join(os.path.abspath(self.benches_path), bench_name)
+			disable_production(bench_path)
+
 	def test_setup_production_v6(self):
 		bench_name = 'test-bench-v6'
 		self.test_init(bench_name, frappe_branch='master')
@@ -46,6 +50,8 @@ class TestSetupProduction(test_init.TestBenchInit):
 
 		self.assert_supervisor_config(bench_name, use_rq=False)
 		self.assert_supervisor_process(bench_name, use_rq=False)
+
+		disable_production(bench_path)
 
 	def test_disable_production(self):
 		bench_name = 'test-disable-prod'
