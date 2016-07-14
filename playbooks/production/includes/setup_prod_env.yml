@@ -90,11 +90,6 @@
     become_user: root
     when: ansible_distribution == 'Ubuntu'
 
-  - name: Stat supervisor.conf
-    stat:
-      path: /etc/supervisord.conf
-    register: supervisor_conf
-
   - name: Check whether default supervisor.conf exists
     service:
       name: supervisord
@@ -102,4 +97,13 @@
       enabled: yes
     become: yes
     become_user: root
-    when: supervisor_conf.stat.exists
+    when: ansible_distribution == 'CentOS'
+
+  - name: Check whether default supervisor.conf exists
+    service:
+      name: supervisor
+      state: started
+      enabled: yes
+    become: yes
+    become_user: root
+    when: ansible_distribution == 'Ubuntu'

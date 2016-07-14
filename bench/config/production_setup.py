@@ -95,12 +95,36 @@ def is_running_systemd():
 	return False
 
 def reload_supervisor():
-	try:
-		exec_cmd('sudo supervisorctl reread')
-		exec_cmd('sudo supervisorctl update')
+	supervisorctl = find_executable('supervisorctl')
 
+	try:
+		# first try reread/update
+		exec_cmd('sudo {0} reread'.format(supervisorctl))
+		exec_cmd('sudo {0} update'.format(supervisorctl))
+		return
 	except CommandFailedError:
-		exec_cmd('sudo supervisorctl reload')
+		pass
+
+	try:
+		# something is wrong, so try reloading
+		exec_cmd('sudo {0} reload'.format(supervisorctl))
+		return
+	except CommandFailedError:
+		pass
+
+	try:
+		# then try restart for centos
+		service('supervisord', 'restart')
+		return
+	except CommandFailedError:
+		pass
+
+	try:
+		# else try restart for ubuntu / debian
+		service('supervisor', 'restart')
+		return
+	except CommandFailedError:
+		pass
 
 def reload_nginx():
 	subprocess.check_output(['sudo', find_executable('nginx'), '-t'])
