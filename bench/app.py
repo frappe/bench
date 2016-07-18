@@ -10,6 +10,8 @@ import json
 import re
 import subprocess
 import bench
+import sys
+import shutil
 
 logging.basicConfig(level="DEBUG")
 logger = logging.getLogger(__name__)
@@ -100,6 +102,32 @@ def install_app(app, bench_path='.', verbose=False):
 				app=os.path.join(bench_path, 'apps', app),
 				find_links=find_links))
 	add_to_appstxt(app, bench_path=bench_path)
+
+
+def remove_app(app, bench_path='.'):
+	if not app in get_apps():
+		print "No app named {0}".format(app)
+		sys.exit(1)
+
+	app_path = os.path.join(bench_path, 'apps', app)
+	site_path = os.path.join(bench_path, 'sites')
+	pip = os.path.join(bench_path, 'env', 'bin', 'pip')
+
+	for site in os.listdir(site_path):
+		req_file = os.path.join(site_path, site, 'site_config.json')
+		if os.path.exists(req_file):
+			out = subprocess.check_output(["bench", "--site", site, "list-apps"], cwd=bench_path)
+			if re.search(r'\b' + app + r'\b', out):
+				print "Cannot remove, app is installed on site: {0}".format(site)
+				sys.exit(1)
+
+	exec_cmd(["{0} uninstall -y {1}".format(pip, app_path)], cwd=bench_path)
+	remove_from_appstxt(app, bench_path)
+	shutil.rmtree(app_path)
+	run_frappe_cmd("build", cwd=bench_path)
+	if get_config(bench_path).get('restart_supervisor_on_update'):
+		restart_supervisor_processes(bench_path=bench_path)
+
 
 def pull_all_apps(bench_path='.'):
 	rebase = '--rebase' if get_config(bench_path).get('rebase_on_pull') else ''

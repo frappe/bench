@@ -36,6 +36,14 @@ def new_app(app_name):
 	new_app(app_name)
 
 
+@click.command('remove-app')
+@click.argument('app-name')
+def remove_app(app_name):
+	"completely remove new app from bench"
+	from bench.app import remove_app
+	remove_app(app_name)
+
+
 @click.command('new-site')
 @click.option('--mariadb-root-password', help="MariaDB root password")
 @click.option('--admin-password', help="admin password to set for site")
