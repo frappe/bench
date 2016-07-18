@@ -39,6 +39,7 @@ Installation
 
 Easy Setup 
 ---------------------
+- We recommend using the newer [Beta Installer](#beta-installer) if your system supports it. 
 - This is an opinionated setup with logging and SE Linux. So, it is best to setup on a blank server.
 - Supported for CentOS 6, CentOS 7, Debian 7 and Ubuntu 12.04 to 15.x
 - **Does not** work on Ubuntu 16.04, use the [Beta Installer](#beta-installer) instead
@@ -62,7 +63,7 @@ sudo bash setup_frappe.sh --setup-production
 ```
 
 ####For Development:
-> We recommend using the [Beta Development Setup](#beta-development-setup) if it supports your OS
+
 
 ```
 Mac OSX:
