@@ -41,6 +41,7 @@ Easy Setup
 ---------------------
 - This is an opinionated setup with logging and SE Linux. So, it is best to setup on a blank server.
 - Supported for CentOS 6, CentOS 7, Debian 7 and Ubuntu 12.04 to 15.x
+- **Does not** work on Ubuntu 16.04, use the [Beta Installer](#beta-installer) instead
 - This script will install the pre-requisites, install bench and setup an ERPNext site
 - Passwords for Frappe, Frappe Administrator and MariaDB (root) will be generated
 - You can then login as **Administrator** with the Administrator password printed 
@@ -88,7 +89,7 @@ You have to explicitly start services by running `bench start`.
 Beta Installer
 ------------------------
 
-Tested on Ubuntu 14.04 to 15.x, Debian 7+, CentOS 7+, and MacOS X. If you find any problems, post them on our forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
+Tested on Ubuntu 14.04 to 16.04, CentOS 7+, and MacOS X. If you find any problems, post them on our forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
 
 ```
 Linux: 
@@ -103,8 +104,15 @@ sudo python install.py --develop
 # for production
 sudo python install.py --production
 
+# If you're logged in as root, use --user flag to create a user and install using that user
+sudo python install.py --develop --user frappe
+
 ```
-For development, you have to explicitly start services by running `bench start`. This script requires Python2.7+ installed on your machine. You need to run this with a user that is **not** `root`, but can `sudo`. If you don't have such a user, you can search the web for *How to add a new user in { your OS }* and *How to add an existing user to sudoers in { your OS }*.
+For development, you have to explicitly start services by running `bench start`. This script requires Python2.7+ installed on your machine. You will have to manually create a new site (`bench new-site`) and get apps that you need (`bench get-app`, `bench install-app`).
+
+For production, you will have a preinstalled site with ERPNext installed in it. 
+
+You need to run this with a user that is **not** `root`, but can `sudo`. If you don't have such a user, you can search the web for *How to add a new user in { your OS }* and *How to add an existing user to sudoers in { your OS }*.
 
 On Mac OS X, you will have to create a group with the same name as *{ your User }*. On creating this group, you have to assign *{ your User }* to it. You can do this by going to "System preferences" -> "Users & Groups" -> "+" (as if you were adding new account) -> Under "New account" select "Group" -> Type in group name -> "Create group"
 
@@ -120,7 +128,17 @@ This script will:
 		- WKHTMLtoPDF with patched QT
 	- Initializes a new Bench at `~/frappe/frappe-bench` with `frappe` framework already installed under `apps`.
 	
-You will have to manually create a new site (`bench new-site`) and get apps that you need (`bench get-app`, `bench install-app`).
+####Script Options:
+```
+	--help
+	--verbose
+	--develop
+	--production
+	--site
+	--user
+	--bench-branch
+	--repo-url
+```
 
 Updating
 ========
