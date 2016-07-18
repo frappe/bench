@@ -39,7 +39,7 @@ def new_app(app_name):
 @click.command('remove-app')
 @click.argument('app-name')
 def remove_app(app_name):
-	"completely remove new app from bench"
+	"completely remove app from bench"
 	from bench.app import remove_app
 	remove_app(app_name)
 
