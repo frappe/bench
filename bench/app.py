@@ -105,7 +105,7 @@ def install_app(app, bench_path='.', verbose=False):
 
 
 def remove_app(app, bench_path='.'):
-	if not app in get_apps():
+	if not app in get_apps(bench_path):
 		print "No app named {0}".format(app)
 		sys.exit(1)
 
@@ -121,10 +121,10 @@ def remove_app(app, bench_path='.'):
 				print "Cannot remove, app is installed on site: {0}".format(site)
 				sys.exit(1)
 
-	exec_cmd(["{0} uninstall -y {1}".format(pip, app_path)], cwd=bench_path)
+	exec_cmd(["{0} uninstall -y {1}".format(pip, app_path)])
 	remove_from_appstxt(app, bench_path)
 	shutil.rmtree(app_path)
-	run_frappe_cmd("build", cwd=bench_path)
+	run_frappe_cmd("build", bench_path=bench_path)
 	if get_config(bench_path).get('restart_supervisor_on_update'):
 		restart_supervisor_processes(bench_path=bench_path)
 
