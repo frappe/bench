@@ -116,6 +116,25 @@ class TestBenchInit(unittest.TestCase):
 		out = subprocess.check_output(["bench", "--site", site_name, "list-apps"], cwd=bench_path)
 		self.assertTrue("erpnext" in out)
 
+
+	def test_remove_app(self):
+		site_name = "test-site-4.dev"
+		self.init_bench('test-bench')
+
+		self.new_site(site_name)
+		bench_path = os.path.join(self.benches_path, "test-bench")
+
+		# get app
+		bench.app.get_app("https://github.com/frappe/erpnext", "develop", bench_path=bench_path)
+
+		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", "erpnext")))
+
+		# remove it
+		bench.app.remove_app("erpnext", bench_path=bench_path)
+
+		self.assertFalse(os.path.exists(os.path.join(bench_path, "apps", "erpnext")))
+
+
 	def test_switch_to_branch(self):
 		self.init_bench('test-bench')
 
