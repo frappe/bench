@@ -118,10 +118,8 @@ class TestBenchInit(unittest.TestCase):
 
 
 	def test_remove_app(self):
-		site_name = "test-site-4.dev"
 		self.init_bench('test-bench')
 
-		self.new_site(site_name)
 		bench_path = os.path.join(self.benches_path, "test-bench")
 
 		# get app
