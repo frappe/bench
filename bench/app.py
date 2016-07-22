@@ -103,7 +103,6 @@ def install_app(app, bench_path='.', verbose=False):
 				find_links=find_links))
 	add_to_appstxt(app, bench_path=bench_path)
 
-
 def remove_app(app, bench_path='.'):
 	if not app in get_apps(bench_path):
 		print "No app named {0}".format(app)
