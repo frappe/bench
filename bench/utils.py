@@ -615,10 +615,13 @@ def get_bench_name(bench_path):
 def setup_fonts():
 	fonts_path = os.path.join('/tmp', 'fonts')
 
+	if os.path.exists('/etc/fonts_backup'):
+		return
+
 	exec_cmd("git clone https://github.com/frappe/fonts.git", cwd='/tmp')
-	os.rename('/usr/share/fonts', '/usr/share/fonts_backup')
 	os.rename('/etc/fonts', '/etc/fonts_backup')
-	os.rename(os.path.join(fonts_path, 'usr_share_fonts'), '/usr/share/fonts')
+	os.rename('/usr/share/fonts', '/usr/share/fonts_backup')
 	os.rename(os.path.join(fonts_path, 'etc_fonts'), '/etc/fonts')
+	os.rename(os.path.join(fonts_path, 'usr_share_fonts'), '/usr/share/fonts')
 	shutil.rmtree(fonts_path)
 	exec_cmd("fc-cache -fv")
