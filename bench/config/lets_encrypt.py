@@ -1,6 +1,6 @@
 import bench, os, click, errno, urllib
-from bench.utils import exec_cmd, update_site_config, CommandFailedError
-from bench.config.common_site_config import update_config as update_common_config
+from bench.utils import exec_cmd, CommandFailedError
+from bench.config.site_config import update_site_config
 from bench.config.nginx import make_nginx_conf
 from bench.config.production_setup import service
 from bench.config.common_site_config import get_config
