@@ -30,6 +30,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	from .config.common_site_config import make_config
 	from .config import redis
 	from .config.procfile import setup_procfile
+	from bench.patches import set_all_patches_executed
 
 	if os.path.exists(path):
 		print 'Directory {} already exists!'.format(path)
@@ -58,6 +59,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	if bench.FRAPPE_VERSION > 5:
 		setup_socketio(bench_path=path)
 
+	set_all_patches_executed(bench_path=path)
 	build_assets(bench_path=path)
 	redis.generate_config(path)
 

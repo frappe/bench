@@ -29,3 +29,11 @@ def run(bench_path):
 
 			# end with an empty line
 			f.write('\n')
+
+def set_all_patches_executed(bench_path):
+	source_patch_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'patches.txt')
+	target_patch_file = os.path.join(os.path.abspath(bench_path), 'patches.txt')
+
+	with open(target_patch_file, 'w') as tf:
+		with open(source_patch_file, 'r') as sf:
+			tf.write(sf.read())
