@@ -49,10 +49,10 @@ Open your Terminal and enter:
 
 ```
 # Linux: 
-wget https://raw.githubusercontent.com/frappe/bench/develop/playbooks/install.py
+wget https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py
 
 # Mac OSX:
-curl "https://raw.githubusercontent.com/frappe/bench/develop/playbooks/install.py" -o install.py
+curl "https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py" -o install.py
 
 # For development
 sudo python install.py --develop

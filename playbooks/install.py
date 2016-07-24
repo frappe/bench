@@ -127,7 +127,7 @@ def clone_bench_repo(args):
 	if os.path.exists(tmp_bench_repo):
 		return 0
 
-	branch = args.bench_branch or 'develop'
+	branch = args.bench_branch or 'master'
 	repo_url = args.repo_url or 'https://github.com/frappe/bench'
 
 	success = run_os_command(
