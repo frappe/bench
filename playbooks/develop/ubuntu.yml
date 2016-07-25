@@ -16,8 +16,6 @@
       # basic installs
       - build-essential
       - redis-server
-      - nodejs
-      - npm
 
       # for mariadb
       - software-properties-common
@@ -56,6 +54,21 @@
       - tcl8.6-dev
       - tk8.6-dev
     when: ansible_distribution_version >= 14.04
+    become: yes
+    become_user: root
+
+  - name: Add nodejs v5 repo
+    shell: 'curl -sL https://deb.nodesource.com/setup_5.x'
+    args:
+      executable: /bin/bash
+    become: yes
+    become_user: root
+
+  - name: Update and Install Node v5
+    apt: name={{ item }} state=present update_cache=yes force=yes
+    with_items:
+      - nodejs
+      - npm
     become: yes
     become_user: root
 
