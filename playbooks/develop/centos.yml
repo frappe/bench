@@ -19,8 +19,6 @@
     with_items:
       # basic installs
       - redis
-      - nodejs
-      - npm
 
       # for mariadb
       - mysql-devel
@@ -42,6 +40,22 @@
       - libtiff-devel
       - tcl-devel
       - tk-devel
+    become: yes
+    become_user: root
+
+  - name: Add repo nodejs 5
+    yum:
+      name: https://rpm.nodesource.com/pub_5.x/el/7/x86_64/nodesource-release-el7-1.noarch.rpm
+      state: present
+      update_cache: yes
+    become: yes
+    become_user: root
+
+  - name: Install nodejs v5
+    yum: name={{ item }} state=present
+    with_items:
+      - nodejs
+      - npm
     become: yes
     become_user: root
 
