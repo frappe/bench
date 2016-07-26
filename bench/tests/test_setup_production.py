@@ -38,7 +38,7 @@ class TestSetupProduction(test_init.TestBenchInit):
 
 	def test_setup_production_v6(self):
 		bench_name = 'test-bench-v6'
-		self.test_init(bench_name, frappe_branch='master')
+		self.test_init(bench_name, frappe_branch='v6.x.x')
 
 		user = getpass.getuser()
 
