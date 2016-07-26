@@ -27,13 +27,21 @@ def release(bench_path, app, bump_type, develop='develop', master='master',
 		repo_name=repo_name, remote=remote)
 
 def validate(bench_path):
-	if not get_config(bench_path).get('release_bench'):
+	config = get_config(bench_path)
+	if not config.get('release_bench'):
 		print 'bench not configured to release'
 		sys.exit(1)
 
 	global github_username, github_password
-	github_username = raw_input('Username: ')
-	github_password = getpass.getpass()
+
+	github_username = config.get('github_username')
+	github_password = config.get('github_password')
+
+	if not github_username:
+		github_username = raw_input('Username: ')
+
+	if not github_password:
+		github_password = getpass.getpass()
 
 	r = requests.get('https://api.github.com/user', auth=HTTPBasicAuth(github_username, github_password))
 	r.raise_for_status()
