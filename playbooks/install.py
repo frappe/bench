@@ -6,6 +6,9 @@ tmp_bench_repo = '/tmp/.bench'
 
 def install_bench(args):
 	# pre-requisites for bench repo cloning
+	install_package('curl')
+	install_package('wget')
+
 	success = run_os_command({
 		'apt-get': [
 			'sudo apt-get update',
@@ -121,6 +124,20 @@ def install_python27():
 
 	# replace current python with python2.7
 	os.execvp('python2.7', ([] if is_sudo_user() else ['sudo']) + ['python2.7', __file__] + sys.argv[1:])
+
+def install_package(package):
+	package_exec = find_executable(package)
+
+	if not package_exec:
+		success = run_os_command({
+			'apt-get': ['sudo apt-get install -y {0}'.format(package)],
+			'yum': ['sudo yum install -y {0}'.format(package)]
+		})
+	else:
+		return
+
+	if not success:
+		could_not_install(package)
 
 def clone_bench_repo(args):
 	'''Clones the bench repository in the user folder'''
