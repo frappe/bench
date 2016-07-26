@@ -58,17 +58,24 @@
     become_user: root
 
   - name: Add nodejs v5 repo
-    shell: 'curl -sL https://deb.nodesource.com/setup_5.x'
-    args:
-      executable: /bin/bash
+    get_url:
+      url: 'https://deb.nodesource.com/setup_5.x'
+      dest: '/tmp/setup_5.x'
+      mode: 0644
+    become: yes
+    become_user: root
+
+  - name: Install setup_5.x
+    command: /bin/bash /tmp/setup_5.x
     become: yes
     become_user: root
 
   - name: Update and Install Node v5
-    apt: name={{ item }} state=present update_cache=yes force=yes
-    with_items:
-      - nodejs
-      - npm
+    apt:
+      name: nodejs
+      state: present
+      update_cache: yes
+      force: yes
     become: yes
     become_user: root
 
