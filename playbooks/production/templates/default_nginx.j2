@@ -2,7 +2,7 @@
 #   * Official English Documentation: http://nginx.org/en/docs/
 #   * Official Russian Documentation: http://nginx.org/ru/docs/
 
-{% if ansible_distribution == 'Ubuntu' %}
+{% if ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian' %}
 	{% set nginx_user = 'www-data'%}
 {% elif ansible_distribution == 'CentOS' %}
 	{% set nginx_user = 'nginx '%}

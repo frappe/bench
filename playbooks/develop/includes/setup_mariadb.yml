@@ -4,21 +4,21 @@
     become: yes
     become_user: root
 
-  - name: Set root Password for Ubuntu
+  - name: Set root Password
     mysql_user:
       name: root
       host: localhost
       password: '{{ mysql_root_password }}'
       state: present
+    with_items:
+      - localhost
+      - 127.0.0.1
+      - ::1
     become: yes
     become_user: root
-    when: ansible_distribution == 'Ubuntu'
-
-  - name: Set root Password
-    command: mysqladmin -u root password {{ mysql_root_password }}
-    become: yes
-    become_user: root
-    when: mysql_root_password is defined and ansible_distribution != 'Ubuntu'
+    # when you have already defined mysql root password
+    ignore_errors: yes
+    when: mysql_root_password is defined
 
   - name: Add configuration
     template: src={{ mysql_config_template }} dest={{ mysql_conf_dir }}/frappe.cnf owner=root mode=0644

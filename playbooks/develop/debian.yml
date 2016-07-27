@@ -27,7 +27,6 @@
       - xfonts-base
 
       # for Pillow
-      - libjpeg8-dev
       - zlib1g-dev
       - libfreetype6-dev
       - liblcms2-dev
@@ -37,40 +36,42 @@
     become: yes
     become_user: root
 
-  - name: install pillow prerequisites for Ubuntu < 14.04
+  - name: install pillow prerequisites for Debian < 8 
     apt: pkg={{ item }} state=present
     with_items:
+      - libjpeg8-dev
       - libtiff4-dev
       - tcl8.5-dev
       - tk8.5-dev
-    when: ansible_distribution_version | version_compare('14.04', 'lt')
+    when: ansible_distribution_version | version_compare('8', 'lt')
     become: yes
     become_user: root
 
-  - name: install pillow prerequisites for Ubuntu >= 14.04
+  - name: install pillow prerequisites for Debian >= 8
     apt: pkg={{ item }} state=present
     with_items:
+      - libjpeg62-turbo-dev
       - libtiff5-dev
-      - tcl8.6-dev
-      - tk8.6-dev
-    when: ansible_distribution_version | version_compare('14.04', 'ge')
+      - tcl8.5-dev
+      - tk8.5-dev
+    when: ansible_distribution_version | version_compare('8', 'ge')
     become: yes
     become_user: root
 
-  - name: Get nodejs 6.x bash script
+  - name: Add nodejs v5 repo
     get_url:
-      url: 'https://deb.nodesource.com/setup_6.x'
-      dest: '/tmp/setup_6.x'
+      url: 'https://deb.nodesource.com/setup_5.x'
+      dest: '/tmp/setup_5.x'
       mode: 0644
     become: yes
     become_user: root
 
-  - name: Run nodejs bash script
-    command: /bin/bash /tmp/setup_6.x
+  - name: Install setup_5.x
+    command: /bin/bash /tmp/setup_5.x
     become: yes
     become_user: root
 
-  - name: Install nodejs 6.x
+  - name: Update and Install Node v5
     apt:
       name: nodejs
       state: present
@@ -80,7 +81,7 @@
     become_user: root
 
   # install MariaDB
-  - include: includes/mariadb_ubuntu.yml
+  - include: includes/mariadb_debian.yml
 
   # install WKHTMLtoPDF
   - include: includes/wkhtmltopdf_ubuntu_debian.yml
@@ -93,8 +94,8 @@
 
   # setup frappe-bench
   - include: includes/setup_bench.yml
-    when: not without_bench_setup and not run_travis
+    when: not run_travis
 
   # setup development environment
   - include: includes/setup_dev_env.yml
-    when: not production and not run_travis and not without_bench_setup
+    when: not production and not run_travis
