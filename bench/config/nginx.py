@@ -23,6 +23,7 @@ def make_nginx_conf(bench_path, yes=False):
 		"socketio_port": config.get('socketio_port'),
 		"bench_name": bench_name,
 		"bench_name_hash": bench_name_hash,
+		"limit_conn_shared_memory": get_limit_conn_shared_memory(),
 		"error_pages": get_error_pages(),
 
 		# for nginx map variable
@@ -160,3 +161,10 @@ def get_error_pages():
 	return {
 		502: os.path.join(templates, '502.html')
 	}
+
+def get_limit_conn_shared_memory():
+	"""Allocate 2 percent of total virtual memory as shared memory for nginx limit_conn_zone"""
+	import psutil
+	total_vm = (psutil.virtual_memory().total) / (1024 * 1024) # in MB
+
+	return int(0.02 * total_vm)
