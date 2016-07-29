@@ -13,7 +13,7 @@ def make_nginx_conf(bench_path, yes=False):
 	sites = prepare_sites(config, bench_path)
 
 	bench_name = get_bench_name(bench_path)
-	bench_name_hash = hashlib.sha256('bench_name').hexdigest()[:16]
+	bench_name_hash = hashlib.sha256(bench_name).hexdigest()[:16]
 
 	nginx_conf = template.render(**{
 		"sites_path": sites_path,
