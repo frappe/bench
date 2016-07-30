@@ -62,7 +62,7 @@ def setup_crontab():
 	user_crontab = CronTab(user=True)
 	if job_command not in str(user_crontab):
 		job  = user_crontab.new(command=job_command, comment="Renew lets-encrypt every month")
-		job.month.every(1)
+		job.every().month()
 		job.enable()
 		user_crontab.write()
 
