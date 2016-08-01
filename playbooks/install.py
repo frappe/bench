@@ -86,6 +86,13 @@ def install_bench(args):
 	extra_vars = vars(args)
 	extra_vars.update(frappe_user=args.user)
 
+	if os.path.exists(tmp_bench_repo):
+		repo_path = tmp_bench_repo
+
+	else:
+		repo_path = os.path.join(os.path.expanduser('~'), 'bench')
+
+	extra_vars.update(repo_path=repo_path)
 	run_playbook('develop/create_user.yml', extra_vars=extra_vars)
 
 	extra_vars.update(get_passwords(args.run_travis or args.without_bench_setup))
@@ -144,12 +151,19 @@ def clone_bench_repo(args):
 	if os.path.exists(tmp_bench_repo):
 		return 0
 
+	elif args.without_bench_setup:
+		clone_path = os.path.join(os.path.expanduser('~'), 'bench')
+
+	else:
+		clone_path = tmp_bench_repo
+
 	branch = args.bench_branch or 'master'
 	repo_url = args.repo_url or 'https://github.com/frappe/bench'
 
+
 	success = run_os_command(
 		{'git': 'git clone {repo_url} {bench_repo} --depth 1 --branch {branch}'.format(
-			repo_url=repo_url, bench_repo=tmp_bench_repo, branch=branch)}
+			repo_url=repo_url, bench_repo=clone_path, branch=branch)}
 	)
 
 	return success
@@ -231,7 +245,12 @@ def run_playbook(playbook_name, sudo=False, extra_vars=None):
 		user = extra_vars.get('user') or getpass.getuser()
 		args.extend(['--become', '--become-user={0}'.format(user)])
 
-	success = subprocess.check_call(args, cwd=os.path.join(tmp_bench_repo, 'playbooks'))
+	if os.path.exists(tmp_bench_repo):
+		cwd = tmp_bench_repo
+	else:
+		cwd = os.path.join(os.path.expanduser('~'), 'bench')
+
+	success = subprocess.check_call(args, cwd=os.path.join(cwd, 'playbooks'))
 	return success
 
 def parse_commandline_args():
