@@ -1,12 +1,12 @@
 # wget setup_frappe.py | python
-import os, sys, subprocess, getpass, json, multiprocessing, shutil
+import os, sys, subprocess, getpass, json, multiprocessing, shutil, platform
 from distutils.spawn import find_executable
 
 tmp_bench_repo = '/tmp/.bench'
 
 def install_bench(args):
+	check_distribution_compatibility()
 	check_brew_installed()
-
 	# pre-requisites for bench repo cloning
 	install_package('curl')
 	install_package('wget')
@@ -112,6 +112,24 @@ def install_bench(args):
 
 	if os.path.exists(tmp_bench_repo):
 		shutil.rmtree(tmp_bench_repo)
+
+def check_distribution_compatibility():
+	supported_dists = {'ubuntu': [14, 15, 16], 'debian': [7, 8], 'centos': [7]}
+	dist_name, dist_version = get_distribution_info()
+	for dist, versions in supported_dists.iteritems():
+		if dist_name == dist:
+			if dist_version in versions:
+				return
+
+	print "We currently do not support {0} {1}. Aborting installation!".format(dist_name, dist_version)
+	if dist_name in supported_dists:
+		print "Install on {0} {1} instead".format(dist_name, supported_dists[dist_name][-1])
+	sys.exit(1)
+
+def get_distribution_info():
+	current_dist = platform.dist()
+	# return distribution name and major version
+	return current_dist[0].lower(), int(float(current_dist[1]))
 
 def install_python27():
 	version = (sys.version_info[0], sys.version_info[1])

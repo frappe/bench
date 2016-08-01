@@ -9,6 +9,22 @@
 
   tasks:
 
+  - name: Add dotdeb apt repository key for Debian < 8
+    apt_key:
+      url: http://www.dotdeb.org/dotdeb.gpg
+      state: present
+    become: yes
+    become_user: root
+    when: ansible_distribution == 'Debian' and ansible_distribution_version | version_compare('8', 'lt')
+
+  - name: Add dotdeb apt repository for redis-server for Debian < 8
+    apt_repository:
+      repo: 'deb http://packages.dotdeb.org wheezy all'
+      state: present
+    become: yes
+    become_user: root
+    when: ansible_distribution == 'Debian' and ansible_distribution_version | version_compare('8', 'lt')
+
   # install pre-requisites
   - name: install prequisites
     apt: pkg={{ item }} state=present
