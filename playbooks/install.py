@@ -88,7 +88,7 @@ def install_bench(args):
 
 	run_playbook('develop/create_user.yml', extra_vars=extra_vars)
 
-	extra_vars.update(get_passwords(args.run_travis))
+	extra_vars.update(get_passwords(args.run_travis or args.without_bench_setup))
 	if args.production:
 		extra_vars.update(max_worker_connections=multiprocessing.cpu_count() * 1024)
 
@@ -176,8 +176,8 @@ def could_not_install(package):
 def is_sudo_user():
 	return os.geteuid() == 0
 
-def get_passwords(run_travis=False):
-	if not run_travis:
+def get_passwords(ignore_prompt=False):
+	if not ignore_prompt:
 		mysql_root_password, admin_password = '', ''
 		pass_set = True
 		while pass_set:
@@ -263,6 +263,9 @@ def parse_commandline_args():
 
 	# To enable testing of script using Travis, this should skip the prompt
 	parser.add_argument('--run-travis', dest='run_travis', action='store_true', default=False,
+		help=argparse.SUPPRESS)
+
+	parser.add_argument('--without-bench-setup', dest='without_bench_setup', action='store_true', default=False,
 		help=argparse.SUPPRESS)
 
 	args = parser.parse_args()

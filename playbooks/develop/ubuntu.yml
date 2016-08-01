@@ -93,7 +93,7 @@
 
   # setup frappe-bench
   - include: includes/setup_bench.yml
-    when: not run_travis
+    when: not without_bench_setup and not run_travis
 
   # setup development environment
   - include: includes/setup_dev_env.yml
