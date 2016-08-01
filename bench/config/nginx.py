@@ -1,4 +1,4 @@
-import os, json, click, random, string
+import os, json, click, random, string, hashlib
 from bench.utils import get_sites, get_bench_name, exec_cmd
 
 def make_nginx_conf(bench_path, yes=False):
@@ -12,13 +12,18 @@ def make_nginx_conf(bench_path, yes=False):
 	config = get_config(bench_path)
 	sites = prepare_sites(config, bench_path)
 
+	bench_name = get_bench_name(bench_path)
+	bench_name_hash = hashlib.sha256(bench_name).hexdigest()[:16]
+
 	nginx_conf = template.render(**{
 		"sites_path": sites_path,
 		"http_timeout": config.get("http_timeout"),
 		"sites": sites,
 		"webserver_port": config.get('webserver_port'),
 		"socketio_port": config.get('socketio_port'),
-		"bench_name": get_bench_name(bench_path),
+		"bench_name": bench_name,
+		"bench_name_hash": bench_name_hash,
+		"limit_conn_shared_memory": get_limit_conn_shared_memory(),
 		"error_pages": get_error_pages(),
 
 		# for nginx map variable
@@ -156,3 +161,10 @@ def get_error_pages():
 	return {
 		502: os.path.join(templates, '502.html')
 	}
+
+def get_limit_conn_shared_memory():
+	"""Allocate 2 percent of total virtual memory as shared memory for nginx limit_conn_zone"""
+	import psutil
+	total_vm = (psutil.virtual_memory().total) / (1024 * 1024) # in MB
+
+	return int(0.02 * total_vm)

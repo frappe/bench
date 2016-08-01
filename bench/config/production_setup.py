@@ -127,5 +127,9 @@ def reload_supervisor():
 		pass
 
 def reload_nginx():
-	subprocess.check_output(['sudo', find_executable('nginx'), '-t'])
+	try:
+		subprocess.check_output(['sudo', find_executable('nginx'), '-t'])
+	except:
+		raise
+
 	service('nginx', 'reload')

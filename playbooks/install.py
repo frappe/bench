@@ -5,6 +5,8 @@ from distutils.spawn import find_executable
 tmp_bench_repo = '/tmp/.bench'
 
 def install_bench(args):
+	check_brew_installed()
+
 	# pre-requisites for bench repo cloning
 	install_package('curl')
 	install_package('wget')
@@ -145,6 +147,20 @@ def install_package(package):
 
 	if not success:
 		could_not_install(package)
+
+def check_brew_installed():
+	if 'Darwin' not in os.uname():
+		return
+
+	brew_exec = find_executable('brew')
+
+	if not brew_exec:
+		raise Exception('''
+		Please install brew package manager before proceeding with bench setup. Please run following
+		to install brew package manager on your machine,
+
+		/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+		''')
 
 def clone_bench_repo(args):
 	'''Clones the bench repository in the user folder'''
