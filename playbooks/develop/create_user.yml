@@ -19,5 +19,5 @@
       when: ansible_distribution == 'MacOSX'
 
     - name: Set /tmp/.bench folder perms
-      command: 'chown -R {{ frappe_user }}:{{ frappe_user }} /tmp/.bench'
+      command: 'chown -R {{ frappe_user }}:{{ frappe_user }} {{ repo_path }}'
       when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'CentOS'
