@@ -114,23 +114,28 @@ def install_bench(args):
 		shutil.rmtree(tmp_bench_repo)
 
 def check_distribution_compatibility():
-	supported_dists = {'ubuntu': [14, 15, 16], 'debian': [7, 8], 'centos': [7]}
-	dist_name, dist_version = get_distribution_info()
-	for dist, versions in supported_dists.iteritems():
-		if dist_name == dist:
-			if dist_version in versions:
-				return
+	supported_dists = {'ubuntu': [14, 15, 16], 'debian': [7, 8],
+		'centos': [7], 'macos': [10.9, 10.10, 10.11, 10.12]}
 
-	print "We currently do not support {0} {1}. Aborting installation!".format(dist_name, dist_version)
+	dist_name, dist_version = get_distribution_info()
+	if dist_name in supported_dists:
+		if float(dist_version) in supported_dists[dist_name]:
+			return
+
+	print "Sorry, the installer doesn't support {0} {1}. Aborting installation!".format(dist_name, dist_version)
 	if dist_name in supported_dists:
 		print "Install on {0} {1} instead".format(dist_name, supported_dists[dist_name][-1])
 	sys.exit(1)
 
 def get_distribution_info():
-	current_dist = platform.dist()
 	# return distribution name and major version
-	return current_dist[0].lower(), int(float(current_dist[1]))
-
+	if platform.system() == "Linux":
+		current_dist = platform.dist()
+		return current_dist[0].lower(), current_dist[1].rsplit('.')[0]
+	elif platform.system() == "Darwin":
+		current_dist = platform.mac_ver()
+		return "macos", current_dist[0].rsplit('.', 1)[0]
+	
 def install_python27():
 	version = (sys.version_info[0], sys.version_info[1])
 

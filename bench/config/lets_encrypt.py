@@ -90,6 +90,6 @@ def renew_certs():
 		'Do you want to continue?',
 		abort=True)
 
-	service('nginx', 'start')
-	exec_cmd("{path} renew".format(path=get_certbot_path()))
 	service('nginx', 'stop')
+	exec_cmd("{path} renew".format(path=get_certbot_path()))
+	service('nginx', 'start')
