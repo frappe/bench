@@ -10,7 +10,7 @@
       file:
         path: '/home/{{ frappe_user }}'
         mode: 'o+rx'
-      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'CentOS'
+      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'CentOS' or ansible_distribution == 'Debian'
 
     - name: Set home folder perms
       file:
@@ -20,4 +20,4 @@
 
     - name: Set /tmp/.bench folder perms
       command: 'chown -R {{ frappe_user }}:{{ frappe_user }} {{ repo_path }}'
-      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'CentOS'
+      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'CentOS' or ansible_distribution == 'Debian'

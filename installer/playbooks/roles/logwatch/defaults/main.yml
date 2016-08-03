@@ -1,3 +1,0 @@
----
-logwatch_emails: "{{ admin_emails }}"
-logwatch_detail: High

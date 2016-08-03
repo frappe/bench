@@ -4,22 +4,6 @@
     become: yes
     become_user: root
 
-  - name: Set root Password for Ubuntu
-    mysql_user:
-      name: root
-      host: localhost
-      password: '{{ mysql_root_password }}'
-      state: present
-    become: yes
-    become_user: root
-    when: ansible_distribution == 'Ubuntu'
-
-  - name: Set root Password
-    command: mysqladmin -u root password {{ mysql_root_password }}
-    become: yes
-    become_user: root
-    when: mysql_root_password is defined and ansible_distribution != 'Ubuntu'
-
   - name: Add configuration
     template: src={{ mysql_config_template }} dest={{ mysql_conf_dir }}/frappe.cnf owner=root mode=0644
     become: yes
@@ -31,11 +15,11 @@
     become_user: root
     when: ansible_os_family == 'RedHat' or ansible_os_family == 'Debian'
 
-  # - name: Set root password on CentOS
-  #   command: mysqladmin -u root password '{{ mysql_root_password }}'
-  #   become: yes
-  #   become_user: root
-  #   when: mysql_root_password is defined and ansible_distribution == 'CentOS'
+  - name: Set root Password
+    command: mysqladmin -u root password {{ mysql_root_password }}
+    become: yes
+    become_user: root
+    when: mysql_root_password is defined
 
   - name: add launchagents folder mac
     file: path=~/Library/LaunchAgents state=directory
