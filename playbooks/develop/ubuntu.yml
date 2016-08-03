@@ -57,20 +57,20 @@
     become: yes
     become_user: root
 
-  - name: Add nodejs v5 repo
+  - name: Get nodejs 6.x bash script
     get_url:
-      url: 'https://deb.nodesource.com/setup_5.x'
-      dest: '/tmp/setup_5.x'
+      url: 'https://deb.nodesource.com/setup_6.x'
+      dest: '/tmp/setup_6.x'
       mode: 0644
     become: yes
     become_user: root
 
-  - name: Install setup_5.x
-    command: /bin/bash /tmp/setup_5.x
+  - name: Run nodejs bash script
+    command: /bin/bash /tmp/setup_6.x
     become: yes
     become_user: root
 
-  - name: Update and Install Node v5
+  - name: Install nodejs 6.x
     apt:
       name: nodejs
       state: present

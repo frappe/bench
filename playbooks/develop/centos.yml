@@ -43,18 +43,23 @@
     become: yes
     become_user: root
 
-  - name: Add repo nodejs 5
-    yum:
-      name: https://rpm.nodesource.com/pub_5.x/el/7/x86_64/nodesource-release-el7-1.noarch.rpm
-      state: present
+  - name: Get nodejs 6.x bash script
+    get_url:
+      url: 'https://rpm.nodesource.com/setup_6.x'
+      dest: '/tmp/setup_6.x'
+      mode: 0644
     become: yes
     become_user: root
 
-  - name: Install nodejs v5
+  - name: Run nodejs 6.x bash script
+    command: /bin/bash /tmp/setup_6.x
+    become: yes
+    become_user: root
+
+  - name: Install nodejs
     yum:
       name: nodejs
       state: present
-      update_cache: yes
     become: yes
     become_user: root
 
