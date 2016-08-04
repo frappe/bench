@@ -11,24 +11,30 @@ def make_nginx_conf(bench_path, yes=False):
 
 	config = get_config(bench_path)
 	sites = prepare_sites(config, bench_path)
-
 	bench_name = get_bench_name(bench_path)
-	bench_name_hash = hashlib.sha256(bench_name).hexdigest()[:16]
 
-	nginx_conf = template.render(**{
+	allow_rate_limiting = config.get('allow_rate_limiting', False)
+
+	template_vars = {
 		"sites_path": sites_path,
 		"http_timeout": config.get("http_timeout"),
 		"sites": sites,
 		"webserver_port": config.get('webserver_port'),
 		"socketio_port": config.get('socketio_port'),
 		"bench_name": bench_name,
-		"bench_name_hash": bench_name_hash,
-		"limit_conn_shared_memory": get_limit_conn_shared_memory(),
 		"error_pages": get_error_pages(),
-
+		"allow_rate_limiting": allow_rate_limiting,
 		# for nginx map variable
 		"random_string": "".join(random.choice(string.ascii_lowercase) for i in xrange(7))
-	})
+	}
+
+	if allow_rate_limiting:
+		template_vars.update({
+			'bench_name_hash': hashlib.sha256(bench_name).hexdigest()[:16],
+			'limit_conn_shared_memory': get_limit_conn_shared_memory()
+		})
+
+	nginx_conf = template.render(**template_vars)
 
 	conf_path = os.path.join(bench_path, "config", "nginx.conf")
 	if not yes and os.path.exists(conf_path):
