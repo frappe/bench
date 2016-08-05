@@ -21,6 +21,7 @@
       - redis
 
       # for mariadb
+      - libselinux-python
       - mysql-devel
       - mysql-libs
 
