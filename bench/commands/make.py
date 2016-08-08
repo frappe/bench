@@ -5,16 +5,18 @@ import click
 @click.option('--apps_path', default=None, help="path to json files with apps to install after init")
 @click.option('--frappe-path', default=None, help="path to frappe repo")
 @click.option('--frappe-branch', default=None, help="path to frappe repo")
+@click.option('--clone-from', default=None, help="copy repos from path")
 @click.option('--no-procfile', is_flag=True, help="Pull changes in all the apps in bench")
 @click.option('--no-backups',is_flag=True, help="Run migrations for all sites in the bench")
 @click.option('--no-auto-update',is_flag=True, help="Build JS and CSS artifacts for the bench")
 @click.option('--verbose',is_flag=True, help="Verbose output during install")
 def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups,
-		no_auto_update, verbose):
+		no_auto_update, clone_from, verbose):
 	"Create a new bench"
 	from bench.utils import init
 	init(path, apps_path=apps_path, no_procfile=no_procfile, no_backups=no_backups,
-			no_auto_update=no_auto_update, frappe_path=frappe_path, frappe_branch=frappe_branch, verbose=verbose)
+			no_auto_update=no_auto_update, frappe_path=frappe_path, frappe_branch=frappe_branch,
+			verbose=verbose, clone_from=clone_from)
 	click.echo('Bench {} initialized'.format(path))
 
 

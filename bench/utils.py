@@ -25,7 +25,7 @@ def get_env_cmd(cmd, bench_path='.'):
 
 def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None,
-		verbose=False):
+		verbose=False, clone_from=None):
 	from .app import get_app, install_apps_from_path
 	from .config.common_site_config import make_config
 	from .config import redis
@@ -47,13 +47,17 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	make_config(path)
 
-	if not frappe_path:
-		frappe_path = 'https://github.com/frappe/frappe.git'
+	if clone_from:
+		clone_apps_from(bench_path=path, clone_from=clone_from)
+	else:
+		if not frappe_path:
+			frappe_path = 'https://github.com/frappe/frappe.git'
 
-	get_app(frappe_path, branch=frappe_branch, bench_path=path, build_asset_files=False, verbose=verbose)
+		get_app(frappe_path, branch=frappe_branch, bench_path=path, build_asset_files=False, verbose=verbose)
 
-	if apps_path:
-		install_apps_from_path(apps_path, bench_path=path)
+		if apps_path:
+			install_apps_from_path(apps_path, bench_path=path)
+
 
 	bench.set_frappe_version(bench_path=path)
 	if bench.FRAPPE_VERSION > 5:
@@ -70,6 +74,42 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	if not no_auto_update:
 		setup_auto_update(bench_path=path)
 
+def clone_apps_from(bench_path, clone_from):
+	from .app import install_app
+	print 'Copying apps from {0}...'.format(clone_from)
+	subprocess.check_output(['cp', '-R', os.path.join(clone_from, 'apps'), bench_path])
+
+	print 'Copying node_modules from {0}...'.format(clone_from)
+	subprocess.check_output(['cp', '-R', os.path.join(clone_from, 'node_modules'), bench_path])
+
+	def setup_app(app):
+		# run git reset --hard in each branch, pull latest updates and install_app
+		app_path = os.path.join(bench_path, 'apps', app)
+		if os.path.exists(os.path.join(app_path, '.git')):
+			print 'Cleaning up {0}'.format(app)
+
+			# remove .egg-ino
+			subprocess.check_output(['rm', '-rf', app + '.egg-info'], cwd=app_path)
+
+			remotes = subprocess.check_output(['git', 'remote'], cwd=app_path).strip().split()
+			if 'upstream' in remotes:
+				remote = 'upstream'
+			else:
+				remote = remotes[0]
+			branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=app_path).strip()
+			subprocess.check_output(['git', 'reset', '--hard'], cwd=app_path)
+			subprocess.check_output(['git', 'pull', '--rebase', remote, branch], cwd=app_path)
+
+			install_app(app, bench_path)
+
+	apps = os.listdir(os.path.join(bench_path, 'apps'))
+
+	# setup frappe first
+	setup_app('frappe')
+
+	for app in apps:
+		if app != 'frappe':
+			setup_app(app)
 
 def exec_cmd(cmd, cwd='.'):
 	from .cli import from_command_line
