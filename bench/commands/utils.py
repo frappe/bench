@@ -12,10 +12,11 @@ def start(no_dev, concurrency):
 
 
 @click.command('restart')
-def restart():
+@click.option('--web-workers', is_flag=True, default=False)
+def restart(web_workers):
 	"Restart supervisor processes"
 	from bench.utils import restart_supervisor_processes
-	restart_supervisor_processes()
+	restart_supervisor_processes(web_workers)
 
 
 @click.command('set-nginx-port')
