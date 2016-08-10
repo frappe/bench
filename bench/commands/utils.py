@@ -16,7 +16,7 @@ def start(no_dev, concurrency):
 def restart(web_workers):
 	"Restart supervisor processes"
 	from bench.utils import restart_supervisor_processes
-	restart_supervisor_processes(web_workers)
+	restart_supervisor_processes(bench_path='.', web_workers=web_workers)
 
 
 @click.command('set-nginx-port')
