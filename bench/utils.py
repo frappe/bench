@@ -327,7 +327,7 @@ def get_cmd_output(cmd, cwd='.'):
 			print e.output
 		raise
 
-def restart_supervisor_processes(bench_path='.'):
+def restart_supervisor_processes(bench_path='.', web_workers=False):
 	from .config.common_site_config import get_config
 	conf = get_config(bench_path=bench_path)
 	bench_name = get_bench_name(bench_path)
@@ -339,7 +339,10 @@ def restart_supervisor_processes(bench_path='.'):
 	else:
 		supervisor_status = subprocess.check_output(['sudo', 'supervisorctl', 'status'], cwd=bench_path)
 
-		if '{bench_name}-workers:'.format(bench_name=bench_name) in supervisor_status:
+		if web_workers and '{bench_name}-web:'.format(bench_name=bench_name) in supervisor_status:
+			group = '{bench_name}-web:	'.format(bench_name=bench_name)
+
+		elif '{bench_name}-workers:'.format(bench_name=bench_name) in supervisor_status:
 			group = '{bench_name}-workers: {bench_name}-web:'.format(bench_name=bench_name)
 
 		# backward compatibility
