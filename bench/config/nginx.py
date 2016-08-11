@@ -123,6 +123,17 @@ def prepare_sites(config, bench_path):
 					message += " {0}".format(sitename)
 		raise Exception(message)
 
+	if not dns_multitenant:
+		message = "Port configuration list:"
+		PortConfigIndex = 0
+		for site in siteConfigs:
+			PortConfigIndex += 1
+			message += "\nSite {0} assigned port: {1}".format(site["name"], site["port"])
+
+		print(message)
+
+
+
 	sites['domain_map'] = domain_map
 
 	return sites
