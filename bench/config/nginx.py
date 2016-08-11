@@ -57,7 +57,20 @@ def prepare_sites(config, bench_path):
 
 	dns_multitenant = config.get('dns_multitenant')
 
-	for site in get_sites_with_config(bench_path=bench_path):
+	sharedPortExceptionFound = False
+	siteConfigs = get_sites_with_config(bench_path=bench_path)
+
+
+	# preload all preset site ports to avoid conflicts
+
+	if not dns_multitenant:
+		for site in siteConfigs:
+			if site.get("port"):
+				if not site["port"] in ports_in_use:
+					ports_in_use[site["port"]] = []
+				ports_in_use[site["port"]].append(site["name"])
+
+	for site in siteConfigs:
 		if dns_multitenant:
 			domain = site.get('domain')
 
@@ -85,13 +98,30 @@ def prepare_sites(config, bench_path):
 				site["port"] = 80
 				while site["port"] in ports_in_use:
 					site["port"] += 1
-				
 
-			if site["port"] in ports_in_use:
-				raise Exception("Port {0} is being used by another site {1}".format(site["port"], ports_in_use[site["port"]]))
+#			if site["port"] in ports_in_use:
+#				raise Exception("Port {0} is being used by another site {1}".format(site["port"], ports_in_use[site["port"]]))
 
-			ports_in_use[site["port"]] = site["name"]
+			if site["port"] in ports_in_use and not site["name"] in ports_in_use[site["port"]]:
+				sharedPortExceptionFound = True
+				ports_in_use[site["port"]].append(site["name"])
+			else:
+				ports_in_use[site["port"]] = []
+				ports_in_use[site["port"]].append(site["name"])
+
 			sites["that_use_port"].append(site)
+
+
+	if not dns_multitenant and sharedPortExceptionFound:
+		message = "Port conflicts found:"
+		PortConflictIndex = 0
+		for portNumber in ports_in_use:
+			if len(ports_in_use[portNumber]) > 1:
+				PortConflictIndex += 1
+				message += "\n{0} - Port {1} is shared among sites:".format(PortConflictIndex,portNumber)
+				for sitename in ports_in_use[portNumber]:
+					message += " {0}".format(sitename)
+		raise Exception(message)
 
 	sites['domain_map'] = domain_map
 
