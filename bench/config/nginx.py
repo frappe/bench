@@ -83,6 +83,10 @@ def prepare_sites(config, bench_path):
 		else:
 			if not site.get("port"):
 				site["port"] = 80
+				while(site["port"] in ports_in_use)
+				{
+					site["port"]++
+				}
 
 			if site["port"] in ports_in_use:
 				raise Exception("Port {0} is being used by another site {1}".format(site["port"], ports_in_use[site["port"]]))
