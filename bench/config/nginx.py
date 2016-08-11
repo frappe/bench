@@ -99,7 +99,7 @@ def prepare_sites(config, bench_path):
 				# continue from 8000 afterwards because of the security inforced by browsers
 				# preventing low number ports from being used
 				if site["port"] in ports_in_use: 
-					site["port"] = 8000
+					site["port"] = 8001
 				while site["port"] in ports_in_use:
 					site["port"] += 1
 
