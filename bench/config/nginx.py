@@ -84,7 +84,7 @@ def prepare_sites(config, bench_path):
 			if not site.get("port"):
 				site["port"] = 80
 				while site["port"] in ports_in_use:
-					site["port"]++
+					site["port"] += 1
 				
 
 			if site["port"] in ports_in_use:
