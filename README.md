@@ -14,10 +14,12 @@ Easy Setup
 ----------
 
 - This is an opinionated setup with logging and SE Linux. So, it is best to setup on a blank server.
-- Works on Ubuntu 14.04 to 16.04, CentOS 7+, Debian 7 to 8 and MacOS X. If you find any problems, post them on our forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
+- Works on Ubuntu 14.04 to 16.04, CentOS 7+, Debian 7 to 8 and MacOS X.
+- You may have to install Python 2.7 (eg on Ubuntu 16.04+) by running `apt-get install python-minimal` 
 - This script will install the pre-requisites, install bench and setup an ERPNext site
 - Passwords for Frappe Administrator and MariaDB (root) will be asked
 - You can then login as **Administrator** with the Administrator password
+- If you find any problems, post them on our forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
 
 Production vs Develop
 ---------------------
