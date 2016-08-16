@@ -20,6 +20,8 @@
     become: yes
     become_user: root
     when: mysql_root_password is defined
+    # incase root password is already set
+    ignore_errors: yes
 
   - name: add launchagents folder mac
     file: path=~/Library/LaunchAgents state=directory
