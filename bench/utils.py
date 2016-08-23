@@ -102,14 +102,11 @@ def clone_apps_from(bench_path, clone_from):
 
 			install_app(app, bench_path)
 
-	apps = os.listdir(os.path.join(bench_path, 'apps'))
-
-	# setup frappe first
-	setup_app('frappe')
+	with open(os.path.join(clone_from, 'sites', 'apps.txt'), 'r') as f:
+		apps = f.read().splitlines()
 
 	for app in apps:
-		if app != 'frappe':
-			setup_app(app)
+		setup_app(app)
 
 def exec_cmd(cmd, cwd='.'):
 	from .cli import from_command_line
