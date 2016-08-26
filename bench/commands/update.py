@@ -162,7 +162,7 @@ def switch_to_v4(upgrade=False):
 @click.command('switch-to-v5')
 @click.option('--upgrade',is_flag=True)
 def switch_to_v5(upgrade=False):
-	"Switch frappe and erpnext to v4 branch"
+	"Switch frappe and erpnext to v5 branch"
 	from bench.app import switch_to_v5
 	switch_to_v5(upgrade=upgrade)
 	print
