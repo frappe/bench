@@ -675,3 +675,15 @@ def setup_fonts():
 	os.rename(os.path.join(fonts_path, 'usr_share_fonts'), '/usr/share/fonts')
 	shutil.rmtree(fonts_path)
 	exec_cmd("fc-cache -fv")
+
+def set_git_remote_url(git_url, bench_path='.'):
+	"Set app remote git url"
+	app = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
+
+	if app not in bench.app.get_apps(bench_path):
+		print "No app named {0}".format(app)
+		sys.exit(1)
+
+	app_dir = bench.app.get_repo_dir(app, bench_path=bench_path)
+	if os.path.exists(os.path.join(app_dir, '.git')):
+		exec_cmd("git remote set-url upstream {}".format(git_url), cwd=app_dir)

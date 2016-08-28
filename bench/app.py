@@ -134,15 +134,7 @@ def pull_all_apps(bench_path='.'):
 	for app in get_apps(bench_path=bench_path):
 		app_dir = get_repo_dir(app, bench_path=bench_path)
 		if os.path.exists(os.path.join(app_dir, '.git')):
-			contents = subprocess.check_output(['git', 'remote', '-v'], cwd=app_dir,
-				stderr=subprocess.STDOUT)
-
-			if re.findall('upstream[\s]+', contents):
-				remote = 'upstream'
-			else:
-				# get the first remote
-				remote = contents.splitlines()[0].split()[0]
-
+			remote = get_remote(app)
 			logger.info('pulling {0}'.format(app))
 			exec_cmd("git pull {rebase} {remote} {branch}".format(rebase=rebase,
 				remote=remote, branch=get_current_branch(app, bench_path=bench_path)), cwd=app_dir)
@@ -177,6 +169,18 @@ def get_current_frappe_version(bench_path='.'):
 def get_current_branch(app, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	return get_cmd_output("basename $(git symbolic-ref -q HEAD)", cwd=repo_dir)
+
+def get_remote(app, bench_path='.'):
+	repo_dir = get_repo_dir(app, bench_path=bench_path)
+	contents = subprocess.check_output(['git', 'remote', '-v'], cwd=repo_dir,
+									   stderr=subprocess.STDOUT)
+	if re.findall('upstream[\s]+', contents):
+		remote = 'upstream'
+	else:
+		# get the first remote
+		remote = contents.splitlines()[0].split()[0]
+
+	return remote
 
 def use_rq(bench_path):
 	bench_path = os.path.abspath(bench_path)
