@@ -573,12 +573,10 @@ def download_translations():
 		update_translations(app, lang)
 
 def get_langs():
-	lang_file = 'apps/frappe/frappe/data/languages.txt'
+	lang_file = 'apps/frappe/frappe/geo/languages.json'
 	with open(lang_file) as f:
-		lang_data = f.read()
-	langs = [line.split()[0] for line in lang_data.splitlines()]
-	langs.remove('en')
-	return langs
+		langs = json.loads(f.read())
+	return [d['code'] for d in langs]
 
 def update_translations(app, lang):
 	translations_dir = os.path.join('apps', app, app, 'translations')
