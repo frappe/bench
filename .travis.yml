@@ -3,7 +3,7 @@ dist: trusty
 sudo: required
 
 python:
-  - "2.7"
+  - "2.7.11"
 
 install:
   - sudo apt-get purge -y mysql-common mysql-server mysql-client

@@ -62,6 +62,7 @@
       url: 'https://deb.nodesource.com/setup_6.x'
       dest: '/tmp/setup_6.x'
       mode: 0644
+      validate_certs: no
     become: yes
     become_user: root
 
