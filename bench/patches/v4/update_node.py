@@ -12,9 +12,10 @@ def execute(bench_path):
 	else:
 		click.echo('''
 		No node executable was found on your machine.
-		Please install node 5.x before running "bench update".
-		Installation instructions for CentOS and Ubuntu can be found on the following link,
-		"https://www.metachris.com/2015/10/how-to-install-nodejs-5-on-centos-and-ubuntu/"
+		Please install latest node version before running "bench update". For installation instructions
+		please refer "Debian and Ubuntu based Linux distributions" section or "Enterprise Linux and
+		Fedora" section depending upon your OS on the following link,
+		"https://nodejs.org/en/download/package-manager/"
 		''')
 		sys.exit(1)
 
@@ -22,8 +23,10 @@ def execute(bench_path):
 
 	if node_ver < expected_node_ver:
 		click.echo('''
-		Please update node version to 5.x before running "bench update".
-		Installation instructions for CentOS and Ubuntu can be found on the following link,
-		"https://www.metachris.com/2015/10/how-to-install-nodejs-5-on-centos-and-ubuntu/"
+		Please update node to latest version before running "bench update".
+		Please install latest node version before running "bench update". For installation instructions
+		please refer "Debian and Ubuntu based Linux distributions" section or "Enterprise Linux and
+		Fedora" section depending upon your OS on the following link,
+		"https://nodejs.org/en/download/package-manager/"
 		''')
 		sys.exit(1)

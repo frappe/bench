@@ -49,10 +49,13 @@
       - libwebp-dev
       - python-tk
 
+      # Ensure apt-transport-https
+      - apt-transport-https
+
     become: yes
     become_user: root
 
-  - name: install pillow prerequisites for Debian < 8 
+  - name: install pillow prerequisites for Debian < 8
     apt: pkg={{ item }} state=present
     with_items:
       - libjpeg8-dev
@@ -74,16 +77,19 @@
     become: yes
     become_user: root
 
-  - name: Get nodejs 6.x bash script
-    get_url:
-      url: 'https://deb.nodesource.com/setup_6.x'
-      dest: '/tmp/setup_6.x'
-      mode: 0644
+  - name: Add apt key for node repo
+    apt_key:
+      url: https://keyserver.ubuntu.com/pks/lookup?op=get&fingerprint=on&search=0x1655A0AB68576280
+      id: "68576280"
+      state: present
     become: yes
     become_user: root
 
-  - name: Run nodejs bash script
-    command: /bin/bash /tmp/setup_6.x
+  - name: Add repo
+    apt_repository:
+      repo: "deb [arch=amd64,i386] https://deb.nodesource.com/node_6.x {{ ansible_distribution_release }} main"
+      state: present
+      update_cache: yes
     become: yes
     become_user: root
 
@@ -95,7 +101,7 @@
       force: yes
     become: yes
     become_user: root
-    
+
   # install MariaDB
   - include: includes/mariadb_debian.yml
 

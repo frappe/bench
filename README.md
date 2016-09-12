@@ -1,4 +1,4 @@
-Bench
+Bench [![Build Status](https://travis-ci.org/frappe/bench.svg?branch=master)](https://travis-ci.org/frappe/bench)
 =====
 
 The bench allows you to setup Frappe / ERPNext apps on your local Linux (CentOS 6, Debian 7, Ubuntu, etc) machine or a production server. You can use the bench to serve multiple frappe sites. If you are using a DigitalOcean droplet or any other VPS / Dedicated Server, make sure it has >= 1Gb of ram or has swap setup properly.
@@ -15,7 +15,7 @@ Easy Setup
 
 - This is an opinionated setup with logging and SE Linux. So, it is best to setup on a blank server.
 - Works on Ubuntu 14.04 to 16.04, CentOS 7+, Debian 7 to 8 and MacOS X.
-- You may have to install Python 2.7 (eg on Ubuntu 16.04+) by running `apt-get install python-minimal` 
+- You may have to install Python 2.7 (eg on Ubuntu 16.04+) by running `apt-get install python-minimal`
 - This script will install the pre-requisites, install bench and setup an ERPNext site
 - Passwords for Frappe Administrator and MariaDB (root) will be asked
 - You can then login as **Administrator** with the Administrator password
