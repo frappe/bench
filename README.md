@@ -2,7 +2,9 @@
 
 [![Build Status](https://travis-ci.org/frappe/bench.svg?branch=master)](https://travis-ci.org/frappe/bench)
 
-The bench allows you to setup Frappe / ERPNext apps on your local Linux (CentOS 6, Debian 7, Ubuntu, etc) machine or a production server. You can use the bench to serve multiple frappe sites. If you are using a DigitalOcean droplet or any other VPS / Dedicated Server, make sure it has >= 1Gb of ram or has swap setup properly.
+The bench is a command-line utility that helps you to install apps, manage multiple sites and update Frappe / ERPNext apps on */nix (CentOS 6, Debian 7, Ubuntu, etc) for development and production. Bench will also create nginx and supervisor config files, setup backups and much more.
+
+If you are using on a VPS make sure it has >= 1Gb of RAM or has swap setup properly.
 
 To do this install, you must have basic information on how Linux works and should be able to use the command-line. If you are looking easier ways to get started and evaluate ERPNext, [download the Virtual Machine](https://erpnext.com/download) or take [a free trial on erpnext.com](https://erpnext.com/pricing).
 
