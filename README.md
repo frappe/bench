@@ -6,20 +6,9 @@ The bench allows you to setup Frappe / ERPNext apps on your local Linux (CentOS 
 
 To do this install, you must have basic information on how Linux works and should be able to use the command-line. If you are looking easier ways to get started and evaluate ERPNext, [download the Virtual Machine](https://erpnext.com/download) or take [a free trial on erpnext.com](https://erpnext.com/pricing).
 
-If you have questions, please ask them on our [forum](https://discuss.erpnext.com/).
+If you have questions, please ask them on the [forum](https://discuss.erpnext.com/).
 
 ## Installation
-
-Easy Setup
-----------
-
-- This is an opinionated setup so it is best to setup on a blank server.
-- Works on Ubuntu 14.04 to 16.04, CentOS 7+, Debian 7 to 8 and MacOS X.
-- You may have to install Python 2.7 (eg on Ubuntu 16.04+) by running `apt-get install python-minimal`
-- This script will install the pre-requisites, install bench and setup an ERPNext site
-- Passwords for Frappe Administrator and MariaDB (root) will be asked
-- You can then login as **Administrator** with the Administrator password
-- If you find any problems, post them on our forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
 
 ## Manual Install
 
@@ -87,6 +76,13 @@ Note: Please do not remove the bench directory the above commands will create
 
 ## Easy Install
 
+- This is an opinionated setup so it is best to setup on a blank server.
+- Works on Ubuntu 14.04 to 16.04, CentOS 7+, Debian 7 to 8 and MacOS X.
+- You may have to install Python 2.7 (eg on Ubuntu 16.04+) by running `apt-get install python-minimal`
+- This script will install the pre-requisites, install bench and setup an ERPNext site
+- Passwords for Frappe Administrator and MariaDB (root) will be asked
+- You can then login as **Administrator** with the Administrator password
+- If you find any problems, post them on the forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
 
 Open your Terminal and enter:
 
