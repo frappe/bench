@@ -135,7 +135,7 @@ def get_distribution_info():
 	elif platform.system() == "Darwin":
 		current_dist = platform.mac_ver()
 		return "macos", current_dist[0].rsplit('.', 1)[0]
-	
+
 def install_python27():
 	version = (sys.version_info[0], sys.version_info[1])
 
@@ -256,10 +256,17 @@ def get_passwords(ignore_prompt=False):
 	else:
 		mysql_root_password = admin_password = 'travis'
 
-	return {
+	passwords = {
 		'mysql_root_password': mysql_root_password,
 		'admin_password': admin_password
 	}
+
+	if not ignore_prompt:
+		passwords_file_path = os.path.join(os.path.expanduser('~'), 'passwords.txt')
+		with open(passwords_file_path, 'w') as f:
+			json.dump(passwords, f, indent=1)
+
+	return passwords
 
 def get_extra_vars_json(extra_args):
 	# We need to pass production as extra_vars to the playbook to execute conditionals in the
@@ -340,3 +347,10 @@ if __name__ == '__main__':
 	args = parse_commandline_args()
 
 	install_bench(args)
+
+	print '''
+	Frappe/ERPNext has been successfully installed on your machine.
+
+	Please find mysql root password and admin password in "passwords.txt" in your root directory,
+	you can remove the file after making note of the passwords.
+	'''
