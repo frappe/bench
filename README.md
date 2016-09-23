@@ -23,7 +23,7 @@ To manually install frappe/erpnext here are the steps
 - Nginx (for production)
 - Nodejs
 - Redis
-- wkhtmltopdf (for pdf generation)
+- wkhtmltopdf with patched Qt (for pdf generation)
 
 #### 2. Install Bench
 
