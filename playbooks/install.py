@@ -18,7 +18,7 @@ def install_bench(args):
 		],
 		'yum': [
 			'sudo yum groupinstall -y "Development tools"',
-			'sudo yum install -y epel-release redhat-lsb-core git python-setuptools python-devel openssl-devel libffi-devel'
+			'sudo yum install -y epel-release redhat-lsb-core git python-setuptools python-devel openssl-devel openldap-devel libffi-devel'
 		],
 		# epel-release is required to install redis, so installing it before the playbook-run.
 		# redhat-lsb-core is required, so that ansible can set ansible_lsb variable
