@@ -12,6 +12,60 @@ If you have questions, please ask them on the [forum](https://discuss.erpnext.co
 
 ## Installation
 
+## Easy Install
+
+- This is an opinionated setup so it is best to setup on a blank server.
+- Works on Ubuntu 14.04 to 16.04, CentOS 7+, Debian 7 to 8 and MacOS X.
+- You may have to install Python 2.7 (eg on Ubuntu 16.04+) by running `apt-get install python-minimal`
+- This script will install the pre-requisites, install bench and setup an ERPNext site
+- Passwords for Frappe Administrator and MariaDB (root) will be asked
+- You can then login as **Administrator** with the Administrator password
+- If you find any problems, post them on the forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
+
+Open your Terminal and enter:
+
+#### 1. Download the install script
+
+	# Linux:
+
+	wget https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py
+
+	# Mac OSX:
+
+	# install X Code (from App store)
+	# install HomeBrew (http://brew.sh/)
+	brew install python
+	brew install git
+	curl "https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py" -o install.py
+
+#### 2. Run the install script
+
+For development:
+
+	sudo python install.py --develop
+
+For production:
+
+	sudo python install.py --production
+
+If you're logged in as root, use --user flag to create a user and install using that user
+
+	sudo python install.py --develop --user frappe
+
+#### What will this script do?
+
+- Install all the pre-requisites
+- Install the command line `bench`
+- Create a new bench (a folder that will contain your entire frappe/erpnext setup)
+- Create a new site on the bench
+
+#### How do I start ERPNext
+
+1. For development: Go to your bench folder (`frappe-bench` by default) and start the bench with `bench start`
+2. For production: Your process will be setup and managed by `nginx` and `supervisor`. [Setup Production](https://frappe.github.io/frappe/user/en/bench/guides/setup-production.html)
+
+---
+
 ## Manual Install
 
 To manually install frappe/erpnext here are the steps
@@ -72,61 +126,6 @@ Note: Please do not remove the bench directory the above commands will create
 	To login to Frappe / ERPNext, open your browser and go to `localhost:8000`
 
 	The default user name is "Administrator" and password is what you set when you created the new site.
-
-
----
-
-## Easy Install
-
-- This is an opinionated setup so it is best to setup on a blank server.
-- Works on Ubuntu 14.04 to 16.04, CentOS 7+, Debian 7 to 8 and MacOS X.
-- You may have to install Python 2.7 (eg on Ubuntu 16.04+) by running `apt-get install python-minimal`
-- This script will install the pre-requisites, install bench and setup an ERPNext site
-- Passwords for Frappe Administrator and MariaDB (root) will be asked
-- You can then login as **Administrator** with the Administrator password
-- If you find any problems, post them on the forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
-
-Open your Terminal and enter:
-
-#### 1. Download the install script
-
-	# Linux:
-
-	wget https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py
-
-	# Mac OSX:
-
-	# install X Code (from App store)
-	# install HomeBrew (http://brew.sh/)
-	brew install python
-	brew install git
-	curl "https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py" -o install.py
-
-#### 2. Run the install script
-
-For development:
-
-	sudo python install.py --develop
-
-For production:
-
-	sudo python install.py --production
-
-If you're logged in as root, use --user flag to create a user and install using that user
-
-	sudo python install.py --develop --user frappe
-
-#### What will this script do?
-
-- Install all the pre-requisites
-- Install the command line `bench`
-- Create a new bench (a folder that will contain your entire frappe/erpnext setup)
-- Create a new site on the bench
-
-#### How do I start ERPNext
-
-1. For development: Go to your bench folder (`frappe-bench` by default) and start the bench with `bench start`
-2. For production: Your process will be setup and managed by `nginx` and `supervisor`. [Setup Production](https://frappe.github.io/frappe/user/en/bench/guides/setup-production.html)
 
 ---
 
