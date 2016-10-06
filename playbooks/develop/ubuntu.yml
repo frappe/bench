@@ -37,6 +37,10 @@
       # Ensure apt-transport-https
       - apt-transport-https
 
+      # Python LDAP
+      - libsasl2-dev
+      - libldap2-dev
+      
     become: yes
     become_user: root
 
