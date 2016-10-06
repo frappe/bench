@@ -1,0 +1,26 @@
+- name: Setup Firewall
+  user: root
+  hosts: localhost
+
+  tasks:
+    - name: Install firewalld
+      yum: name=firewalld state=present
+      when: ansible_distribution == 'CentOS'
+
+    - name: Install firewalld
+      apt: name=firewalld state=present
+      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
+
+    - name: Enable Firewall
+      service: name=firewalld state=started enabled=yes
+
+    - name: Add firewall rules
+      firewalld: port={{ item }}/tcp permanent=true state=enabled
+      with_items:
+        - 80
+        - 443
+        - 22
+
+    - name: Restart Firewall
+      service: name=firewalld state=restarted enabled=yes
+

@@ -685,3 +685,7 @@ def set_git_remote_url(git_url, bench_path='.'):
 	app_dir = bench.app.get_repo_dir(app, bench_path=bench_path)
 	if os.path.exists(os.path.join(app_dir, '.git')):
 		exec_cmd("git remote set-url upstream {}".format(git_url), cwd=app_dir)
+
+def run_playbook(playbook_name):
+	args = ['ansible-playbook', '-c', 'local', playbook_name]
+	subprocess.check_call(args, cwd=os.path.join(os.path.dirname(bench.__path__[0]), 'playbooks'))
