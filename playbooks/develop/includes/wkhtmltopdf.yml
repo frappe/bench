@@ -6,7 +6,7 @@
     file: path=/tmp/wkhtmltox state=directory
 
   - name: unarchive wkhtmltopdf
-    unarchive: src=/tmp/wkhtmltox.tar.xz dest=/tmp/wkhtmltox
+    unarchive: src=/tmp/wkhtmltox.tar.xz dest=/tmp
 
-  - name: move to /usr/local/bin
-    command: creates="/usr/local/bin/wkhtmltopdf" mv /tmp/wkhtmltox/bin/wkhtmltopdf /usr/local/bin/wkhtmltopdf
+  - name: copy to /usr/local/bin
+    copy: source="/tmp/wkhtmltox/bin/wkhtmltopdf" dest="/usr/local/bin/wkhtmltopdf"
