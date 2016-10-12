@@ -9,4 +9,4 @@
     unarchive: src=/tmp/wkhtmltox.tar.xz dest=/tmp
 
   - name: copy to /usr/local/bin
-    copy: source="/tmp/wkhtmltox/bin/wkhtmltopdf" dest="/usr/local/bin/wkhtmltopdf"
+    copy: src="/tmp/wkhtmltox/bin/wkhtmltopdf" dest="/usr/local/bin/wkhtmltopdf"
