@@ -1,0 +1,9 @@
+---
+  - name: download wkthmltox linux
+    get_url: url=http://download.gna.org/wkhtmltopdf/0.12/0.12.3/wkhtmltox-0.12.3_linux-generic-{{ "amd64" if ansible_architecture == "x86_64" else "i386"}}.tar.xz dest=/tmp/wkhtmltox.tar.xz
+
+  - name: unarchive wkhtmltopdf
+    unarchive: src=/tmp/wkhtmltox.tar.xz dest=/tmp/wkhtmltox
+
+  - name: move to /usr/local/bin
+    command: creates="/usr/local/bin/wkhtmltopdf" mv /tmp/wkhtmltox/bin/wkhtmltopdf /usr/local/bin/wkhtmltopdf

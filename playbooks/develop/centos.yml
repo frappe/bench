@@ -5,7 +5,6 @@
     bench_path: "/home/{{ ansible_user_id }}/frappe-bench"
     mysql_config_template: "templates/simple_mariadb_config.cnf"
     mysql_conf_dir: /etc/my.cnf.d/
-    wkhtmltopdf_version: 0.12.2.1
 
   tasks:
 
@@ -69,7 +68,7 @@
   - include: includes/mariadb_centos.yml
 
   # install WKHTMLtoPDF
-  - include: includes/wkhtmltopdf_centos.yml
+  - include: includes/wkhtmltopdf.yml
 
   # setup MariaDB
   - include: includes/setup_mariadb.yml
