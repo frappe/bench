@@ -10,3 +10,5 @@
 
   - name: copy to /usr/local/bin
     copy: src="/tmp/wkhtmltox/bin/wkhtmltopdf" dest="/usr/local/bin/wkhtmltopdf"
+    become: true
+    become_method: sudo
