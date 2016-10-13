@@ -15,7 +15,7 @@ Easy Setup
 
 - This is an opinionated setup with logging and SE Linux. So, it is best to setup on a blank server.
 - Works on Ubuntu 14.04 to 16.04, CentOS 7+, Debian 7 to 8 and MacOS X.
-- You may have to install Python 2.7 (eg on Ubuntu 16.04+) by running `apt-get install python-minimal` 
+- You may have to install Python 2.7 (eg on Ubuntu 16.04+) by running `apt-get install python-minimal`
 - This script will install the pre-requisites, install bench and setup an ERPNext site
 - Passwords for Frappe Administrator and MariaDB (root) will be asked
 - You can then login as **Administrator** with the Administrator password
@@ -31,17 +31,22 @@ Steps
 
 Open your Terminal and enter:
 
-	# Linux:
+#### Linux:
 
 	wget https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py
 
-	# Mac OSX:
+#### MacOS:
 
-	# install X Code (from App store)
-	# install HomeBrew (http://brew.sh/)
+Install X Code (from App store) and HomeBrew (http://brew.sh/)
+
 	brew install python
 	brew install git
+
+Download the Script
+
 	curl "https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py" -o install.py
+
+#### Run the Script
 
 	# For development
 	sudo python install.py --develop
@@ -50,7 +55,7 @@ Open your Terminal and enter:
 	sudo python install.py --production
 
 	# If you're logged in as root, use --user flag to create a user and install using that user
-	sudo python install.py --develop --user frappe
+	python install.py --develop --user frappe
 
 
 For development, you have to explicitly start services by running `bench start`. This script requires Python2.7+ installed on your machine. You will have to manually create a new site (`bench new-site`) and get apps that you need (`bench get-app`, `bench install-app`).
