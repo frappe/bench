@@ -78,10 +78,11 @@ def setup_env():
 
 @click.command('lets-encrypt')
 @click.argument('site')
-def setup_letsencrypt(site):
+@click.option('--custom-domain')
+def setup_letsencrypt(site, custom_domain):
 	"Setup lets-encrypt for site"
 	from bench.config.lets_encrypt import setup_letsencrypt
-	setup_letsencrypt(site, bench_path='.')
+	setup_letsencrypt(site, custom_domain, bench_path='.')
 
 
 @click.command('procfile')
