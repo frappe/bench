@@ -15,3 +15,5 @@
 
   - name: make wkhtmltopdf executable
     file: path=/usr/local/bin/wkhtmltopdf mode="o+x"
+    become: true
+    become_user: root

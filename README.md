@@ -90,31 +90,31 @@ Open your Terminal and enter:
 
 #### 1. Download the install script
 
-	# Linux:
+For Linux:
 
 	wget https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py
 
-	# Mac OSX:
+For Mac OSX:
 
-	# install X Code (from App store)
-	# install HomeBrew (http://brew.sh/)
+Install X Code (from App store) and HomeBrew (http://brew.sh/) first
+
 	brew install python
 	brew install git
 	curl "https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py" -o install.py
 
 #### 2. Run the install script
 
-For development:
+If you are on a fresh server and logged in as root, use --user flag to create a user and install using that user
+
+	python install.py --develop --user frappe
+
+For the current user:
 
 	sudo python install.py --develop
 
 For production:
 
 	sudo python install.py --production
-
-If you're logged in as root, use --user flag to create a user and install using that user
-
-	sudo python install.py --develop --user frappe
 
 #### What will this script do?
 
