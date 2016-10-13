@@ -12,3 +12,6 @@
     copy: src="/tmp/wkhtmltox/bin/wkhtmltopdf" dest="/usr/local/bin/wkhtmltopdf"
     become: true
     become_user: root
+
+  - name: make wkhtmltopdf executable
+    file: path=/usr/local/bin/wkhtmltopdf mode="o+x"

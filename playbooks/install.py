@@ -245,7 +245,7 @@ def get_passwords(ignore_prompt=False):
 
 			# admin password
 			if not admin_password:
-				admin_password = getpass.unix_getpass(prompt='Please enter Administrator password: ')
+				admin_password = getpass.unix_getpass(prompt='Please enter the default Administrator user password: ')
 				conf_admin_passswd = getpass.unix_getpass(prompt='Re-enter Administrator password: ')
 
 				if admin_password != conf_admin_passswd:
@@ -265,6 +265,8 @@ def get_passwords(ignore_prompt=False):
 		passwords_file_path = os.path.join(os.path.expanduser('~'), 'passwords.txt')
 		with open(passwords_file_path, 'w') as f:
 			json.dump(passwords, f, indent=1)
+
+		print 'Passwords saved at ~/passwords.txt'
 
 	return passwords
 
@@ -348,9 +350,4 @@ if __name__ == '__main__':
 
 	install_bench(args)
 
-	print '''
-	Frappe/ERPNext has been successfully installed on your machine.
-
-	Please find mysql root password and admin password in "passwords.txt" in your root directory,
-	you can remove the file after making note of the passwords.
-	'''
+	print '''Frappe/ERPNext has been successfully installed!'''
