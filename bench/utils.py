@@ -498,7 +498,8 @@ def run_frappe_cmd(*args, **kwargs):
 		return_code = p.wait()
 
 	if return_code > 0:
-		raise CommandFailedError(args)
+		sys.exit(return_code)
+		#raise CommandFailedError(args)
 
 def get_frappe_cmd_output(*args, **kwargs):
 	bench_path = kwargs.get('bench_path', '.')
