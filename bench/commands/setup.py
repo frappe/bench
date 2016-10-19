@@ -84,6 +84,17 @@ def setup_firewall():
 		abort=True)
 	run_playbook('production/setup_firewall.yml')
 
+@click.command('ssh-port')
+@click.argument('port')
+def set_ssh_port(port):
+	"Setup firewall"
+	from bench.utils import run_playbook
+	click.confirm('This will change your SSH Port to {}\n'
+		'Do you want to continue?'.format(port),
+		abort=True)
+	run_playbook('production/change_ssh_port.yml', {"ssh_port": port})
+
+
 @click.command('lets-encrypt')
 @click.argument('site')
 @click.option('--custom-domain')
@@ -180,3 +191,4 @@ setup.add_command(add_domain)
 setup.add_command(remove_domain)
 setup.add_command(sync_domains)
 setup.add_command(setup_firewall)
+setup.add_command(set_ssh_port)
