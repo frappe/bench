@@ -693,5 +693,5 @@ def run_playbook(playbook_name, extra_vars=None):
 		sys.exit(1)
 	args = ['ansible-playbook', '-c', 'local', playbook_name]
 	if extra_vars:
-		args.extend(['--extra-vars=' + json.dumps(extra_vars)])
+		args.extend(['-e', json.dumps(extra_vars)])
 	subprocess.check_call(args, cwd=os.path.join(os.path.dirname(bench.__path__[0]), 'playbooks'))

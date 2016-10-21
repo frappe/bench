@@ -87,7 +87,7 @@ def setup_firewall():
 @click.command('ssh-port')
 @click.argument('port')
 def set_ssh_port(port):
-	"Setup firewall"
+	"Set SSH Port"
 	from bench.utils import run_playbook
 	click.confirm('This will change your SSH Port to {}\n'
 		'Do you want to continue?'.format(port),
