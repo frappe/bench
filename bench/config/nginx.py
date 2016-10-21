@@ -44,6 +44,10 @@ def make_nginx_conf(bench_path, yes=False):
 	with open(conf_path, "w") as f:
 		f.write(nginx_conf)
 
+	nginx_conf = '/etc/nginx/conf.d/{bench_name}.conf'.format(bench_name=bench_name)
+	if not os.path.islink(nginx_conf):
+		os.symlink(os.path.abspath(os.path.join(bench_path, 'config', 'nginx.conf')), nginx_conf)
+
 def prepare_sites(config, bench_path):
 	sites = {
 		"that_use_port": [],
