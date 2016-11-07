@@ -128,7 +128,8 @@ def remove_app(app, bench_path='.'):
 		restart_supervisor_processes(bench_path=bench_path)
 
 
-def pull_all_apps(bench_path='.'):
+def pull_all_apps(bench_path='.',reset=False):
+	
 	rebase = '--rebase' if get_config(bench_path).get('rebase_on_pull') else ''
 
 	for app in get_apps(bench_path=bench_path):
@@ -136,8 +137,13 @@ def pull_all_apps(bench_path='.'):
 		if os.path.exists(os.path.join(app_dir, '.git')):
 			remote = get_remote(app)
 			logger.info('pulling {0}'.format(app))
-			exec_cmd("git pull {rebase} {remote} {branch}".format(rebase=rebase,
-				remote=remote, branch=get_current_branch(app, bench_path=bench_path)), cwd=app_dir)
+			if reset:
+				exec_cmd("git fetch --all", cwd=app_dir)
+				exec_cmd("git reset --hard {remote}/{branch}".format(
+					remote=remote, branch=get_current_branch(app,bench_path=bench_path)), cwd=app_dir)
+			else:
+				exec_cmd("git pull {rebase} {remote} {branch}".format(rebase=rebase,
+					remote=remote, branch=get_current_branch(app, bench_path=bench_path)), cwd=app_dir)
 			exec_cmd('find . -name "*.pyc" -delete', cwd=app_dir)
 
 
