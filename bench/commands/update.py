@@ -40,7 +40,8 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 				'requirements': requirements,
 				'no-backup': no_backup,
 				'restart-supervisor': restart_supervisor,
-				'upgrade': upgrade
+				'upgrade': upgrade,
+				'reset':reset
 		})
 
 	if conf.get('release_bench'):
