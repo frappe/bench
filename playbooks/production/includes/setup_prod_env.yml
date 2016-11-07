@@ -78,6 +78,28 @@
     become: yes
     become_user: root
 
+  ######################################################
+  # Set InnoDB Buffer Pool size to half of total RAM
+  - name: Set InnoDB buffer pool
+    lineinfile: >
+      dest=/etc/my.cnf.d/frappe.cnf
+      regexp="^\[mysqld\]$"
+      line="[mysqld]\ninnodb_buffer_pool_size={{ (ansible_memtotal_mb/2)|round|int }}M"
+      state=present
+    when: ansible_distribution == 'CentOS'
+    become: yes
+    become_user: root
+
+  - name: Set InnoDB buffer pool
+    lineinfile: >
+      dest=/etc/mysql/conf.d/frappe.cnf
+      regexp="^\[mysqld\]$"
+      line="[mysqld]\ninnodb_buffer_pool_size={{ (ansible_memtotal_mb/2)|round|int }}M"
+      state=present
+    when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
+    become: yes
+    become_user: root
+
   ####################################################
   # Enable nginx, mysql, redis and supevisord services
   - name: Enable nginx, mysql, and redis
