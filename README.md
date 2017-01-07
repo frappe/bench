@@ -23,6 +23,7 @@ To manually install frappe/erpnext here are the steps
 - Nginx (for production)
 - Nodejs
 - Redis
+- cron (crontab is required)
 - wkhtmltopdf with patched Qt (for pdf generation)
 
 #### 2. Install Bench
@@ -62,6 +63,10 @@ Note: Please do not remove the bench directory the above commands will create
 	To install erpnext on your new site, use the bench `install-app` command
 
 		bench --site site1.local install-app erpnext
+		
+* Set our new site as the default site
+
+		bench use site1.local
 
 * Start bench
 
