@@ -308,7 +308,12 @@ def get_git_version():
 
 def check_git_for_shallow_clone():
 	from .config.common_site_config import get_config
-	if get_config(".").get('release_bench'):
+	config = get_config('.')
+
+	if config.get('release_bench'):
+		return False
+
+	if not config.get('shallow_clone'):
 		return False
 
 	git_version = get_git_version()
