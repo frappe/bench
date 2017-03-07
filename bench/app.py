@@ -174,7 +174,7 @@ def get_current_frappe_version(bench_path='.'):
 
 def get_current_branch(app, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
-	return get_cmd_output("basename $(git symbolic-ref -q HEAD)", cwd=repo_dir)
+	return get_cmd_output("git branch | grep \* | cut -d ' ' -f2", cwd=repo_dir)
 
 def get_remote(app, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
