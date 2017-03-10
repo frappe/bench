@@ -49,6 +49,9 @@ def write_appstxt(apps, bench_path='.'):
 		return f.write('\n'.join(apps))
 
 def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbose=False):
+	#less verbose app install
+	if '/' not in git_url:
+		git_url = 'https://github.com/frappe/' + git_url
 	#Gets repo name from URL
 	repo_name = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
 	logger.info('getting app {}'.format(repo_name))
