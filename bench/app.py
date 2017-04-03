@@ -139,13 +139,17 @@ def pull_all_apps(bench_path='.', reset=False):
 		if os.path.exists(os.path.join(app_dir, '.git')):
 			out = subprocess.check_output(["git", "status"], cwd=app_dir)
 			if not 'nothing to commit, working directory clean' in out:
-				print '''You have local changes in app "{0}" that are not committed.
-Please commit or stash these changes before using bench update.
-If you commit, you may encounter conflicts, so you have two choices:
+				print '''
+
+Cannot proceed with update: You have local changes in app "{0}" that are not committed.
+
+Here are your choices:
 
 1. Merge the {0} app manually with "git pull" / "git pull --rebase" and fix conflicts.
-1. If your changes were temporary and not important, you can stash them with "git stash" or discard them completely with "git reset --hard"
-2. If your changes are helpful for the community, send in a pull request so that your changes become a part of the core.'''
+1. Temporarily remove your changes with "git stash" or discard them completely
+	with "git reset --hard"
+2. If your changes are helpful for others, send in a pull request via GitHub and
+	wait for them to be merged in the core.'''.format(app)
 				sys.exit(1)
 
 	for app in get_apps(bench_path=bench_path):
