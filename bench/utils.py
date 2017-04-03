@@ -116,6 +116,9 @@ def exec_cmd(cmd, cwd='.'):
 		stderr = stdout = subprocess.PIPE
 	else:
 		stderr = stdout = None
+
+	logger.info(cmd)
+
 	p = subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=stdout, stderr=stderr)
 
 	if async:
@@ -137,7 +140,6 @@ def setup_socketio(bench_path='.'):
 	exec_cmd("npm install socket.io redis express superagent cookie", cwd=bench_path)
 
 def new_site(site, mariadb_root_password=None, admin_password=None, bench_path='.'):
-	import hashlib
 	logger.info('creating new site {}'.format(site))
 	mariadb_root_password_fragment = '--root_password {}'.format(mariadb_root_password) if mariadb_root_password else ''
 	admin_password_fragment = '--admin_password {}'.format(admin_password) if admin_password else ''

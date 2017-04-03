@@ -92,13 +92,14 @@ def new_app(app, bench_path='.'):
 		run_frappe_cmd('make-app', apps, app, bench_path=bench_path)
 	install_app(app, bench_path=bench_path)
 
-def install_app(app, bench_path='.', verbose=False):
+def install_app(app, bench_path='.', verbose=False, no_cache=False):
 	logger.info('installing {}'.format(app))
 	# find_links = '--find-links={}'.format(conf.get('wheel_cache_dir')) if conf.get('wheel_cache_dir') else ''
 	find_links = ''
-	exec_cmd("{pip} install {quiet} {find_links} -e {app}".format(
+	exec_cmd("{pip} install {quiet} {find_links} -e {app} {no_cache}".format(
 				pip=os.path.join(bench_path, 'env', 'bin', 'pip'),
 				quiet="-q" if not verbose else "",
+				no_cache='--no-cache-dir' if not no_cache else '',
 				app=os.path.join(bench_path, 'apps', app),
 				find_links=find_links))
 	add_to_appstxt(app, bench_path=bench_path)
@@ -128,9 +129,24 @@ def remove_app(app, bench_path='.'):
 		restart_supervisor_processes(bench_path=bench_path)
 
 
-def pull_all_apps(bench_path='.',reset=False):
-	
+def pull_all_apps(bench_path='.', reset=False):
+	'''Check all apps if there no local changes, pull'''
 	rebase = '--rebase' if get_config(bench_path).get('rebase_on_pull') else ''
+
+	# chech for local changes
+	for app in get_apps(bench_path=bench_path):
+		app_dir = get_repo_dir(app, bench_path=bench_path)
+		if os.path.exists(os.path.join(app_dir, '.git')):
+			out = subprocess.check_output(["git", "status"], cwd=app_dir)
+			if not 'nothing to commit, working directory clean' in out:
+				print '''You have local changes in app "{0}" that are not committed.
+Please commit or stash these changes before using bench update.
+If you commit, you may encounter conflicts, so you have two choices:
+
+1. Merge the {0} app manually with "git pull" / "git pull --rebase" and fix conflicts.
+1. If your changes were temporary and not important, you can stash them with "git stash" or discard them completely with "git reset --hard"
+2. If your changes are helpful for the community, send in a pull request so that your changes become a part of the core.'''
+				sys.exit(1)
 
 	for app in get_apps(bench_path=bench_path):
 		app_dir = get_repo_dir(app, bench_path=bench_path)

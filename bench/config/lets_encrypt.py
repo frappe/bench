@@ -64,19 +64,19 @@ def run_certbot_and_setup_ssl(site, custom_domain, bench_path):
 	if custom_domain:
 		remove_domain(site, custom_domain, bench_path)
 		domains = get_domains(site, bench_path)
-		ssl_config['domain'] = custom_domain		
+		ssl_config['domain'] = custom_domain
 		domains.append(ssl_config)
 		update_site_config(site, { "domains": domains }, bench_path=bench_path)
 	else:
 		update_site_config(site, ssl_config, bench_path=bench_path)
-	
+
 	make_nginx_conf(bench_path)
 	service('nginx', 'start')
 
 
 def setup_crontab():
 	job_command = 'sudo service nginx stop && /opt/certbot-auto renew && sudo service nginx start'
-	user_crontab = CronTab(user=True)
+	user_crontab = CronTab()
 	if job_command not in str(user_crontab):
 		job  = user_crontab.new(command=job_command, comment="Renew lets-encrypt every month")
 		job.every().month()
