@@ -44,24 +44,30 @@ Note: Please do not remove the bench directory the above commands will create
 
 		bench init frappe-bench && cd frappe-bench
 
-* Add apps
-
-	The get-app command gets remote frappe apps from a remote git repository and installs it. Example: [erpnext](https://github.com/frappe/erpnext)
-
-		bench get-app erpnext https://github.com/frappe/erpnext
-
-* Add site
+* Add a site
 
 	Frappe apps are run by frappe sites and you will have to create at least one
 	site. The new-site command allows you to do that.
 
 		bench new-site site1.local
 
-* Install erpnext
+* Set a default site
 
-	To install erpnext on your new site, use the bench `install-app` command
+	You could specify the site for each command `bench --site [site-name] COMMAND` or you could set a default site.
+	
+		bench use site1.local
 
-		bench --site site1.local install-app erpnext
+* Add apps
+
+	The get-app command gets remote frappe apps from a remote git repository and installs them. Example: [erpnext](https://github.com/frappe/erpnext)
+
+		bench get-app erpnext https://github.com/frappe/erpnext
+
+* Install apps
+
+	To install an app on your new site, use the bench `install-app` command.
+
+		bench install-app erpnext
 
 * Start bench
 
@@ -69,9 +75,9 @@ Note: Please do not remove the bench directory the above commands will create
 
 		bench start
 
-	To login to Frappe / ERPNext, open your browser and go to `localhost:8000`
+	To login to Frappe / ERPNext, open your browser and go to `[your-external-ip]:8000`, probably `localhost:8000`
 
-	The default user name is "Administrator" and password is what you set when you created the new site.
+	The default username is "Administrator" and password is what you set when you created the new site.
 
 
 ---
