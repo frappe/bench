@@ -78,17 +78,22 @@ def _update(pull=False, patch=False, build=False, update_bench=False, auto=False
 		pull_all_apps(bench_path=bench_path, reset=reset)
 
 	if requirements:
+		print 'Updating Python libraries...'
 		update_requirements(bench_path=bench_path)
 
 	if upgrade and (version_upgrade[0] or (not version_upgrade[0] and force)):
 		pre_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
 		import bench.utils, bench.app
+		print 'Reloading bench...'
 		reload(bench.utils)
 		reload(bench.app)
 
 	if patch:
 		if not no_backup:
+			print 'Backing up sites...'
 			backup_all_sites(bench_path=bench_path)
+
+		print 'Patching sites...'
 		patch_sites(bench_path=bench_path)
 	if build:
 		build_assets(bench_path=bench_path)
@@ -98,7 +103,8 @@ def _update(pull=False, patch=False, build=False, update_bench=False, auto=False
 		restart_supervisor_processes(bench_path=bench_path)
 
 	print "_"*80
-	print "Bench: Open source installer + admin for Frappe and ERPNext (https://erpnext.com)"
+	print "Bench: Deployment tool for Frappe and ERPNext (https://erpnext.org)."
+	print "Open source depends on your contributions, so please contribute bug reports, patches, fixes or cash and be a part of the community"
 	print
 
 
@@ -124,7 +130,7 @@ def switch_to_branch(branch, apps, upgrade=False):
 	"Switch all apps to specified branch, or specify apps separated by space"
 	from bench.app import switch_to_branch
 	switch_to_branch(branch=branch, apps=list(apps), upgrade=upgrade)
-	print 'Switched to ' + branch 
+	print 'Switched to ' + branch
 	print 'Please run `bench update --patch` to be safe from any differences in database schema'
 
 

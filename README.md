@@ -45,38 +45,34 @@ Note: Please do not remove the bench directory the above commands will create
 
 		bench init frappe-bench && cd frappe-bench
 
-* Add apps
-
-	The get-app command gets remote frappe apps from a remote git repository and installs it. Example: [erpnext](https://github.com/frappe/erpnext)
-
-		bench get-app erpnext https://github.com/frappe/erpnext
-
-* Add site
+* Add a site
 
 	Frappe apps are run by frappe sites and you will have to create at least one
 	site. The new-site command allows you to do that.
 
 		bench new-site site1.local
 
-* Install erpnext
+* Add apps
 
-	To install erpnext on your new site, use the bench `install-app` command
+	The get-app command gets remote frappe apps from a remote git repository and installs them. Example: [erpnext](https://github.com/frappe/erpnext)
+
+		bench get-app erpnext https://github.com/frappe/erpnext
+
+* Install apps
+
+	To install an app on your new site, use the bench `install-app` command.
 
 		bench --site site1.local install-app erpnext
 		
-* Set our new site as the default site
-
-		bench use site1.local
-
 * Start bench
 
 	To start using the bench, use the `bench start` command
 
 		bench start
 
-	To login to Frappe / ERPNext, open your browser and go to `localhost:8000`
+	To login to Frappe / ERPNext, open your browser and go to `[your-external-ip]:8000`, probably `localhost:8000`
 
-	The default user name is "Administrator" and password is what you set when you created the new site.
+	The default username is "Administrator" and password is what you set when you created the new site.
 
 
 ---
@@ -165,11 +161,11 @@ Guides
 - [Configuring HTTPS](https://frappe.github.io/frappe/user/en/bench/guides/configuring-https.html)
 - [Using Let's Encrypt to setup HTTPS](https://frappe.github.io/frappe/user/en/bench/guides/lets-encrypt-ssl-setup.html)
 - [Diagnosing the Scheduler](https://frappe.github.io/frappe/user/en/bench/guides/diagnosing-the-scheduler.html)
-- [Change Hostname](https://frappe.github.io/frappe/user/en/bench/guides/how-to-change-host-name-from-localhost.html)
+- [Change Hostname](https://frappe.github.io/frappe/user/en/bench/guides/adding-custom-domains)
 - [Manual Setup](https://frappe.github.io/frappe/user/en/bench/guides/manual-setup.html)
 - [Setup Production](https://frappe.github.io/frappe/user/en/bench/guides/setup-production.html)
 - [Setup Multitenancy](https://frappe.github.io/frappe/user/en/bench/guides/setup-multitenancy.html)
-- [Stopping Production](https://frappe.github.io/frappe/user/en/bench/guides/stop-production-and-start-development.html)
+- [Stopping Production](https://github.com/frappe/bench/wiki/Stopping-Production-and-starting-Development)
 
 
 Resources

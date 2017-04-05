@@ -49,6 +49,9 @@ def write_appstxt(apps, bench_path='.'):
 		return f.write('\n'.join(apps))
 
 def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbose=False):
+	#less verbose app install
+	if '/' not in git_url:
+		git_url = 'https://github.com/frappe/' + git_url
 	#Gets repo name from URL
 	repo_name = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
 	logger.info('getting app {}'.format(repo_name))
@@ -92,13 +95,14 @@ def new_app(app, bench_path='.'):
 		run_frappe_cmd('make-app', apps, app, bench_path=bench_path)
 	install_app(app, bench_path=bench_path)
 
-def install_app(app, bench_path='.', verbose=False):
+def install_app(app, bench_path='.', verbose=False, no_cache=False):
 	logger.info('installing {}'.format(app))
 	# find_links = '--find-links={}'.format(conf.get('wheel_cache_dir')) if conf.get('wheel_cache_dir') else ''
 	find_links = ''
-	exec_cmd("{pip} install {quiet} {find_links} -e {app}".format(
+	exec_cmd("{pip} install {quiet} {find_links} -e {app} {no_cache}".format(
 				pip=os.path.join(bench_path, 'env', 'bin', 'pip'),
 				quiet="-q" if not verbose else "",
+				no_cache='--no-cache-dir' if not no_cache else '',
 				app=os.path.join(bench_path, 'apps', app),
 				find_links=find_links))
 	add_to_appstxt(app, bench_path=bench_path)
@@ -128,9 +132,28 @@ def remove_app(app, bench_path='.'):
 		restart_supervisor_processes(bench_path=bench_path)
 
 
-def pull_all_apps(bench_path='.',reset=False):
-	
+def pull_all_apps(bench_path='.', reset=False):
+	'''Check all apps if there no local changes, pull'''
 	rebase = '--rebase' if get_config(bench_path).get('rebase_on_pull') else ''
+
+	# chech for local changes
+	for app in get_apps(bench_path=bench_path):
+		app_dir = get_repo_dir(app, bench_path=bench_path)
+		if os.path.exists(os.path.join(app_dir, '.git')):
+			out = subprocess.check_output(["git", "status"], cwd=app_dir)
+			if not re.search(r'nothing to commit, working (directory|tree) clean', out):
+				print '''
+
+Cannot proceed with update: You have local changes in app "{0}" that are not committed.
+
+Here are your choices:
+
+1. Merge the {0} app manually with "git pull" / "git pull --rebase" and fix conflicts.
+1. Temporarily remove your changes with "git stash" or discard them completely
+	with "git reset --hard"
+2. If your changes are helpful for others, send in a pull request via GitHub and
+	wait for them to be merged in the core.'''.format(app)
+				sys.exit(1)
 
 	for app in get_apps(bench_path=bench_path):
 		app_dir = get_repo_dir(app, bench_path=bench_path)

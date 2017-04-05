@@ -116,6 +116,9 @@ def exec_cmd(cmd, cwd='.'):
 		stderr = stdout = subprocess.PIPE
 	else:
 		stderr = stdout = None
+
+	logger.info(cmd)
+
 	p = subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=stdout, stderr=stderr)
 
 	if async:
@@ -137,7 +140,6 @@ def setup_socketio(bench_path='.'):
 	exec_cmd("npm install socket.io redis express superagent cookie", cwd=bench_path)
 
 def new_site(site, mariadb_root_password=None, admin_password=None, bench_path='.'):
-	import hashlib
 	logger.info('creating new site {}'.format(site))
 	mariadb_root_password_fragment = '--root_password {}'.format(mariadb_root_password) if mariadb_root_password else ''
 	admin_password_fragment = '--admin_password {}'.format(admin_password) if admin_password else ''
@@ -308,7 +310,12 @@ def get_git_version():
 
 def check_git_for_shallow_clone():
 	from .config.common_site_config import get_config
-	if get_config(".").get('release_bench'):
+	config = get_config('.')
+
+	if config.get('release_bench'):
+		return False
+
+	if not config.get('shallow_clone'):
 		return False
 
 	git_version = get_git_version()
