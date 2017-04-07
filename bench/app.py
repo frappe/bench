@@ -154,7 +154,7 @@ Here are your choices:
 	with "bench update --reset" or for individual repositries "git reset --hard"
 2. If your changes are helpful for others, send in a pull request via GitHub and
 	wait for them to be merged in the core.'''.format(app)
-				sys.exit(1)
+					sys.exit(1)
 
 	for app in get_apps(bench_path=bench_path):
 		app_dir = get_repo_dir(app, bench_path=bench_path)
