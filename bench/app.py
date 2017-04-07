@@ -135,14 +135,15 @@ def remove_app(app, bench_path='.'):
 def pull_all_apps(bench_path='.', reset=False):
 	'''Check all apps if there no local changes, pull'''
 	rebase = '--rebase' if get_config(bench_path).get('rebase_on_pull') else ''
-
+	
 	# chech for local changes
-	for app in get_apps(bench_path=bench_path):
-		app_dir = get_repo_dir(app, bench_path=bench_path)
-		if os.path.exists(os.path.join(app_dir, '.git')):
-			out = subprocess.check_output(["git", "status"], cwd=app_dir)
-			if not re.search(r'nothing to commit, working (directory|tree) clean', out):
-				print '''
+	if not reset:
+		for app in get_apps(bench_path=bench_path):
+			app_dir = get_repo_dir(app, bench_path=bench_path)
+			if os.path.exists(os.path.join(app_dir, '.git')):
+				out = subprocess.check_output(["git", "status"], cwd=app_dir)
+				if not re.search(r'nothing to commit, working (directory|tree) clean', out):
+					print '''
 
 Cannot proceed with update: You have local changes in app "{0}" that are not committed.
 
@@ -150,7 +151,7 @@ Here are your choices:
 
 1. Merge the {0} app manually with "git pull" / "git pull --rebase" and fix conflicts.
 1. Temporarily remove your changes with "git stash" or discard them completely
-	with "git reset --hard"
+	with "bench update --reset" or for individual repositries "git reset --hard"
 2. If your changes are helpful for others, send in a pull request via GitHub and
 	wait for them to be merged in the core.'''.format(app)
 				sys.exit(1)
