@@ -1,4 +1,4 @@
-import bench, os, click, errno, urllib
+import bench, os, click, errno, urllib.request, urllib.parse, urllib.error
 from bench.utils import exec_cmd, CommandFailedError
 from bench.config.site_config import update_site_config, remove_domain, get_domains
 from bench.config.nginx import make_nginx_conf
@@ -10,18 +10,18 @@ def setup_letsencrypt(site, custom_domain, bench_path):
 
 	site_path = os.path.join(bench_path, "sites", site, "site_config.json")
 	if not os.path.exists(os.path.dirname(site_path)):
-		print "No site named "+site
+		print("No site named "+site)
 		return
 
 	if custom_domain:
 		domains = get_domains(site, bench_path)
 		for d in domains:
 			if (isinstance(d, dict) and d['domain']==custom_domain):
-				print "SSL for Domain {0} already exists".format(custom_domain)
+				print("SSL for Domain {0} already exists".format(custom_domain))
 				return
 
 		if not custom_domain in domains:
-			print "No custom domain named {0} set for site".format(custom_domain)
+			print("No custom domain named {0} set for site".format(custom_domain))
 			return
 
 	click.confirm('Running this will stop the nginx service temporarily causing your sites to go offline\n'
@@ -29,7 +29,7 @@ def setup_letsencrypt(site, custom_domain, bench_path):
 		abort=True)
 
 	if not get_config(bench_path).get("dns_multitenant"):
-		print "You cannot setup SSL without DNS Multitenancy"
+		print("You cannot setup SSL without DNS Multitenancy")
 		return
 
 	create_config(site, custom_domain)
@@ -54,7 +54,7 @@ def run_certbot_and_setup_ssl(site, custom_domain, bench_path):
 		exec_cmd("{path} --config /etc/letsencrypt/configs/{site}.cfg certonly".format(path=get_certbot_path(), site=custom_domain or site))
 	except CommandFailedError:
 		service('nginx', 'start')
-		print "There was a problem trying to setup SSL for your site"
+		print("There was a problem trying to setup SSL for your site")
 		return
 
 	ssl_path = "/etc/letsencrypt/live/{site}/".format(site=custom_domain or site)
@@ -94,8 +94,8 @@ def get_certbot():
 	create_dir_if_missing(certbot_path)
 
 	if not os.path.isfile(certbot_path):
-		urllib.urlretrieve ("https://dl.eff.org/certbot-auto", certbot_path)
-		os.chmod(certbot_path, 0744)
+		urllib.request.urlretrieve ("https://dl.eff.org/certbot-auto", certbot_path)
+		os.chmod(certbot_path, 0o744)
 
 
 def get_certbot_path():

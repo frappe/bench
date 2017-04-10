@@ -45,18 +45,18 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 		})
 
 	if conf.get('release_bench'):
-		print 'Release bench, cannot update'
+		print('Release bench, cannot update')
 		sys.exit(1)
 
 	version_upgrade = is_version_upgrade()
 
 	if version_upgrade[0] and not upgrade:
-		print
-		print
-		print "This update will cause a major version change in Frappe/ERPNext from {0} to {1}.".format(*version_upgrade[1:])
-		print "This would take significant time to migrate and might break custom apps. Please run `bench update --upgrade` to confirm."
-		print
-		print "You can stay on the latest stable release by running `bench switch-to-master` or pin your bench to {0} by running `bench switch-to-v{0}`".format(version_upgrade[1])
+		print()
+		print()
+		print("This update will cause a major version change in Frappe/ERPNext from {0} to {1}.".format(*version_upgrade[1:]))
+		print("This would take significant time to migrate and might break custom apps. Please run `bench update --upgrade` to confirm.")
+		print()
+		print("You can stay on the latest stable release by running `bench switch-to-master` or pin your bench to {0} by running `bench switch-to-v{0}`".format(version_upgrade[1]))
 		sys.exit(1)
 
 	_update(pull, patch, build, bench, auto, restart_supervisor, requirements, no_backup, upgrade, force=force, reset=reset)
@@ -78,22 +78,22 @@ def _update(pull=False, patch=False, build=False, update_bench=False, auto=False
 		pull_all_apps(bench_path=bench_path, reset=reset)
 
 	if requirements:
-		print 'Updating Python libraries...'
+		print('Updating Python libraries...')
 		update_requirements(bench_path=bench_path)
 
 	if upgrade and (version_upgrade[0] or (not version_upgrade[0] and force)):
 		pre_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
 		import bench.utils, bench.app
-		print 'Reloading bench...'
+		print('Reloading bench...')
 		reload(bench.utils)
 		reload(bench.app)
 
 	if patch:
 		if not no_backup:
-			print 'Backing up sites...'
+			print('Backing up sites...')
 			backup_all_sites(bench_path=bench_path)
 
-		print 'Patching sites...'
+		print('Patching sites...')
 		patch_sites(bench_path=bench_path)
 	if build:
 		build_assets(bench_path=bench_path)
@@ -102,10 +102,10 @@ def _update(pull=False, patch=False, build=False, update_bench=False, auto=False
 	if restart_supervisor or conf.get('restart_supervisor_on_update'):
 		restart_supervisor_processes(bench_path=bench_path)
 
-	print "_"*80
-	print "Bench: Deployment tool for Frappe and ERPNext (https://erpnext.org)."
-	print "Open source depends on your contributions, so please contribute bug reports, patches, fixes or cash and be a part of the community"
-	print
+	print("_"*80)
+	print("Bench: Deployment tool for Frappe and ERPNext (https://erpnext.org).")
+	print("Open source depends on your contributions, so please contribute bug reports, patches, fixes or cash and be a part of the community")
+	print()
 
 
 @click.command('retry-upgrade')
@@ -118,7 +118,7 @@ def retry_upgrade(version):
 
 
 def restart_update(kwargs):
-	args = ['--'+k for k, v in kwargs.items() if v]
+	args = ['--'+k for k, v in list(kwargs.items()) if v]
 	os.execv(sys.argv[0], sys.argv[:2] + args)
 
 
@@ -130,8 +130,8 @@ def switch_to_branch(branch, apps, upgrade=False):
 	"Switch all apps to specified branch, or specify apps separated by space"
 	from bench.app import switch_to_branch
 	switch_to_branch(branch=branch, apps=list(apps), upgrade=upgrade)
-	print 'Switched to ' + branch
-	print 'Please run `bench update --patch` to be safe from any differences in database schema'
+	print('Switched to ' + branch)
+	print('Please run `bench update --patch` to be safe from any differences in database schema')
 
 
 @click.command('switch-to-master')
@@ -140,9 +140,9 @@ def switch_to_master(upgrade=False):
 	"Switch frappe and erpnext to master branch"
 	from bench.app import switch_to_master
 	switch_to_master(upgrade=upgrade, apps=['frappe', 'erpnext'])
-	print
-	print 'Switched to master'
-	print 'Please run `bench update --patch` to be safe from any differences in database schema'
+	print()
+	print('Switched to master')
+	print('Please run `bench update --patch` to be safe from any differences in database schema')
 
 
 @click.command('switch-to-develop')
@@ -151,9 +151,9 @@ def switch_to_develop(upgrade=False):
 	"Switch frappe and erpnext to develop branch"
 	from bench.app import switch_to_develop
 	switch_to_develop(upgrade=upgrade, apps=['frappe', 'erpnext'])
-	print
-	print 'Switched to develop'
-	print 'Please run `bench update --patch` to be safe from any differences in database schema'
+	print()
+	print('Switched to develop')
+	print('Please run `bench update --patch` to be safe from any differences in database schema')
 
 
 @click.command('switch-to-v4')
@@ -162,9 +162,9 @@ def switch_to_v4(upgrade=False):
 	"Switch frappe and erpnext to v4 branch"
 	from bench.app import switch_to_v4
 	switch_to_v4(upgrade=upgrade)
-	print
-	print 'Switched to v4'
-	print 'Please run `bench update --patch` to be safe from any differences in database schema'
+	print()
+	print('Switched to v4')
+	print('Please run `bench update --patch` to be safe from any differences in database schema')
 
 
 @click.command('switch-to-v5')
@@ -173,6 +173,6 @@ def switch_to_v5(upgrade=False):
 	"Switch frappe and erpnext to v5 branch"
 	from bench.app import switch_to_v5
 	switch_to_v5(upgrade=upgrade)
-	print
-	print 'Switched to v5'
-	print 'Please run `bench update --patch` to be safe from any differences in database schema'
+	print()
+	print('Switched to v5')
+	print('Please run `bench update --patch` to be safe from any differences in database schema')

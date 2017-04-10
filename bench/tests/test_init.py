@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+
 import unittest
 import json, os, shutil, subprocess
 import bench
@@ -178,7 +178,7 @@ class TestBenchInit(unittest.TestCase):
 		try:
 			subprocess.check_output(drop_site_cmd, cwd=bench_path)
 		except subprocess.CalledProcessError as err:
-			print err.output
+			print(err.output)
 
 		if not archived_sites_path:
 			archived_sites_path = os.path.join(bench_path, 'archived_sites')
@@ -234,8 +234,8 @@ class TestBenchInit(unittest.TestCase):
 
 		config = self.load_json(common_site_config_path)
 
-		for key, value in expected_config.items():
-			self.assertEquals(config.get(key), value)
+		for key, value in list(expected_config.items()):
+			self.assertEqual(config.get(key), value)
 
 	def assert_exists(self, *args):
 		self.assertTrue(os.path.exists(os.path.join(*args)))

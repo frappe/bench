@@ -16,8 +16,8 @@ folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 def get_frappe(bench_path='.'):
 	frappe = get_env_cmd('frappe', bench_path=bench_path)
 	if not os.path.exists(frappe):
-		print 'frappe app is not installed. Run the following command to install frappe'
-		print 'bench get-app https://github.com/frappe/frappe.git'
+		print('frappe app is not installed. Run the following command to install frappe')
+		print('bench get-app https://github.com/frappe/frappe.git')
 	return frappe
 
 def get_env_cmd(cmd, bench_path='.'):
@@ -33,7 +33,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	from bench.patches import set_all_patches_executed
 
 	if os.path.exists(path):
-		print 'Directory {} already exists!'.format(path)
+		print('Directory {} already exists!'.format(path))
 		raise Exception("Site directory already exists")
 		# sys.exit(1)
 
@@ -76,17 +76,17 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 def clone_apps_from(bench_path, clone_from):
 	from .app import install_app
-	print 'Copying apps from {0}...'.format(clone_from)
+	print('Copying apps from {0}...'.format(clone_from))
 	subprocess.check_output(['cp', '-R', os.path.join(clone_from, 'apps'), bench_path])
 
-	print 'Copying node_modules from {0}...'.format(clone_from)
+	print('Copying node_modules from {0}...'.format(clone_from))
 	subprocess.check_output(['cp', '-R', os.path.join(clone_from, 'node_modules'), bench_path])
 
 	def setup_app(app):
 		# run git reset --hard in each branch, pull latest updates and install_app
 		app_path = os.path.join(bench_path, 'apps', app)
 		if os.path.exists(os.path.join(app_path, '.git')):
-			print 'Cleaning up {0}'.format(app)
+			print('Cleaning up {0}'.format(app))
 
 			# remove .egg-ino
 			subprocess.check_output(['rm', '-rf', app + '.egg-info'], cwd=app_path)
@@ -240,7 +240,7 @@ def setup_sudoers(user):
 			f.write('\n#includedir /etc/sudoers.d\n')
 
 		if set_permissions:
-			os.chmod('/etc/sudoers', 0440)
+			os.chmod('/etc/sudoers', 0o440)
 
 	sudoers_file = '/etc/sudoers.d/frappe'
 
@@ -257,7 +257,7 @@ def setup_sudoers(user):
 	with open(sudoers_file, 'w') as f:
 		f.write(frappe_sudoers.encode('utf-8'))
 
-	os.chmod(sudoers_file, 0440)
+	os.chmod(sudoers_file, 0o440)
 
 def setup_logging(bench_path='.'):
 	if os.path.exists(os.path.join(bench_path, 'logs')):
@@ -326,9 +326,9 @@ def check_git_for_shallow_clone():
 def get_cmd_output(cmd, cwd='.'):
 	try:
 		return subprocess.check_output(cmd, cwd=cwd, shell=True, stderr=open(os.devnull, 'wb')).strip()
-	except subprocess.CalledProcessError, e:
+	except subprocess.CalledProcessError as e:
 		if e.output:
-			print e.output
+			print(e.output)
 		raise
 
 def restart_supervisor_processes(bench_path='.', web_workers=False):
@@ -439,7 +439,7 @@ def drop_privileges(uid_name='nobody', gid_name='nogroup'):
 	os.setuid(running_uid)
 
 	# Ensure a very conservative umask
-	os.umask(022)
+	os.umask(0o22)
 
 def fix_prod_setup_perms(bench_path='.', frappe_user=None):
 	from .config.common_site_config import get_config
@@ -458,7 +458,7 @@ def fix_prod_setup_perms(bench_path='.', frappe_user=None):
 		frappe_user = get_config(bench_path).get('frappe_user')
 
 	if not frappe_user:
-		print "frappe user not set"
+		print("frappe user not set")
 		sys.exit(1)
 
 	for path in files:
@@ -470,14 +470,14 @@ def fix_prod_setup_perms(bench_path='.', frappe_user=None):
 def fix_file_perms():
 	for dir_path, dirs, files in os.walk('.'):
 		for _dir in dirs:
-			os.chmod(os.path.join(dir_path, _dir), 0755)
+			os.chmod(os.path.join(dir_path, _dir), 0o755)
 		for _file in files:
-			os.chmod(os.path.join(dir_path, _file), 0644)
+			os.chmod(os.path.join(dir_path, _file), 0o644)
 	bin_dir = './env/bin'
 	if os.path.exists(bin_dir):
 		for _file in os.listdir(bin_dir):
 			if not _file.startswith('activate'):
-				os.chmod(os.path.join(bin_dir, _file), 0755)
+				os.chmod(os.path.join(bin_dir, _file), 0o755)
 
 def get_current_frappe_version(bench_path='.'):
 	from .app import get_current_frappe_version as fv
@@ -539,8 +539,8 @@ def post_upgrade(from_ver, to_ver, bench_path='.'):
 	from .config.supervisor import generate_supervisor_config
 	from .config.nginx import make_nginx_conf
 	conf = get_config(bench_path=bench_path)
-	print "-"*80
-	print "Your bench was upgraded to version {0}".format(to_ver)
+	print("-"*80)
+	print("Your bench was upgraded to version {0}".format(to_ver))
 
 	if conf.get('restart_supervisor_on_update'):
 		redis.generate_config(bench_path=bench_path)
@@ -553,17 +553,17 @@ def post_upgrade(from_ver, to_ver, bench_path='.'):
 		if from_ver <= 5 and to_ver == 6:
 			setup_socketio(bench_path=bench_path)
 
-		print "As you have setup your bench for production, you will have to reload configuration for nginx and supervisor"
-		print "To complete the migration, please run the following commands"
-		print
-		print "sudo service nginx restart"
-		print "sudo supervisorctl reload"
+		print("As you have setup your bench for production, you will have to reload configuration for nginx and supervisor")
+		print("To complete the migration, please run the following commands")
+		print()
+		print("sudo service nginx restart")
+		print("sudo supervisorctl reload")
 
 def update_translations_p(args):
 	try:
 		update_translations(*args)
 	except requests.exceptions.HTTPError:
-		print 'Download failed for', args[0], args[1]
+		print('Download failed for', args[0], args[1])
 
 def download_translations_p():
 	pool = multiprocessing.Pool(4)
@@ -600,7 +600,7 @@ def update_translations(app, lang):
 				f.write(chunk)
 				f.flush()
 
-	print 'downloaded for', app, lang
+	print('downloaded for', app, lang)
 
 def print_output(p):
 	while p.poll() is None:
@@ -650,18 +650,18 @@ def validate_pillow_dependencies(bench_path, requirements):
 		distro = platform.linux_distribution()
 		distro_name = distro[0].lower()
 		if "centos" in distro_name or "fedora" in distro_name:
-			print "Please install these dependencies using the command:"
-			print "sudo yum install libtiff-devel libjpeg-devel libzip-devel freetype-devel lcms2-devel libwebp-devel tcl-devel tk-devel"
+			print("Please install these dependencies using the command:")
+			print("sudo yum install libtiff-devel libjpeg-devel libzip-devel freetype-devel lcms2-devel libwebp-devel tcl-devel tk-devel")
 
 			raise
 
 		elif "ubuntu" in distro_name or "elementary os" in distro_name or "debian" in distro_name:
-			print "Please install these dependencies using the command:"
+			print("Please install these dependencies using the command:")
 
 			if "ubuntu" in distro_name and distro[1]=="12.04":
-				print "sudo apt-get install -y libtiff4-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.5-dev tk8.5-dev python-tk"
+				print("sudo apt-get install -y libtiff4-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.5-dev tk8.5-dev python-tk")
 			else:
-				print "sudo apt-get install -y libtiff5-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python-tk"
+				print("sudo apt-get install -y libtiff5-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python-tk")
 
 			raise
 
@@ -687,7 +687,7 @@ def set_git_remote_url(git_url, bench_path='.'):
 	app = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
 
 	if app not in bench.app.get_apps(bench_path):
-		print "No app named {0}".format(app)
+		print("No app named {0}".format(app))
 		sys.exit(1)
 
 	app_dir = bench.app.get_repo_dir(app, bench_path=bench_path)
@@ -696,7 +696,7 @@ def set_git_remote_url(git_url, bench_path='.'):
 
 def run_playbook(playbook_name, extra_vars=None):
 	if not find_executable('ansible'):
-		print "Ansible is needed to run this command, please install it using 'pip install ansible'"
+		print("Ansible is needed to run this command, please install it using 'pip install ansible'")
 		sys.exit(1)
 	args = ['ansible-playbook', '-c', 'local', playbook_name]
 	if extra_vars:

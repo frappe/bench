@@ -1,5 +1,5 @@
 from .common_site_config import get_config
-import re, os, subprocess, urlparse, semantic_version
+import re, os, subprocess, urllib.parse, semantic_version
 import bench
 
 def generate_config(bench_path):
@@ -7,7 +7,7 @@ def generate_config(bench_path):
 
 	ports = {}
 	for key in ('redis_cache', 'redis_queue', 'redis_socketio'):
-		ports[key] = urlparse.urlparse(config[key]).port
+		ports[key] = urllib.parse.urlparse(config[key]).port
 
 	write_redis_config(
 		template_name='redis_queue.conf',

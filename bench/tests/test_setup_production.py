@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+
 from bench.tests import test_init
 from bench.config.production_setup import setup_production, get_supervisor_confdir, disable_production
 import bench.utils
@@ -76,7 +76,7 @@ class TestSetupProduction(test_init.TestBenchInit):
 		self.assertTrue(os.path.exists(conf_dest))
 
 		# symlink matches
-		self.assertEquals(os.path.realpath(conf_dest), conf_src)
+		self.assertEqual(os.path.realpath(conf_dest), conf_src)
 
 		# file content
 		with open(conf_src, "r") as f:
@@ -113,7 +113,7 @@ class TestSetupProduction(test_init.TestBenchInit):
 		self.assertTrue(os.path.exists(conf_dest))
 
 		# symlink matches
-		self.assertEquals(os.path.realpath(conf_dest), conf_src)
+		self.assertEqual(os.path.realpath(conf_dest), conf_src)
 
 		# file content
 		with open(conf_src, "r") as f:
