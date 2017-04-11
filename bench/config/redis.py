@@ -1,5 +1,5 @@
 from .common_site_config import get_config
-import re, os, subprocess, urllib.parse, semantic_version
+import re, os, subprocess, urllib, semantic_version
 import bench
 
 def generate_config(bench_path):
