@@ -1,10 +1,15 @@
-import bench, os, click, errno, urllib.request, urllib.parse, urllib.error
+import bench, os, click, errno
 from bench.utils import exec_cmd, CommandFailedError
 from bench.config.site_config import update_site_config, remove_domain, get_domains
 from bench.config.nginx import make_nginx_conf
 from bench.config.production_setup import service
 from bench.config.common_site_config import get_config
 from crontab import CronTab
+
+try:
+	from urllib.request import urlretrieve
+except ImportError:
+	from urllib import urlretrieve
 
 def setup_letsencrypt(site, custom_domain, bench_path):
 
@@ -94,7 +99,7 @@ def get_certbot():
 	create_dir_if_missing(certbot_path)
 
 	if not os.path.isfile(certbot_path):
-		urllib.request.urlretrieve ("https://dl.eff.org/certbot-auto", certbot_path)
+		urlretrieve ("https://dl.eff.org/certbot-auto", certbot_path)
 		os.chmod(certbot_path, 0o744)
 
 

@@ -1,4 +1,9 @@
-import os, multiprocessing, getpass, json, urllib
+import os, multiprocessing, getpass, json
+
+try:
+	from urllib.parse import urlparse
+except ImportError:
+	from urlparse import urlparse
 
 default_config = {
 	'restart_supervisor_on_update': False,
@@ -86,7 +91,7 @@ def make_ports(bench_path):
 
 				# extract port from redis url
 				if value and (key in ('redis_cache', 'redis_queue', 'redis_socketio')):
-					value = urllib.parse.urlparse(value).port
+					value = urlparse(value).port
 
 				if value:
 					existing_ports.setdefault(key, []).append(value)
