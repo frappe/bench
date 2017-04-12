@@ -36,23 +36,6 @@ class TestSetupProduction(test_init.TestBenchInit):
 			bench_path = os.path.join(os.path.abspath(self.benches_path), bench_name)
 			disable_production(bench_path)
 
-	def test_setup_production_v6(self):
-		bench_name = 'test-bench-v6'
-		self.test_init(bench_name, frappe_branch='v6.x.x')
-
-		user = getpass.getuser()
-
-		bench_path = os.path.join(os.path.abspath(self.benches_path), bench_name)
-		setup_production(user, bench_path)
-
-		self.assert_nginx_config(bench_name)
-		self.assert_nginx_process()
-
-		self.assert_supervisor_config(bench_name, use_rq=False)
-		self.assert_supervisor_process(bench_name, use_rq=False)
-
-		disable_production(bench_path)
-
 	def test_disable_production(self):
 		bench_name = 'test-disable-prod'
 		self.test_init(bench_name, frappe_branch='master')
