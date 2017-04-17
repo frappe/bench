@@ -135,7 +135,7 @@ def add_domain(domain, site=None, ssl_certificate=None, ssl_certificate_key=None
 	from bench.config.site_config import add_domain
 
 	if not site:
-		print "Please specify site"
+		print("Please specify site")
 		sys.exit(1)
 
 	add_domain(site, domain, ssl_certificate, ssl_certificate_key, bench_path='.')
@@ -148,7 +148,7 @@ def remove_domain(domain, site=None):
 	from bench.config.site_config import remove_domain
 
 	if not site:
-		print "Please specify site"
+		print("Please specify site")
 		sys.exit(1)
 
 	remove_domain(site, domain, bench_path='.')
@@ -160,12 +160,12 @@ def sync_domains(domains, site=None):
 	from bench.config.site_config import sync_domains
 
 	if not site:
-		print "Please specify site"
+		print("Please specify site")
 		sys.exit(1)
 
 	domains = json.loads(domains)
 	if not isinstance(domains, list):
-		print "Domains should be a json list of strings or dictionaries"
+		print("Domains should be a json list of strings or dictionaries")
 		sys.exit(1)
 
 	changed = sync_domains(site, domains, bench_path='.')

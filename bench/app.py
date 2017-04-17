@@ -72,7 +72,7 @@ def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbos
 			apps_path = os.path.join(os.path.abspath(bench_path), 'apps')
 			os.rename(os.path.join(apps_path, repo_name), os.path.join(apps_path, app_name))
 
-	print 'installing', app_name
+	print('installing', app_name)
 	install_app(app=app_name, bench_path=bench_path, verbose=verbose)
 
 	if build_asset_files:
@@ -109,7 +109,7 @@ def install_app(app, bench_path='.', verbose=False, no_cache=False):
 
 def remove_app(app, bench_path='.'):
 	if not app in get_apps(bench_path):
-		print "No app named {0}".format(app)
+		print("No app named {0}".format(app))
 		sys.exit(1)
 
 	app_path = os.path.join(bench_path, 'apps', app)
@@ -121,7 +121,7 @@ def remove_app(app, bench_path='.'):
 		if os.path.exists(req_file):
 			out = subprocess.check_output(["bench", "--site", site, "list-apps"], cwd=bench_path)
 			if re.search(r'\b' + app + r'\b', out):
-				print "Cannot remove, app is installed on site: {0}".format(site)
+				print("Cannot remove, app is installed on site: {0}".format(site))
 				sys.exit(1)
 
 	exec_cmd(["{0} uninstall -y {1}".format(pip, app_path)])
@@ -143,7 +143,7 @@ def pull_all_apps(bench_path='.', reset=False):
 			if os.path.exists(os.path.join(app_dir, '.git')):
 				out = subprocess.check_output(["git", "status"], cwd=app_dir)
 				if not re.search(r'nothing to commit, working (directory|tree) clean', out):
-					print '''
+					print('''
 
 Cannot proceed with update: You have local changes in app "{0}" that are not committed.
 
@@ -153,7 +153,7 @@ Here are your choices:
 1. Temporarily remove your changes with "git stash" or discard them completely
 	with "bench update --reset" or for individual repositries "git reset --hard"
 2. If your changes are helpful for others, send in a pull request via GitHub and
-	wait for them to be merged in the core.'''.format(app)
+	wait for them to be merged in the core.'''.format(app))
 					sys.exit(1)
 
 	for app in get_apps(bench_path=bench_path):
@@ -238,7 +238,7 @@ def get_upstream_version(app, branch=None, bench_path='.'):
 		branch = get_current_branch(app, bench_path=bench_path)
 	try:
 		contents = subprocess.check_output(['git', 'show', 'upstream/{branch}:{app}/__init__.py'.format(branch=branch, app=app)], cwd=repo_dir, stderr=subprocess.STDOUT)
-	except subprocess.CalledProcessError, e:
+	except subprocess.CalledProcessError as e:
 		if "Invalid object" in e.output:
 			return None
 		else:
@@ -254,7 +254,7 @@ def get_repo_dir(app, bench_path='.'):
 
 def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrade=True):
 	from .utils import update_requirements, backup_all_sites, patch_sites, build_assets, pre_upgrade, post_upgrade
-	import utils
+	from . import utils
 	apps_dir = os.path.join(bench_path, 'apps')
 	version_upgrade = (False,)
 	switched_apps = []
@@ -273,7 +273,7 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 					version_upgrade = is_version_upgrade(app=app, bench_path=bench_path, branch=branch)
 					if version_upgrade[0] and not upgrade:
 						raise MajorVersionUpgradeException("Switching to {0} will cause upgrade from {1} to {2}. Pass --upgrade to confirm".format(branch, version_upgrade[1], version_upgrade[2]), version_upgrade[1], version_upgrade[2])
-				print "Switching for "+app
+				print("Switching for "+app)
 				unshallow = "--unshallow" if os.path.exists(os.path.join(app_dir, ".git", "shallow")) else ""
 				exec_cmd("git config --unset-all remote.upstream.fetch", cwd=app_dir)
 				exec_cmd("git config --add remote.upstream.fetch '+refs/heads/*:refs/remotes/upstream/*'", cwd=app_dir)
@@ -282,14 +282,14 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 				exec_cmd("git merge upstream/{branch}".format(branch=branch), cwd=app_dir)
 				switched_apps.append(app)
 			except CommandFailedError:
-				print "Error switching to branch {0} for {1}".format(branch, app)
+				print("Error switching to branch {0} for {1}".format(branch, app))
 			except InvalidRemoteException:
-				print "Remote does not exist for app "+app
+				print("Remote does not exist for app "+app)
 			except InvalidBranchException:
-				print "Branch {0} does not exist in Upstream for {1}".format(branch, app)
+				print("Branch {0} does not exist in Upstream for {1}".format(branch, app))
 
 	if switched_apps:
-		print "Successfully switched branches for:\n" + "\n".join(switched_apps)
+		print("Successfully switched branches for:\n" + "\n".join(switched_apps))
 
 	if version_upgrade[0] and upgrade:
 		update_requirements()

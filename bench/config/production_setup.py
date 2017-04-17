@@ -66,7 +66,7 @@ def service(service, option):
 			exec_cmd(service_manager_command)
 
 		else:
-			raise Exception, 'No service manager found'
+			raise Exception('No service manager found')
 
 def get_supervisor_confdir():
 	possiblities = ('/etc/supervisor/conf.d', '/etc/supervisor.d/', '/etc/supervisord/conf.d', '/etc/supervisord.d')

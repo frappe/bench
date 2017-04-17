@@ -29,5 +29,5 @@ def remote_urls():
 		if os.path.exists(os.path.join(repo_dir, '.git')):
 			remote = get_remote(app)
 			remote_url = subprocess.check_output(['git', 'config', '--get', 'remote.{}.url'.format(remote)], cwd=repo_dir).strip()
-			print "{app}	{remote_url}".format(app=app, remote_url=remote_url)
+			print("{app}	{remote_url}".format(app=app, remote_url=remote_url))
 
