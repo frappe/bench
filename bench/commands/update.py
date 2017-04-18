@@ -54,7 +54,7 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 		print "This update will cause a major version change in Frappe/ERPNext from {0} to {1}.".format(*version_upgrade[1:])
 		print "This would take significant time to migrate and might break custom apps. Please run `bench update --upgrade` to confirm."
 		print
-		print "You can stay on the latest stable release by running `bench switch-to-master` or pin your bench to {0} by running `bench switch-to-v{0}`".format(version_upgrade[1])
+		print "You can stay on the latest stable release by running `bench switch-to-master` or pin your bench to {0}".format(version_upgrade[1])
 		sys.exit(1)
 
 	_update(pull, patch, build, bench, auto, restart_supervisor, requirements, no_backup, upgrade, force=force)
@@ -145,26 +145,4 @@ def switch_to_develop(upgrade=False):
 	switch_to_develop(upgrade=upgrade, apps=['frappe', 'erpnext'])
 	print
 	print 'Switched to develop'
-	print 'Please run `bench update --patch` to be safe from any differences in database schema'
-
-
-@click.command('switch-to-v4')
-@click.option('--upgrade',is_flag=True)
-def switch_to_v4(upgrade=False):
-	"Switch frappe and erpnext to v4 branch"
-	from bench.app import switch_to_v4
-	switch_to_v4(upgrade=upgrade)
-	print
-	print 'Switched to v4'
-	print 'Please run `bench update --patch` to be safe from any differences in database schema'
-
-
-@click.command('switch-to-v5')
-@click.option('--upgrade',is_flag=True)
-def switch_to_v5(upgrade=False):
-	"Switch frappe and erpnext to v5 branch"
-	from bench.app import switch_to_v5
-	switch_to_v5(upgrade=upgrade)
-	print
-	print 'Switched to v5'
 	print 'Please run `bench update --patch` to be safe from any differences in database schema'

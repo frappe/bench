@@ -279,12 +279,6 @@ def switch_to_master(apps=None, bench_path='.', upgrade=False):
 def switch_to_develop(apps=None, bench_path='.', upgrade=False):
 	switch_branch('develop', apps=apps, bench_path=bench_path, upgrade=upgrade)
 
-def switch_to_v4(apps=None, bench_path='.', upgrade=False):
-	switch_branch('v4.x.x', apps=apps, bench_path=bench_path, upgrade=upgrade)
-
-def switch_to_v5(apps=None, bench_path='.', upgrade=False):
-	switch_branch('v5.x.x', apps=apps, bench_path=bench_path, upgrade=upgrade)
-
 def get_version_from_string(contents, field='__version__'):
 	match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % field,
 			contents)
