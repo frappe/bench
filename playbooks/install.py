@@ -336,7 +336,8 @@ def parse_commandline_args():
 		help=argparse.SUPPRESS)
 
 	# whether to overwrite an existing bench
-	parser.add_argument('--overwrite', dest='overwrite', action='store_true', default=False)
+	parser.add_argument('--overwrite', dest='overwrite', action='store_true', default=False,
+		help='Whether to overwrite an existing bench')
 
 	args = parser.parse_args()
 
