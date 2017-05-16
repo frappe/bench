@@ -12,11 +12,11 @@ def start(no_dev, concurrency):
 
 
 @click.command('restart')
-@click.option('--web-workers', is_flag=True, default=False)
-def restart(web_workers):
+@click.option('--web', is_flag=True, default=False)
+def restart(web):
 	"Restart supervisor processes"
 	from bench.utils import restart_supervisor_processes
-	restart_supervisor_processes(bench_path='.', web_workers=web_workers)
+	restart_supervisor_processes(bench_path='.', web_workers=web)
 
 
 @click.command('set-nginx-port')
@@ -86,10 +86,10 @@ def renew_lets_encrypt():
 @click.command()
 def shell(bench_path='.'):
 	if not os.environ.get('SHELL'):
-		print "Cannot get shell"
+		print("Cannot get shell")
 		sys.exit(1)
 	if not os.path.exists('sites'):
-		print "sites dir doesn't exist"
+		print("sites dir doesn't exist")
 		sys.exit(1)
 	env = copy.copy(os.environ)
 	env['PS1'] = '(' + os.path.basename(os.path.dirname(os.path.abspath(__file__))) + ')' + env.get('PS1', '')
@@ -104,7 +104,7 @@ def backup_site(site):
 	"backup site"
 	from bench.utils import get_sites, backup_site
 	if not site in get_sites(bench_path='.'):
-		print 'site not found'
+		print('site not found')
 		sys.exit(1)
 	backup_site(site, bench_path='.')
 
@@ -142,4 +142,4 @@ def disable_production():
 def bench_src():
 	"""Prints bench source folder path, which can be used as: cd `bench src` """
 	import bench
-	print os.path.dirname(bench.__path__[0])
+	print(os.path.dirname(bench.__path__[0]))

@@ -75,13 +75,33 @@ def setup_env():
 	from bench.utils import setup_env
 	setup_env()
 
+@click.command('firewall')
+def setup_firewall():
+	"Setup firewall"
+	from bench.utils import run_playbook
+	click.confirm('Setting up the firewall will block all ports except 80, 443 and 22\n'
+		'Do you want to continue?',
+		abort=True)
+	run_playbook('production/setup_firewall.yml')
+
+@click.command('ssh-port')
+@click.argument('port')
+def set_ssh_port(port):
+	"Set SSH Port"
+	from bench.utils import run_playbook
+	click.confirm('This will change your SSH Port to {}\n'
+		'Do you want to continue?'.format(port),
+		abort=True)
+	run_playbook('production/change_ssh_port.yml', {"ssh_port": port})
+
 
 @click.command('lets-encrypt')
 @click.argument('site')
-def setup_letsencrypt(site):
+@click.option('--custom-domain')
+def setup_letsencrypt(site, custom_domain):
 	"Setup lets-encrypt for site"
 	from bench.config.lets_encrypt import setup_letsencrypt
-	setup_letsencrypt(site, bench_path='.')
+	setup_letsencrypt(site, custom_domain, bench_path='.')
 
 
 @click.command('procfile')
@@ -115,7 +135,7 @@ def add_domain(domain, site=None, ssl_certificate=None, ssl_certificate_key=None
 	from bench.config.site_config import add_domain
 
 	if not site:
-		print "Please specify site"
+		print("Please specify site")
 		sys.exit(1)
 
 	add_domain(site, domain, ssl_certificate, ssl_certificate_key, bench_path='.')
@@ -128,7 +148,7 @@ def remove_domain(domain, site=None):
 	from bench.config.site_config import remove_domain
 
 	if not site:
-		print "Please specify site"
+		print("Please specify site")
 		sys.exit(1)
 
 	remove_domain(site, domain, bench_path='.')
@@ -140,12 +160,12 @@ def sync_domains(domains, site=None):
 	from bench.config.site_config import sync_domains
 
 	if not site:
-		print "Please specify site"
+		print("Please specify site")
 		sys.exit(1)
 
 	domains = json.loads(domains)
 	if not isinstance(domains, list):
-		print "Domains should be a json list of strings or dictionaries"
+		print("Domains should be a json list of strings or dictionaries")
 		sys.exit(1)
 
 	changed = sync_domains(site, domains, bench_path='.')
@@ -170,3 +190,5 @@ setup.add_command(setup_fonts)
 setup.add_command(add_domain)
 setup.add_command(remove_domain)
 setup.add_command(sync_domains)
+setup.add_command(setup_firewall)
+setup.add_command(set_ssh_port)

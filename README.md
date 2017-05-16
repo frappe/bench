@@ -1,43 +1,103 @@
-Bench
-=====
+# Bench
 
-The bench allows you to setup Frappe / ERPNext apps on your local Linux (CentOS 6, Debian 7, Ubuntu, etc) machine or a production server. You can use the bench to serve multiple frappe sites. If you are using a DigitalOcean droplet or any other VPS / Dedicated Server, make sure it has >= 1Gb of ram or has swap setup properly.
+[![Build Status](https://travis-ci.org/frappe/bench.svg?branch=master)](https://travis-ci.org/frappe/bench)
+
+The bench is a command-line utility that helps you to install apps, manage multiple sites and update Frappe / ERPNext apps on */nix (CentOS 6, Debian 7, Ubuntu, etc) for development and production. Bench will also create nginx and supervisor config files, setup backups and much more.
+
+If you are using on a VPS make sure it has >= 1Gb of RAM or has swap setup properly.
 
 To do this install, you must have basic information on how Linux works and should be able to use the command-line. If you are looking easier ways to get started and evaluate ERPNext, [download the Virtual Machine](https://erpnext.com/download) or take [a free trial on erpnext.com](https://erpnext.com/pricing).
 
-If you have questions, please ask them on our [forum](https://discuss.erpnext.com/).
+If you have questions, please ask them on the [forum](https://discuss.erpnext.com/).
 
-Installation
-============
+## Installation
 
-Easy Setup
-----------
+## Manual Install
 
-- This is an opinionated setup with logging and SE Linux. So, it is best to setup on a blank server.
+To manually install frappe/erpnext here are the steps
+
+#### 1. Install Pre-requisites
+
+- Python 2.7
+- MariaDB 10+
+- Nginx (for production)
+- Nodejs
+- Redis
+- cron (crontab is required)
+- wkhtmltopdf with patched Qt (for pdf generation)
+
+#### 2. Install Bench
+
+Install bench as a *non root* user,
+
+	git clone https://github.com/frappe/bench bench-repo
+	sudo pip install -e bench-repo
+
+Note: Please do not remove the bench directory the above commands will create
+
+#### Basic Usage
+
+* Create a new bench
+
+	The init command will create a bench directory with frappe framework
+	installed. It will be setup for periodic backups and auto updates once
+	a day.
+
+		bench init frappe-bench && cd frappe-bench
+
+* Add a site
+
+	Frappe apps are run by frappe sites and you will have to create at least one
+	site. The new-site command allows you to do that.
+
+		bench new-site site1.local
+
+* Add apps
+
+	The get-app command gets remote frappe apps from a remote git repository and installs them. Example: [erpnext](https://github.com/frappe/erpnext)
+
+		bench get-app erpnext https://github.com/frappe/erpnext
+
+* Install apps
+
+	To install an app on your new site, use the bench `install-app` command.
+
+		bench --site site1.local install-app erpnext
+		
+* Start bench
+
+	To start using the bench, use the `bench start` command
+
+		bench start
+
+	To login to Frappe / ERPNext, open your browser and go to `[your-external-ip]:8000`, probably `localhost:8000`
+
+	The default username is "Administrator" and password is what you set when you created the new site.
+
+
+---
+
+## Easy Install
+
+- This is an opinionated setup so it is best to setup on a blank server.
 - Works on Ubuntu 14.04 to 16.04, CentOS 7+, Debian 7 to 8 and MacOS X.
 - You may have to install Python 2.7 (eg on Ubuntu 16.04+) by running `apt-get install python-minimal`
 - This script will install the pre-requisites, install bench and setup an ERPNext site
 - Passwords for Frappe Administrator and MariaDB (root) will be asked
 - You can then login as **Administrator** with the Administrator password
-- If you find any problems, post them on our forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
-
-Production vs Develop
----------------------
-
-*Production* setup should be run on a new box and installs nginx and supervisor to manage the processes. *Develop* setup uses `honcho` to manage the processes and uses the built-in web server (`bench start`)
-
-Steps
------
+- If you find any problems, post them on the forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
 
 Open your Terminal and enter:
 
-#### Linux:
+#### 1. Download the install script
+
+For Linux:
 
 	wget https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py
 
-#### MacOS:
+For Mac OSX:
 
-Install X Code (from App store) and HomeBrew (http://brew.sh/)
+Install X Code (from App store) and HomeBrew (http://brew.sh/) first
 
 	brew install python
 	brew install git
@@ -46,49 +106,40 @@ Download the Script
 
 	curl "https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py" -o install.py
 
-#### Run the Script
+#### 2. Run the install script
 
-	# For development
-	sudo python install.py --develop
+If you are on a fresh server and logged in as root, use --user flag to create a user and install using that user
 
-	# For production
-	sudo python install.py --production
-
-	# If you're logged in as root, use --user flag to create a user and install using that user
 	python install.py --develop --user frappe
 
+For developer setup:
 
-For development, you have to explicitly start services by running `bench start`. This script requires Python2.7+ installed on your machine. You will have to manually create a new site (`bench new-site`) and get apps that you need (`bench get-app`, `bench install-app`).
+	sudo python install.py --develop
 
-For production, you will have a preinstalled site with ERPNext installed in it.
+For production:
 
-You need to run this with a user that is **not** `root`, but can `sudo`. If you don't have such a user, you can search the web for *How to add a new user in { your OS }* and *How to add an existing user to sudoers in { your OS }*.
+	sudo python install.py --production
 
-On Mac OS X, you will have to create a group with the same name as *{ your User }*. On creating this group, you have to assign *{ your User }* to it. You can do this by going to "System preferences" -> "Users & Groups" -> "+" (as if you were adding new account) -> Under "New account" select "Group" -> Type in group name -> "Create group"
+#### What will this script do?
 
-This script will:
+- Install all the pre-requisites
+- Install the command line `bench`
+- Create a new bench (a folder that will contain your entire frappe/erpnext setup)
+- Create a new site on the bench
 
-- Install pre-requisites like git and ansible
-- Shallow clones this bench repository under `/usr/local/frappe/bench-repo`
-- Runs the Ansible playbook 'playbooks/develop/install.yml', which:
-	- Installs
-		- MariaDB and its config
-		- Redis
-		- NodeJS
-		- WKHTMLtoPDF with patched QT
-	- Initializes a new Bench at `~/frappe/frappe-bench` with `frappe` framework already installed under `apps`.
+#### How do I start ERPNext
 
-####Script Options:
-```
-	--help
-	--verbose
-	--develop
-	--production
-	--site
-	--user
-	--bench-branch
-	--repo-url
-```
+1. For development: Go to your bench folder (`frappe-bench` by default) and start the bench with `bench start`
+2. For production: Your process will be setup and managed by `nginx` and `supervisor`. [Setup Production](https://frappe.github.io/frappe/user/en/bench/guides/setup-production.html)
+
+---
+
+Help
+====
+
+For bench help, you can type
+
+	bench --help
 
 Updating
 ========
@@ -108,17 +159,16 @@ You can also run the parts of the bench selectively.
 
 `bench update --requirements` will only update dependencies (python packages) for the apps installed
 
-
 Guides
 =======
 - [Configuring HTTPS](https://frappe.github.io/frappe/user/en/bench/guides/configuring-https.html)
 - [Using Let's Encrypt to setup HTTPS](https://frappe.github.io/frappe/user/en/bench/guides/lets-encrypt-ssl-setup.html)
 - [Diagnosing the Scheduler](https://frappe.github.io/frappe/user/en/bench/guides/diagnosing-the-scheduler.html)
-- [Change Hostname](https://frappe.github.io/frappe/user/en/bench/guides/how-to-change-host-name-from-localhost.html)
+- [Change Hostname](https://frappe.github.io/frappe/user/en/bench/guides/adding-custom-domains)
 - [Manual Setup](https://frappe.github.io/frappe/user/en/bench/guides/manual-setup.html)
 - [Setup Production](https://frappe.github.io/frappe/user/en/bench/guides/setup-production.html)
 - [Setup Multitenancy](https://frappe.github.io/frappe/user/en/bench/guides/setup-multitenancy.html)
-- [Stopping Production](https://frappe.github.io/frappe/user/en/bench/guides/stop-production-and-start-development.html)
+- [Stopping Production](https://github.com/frappe/bench/wiki/Stopping-Production-and-starting-Development)
 
 
 Resources

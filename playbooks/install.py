@@ -30,7 +30,7 @@ def install_bench(args):
 		})
 
 	if not success:
-		print 'Could not install pre-requisites. Please check for errors or install them manually.'
+		print('Could not install pre-requisites. Please check for errors or install them manually.')
 		return
 
 	# secure pip installation
@@ -75,7 +75,7 @@ def install_bench(args):
 		if args.production:
 			args.user = 'frappe'
 
-		elif os.environ.has_key('SUDO_USER'):
+		elif 'SUDO_USER' in os.environ:
 			args.user = os.environ['SUDO_USER']
 
 		else:
@@ -122,9 +122,9 @@ def check_distribution_compatibility():
 		if float(dist_version) in supported_dists[dist_name]:
 			return
 
-	print "Sorry, the installer doesn't support {0} {1}. Aborting installation!".format(dist_name, dist_version)
+	print("Sorry, the installer doesn't support {0} {1}. Aborting installation!".format(dist_name, dist_version))
 	if dist_name in supported_dists:
-		print "Install on {0} {1} instead".format(dist_name, supported_dists[dist_name][-1])
+		print("Install on {0} {1} instead".format(dist_name, supported_dists[dist_name][-1]))
 	sys.exit(1)
 
 def get_distribution_info():
@@ -135,14 +135,14 @@ def get_distribution_info():
 	elif platform.system() == "Darwin":
 		current_dist = platform.mac_ver()
 		return "macos", current_dist[0].rsplit('.', 1)[0]
-	
+
 def install_python27():
 	version = (sys.version_info[0], sys.version_info[1])
 
 	if version == (2, 7):
 		return
 
-	print 'Installing Python 2.7'
+	print('Installing Python 2.7')
 
 	# install python 2.7
 	success = run_os_command({
@@ -210,9 +210,9 @@ def clone_bench_repo(args):
 def run_os_command(command_map):
 	'''command_map is a dictionary of {'executable': command}. For ex. {'apt-get': 'sudo apt-get install -y python2.7'} '''
 	success = True
-	for executable, commands in command_map.items():
+	for executable, commands in list(command_map.items()):
 		if find_executable(executable):
-			if isinstance(commands, basestring):
+			if isinstance(commands, str):
 				commands = [commands]
 
 			for command in commands:
@@ -245,7 +245,7 @@ def get_passwords(ignore_prompt=False):
 
 			# admin password
 			if not admin_password:
-				admin_password = getpass.unix_getpass(prompt='Please enter Administrator password: ')
+				admin_password = getpass.unix_getpass(prompt='Please enter the default Administrator user password: ')
 				conf_admin_passswd = getpass.unix_getpass(prompt='Re-enter Administrator password: ')
 
 				if admin_password != conf_admin_passswd:
@@ -256,16 +256,25 @@ def get_passwords(ignore_prompt=False):
 	else:
 		mysql_root_password = admin_password = 'travis'
 
-	return {
+	passwords = {
 		'mysql_root_password': mysql_root_password,
 		'admin_password': admin_password
 	}
+
+	if not ignore_prompt:
+		passwords_file_path = os.path.join(os.path.expanduser('~'), 'passwords.txt')
+		with open(passwords_file_path, 'w') as f:
+			json.dump(passwords, f, indent=1)
+
+		print('Passwords saved at ~/passwords.txt')
+
+	return passwords
 
 def get_extra_vars_json(extra_args):
 	# We need to pass production as extra_vars to the playbook to execute conditionals in the
 	# playbook. Extra variables can passed as json or key=value pair. Here, we will use JSON.
 	json_path = os.path.join('/tmp', 'extra_vars.json')
-	extra_vars = dict(extra_args.items())
+	extra_vars = dict(list(extra_args.items()))
 	with open(json_path, mode='w') as j:
 		json.dump(extra_vars, j, indent=1, sort_keys=True)
 
@@ -340,3 +349,5 @@ if __name__ == '__main__':
 	args = parse_commandline_args()
 
 	install_bench(args)
+
+	print('''Frappe/ERPNext has been successfully installed!''')

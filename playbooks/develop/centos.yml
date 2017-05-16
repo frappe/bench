@@ -5,7 +5,6 @@
     bench_path: "/home/{{ ansible_user_id }}/frappe-bench"
     mysql_config_template: "templates/simple_mariadb_config.cnf"
     mysql_conf_dir: /etc/my.cnf.d/
-    wkhtmltopdf_version: 0.12.2.1
 
   tasks:
 
@@ -41,19 +40,24 @@
       - libtiff-devel
       - tcl-devel
       - tk-devel
+
+      # Python LDAP
+      - openldap-devel
+
     become: yes
     become_user: root
 
-  - name: Get nodejs 6.x bash script
-    get_url:
-      url: 'https://rpm.nodesource.com/setup_6.x'
-      dest: '/tmp/setup_6.x'
-      mode: 0644
+  - name: Import Node source RPM key
+    rpm_key:
+      key: https://rpm.nodesource.com/pub/el/NODESOURCE-GPG-SIGNING-KEY-EL
+      state: present
     become: yes
     become_user: root
 
-  - name: Run nodejs 6.x bash script
-    command: /bin/bash /tmp/setup_6.x
+  - name: Add Node Repo
+    yum:
+      name: 'https://rpm.nodesource.com/pub_6.x/el/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/nodesource-release-el{{ ansible_distribution_major_version }}-1.noarch.rpm'
+      state: present
     become: yes
     become_user: root
 
@@ -68,7 +72,7 @@
   - include: includes/mariadb_centos.yml
 
   # install WKHTMLtoPDF
-  - include: includes/wkhtmltopdf_centos.yml
+  - include: includes/wkhtmltopdf.yml
 
   # setup MariaDB
   - include: includes/setup_mariadb.yml

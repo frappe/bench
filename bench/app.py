@@ -49,6 +49,9 @@ def write_appstxt(apps, bench_path='.'):
 		return f.write('\n'.join(apps))
 
 def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbose=False):
+	#less verbose app install
+	if '/' not in git_url:
+		git_url = 'https://github.com/frappe/' + git_url
 	#Gets repo name from URL
 	repo_name = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
 	logger.info('getting app {}'.format(repo_name))
@@ -69,7 +72,7 @@ def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbos
 			apps_path = os.path.join(os.path.abspath(bench_path), 'apps')
 			os.rename(os.path.join(apps_path, repo_name), os.path.join(apps_path, app_name))
 
-	print 'installing', app_name
+	print('installing', app_name)
 	install_app(app=app_name, bench_path=bench_path, verbose=verbose)
 
 	if build_asset_files:
@@ -92,20 +95,21 @@ def new_app(app, bench_path='.'):
 		run_frappe_cmd('make-app', apps, app, bench_path=bench_path)
 	install_app(app, bench_path=bench_path)
 
-def install_app(app, bench_path='.', verbose=False):
+def install_app(app, bench_path='.', verbose=False, no_cache=False):
 	logger.info('installing {}'.format(app))
 	# find_links = '--find-links={}'.format(conf.get('wheel_cache_dir')) if conf.get('wheel_cache_dir') else ''
 	find_links = ''
-	exec_cmd("{pip} install {quiet} {find_links} -e {app}".format(
+	exec_cmd("{pip} install {quiet} {find_links} -e {app} {no_cache}".format(
 				pip=os.path.join(bench_path, 'env', 'bin', 'pip'),
 				quiet="-q" if not verbose else "",
+				no_cache='--no-cache-dir' if not no_cache else '',
 				app=os.path.join(bench_path, 'apps', app),
 				find_links=find_links))
 	add_to_appstxt(app, bench_path=bench_path)
 
 def remove_app(app, bench_path='.'):
 	if not app in get_apps(bench_path):
-		print "No app named {0}".format(app)
+		print("No app named {0}".format(app))
 		sys.exit(1)
 
 	app_path = os.path.join(bench_path, 'apps', app)
@@ -117,7 +121,7 @@ def remove_app(app, bench_path='.'):
 		if os.path.exists(req_file):
 			out = subprocess.check_output(["bench", "--site", site, "list-apps"], cwd=bench_path)
 			if re.search(r'\b' + app + r'\b', out):
-				print "Cannot remove, app is installed on site: {0}".format(site)
+				print("Cannot remove, app is installed on site: {0}".format(site))
 				sys.exit(1)
 
 	exec_cmd(["{0} uninstall -y {1}".format(pip, app_path)])
@@ -128,16 +132,42 @@ def remove_app(app, bench_path='.'):
 		restart_supervisor_processes(bench_path=bench_path)
 
 
-def pull_all_apps(bench_path='.'):
+def pull_all_apps(bench_path='.', reset=False):
+	'''Check all apps if there no local changes, pull'''
 	rebase = '--rebase' if get_config(bench_path).get('rebase_on_pull') else ''
+	
+	# chech for local changes
+	if not reset:
+		for app in get_apps(bench_path=bench_path):
+			app_dir = get_repo_dir(app, bench_path=bench_path)
+			if os.path.exists(os.path.join(app_dir, '.git')):
+				out = subprocess.check_output(["git", "status"], cwd=app_dir)
+				if not re.search(r'nothing to commit, working (directory|tree) clean', out):
+					print('''
+
+Cannot proceed with update: You have local changes in app "{0}" that are not committed.
+
+Here are your choices:
+
+1. Merge the {0} app manually with "git pull" / "git pull --rebase" and fix conflicts.
+1. Temporarily remove your changes with "git stash" or discard them completely
+	with "bench update --reset" or for individual repositries "git reset --hard"
+2. If your changes are helpful for others, send in a pull request via GitHub and
+	wait for them to be merged in the core.'''.format(app))
+					sys.exit(1)
 
 	for app in get_apps(bench_path=bench_path):
 		app_dir = get_repo_dir(app, bench_path=bench_path)
 		if os.path.exists(os.path.join(app_dir, '.git')):
 			remote = get_remote(app)
 			logger.info('pulling {0}'.format(app))
-			exec_cmd("git pull {rebase} {remote} {branch}".format(rebase=rebase,
-				remote=remote, branch=get_current_branch(app, bench_path=bench_path)), cwd=app_dir)
+			if reset:
+				exec_cmd("git fetch --all", cwd=app_dir)
+				exec_cmd("git reset --hard {remote}/{branch}".format(
+					remote=remote, branch=get_current_branch(app,bench_path=bench_path)), cwd=app_dir)
+			else:
+				exec_cmd("git pull {rebase} {remote} {branch}".format(rebase=rebase,
+					remote=remote, branch=get_current_branch(app, bench_path=bench_path)), cwd=app_dir)
 			exec_cmd('find . -name "*.pyc" -delete', cwd=app_dir)
 
 
@@ -208,7 +238,7 @@ def get_upstream_version(app, branch=None, bench_path='.'):
 		branch = get_current_branch(app, bench_path=bench_path)
 	try:
 		contents = subprocess.check_output(['git', 'show', 'upstream/{branch}:{app}/__init__.py'.format(branch=branch, app=app)], cwd=repo_dir, stderr=subprocess.STDOUT)
-	except subprocess.CalledProcessError, e:
+	except subprocess.CalledProcessError as e:
 		if "Invalid object" in e.output:
 			return None
 		else:
@@ -224,7 +254,7 @@ def get_repo_dir(app, bench_path='.'):
 
 def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrade=True):
 	from .utils import update_requirements, backup_all_sites, patch_sites, build_assets, pre_upgrade, post_upgrade
-	import utils
+	from . import utils
 	apps_dir = os.path.join(bench_path, 'apps')
 	version_upgrade = (False,)
 	switched_apps = []
@@ -243,7 +273,7 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 					version_upgrade = is_version_upgrade(app=app, bench_path=bench_path, branch=branch)
 					if version_upgrade[0] and not upgrade:
 						raise MajorVersionUpgradeException("Switching to {0} will cause upgrade from {1} to {2}. Pass --upgrade to confirm".format(branch, version_upgrade[1], version_upgrade[2]), version_upgrade[1], version_upgrade[2])
-				print "Switching for "+app
+				print("Switching for "+app)
 				unshallow = "--unshallow" if os.path.exists(os.path.join(app_dir, ".git", "shallow")) else ""
 				exec_cmd("git config --unset-all remote.upstream.fetch", cwd=app_dir)
 				exec_cmd("git config --add remote.upstream.fetch '+refs/heads/*:refs/remotes/upstream/*'", cwd=app_dir)
@@ -252,14 +282,14 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 				exec_cmd("git merge upstream/{branch}".format(branch=branch), cwd=app_dir)
 				switched_apps.append(app)
 			except CommandFailedError:
-				print "Error switching to branch {0} for {1}".format(branch, app)
+				print("Error switching to branch {0} for {1}".format(branch, app))
 			except InvalidRemoteException:
-				print "Remote does not exist for app "+app
+				print("Remote does not exist for app "+app)
 			except InvalidBranchException:
-				print "Branch {0} does not exist in Upstream for {1}".format(branch, app)
+				print("Branch {0} does not exist in Upstream for {1}".format(branch, app))
 
 	if switched_apps:
-		print "Successfully switched branches for:\n" + "\n".join(switched_apps)
+		print("Successfully switched branches for:\n" + "\n".join(switched_apps))
 
 	if version_upgrade[0] and upgrade:
 		update_requirements()

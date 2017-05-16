@@ -25,7 +25,7 @@ def make_nginx_conf(bench_path, yes=False):
 		"error_pages": get_error_pages(),
 		"allow_rate_limiting": allow_rate_limiting,
 		# for nginx map variable
-		"random_string": "".join(random.choice(string.ascii_lowercase) for i in xrange(7))
+		"random_string": "".join(random.choice(string.ascii_lowercase) for i in range(7))
 	}
 
 	if allow_rate_limiting:
@@ -159,7 +159,7 @@ def get_sites_with_config(bench_path):
 		if dns_multitenant and site_config.get('domains'):
 			for domain in site_config.get('domains'):
 				# domain can be a string or a dict with 'domain', 'ssl_certificate', 'ssl_certificate_key'
-				if isinstance(domain, basestring):
+				if isinstance(domain, str) or isinstance(domain, unicode):
 					domain = { 'domain': domain }
 
 				domain['name'] = site
