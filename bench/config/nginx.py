@@ -159,7 +159,7 @@ def get_sites_with_config(bench_path):
 		if dns_multitenant and site_config.get('domains'):
 			for domain in site_config.get('domains'):
 				# domain can be a string or a dict with 'domain', 'ssl_certificate', 'ssl_certificate_key'
-				if isinstance(domain, str):
+				if isinstance(domain, str) or isinstance(domain, unicode):
 					domain = { 'domain': domain }
 
 				domain['name'] = site
