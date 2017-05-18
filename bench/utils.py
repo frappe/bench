@@ -139,19 +139,35 @@ def setup_env(bench_path='.'):
 def setup_socketio(bench_path='.'):
 	exec_cmd("npm install socket.io redis express superagent cookie", cwd=bench_path)
 
+
 def new_site(site, mariadb_root_password=None, admin_password=None, bench_path='.'):
+	"""
+	Creates a new site in the specified bench, default is current bench
+	"""
+
 	logger.info('creating new site {}'.format(site))
-	mariadb_root_password_fragment = '--root_password {}'.format(mariadb_root_password) if mariadb_root_password else ''
+
+	# consider an existing passwords.txt file
+	passwords_file_path = os.path.join(os.path.expanduser('~'), 'passwords.txt')
+	if os.path.isfile(passwords_file_path):
+		with open(passwords_file_path, 'r') as f:
+			passwords = json.load(f)
+			mariadb_root_password, admin_password = passwords['mysql_root_password'], passwords['admin_password']
+
+	mysql_root_password_fragment = '--root_password {}'.format(mariadb_root_password) if mariadb_root_password else ''
 	admin_password_fragment = '--admin_password {}'.format(admin_password) if admin_password else ''
-	exec_cmd("{frappe} {site} --install {db_name} {mariadb_root_password_fragment} {admin_password_fragment}".format(
+
+	exec_cmd("{frappe} {site} --install {db_name} {mysql_root_password_fragment} {admin_password_fragment}".format(
 				frappe=get_frappe(bench_path=bench_path),
 				site=site,
-				db_name = hashlib.sha1(site).hexdigest()[:10],
-				mariadb_root_password_fragment=mariadb_root_password_fragment,
+				db_name=hashlib.sha1(site).hexdigest()[:10],
+				mysql_root_password_fragment=mysql_root_password_fragment,
 				admin_password_fragment=admin_password_fragment
 			), cwd=os.path.join(bench_path, 'sites'))
+
 	if len(get_sites(bench_path=bench_path)) == 1:
 		exec_cmd("{frappe} --use {site}".format(frappe=get_frappe(bench_path=bench_path), site=site), cwd=os.path.join(bench_path, 'sites'))
+
 
 def patch_sites(bench_path='.'):
 	bench.set_frappe_version(bench_path=bench_path)
