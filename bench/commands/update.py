@@ -156,23 +156,3 @@ def switch_to_develop(upgrade=False):
 	print('Please run `bench update --patch` to be safe from any differences in database schema')
 
 
-@click.command('switch-to-v4')
-@click.option('--upgrade',is_flag=True)
-def switch_to_v4(upgrade=False):
-	"Switch frappe and erpnext to v4 branch"
-	from bench.app import switch_to_v4
-	switch_to_v4(upgrade=upgrade)
-	print()
-	print('Switched to v4')
-	print('Please run `bench update --patch` to be safe from any differences in database schema')
-
-
-@click.command('switch-to-v5')
-@click.option('--upgrade',is_flag=True)
-def switch_to_v5(upgrade=False):
-	"Switch frappe and erpnext to v5 branch"
-	from bench.app import switch_to_v5
-	switch_to_v5(upgrade=upgrade)
-	print()
-	print('Switched to v5')
-	print('Please run `bench update --patch` to be safe from any differences in database schema')
