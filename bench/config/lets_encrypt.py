@@ -81,12 +81,12 @@ def run_certbot_and_setup_ssl(site, custom_domain, bench_path):
 
 def setup_crontab():
 	job_command = 'sudo service nginx stop && /opt/certbot-auto renew && sudo service nginx start'
-	user_crontab = CronTab()
+	user_crontab = CronTab(tabfile='/etc/crontab', user=True)
 	if job_command not in str(user_crontab):
 		job  = user_crontab.new(command=job_command, comment="Renew lets-encrypt every month")
 		job.every().month()
 		job.enable()
-		user_crontab.write_to_user()
+		user_crontab.write()
 
 
 def create_dir_if_missing(path):
