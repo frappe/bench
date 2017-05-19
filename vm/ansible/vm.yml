@@ -7,6 +7,7 @@
       - git:
           repo=https://github.com/frappe/bench
           dest=/home/frappe/bench-repo
+          depth=no
   tags:
     - bench_install
 

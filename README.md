@@ -101,6 +101,9 @@ Install X Code (from App store) and HomeBrew (http://brew.sh/) first
 
 	brew install python
 	brew install git
+
+Download the Script
+
 	curl "https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py" -o install.py
 
 #### 2. Run the install script
@@ -109,7 +112,7 @@ If you are on a fresh server and logged in as root, use --user flag to create a 
 
 	python install.py --develop --user frappe
 
-For the current user:
+For developer setup:
 
 	sudo python install.py --develop
 
