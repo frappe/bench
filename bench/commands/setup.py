@@ -117,6 +117,11 @@ def setup_socketio():
 	from bench.utils import setup_socketio
 	setup_socketio()
 
+@click.command('babel')
+def setup_babel():
+	"Setup babel for transpiling ES6 to ES5"
+	from bench.utils import setup_babel
+	setup_babel()
 
 @click.command('config')
 def setup_config():
@@ -185,6 +190,7 @@ setup.add_command(setup_backups)
 setup.add_command(setup_env)
 setup.add_command(setup_procfile)
 setup.add_command(setup_socketio)
+setup.add_command(setup_babel)
 setup.add_command(setup_config)
 setup.add_command(setup_fonts)
 setup.add_command(add_domain)

@@ -139,6 +139,9 @@ def setup_env(bench_path='.'):
 def setup_socketio(bench_path='.'):
 	exec_cmd("npm install socket.io redis express superagent cookie", cwd=bench_path)
 
+def setup_babel(bench_path='.'):
+	exec_cmd("npm install babel-core chokidar babel-preset-es2015 babel-preset-es2016 babel-preset-es2017 babel-preset-babili", cwd=bench_path)
+
 def new_site(site, mariadb_root_password=None, admin_password=None, bench_path='.'):
 	logger.info('creating new site {}'.format(site))
 	mariadb_root_password_fragment = '--root_password {}'.format(mariadb_root_password) if mariadb_root_password else ''
