@@ -1,16 +1,4 @@
 ---
- # Setup Socketio
- - name: setup socketio
-   command: bench setup socketio
-   args:
-     creates: "{{ bench_path }}/node_modules"
-     chdir: "{{ bench_path }}"
-
- # Setup Babel
- - name: setup babel
-   command: bench setup babel
-   args:
-     chdir: "{{ bench_path }}"
 
  # Setup Procfile
  - name: setup procfile
