@@ -137,7 +137,7 @@ add_debian_mariadb_repo() {
 	run_cmd sudo apt-get update
 	run_cmd sudo apt-get install -y software-properties-common python-software-properties
 	run_cmd sudo apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 0xcbcb082a1bb943db
-	$repo_test=$(apt-cache search --names-only 'mariadb-server')
+	repo_test=$(apt-cache search --names-only 'mariadb-server')
 	if [ -z "$repo_test" ]; then
 		run_cmd sudo add-apt-repository "deb http://ams2.mirrors.digitalocean.com/mariadb/repo/10.0/debian $CODENAME main"
 	fi
@@ -209,7 +209,7 @@ install_packages() {
 		run_cmd bash -c "curl -sL https://deb.nodesource.com/setup_0.12 | sudo bash -"
 		run_cmd sudo apt-get update
 		run_cmd sudo apt-get install -y python-dev python-setuptools build-essential python-mysqldb git \
-			ntp vim screen htop mariadb-server mariadb-common libmariadbclient-dev \
+			ntp vim screen htop mariadb-server mariadb-common libmysqlclient-dev \
 			libxslt1.1 libxslt1-dev redis-server libssl-dev libcrypto++-dev postfix nginx \
 			supervisor python-pip fontconfig libxrender1 libxext6 xfonts-75dpi xfonts-base nodejs
 
