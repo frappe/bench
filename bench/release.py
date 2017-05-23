@@ -38,7 +38,7 @@ def validate(bench_path):
 	github_password = config.get('github_password')
 
 	if not github_username:
-		github_username = input('Username: ')
+		github_username = click.prompt('Username', type=str)
 
 	if not github_password:
 		github_password = getpass.getpass()
