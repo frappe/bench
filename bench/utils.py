@@ -61,7 +61,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	bench.set_frappe_version(bench_path=path)
 	if bench.FRAPPE_VERSION > 5:
-		setup_socketio(bench_path=path)
+		update_npm_packages(bench_path=path)
 
 	set_all_patches_executed(bench_path=path)
 	build_assets(bench_path=path)
@@ -382,6 +382,7 @@ def set_default_site(site, bench_path='.'):
 			cwd=os.path.join(bench_path, 'sites'))
 
 def update_requirements(bench_path='.'):
+	print('Updating Python libraries...')
 	pip = os.path.join(bench_path, 'env', 'bin', 'pip')
 
 	# upgrade pip to latest
@@ -396,6 +397,38 @@ def update_requirements(bench_path='.'):
 	for app in os.listdir(apps_dir):
 		req_file = os.path.join(apps_dir, app, 'requirements.txt')
 		install_requirements(pip, req_file)
+
+def update_npm_packages(bench_path='.'):
+	print('Updating node libraries...')
+	apps_dir = os.path.join(bench_path, 'apps')
+	package_json = {}
+
+	for app in os.listdir(apps_dir):
+		package_json_path = os.path.join(apps_dir, app, 'package.json')
+
+		if os.path.exists(package_json_path):
+			with open(package_json_path, "r") as f:
+				app_package_json = json.loads(f.read())
+				# package.json is usually a dict in a dict
+				for key, value in app_package_json.iteritems():
+					if not key in package_json:
+						package_json[key] = value
+					else:
+						if isinstance(value, dict):
+							package_json[key].update(value)
+						elif isinstance(value, list):
+							package_json[key].extend(value)
+						else:
+							package_json[key] = value
+	
+	if package_json is {}:
+		with open(os.path.join(os.path.dirname(__file__), 'package.json'), 'r') as f:
+			package_json = json.loads(f.read())
+
+	with open(os.path.join(bench_path, 'package.json'), 'w') as f:
+		f.write(json.dumps(package_json, indent=1, sort_keys=True))
+
+	exec_cmd('npm install', cwd=bench_path)
 
 def install_requirements(pip, req_file):
 	if os.path.exists(req_file):
