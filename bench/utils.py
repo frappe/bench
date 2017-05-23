@@ -405,9 +405,13 @@ def update_npm_packages(bench_path='.'):
 						else:
 							package_json[key] = value
 	
+	if package_json is {}:
+		with open(os.path.join(os.path.dirname(__file__), 'package.json'), 'r') as f:
+			package_json = json.loads(f.read())
+
 	with open(os.path.join(bench_path, 'package.json'), 'w') as f:
-		f.write(json.dumps(package_json, indent=1))
-	
+		f.write(json.dumps(package_json, indent=1, sort_keys=True))
+
 	exec_cmd('npm install', cwd=bench_path)
 
 def install_requirements(pip, req_file):
