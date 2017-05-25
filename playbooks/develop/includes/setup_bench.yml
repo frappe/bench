@@ -18,6 +18,12 @@
     become: yes
     become_user: root
 
+  - name: Overwrite bench if required
+    file:
+      state: absent
+      path: "{{ bench_path }}"
+    when: overwrite
+
   - name: Check whether bench exists
     stat: path="{{ bench_path }}"
     register: bench_stat

@@ -335,6 +335,10 @@ def parse_commandline_args():
 	parser.add_argument('--without-bench-setup', dest='without_bench_setup', action='store_true', default=False,
 		help=argparse.SUPPRESS)
 
+	# whether to overwrite an existing bench
+	parser.add_argument('--overwrite', dest='overwrite', action='store_true', default=False,
+		help='Whether to overwrite an existing bench')
+
 	args = parser.parse_args()
 
 	return args
