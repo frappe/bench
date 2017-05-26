@@ -365,10 +365,6 @@ def parse_commandline_args():
 	parser.add_argument('--mysql-root-password', dest='mysql_root_password', help='Set mysql root password')
 	parser.add_argument('--admin-password', dest='admin_password', help='Set admin password')
 
-	# whether to overwrite an existing bench
-	parser.add_argument('--overwrite', dest='overwrite', action='store_true', default=False,
-		help='Whether to overwrite an existing bench')
-
 	args = parser.parse_args()
 
 	return args
