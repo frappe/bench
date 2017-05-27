@@ -97,7 +97,7 @@ def install_bench(args):
 	extra_vars.update(repo_path=repo_path)
 	run_playbook('develop/create_user.yml', extra_vars=extra_vars)
 
-	extra_vars.update(get_passwords(args.run_travis or args.without_bench_setup))
+	extra_vars.update(get_passwords(args))
 	if args.production:
 		extra_vars.update(max_worker_connections=multiprocessing.cpu_count() * 1024)
 
@@ -229,9 +229,31 @@ def could_not_install(package):
 def is_sudo_user():
 	return os.geteuid() == 0
 
-def get_passwords(ignore_prompt=False):
+
+def get_passwords(args):
+	"""
+	Returns a dict of passwords for further use
+	and creates passwords.txt in the bench user's home directory
+	"""
+
+	ignore_prompt = args.run_travis or args.without_bench_setup
+	mysql_root_password, admin_password = '', ''
+	passwords_file_path = os.path.join(os.path.expanduser('~' + args.user), 'passwords.txt')
+
 	if not ignore_prompt:
-		mysql_root_password, admin_password = '', ''
+		# set passwords from existing passwords.txt
+		if os.path.isfile(passwords_file_path):
+			with open(passwords_file_path, 'r') as f:
+				passwords = json.load(f)
+				mysql_root_password, admin_password = passwords['mysql_root_password'], passwords['admin_password']
+
+		# set passwords from cli args
+		if args.mysql_root_password:
+			mysql_root_password = args.mysql_root_password
+		if args.admin_password:
+			admin_password = args.admin_password
+
+		# prompt for passwords
 		pass_set = True
 		while pass_set:
 			# mysql root password
@@ -262,13 +284,13 @@ def get_passwords(ignore_prompt=False):
 	}
 
 	if not ignore_prompt:
-		passwords_file_path = os.path.join(os.path.expanduser('~'), 'passwords.txt')
 		with open(passwords_file_path, 'w') as f:
 			json.dump(passwords, f, indent=1)
 
 		print('Passwords saved at ~/passwords.txt')
 
 	return passwords
+
 
 def get_extra_vars_json(extra_args):
 	# We need to pass production as extra_vars to the playbook to execute conditionals in the
@@ -334,10 +356,14 @@ def parse_commandline_args():
 
 	parser.add_argument('--without-bench-setup', dest='without_bench_setup', action='store_true', default=False,
 		help=argparse.SUPPRESS)
-
+	
 	# whether to overwrite an existing bench
 	parser.add_argument('--overwrite', dest='overwrite', action='store_true', default=False,
 		help='Whether to overwrite an existing bench')
+
+	# set passwords
+	parser.add_argument('--mysql-root-password', dest='mysql_root_password', help='Set mysql root password')
+	parser.add_argument('--admin-password', dest='admin_password', help='Set admin password')
 
 	args = parser.parse_args()
 
