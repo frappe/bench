@@ -142,7 +142,7 @@ def pull_all_apps(bench_path='.', reset=False):
 			app_dir = get_repo_dir(app, bench_path=bench_path)
 			if os.path.exists(os.path.join(app_dir, '.git')):
 				out = subprocess.check_output(["git", "status"], cwd=app_dir)
-				if not re.search(r'nothing to commit, working (directory|tree) clean', out):
+				if not re.search(r'nothing to commit(, working (directory|tree) clean| \(working (directory|tree) clean\))', out):
 					print('''
 
 Cannot proceed with update: You have local changes in app "{0}" that are not committed.
