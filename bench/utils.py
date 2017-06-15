@@ -2,6 +2,7 @@ import os, sys, shutil, subprocess, logging, itertools, requests, json, platform
 from distutils.spawn import find_executable
 import bench
 from bench import env
+from six import iteritems
 
 class PatchError(Exception):
 	pass
@@ -410,7 +411,7 @@ def update_npm_packages(bench_path='.'):
 			with open(package_json_path, "r") as f:
 				app_package_json = json.loads(f.read())
 				# package.json is usually a dict in a dict
-				for key, value in app_package_json.iteritems():
+				for key, value in iteritems(app_package_json):
 					if not key in package_json:
 						package_json[key] = value
 					else:
