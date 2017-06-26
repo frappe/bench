@@ -160,17 +160,18 @@ def remove_domain(domain, site=None):
 	remove_domain(site, domain, bench_path='.')
 
 @click.command('sync-domains')
-@click.argument('domains')
+@click.option('--domain', multiple=True)
 @click.option('--site', prompt=True)
-def sync_domains(domains, site=None):
+def sync_domains(domain=None, site=None):
 	from bench.config.site_config import sync_domains
 
 	if not site:
 		print("Please specify site")
 		sys.exit(1)
 
-	domains = json.loads(domains)
-	if not isinstance(domains, list):
+	try:
+		domains = list(map(str,domain))
+	except Exception:
 		print("Domains should be a json list of strings or dictionaries")
 		sys.exit(1)
 
