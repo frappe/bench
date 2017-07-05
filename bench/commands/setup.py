@@ -49,11 +49,12 @@ def setup_fonts():
 
 
 @click.command('production')
+@click.option('--yes', is_flag=True, default=False, help='Dont prompt for confirmation')
 @click.argument('user')
-def setup_production(user):
+def setup_production(user, yes=False):
 	"setup bench for production"
 	from bench.config.production_setup import setup_production
-	setup_production(user=user)
+	setup_production(user=user, yes=yes)
 
 
 @click.command('auto-update')

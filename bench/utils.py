@@ -139,20 +139,6 @@ def setup_env(bench_path='.'):
 def setup_socketio(bench_path='.'):
 	exec_cmd("npm install socket.io redis express superagent cookie", cwd=bench_path)
 
-def new_site(site, mariadb_root_password=None, admin_password=None, bench_path='.'):
-	logger.info('creating new site {}'.format(site))
-	mariadb_root_password_fragment = '--root_password {}'.format(mariadb_root_password) if mariadb_root_password else ''
-	admin_password_fragment = '--admin_password {}'.format(admin_password) if admin_password else ''
-	exec_cmd("{frappe} {site} --install {db_name} {mariadb_root_password_fragment} {admin_password_fragment}".format(
-				frappe=get_frappe(bench_path=bench_path),
-				site=site,
-				db_name = hashlib.sha1(site).hexdigest()[:10],
-				mariadb_root_password_fragment=mariadb_root_password_fragment,
-				admin_password_fragment=admin_password_fragment
-			), cwd=os.path.join(bench_path, 'sites'))
-	if len(get_sites(bench_path=bench_path)) == 1:
-		exec_cmd("{frappe} --use {site}".format(frappe=get_frappe(bench_path=bench_path), site=site), cwd=os.path.join(bench_path, 'sites'))
-
 def patch_sites(bench_path='.'):
 	bench.set_frappe_version(bench_path=bench_path)
 
@@ -601,7 +587,7 @@ def update_translations(app, lang):
 				f.flush()
 
 	print('downloaded for', app, lang)
-	
+
 def download_chart_of_accounts():
 	charts_dir = os.path.join('apps', "erpnext", "erpnext", 'accounts', 'chart_of_accounts', "submitted")
 	csv_file = os.path.join(translations_dir, lang + '.csv')

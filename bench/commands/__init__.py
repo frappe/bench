@@ -21,12 +21,11 @@ def bench_command(bench_path='.'):
 	setup_logging(bench_path=bench_path)
 
 
-from bench.commands.make import init, get_app, new_app, remove_app, new_site
+from bench.commands.make import init, get_app, new_app, remove_app
 bench_command.add_command(init)
 bench_command.add_command(get_app)
 bench_command.add_command(new_app)
 bench_command.add_command(remove_app)
-bench_command.add_command(new_site)
 
 
 from bench.commands.update import update, retry_upgrade, switch_to_branch, switch_to_master, switch_to_develop
