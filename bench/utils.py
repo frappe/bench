@@ -140,11 +140,8 @@ def exec_cmd(cmd, cwd='.'):
 
 
 def setup_env(bench_path='.'):
-	exec_cmd('virtualenv -q {} -p {}'.format('env', sys.executable), cwd=bench_path)
-	exec_cmd('./env/bin/pip -q install --upgrade pip', cwd=bench_path)
-	exec_cmd('./env/bin/pip -q install wheel', cwd=bench_path)
-	# exec_cmd('./env/bin/pip -q install https://github.com/frappe/MySQLdb1/archive/MySQLdb-1.2.5-patched.tar.gz', cwd=bench_path)
-	exec_cmd('./env/bin/pip -q install -e git+https://github.com/frappe/python-pdfkit.git#egg=pdfkit', cwd=bench_path)
+	create_env('env', bench_path, 'python2')
+	create_env('env3', bench_path, 'python3')
 
 
 def create_env(env_name, bench_path='.', py_version='python2'):
@@ -157,7 +154,7 @@ def create_env(env_name, bench_path='.', py_version='python2'):
 	"""
 	py_version = py_version.lower()
 	verify_python_or_exit(py_version)
-	exec_cmd('virtualenv -q {} -p which {}'.format(env_name, py_version), cwd=bench_path)
+	exec_cmd('virtualenv -q {} -p `which {}`'.format(env_name, py_version), cwd=bench_path)
 	exec_cmd('./{}/bin/pip -q install --upgrade pip'.format(env_name), cwd=bench_path)
 	exec_cmd('./{}/bin/pip -q install wheel'.format(env_name), cwd=bench_path)
 	exec_cmd(
