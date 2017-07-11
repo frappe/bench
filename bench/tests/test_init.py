@@ -202,17 +202,29 @@ class TestBenchInit(unittest.TestCase):
 	def assert_virtual_env(self, bench_name):
 		bench_path = os.path.abspath(bench_name)
 		python = os.path.join(bench_path, "env", "bin", "python")
-		python_path = bench.utils.get_cmd_output('{python} -c "import os; print os.path.dirname(os.__file__)"'.format(python=python))
+		python3 = os.path.join(bench_path, "env3", "bin", "python")
+		python_path = bench.utils.get_cmd_output(
+			'{python} -c "import os; print os.path.dirname(os.__file__)"'.format(python=python)
+		)
+		python_path3 = bench.utils.get_cmd_output(
+			'{python} -c "import os; print os.path.dirname(os.__file__)"'.format(python=python3))
 
 		# part of bench's virtualenv
 		self.assertTrue(python_path.startswith(bench_path))
+		self.assertTrue(python_path3.startswith(bench_path))
 		self.assert_exists(python_path)
+		self.assert_exists(python_path3)
 		self.assert_exists(python_path, "site-packages")
+		self.assert_exists(python_path3, "site-packages")
 		self.assert_exists(python_path, "site-packages", "IPython")
+		self.assert_exists(python_path3, "site-packages", "IPython")
 		self.assert_exists(python_path, "site-packages", "pip")
+		self.assert_exists(python_path3, "site-packages", "pip")
 
 		site_packages = os.listdir(os.path.join(python_path, "site-packages"))
 		self.assertTrue(any(package.startswith("mysqlclient-1.3.8") for package in site_packages))
+		site_packages3 = os.listdir(os.path.join(python_path3, "site-packages"))
+		self.assertTrue(any(package.startswith("mysqlclient-1.3.8") for package in site_packages3))
 
 	def assert_config(self, bench_name):
 		for config, search_key in (
