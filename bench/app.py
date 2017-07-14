@@ -99,12 +99,21 @@ def install_app(app, bench_path='.', verbose=False, no_cache=False):
 	logger.info('installing {}'.format(app))
 	# find_links = '--find-links={}'.format(conf.get('wheel_cache_dir')) if conf.get('wheel_cache_dir') else ''
 	find_links = ''
+	# first for python 2 env
 	exec_cmd("{pip} install {quiet} {find_links} -e {app} {no_cache}".format(
 				pip=os.path.join(bench_path, 'env', 'bin', 'pip'),
 				quiet="-q" if not verbose else "",
 				no_cache='--no-cache-dir' if not no_cache else '',
 				app=os.path.join(bench_path, 'apps', app),
 				find_links=find_links))
+
+	# then for python 3 env
+	exec_cmd("{pip} install {quiet} {find_links} -e {app} {no_cache}".format(
+		pip=os.path.join(bench_path, 'env3', 'bin', 'pip'),
+		quiet="-q" if not verbose else "",
+		no_cache='--no-cache-dir' if not no_cache else '',
+		app=os.path.join(bench_path, 'apps', app),
+		find_links=find_links))
 	add_to_appstxt(app, bench_path=bench_path)
 
 def remove_app(app, bench_path='.'):
