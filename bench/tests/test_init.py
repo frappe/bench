@@ -207,7 +207,7 @@ class TestBenchInit(unittest.TestCase):
 			'{python} -c "import os; print os.path.dirname(os.__file__)"'.format(python=python)
 		)
 		python_path3 = bench.utils.get_cmd_output(
-			'{python} -c "import os; print os.path.dirname(os.__file__)"'.format(python=python3))
+			'{python} -c "import os; print(os.path.dirname(os.__file__))"'.format(python=python3))
 
 		# part of bench's virtualenv
 		self.assertTrue(python_path.startswith(bench_path))
