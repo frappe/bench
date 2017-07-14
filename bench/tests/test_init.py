@@ -222,9 +222,9 @@ class TestBenchInit(unittest.TestCase):
 		self.assert_exists(python_path3, "site-packages", "pip")
 
 		site_packages = os.listdir(os.path.join(python_path, "site-packages"))
-		self.assertTrue(any(package.startswith("mysqlclient-1.3.8") for package in site_packages))
+		self.assertTrue(any(package.startswith("mysqlclient-1.3.10") for package in site_packages))
 		site_packages3 = os.listdir(os.path.join(python_path3, "site-packages"))
-		self.assertTrue(any(package.startswith("mysqlclient-1.3.8") for package in site_packages3))
+		self.assertTrue(any(package.startswith("mysqlclient-1.3.10") for package in site_packages3))
 
 	def assert_config(self, bench_name):
 		for config, search_key in (
