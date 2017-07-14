@@ -443,19 +443,23 @@ def set_default_site(site, bench_path='.'):
 def update_requirements(bench_path='.'):
 	print('Updating Python libraries...')
 	pip = os.path.join(bench_path, 'env', 'bin', 'pip')
+	pip3 = os.path.join(bench_path, 'env3', 'bin', 'pip')
 
 	# upgrade pip to latest
 	exec_cmd("{pip} install --upgrade pip".format(pip=pip))
+	exec_cmd("{pip} install --upgrade pip".format(pip=pip3))
 
 	apps_dir = os.path.join(bench_path, 'apps')
 
 	# Update bench requirements
 	bench_req_file = os.path.join(os.path.dirname(bench.__path__[0]), 'requirements.txt')
 	install_requirements(pip, bench_req_file)
+	install_requirements(pip3, bench_req_file)
 
 	for app in os.listdir(apps_dir):
 		req_file = os.path.join(apps_dir, app, 'requirements.txt')
 		install_requirements(pip, req_file)
+		install_requirements(pip3, req_file)
 
 
 def update_npm_packages(bench_path='.'):
