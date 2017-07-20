@@ -4,10 +4,8 @@ import os
 import sys
 import semantic_version
 import git
-import json
 import requests
 import getpass
-import argparse
 import re
 from requests.auth import HTTPBasicAuth
 import requests.exceptions
@@ -17,6 +15,12 @@ import click
 
 github_username = None
 github_password = None
+
+branches_to_update = {
+	'develop': [],
+	'staging': ['develop', 'hotfix'],
+	'hotfix': ['develop', 'staging']
+}
 
 def release(bench_path, app, bump_type, develop='develop', master='master',
 		remote='upstream', owner='frappe', repo_name=None):
@@ -74,8 +78,9 @@ def update_branches_and_check_for_changelog(repo_path, develop='develop', master
 
 	update_branch(repo_path, master, remote=remote)
 	update_branch(repo_path, develop, remote=remote)
-	if develop != 'develop':
-		update_branch(repo_path, 'develop', remote=remote)
+
+	for branch in branches_to_update[develop]:
+		update_branch(repo_path, branch, remote=remote)
 
 	git.Repo(repo_path).git.checkout(develop)
 	check_for_unmerged_changelog(repo_path)
@@ -218,13 +223,13 @@ def create_release(repo_path, new_version, develop='develop', master='master'):
 	except git.exc.GitCommandError as e:
 		handle_merge_error(e, source=master, target=develop)
 
-	if develop != 'develop':
-		print('merging master into develop')
-		g.checkout('develop')
+	for branch in branches_to_update[develop]:
+		print('merging master into', branch)
+		g.checkout(branch)
 		try:
 			g.merge(master)
 		except git.exc.GitCommandError as e:
-			handle_merge_error(e, source=master, target='develop')
+			handle_merge_error(e, source=master, target=branch)
 
 	return tag_name
 
@@ -245,9 +250,9 @@ def push_release(repo_path, develop='develop', master='master', remote='upstream
 		'{develop}:{develop}'.format(develop=develop)
 	]
 
-	if develop != 'develop':
-		print('pushing develop branch of', repo_path)
-		args.append('develop:develop')
+	for branch in branches_to_update[develop]:
+		print('pushing {0} branch of'.format(branch), repo_path)
+		args.append('{branch}:{branch}'.format(branch=branch))
 
 	args.append('--tags')
 
