@@ -15,6 +15,14 @@ bench get-app erpnext git@github.com:frappe/erpnext.git
 "release_bench": true,
 ```
 
+* Add branches to update in common_site_config.json
+```
+"branches_to_update": {
+    "staging": ["develop", "hotfix"],
+    "hotfix": ["develop", "staging"]
+}
+```
+
 * Use the release commands to release
 ```
 Usage: bench release [OPTIONS] APP BUMP_TYPE
@@ -24,8 +32,8 @@ Usage: bench release [OPTIONS] APP BUMP_TYPE
   * _APP_ App name e.g [frappe|erpnext|yourapp]
   * _BUMP_TYPE_ [major|minor|patch|stable|prerelease]
 * Options:
-  * --develop git develop branch, default is develop
-  * --master git master branch, default is master
+  * --from-branch git develop branch, default is develop
+  * --to-branch git master branch, default is master
   * --remote git remote, default is upstream
   * --owner git owner, default is frappe
   * --repo-name git repo name if different from app name

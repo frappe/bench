@@ -1,46 +1,56 @@
 # Release Policy
 
-We maintain a **staging** branch for erpnext and frappe. On every Wednesday, release team will create a **staging** branch from **develop** (Internal Release). Same on every Tuesday,we will release from **staging** branch to **master** (Community Release). We also maintain **hotfix** branch, to fix bugs from release. Hot fixes release will take place as per the priority and severity.
+#### Create staging branch
 
+- On Wednesday morning, we will create a `staging` branch from develop branch. `staging` branch is a release candidate. All new features will first go from `develop` to `staging` and then `staging` to `master`.
 
-**I. Branch Description**
+- Use the prepare-staging command to create staging branch
+```usage: bench prepare-staging APP```
 
-1. develop: All new feature developments will go in develop branch
-2. staging: This branch serves as a release candidate. Before a week, release team will pull feature from develop branch to staging branch.<br> EG: if feature is in 25 July's milestone then it should go in staging on 19th July.
-3. master: Community release.
-4. hotfix: mainly define for support issues. This will include bugs or any high priority task like security patches.
+- Impact on branches ?
+  - merge all commits from develop branch to staging
+  - push merge commit back to develop
 
+- QA will use staging for testing.
 
-**II. Where to send PR?**
+- Deploy staging branch on frappe.io
 
-1. If you are working on a new feature, then PR should point to develop branch
-2. If you are working on support issue / bug / error report, then PR should point to hotfix brach
-3. While performing testing on Staging branch, if any fix needed then only send that fix PR to staging.
-4. Direct push to master strictly prohibited.
+- Only regression and security fixes can be cherry-picked into staging
 
+- Create a discuss post on what all new features or fixes going in next version.
 
-**III. Versioning**
+---
 
-1. develop to staging: No release number, cherry-pick or hard push from develop.
-2. staging to master:
-      Patch: Small fixes
-      Minor: For new features updates.
-      Major: If any API changes
-3. hotfix to master: Patch version release
+#### Create release from staging
+- On Tuesday, we will release from staging to master.
 
+- Versioning:
+  - patch: Small fixes
+  - minor: For new features updates.
+  - major: If any API changes
 
-**IV. Release Impact on branches:**
+- Impact on branches:
+  - merge staging branch to master
+  - push merge commit back to staging branch
+  - push merge commit to develop branch
+  - push merge commit to hotfix branch
 
-1. Releasing from staging:
-    staging -> master -> develop -> hotfix
-2. Releasing from hotfix:
-    hotfix -> master -> develop -> staging
+- Use release command to create release,
+``` usage: bench release APP patch|minor|major --from-branch staging ```
 
+---
 
-**V. Servers/Sites and Branches:**
+#### Create release from hotfix
+- Depending on priority, hotfix release will take place.
 
-1. Frappe Cloud: master branch (Every Tuesday)
-2. Frappe.io and Central: staging Branch (Every Wednesday)
-3. demo.erpnext.com: master
-4. beta.erpnext.com: staging
+- Versioning:
+  - patch: Small fixes
 
+- Impact on branches:
+  - merge hotfix branch to master
+  - push merge commit back to staging branch
+  - push merge commit to develop branch
+  - push merge commit to staging branch
+
+- Use release command to create release,
+``` usage: bench release APP patch --from-branch hotfix ```
