@@ -159,6 +159,7 @@ def exec_cmd(cmd, cwd='.'):
 	if return_code > 0:
 		raise CommandFailedError(cmd)
 
+
 def setup_env(bench_path='.', python_version='python2'):
 	if is_valid_python_name(python_version):
 		env = version_map.get(python_version)
@@ -179,11 +180,8 @@ def setup_env(bench_path='.', python_version='python2'):
 		sys.exit(1)
 	logger.info("using ", python_path)
 
-	exec_cmd('virtualenv -q {} -p {}'.format('env', sys.executable), cwd=bench_path)
-	exec_cmd('./env/bin/pip -q install --upgrade pip', cwd=bench_path)
-	exec_cmd('./env/bin/pip -q install wheel', cwd=bench_path)
-	# exec_cmd('./env/bin/pip -q install https://github.com/frappe/MySQLdb1/archive/MySQLdb-1.2.5-patched.tar.gz', cwd=bench_path)
-	exec_cmd('./env/bin/pip -q install -e git+https://github.com/frappe/python-pdfkit.git#egg=pdfkit', cwd=bench_path)
+	add_env(env, python_version=python_version, bench_path=bench_path)
+
 
 def setup_socketio(bench_path='.'):
 	exec_cmd("npm install socket.io redis express superagent cookie", cwd=bench_path)
