@@ -26,6 +26,23 @@ def get_env_names(bench_path='.'):
 	return env_names
 
 
+def add_env(env_name, python_version, bench_path='.'):
+	if is_valid_python_name(python_version):
+		exec_cmd('virtualenv -q {0} -p `which {1}`'.format(env_name, python_version), cwd=bench_path)
+		exec_cmd('./{0}/bin/python ./{0}/bin/pip -q install --upgrade pip'.format(env_name),
+				 cwd=bench_path)
+		exec_cmd('./{0}/bin/python ./{0}/bin/pip -q install wheel'.format(env_name), cwd=bench_path)
+		# exec_cmd('./env/bin/pip -q install https://github.com/frappe/MySQLdb1/archive/MySQLdb-1.2.5-patched.tar.gz', cwd=bench_path)
+		exec_cmd(
+			'./{0}/bin/python ./{0}/bin/pip -q install -e git+https://github.com/frappe/python-pdfkit.git#egg=pdfkit'.format(
+				env_name),
+			cwd=bench_path
+		)
+	else:
+		logger.info("Operation failed. Python version should be either 'python2' or 'python3'")
+		sys.exit(1)
+
+
 def get_frappe(bench_path='.', python_version='python2'):
 	frappe = get_env_cmd('frappe', bench_path=bench_path)
 	if not os.path.exists(frappe):
