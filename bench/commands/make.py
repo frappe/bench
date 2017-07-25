@@ -10,49 +10,54 @@ import click
 @click.option('--no-backups',is_flag=True, help="Run migrations for all sites in the bench")
 @click.option('--no-auto-update',is_flag=True, help="Build JS and CSS artifacts for the bench")
 @click.option('--verbose',is_flag=True, help="Verbose output during install")
+@click.option('--python-version', default="python2", help="Python version to use ('python2 or python3')")
 def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups,
-		no_auto_update, clone_from, verbose):
+		no_auto_update, clone_from, verbose, python_version):
 	"Create a new bench"
 	from bench.utils import init
 	init(path, apps_path=apps_path, no_procfile=no_procfile, no_backups=no_backups,
 			no_auto_update=no_auto_update, frappe_path=frappe_path, frappe_branch=frappe_branch,
-			verbose=verbose, clone_from=clone_from)
+			verbose=verbose, clone_from=clone_from, python_version=python_version)
 	click.echo('Bench {} initialized'.format(path))
 
 
 @click.command('get-app')
 @click.argument('name', nargs=-1) # Dummy argument for backward compatibility
 @click.argument('git-url')
+@click.option('--python-version', default="python2", help="Python version to use ('python2 or python3')")
 @click.option('--branch', default=None, help="branch to checkout")
-def get_app(git_url, branch, name=None):
+def get_app(git_url, branch, python_version, name=None):
 	"clone an app from the internet and set it up in your bench"
 	from bench.app import get_app
-	get_app(git_url, branch=branch)
+	get_app(git_url, branch=branch, python_version=python_version)
 
 
 @click.command('new-app')
 @click.argument('app-name')
-def new_app(app_name):
+@click.option('--python-version', default="python2", help="Python version to use ('python2 or python3')")
+def new_app(app_name, python_version):
 	"start a new app"
 	from bench.app import new_app
-	new_app(app_name)
+	new_app(app_name, python_version=python_version)
 
 
 @click.command('remove-app')
 @click.argument('app-name')
-def remove_app(app_name):
+@click.option('--python-version', default="python2", help="Python version to use ('python2 or python3')")
+def remove_app(app_name, python_version):
 	"completely remove app from bench"
 	from bench.app import remove_app
-	remove_app(app_name)
+	remove_app(app_name, python_version=python_version)
 
 
 @click.command('new-site')
-@click.option('--mariadb-root-password', help="MariaDB root password")
-@click.option('--admin-password', help="admin password to set for site")
+@click.option('--mariadb-root-password', default=None, help="MariaDB root password")
+@click.option('--admin-password', default=None, help="admin password to set for site")
+@click.option('--python-version', default="python2", help="Python version to use ('python2 or python3')")
 @click.argument('site')
-def new_site(site, mariadb_root_password=None, admin_password=None):
+def new_site(site, mariadb_root_password, admin_password, python_version):
 	"Create a new site in the bench"
 	from bench.utils import new_site
-	new_site(site, mariadb_root_password=mariadb_root_password, admin_password=admin_password)
+	new_site(site, mariadb_root_password=mariadb_root_password, admin_password=admin_password, python_version=python_version)
 
 

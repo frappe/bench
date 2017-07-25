@@ -14,19 +14,19 @@ logger = logging.getLogger(__name__)
 
 folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 
-def get_frappe(bench_path='.'):
+def get_frappe(bench_path='.', python_version='python2'):
 	frappe = get_env_cmd('frappe', bench_path=bench_path)
 	if not os.path.exists(frappe):
 		print('frappe app is not installed. Run the following command to install frappe')
 		print('bench get-app https://github.com/frappe/frappe.git')
 	return frappe
 
-def get_env_cmd(cmd, bench_path='.'):
+def get_env_cmd(cmd, bench_path='.', python_version='python2'):
 	return os.path.abspath(os.path.join(bench_path, 'env', 'bin', cmd))
 
 def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None,
-		verbose=False, clone_from=None):
+		verbose=False, clone_from=None, python_version='python2'):
 	from .app import get_app, install_apps_from_path
 	from .config.common_site_config import make_config
 	from .config import redis
@@ -130,7 +130,7 @@ def exec_cmd(cmd, cwd='.'):
 	if return_code > 0:
 		raise CommandFailedError(cmd)
 
-def setup_env(bench_path='.'):
+def setup_env(bench_path='.', python_version='python2'):
 	exec_cmd('virtualenv -q {} -p {}'.format('env', sys.executable), cwd=bench_path)
 	exec_cmd('./env/bin/pip -q install --upgrade pip', cwd=bench_path)
 	exec_cmd('./env/bin/pip -q install wheel', cwd=bench_path)
@@ -141,7 +141,7 @@ def setup_socketio(bench_path='.'):
 	exec_cmd("npm install socket.io redis express superagent cookie", cwd=bench_path)
 
 
-def new_site(site, mariadb_root_password=None, admin_password=None, bench_path='.'):
+def new_site(site, mariadb_root_password=None, admin_password=None, bench_path='.', python_version='python2'):
 	"""
 	Creates a new site in the specified bench, default is current bench
 	"""
