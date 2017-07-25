@@ -178,7 +178,6 @@ def setup_env(bench_path='.', python_version='python2'):
 	if not python_path:
 		logger.info("There's no {} on your computer.".format(python_version))
 		sys.exit(1)
-	logger.info("using ", python_path)
 
 	add_env(env, python_version=python_version, bench_path=bench_path)
 
