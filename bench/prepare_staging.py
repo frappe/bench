@@ -2,6 +2,7 @@
 import os
 import git
 import click
+from .config.common_site_config import get_config
 
 github_username = None
 github_password = None
@@ -12,7 +13,7 @@ def prepare_staging(bench_path, app, remote='upstream'):
 
 	repo_path = os.path.join(bench_path, 'apps', app)
 	update_branches(repo_path, remote)
-	message = get_release_message(repo_path, develop='develop', master='staging', remote=remote)
+	message = get_release_message(repo_path, from_branch='develop', to_branch='staging', remote=remote)
 
 	if not message:
 		print('No commits to release')
@@ -29,7 +30,9 @@ def prepare_staging(bench_path, app, remote='upstream'):
 
 def validate(bench_path):
 	from .release import validate
-	validate(bench_path)
+
+	config = get_config(bench_path)
+	validate(bench_path, config)
 
 def update_branches(repo_path, remote):
 	from .release import update_branch
@@ -38,23 +41,23 @@ def update_branches(repo_path, remote):
 
 	git.Repo(repo_path).git.checkout('develop')
 
-def create_staging(repo_path, develop='develop'):
+def create_staging(repo_path, from_branch='develop'):
 	from .release import handle_merge_error
 
-	print('creating staging from', develop)
+	print('creating staging from', from_branch)
 	repo = git.Repo(repo_path)
 	g = repo.git
 	g.checkout('staging')
 	try:
-		g.merge(develop, '--no-ff')
+		g.merge(from_branch, '--no-ff')
 	except git.exc.GitCommandError as e:
-		handle_merge_error(e, source=develop, target='staging')
+		handle_merge_error(e, source=from_branch, target='staging')
 	
-	g.checkout(develop)
+	g.checkout(from_branch)
 	try:
 		g.merge('staging')
 	except git.exc.GitCommandError as e:
-		handle_merge_error(e, source='staging', target=develop)
+		handle_merge_error(e, source='staging', target=from_branch)
 	
 def push_commits(repo_path, remote='upstream'):
 	print('pushing staging branch of', repo_path)
