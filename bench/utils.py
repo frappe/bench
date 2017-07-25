@@ -73,7 +73,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	setup_logging()
 
-	setup_env(bench_path=path)
+	setup_env(bench_path=path, python_version=python_version)
 
 	make_config(path)
 
@@ -160,6 +160,12 @@ def exec_cmd(cmd, cwd='.'):
 		raise CommandFailedError(cmd)
 
 def setup_env(bench_path='.', python_version='python2'):
+	if is_valid_python_name(python_version):
+		env = version_map.get(python_version)
+	else:
+		logger.info('{} is not valid. Use either "python2" or "python3"'.format(python_version))
+		sys.exit(1)
+
 	exec_cmd('virtualenv -q {} -p {}'.format('env', sys.executable), cwd=bench_path)
 	exec_cmd('./env/bin/pip -q install --upgrade pip', cwd=bench_path)
 	exec_cmd('./env/bin/pip -q install wheel', cwd=bench_path)
