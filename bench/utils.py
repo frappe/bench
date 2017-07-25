@@ -21,6 +21,11 @@ def is_valid_python_name(py_version):
 	return py_version in ['python2', 'python3']
 
 
+def get_env_names(bench_path='.'):
+	env_names = [dir_name for dir_name in os.listdir(bench_path) if dir_name in ['env', 'env3']]
+	return env_names
+
+
 def get_frappe(bench_path='.', python_version='python2'):
 	frappe = get_env_cmd('frappe', bench_path=bench_path)
 	if not os.path.exists(frappe):
