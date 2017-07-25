@@ -120,7 +120,7 @@ def exec_cmd(cmd, cwd='.'):
 
 	logger.info(cmd)
 
-	p = subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=stdout, stderr=stderr)
+	p = subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=stdout, stderr=stderr, universal_newlines=True)
 
 	if async:
 		return_code = print_output(p)
