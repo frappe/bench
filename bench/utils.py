@@ -169,8 +169,15 @@ def setup_env(bench_path='.', python_version='python2'):
 	# check if env is already created
 	env_names = get_env_names()
 	if env in env_names:
-		logger.info('Virtualenv {} has already been set up'.format(env))
+		logger.info('Virtualenv {} has already been set up.'.format(env))
 		return
+
+	# check if specified `python_version` interpreter is available
+	python_path = os.popen('which {}'.format(python_version)).read()
+	if not python_path:
+		logger.info("There's no {} on your computer.".format(python_version))
+		sys.exit(1)
+	logger.info("using ", python_path)
 
 	exec_cmd('virtualenv -q {} -p {}'.format('env', sys.executable), cwd=bench_path)
 	exec_cmd('./env/bin/pip -q install --upgrade pip', cwd=bench_path)
