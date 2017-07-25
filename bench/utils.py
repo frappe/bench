@@ -166,6 +166,12 @@ def setup_env(bench_path='.', python_version='python2'):
 		logger.info('{} is not valid. Use either "python2" or "python3"'.format(python_version))
 		sys.exit(1)
 
+	# check if env is already created
+	env_names = get_env_names()
+	if env in env_names:
+		logger.info('Virtualenv {} has already been set up'.format(env))
+		return
+
 	exec_cmd('virtualenv -q {} -p {}'.format('env', sys.executable), cwd=bench_path)
 	exec_cmd('./env/bin/pip -q install --upgrade pip', cwd=bench_path)
 	exec_cmd('./env/bin/pip -q install wheel', cwd=bench_path)
