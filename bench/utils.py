@@ -14,6 +14,11 @@ logger = logging.getLogger(__name__)
 
 folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 
+
+def is_valid_python_name(py_version):
+	return py_version in ['python2', 'python3']
+
+
 def get_frappe(bench_path='.', python_version='python2'):
 	frappe = get_env_cmd('frappe', bench_path=bench_path)
 	if not os.path.exists(frappe):
