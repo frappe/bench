@@ -14,6 +14,8 @@ logger = logging.getLogger(__name__)
 
 folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 
+version_map = {'python2': 'env', 'python3': 'env3'}
+
 
 def is_valid_python_name(py_version):
 	return py_version in ['python2', 'python3']
