@@ -14,19 +14,48 @@ logger = logging.getLogger(__name__)
 
 folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 
-def get_frappe(bench_path='.'):
+version_map = {'python2': 'env', 'python3': 'env3'}
+
+
+def is_valid_python_name(py_version):
+	return py_version in ['python2', 'python3']
+
+
+def get_env_names(bench_path='.'):
+	env_names = [dir_name for dir_name in os.listdir(bench_path) if dir_name in ['env', 'env3']]
+	return env_names
+
+
+def add_env(env_name, python_version, bench_path='.'):
+	if is_valid_python_name(python_version):
+		exec_cmd('virtualenv -q {0} -p `which {1}`'.format(env_name, python_version), cwd=bench_path)
+		exec_cmd('./{0}/bin/python ./{0}/bin/pip -q install --upgrade pip'.format(env_name),
+				 cwd=bench_path)
+		exec_cmd('./{0}/bin/python ./{0}/bin/pip -q install wheel'.format(env_name), cwd=bench_path)
+		# exec_cmd('./env/bin/pip -q install https://github.com/frappe/MySQLdb1/archive/MySQLdb-1.2.5-patched.tar.gz', cwd=bench_path)
+		exec_cmd(
+			'./{0}/bin/python ./{0}/bin/pip -q install -e git+https://github.com/frappe/python-pdfkit.git#egg=pdfkit'.format(
+				env_name),
+			cwd=bench_path
+		)
+	else:
+		logger.info("Operation failed. Python version should be either 'python2' or 'python3'")
+		sys.exit(1)
+
+
+def get_frappe(bench_path='.', python_version='python2'):
 	frappe = get_env_cmd('frappe', bench_path=bench_path)
 	if not os.path.exists(frappe):
 		print('frappe app is not installed. Run the following command to install frappe')
 		print('bench get-app https://github.com/frappe/frappe.git')
 	return frappe
 
-def get_env_cmd(cmd, bench_path='.'):
+def get_env_cmd(cmd, bench_path='.', python_version='python2'):
 	return os.path.abspath(os.path.join(bench_path, 'env', 'bin', cmd))
 
 def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None,
-		verbose=False, clone_from=None):
+		verbose=False, clone_from=None, python_version='python2'):
 	from .app import get_app, install_apps_from_path
 	from .config.common_site_config import make_config
 	from .config import redis
@@ -44,7 +73,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	setup_logging()
 
-	setup_env(bench_path=path)
+	setup_env(bench_path=path, python_version=python_version)
 
 	make_config(path)
 
@@ -130,18 +159,34 @@ def exec_cmd(cmd, cwd='.'):
 	if return_code > 0:
 		raise CommandFailedError(cmd)
 
-def setup_env(bench_path='.'):
-	exec_cmd('virtualenv -q {} -p {}'.format('env', sys.executable), cwd=bench_path)
-	exec_cmd('./env/bin/pip -q install --upgrade pip', cwd=bench_path)
-	exec_cmd('./env/bin/pip -q install wheel', cwd=bench_path)
-	# exec_cmd('./env/bin/pip -q install https://github.com/frappe/MySQLdb1/archive/MySQLdb-1.2.5-patched.tar.gz', cwd=bench_path)
-	exec_cmd('./env/bin/pip -q install -e git+https://github.com/frappe/python-pdfkit.git#egg=pdfkit', cwd=bench_path)
+
+def setup_env(bench_path='.', python_version='python2'):
+	if is_valid_python_name(python_version):
+		env = version_map.get(python_version)
+	else:
+		logger.info('{} is not valid. Use either "python2" or "python3"'.format(python_version))
+		sys.exit(1)
+
+	# check if env is already created
+	env_names = get_env_names()
+	if env in env_names:
+		logger.info('Virtualenv {} has already been set up.'.format(env))
+		return
+
+	# check if specified `python_version` interpreter is available
+	python_path = os.popen('which {}'.format(python_version)).read()
+	if not python_path:
+		logger.info("There's no {} on your computer.".format(python_version))
+		sys.exit(1)
+
+	add_env(env, python_version=python_version, bench_path=bench_path)
+
 
 def setup_socketio(bench_path='.'):
 	exec_cmd("npm install socket.io redis express superagent cookie", cwd=bench_path)
 
 
-def new_site(site, mariadb_root_password=None, admin_password=None, bench_path='.'):
+def new_site(site, mariadb_root_password=None, admin_password=None, bench_path='.', python_version='python2'):
 	"""
 	Creates a new site in the specified bench, default is current bench
 	"""

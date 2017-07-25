@@ -48,7 +48,7 @@ def write_appstxt(apps, bench_path='.'):
 	with open(os.path.join(bench_path, 'sites', 'apps.txt'), 'w') as f:
 		return f.write('\n'.join(apps))
 
-def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbose=False):
+def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbose=False, python_version='python2'):
 	#less verbose app install
 	if '/' not in git_url:
 		git_url = 'https://github.com/frappe/' + git_url
@@ -81,7 +81,7 @@ def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbos
 	if conf.get('restart_supervisor_on_update'):
 		restart_supervisor_processes(bench_path=bench_path)
 
-def new_app(app, bench_path='.'):
+def new_app(app, bench_path='.', python_version='python2'):
 	# For backwards compatibility
 	app = app.lower().replace(" ", "_").replace("-", "_")
 	logger.info('creating new app {}'.format(app))
@@ -95,7 +95,7 @@ def new_app(app, bench_path='.'):
 		run_frappe_cmd('make-app', apps, app, bench_path=bench_path)
 	install_app(app, bench_path=bench_path)
 
-def install_app(app, bench_path='.', verbose=False, no_cache=False):
+def install_app(app, bench_path='.', verbose=False, no_cache=False, python_version='python2'):
 	logger.info('installing {}'.format(app))
 	# find_links = '--find-links={}'.format(conf.get('wheel_cache_dir')) if conf.get('wheel_cache_dir') else ''
 	find_links = ''
@@ -107,7 +107,7 @@ def install_app(app, bench_path='.', verbose=False, no_cache=False):
 				find_links=find_links))
 	add_to_appstxt(app, bench_path=bench_path)
 
-def remove_app(app, bench_path='.'):
+def remove_app(app, bench_path='.', python_version='python2'):
 	if not app in get_apps(bench_path):
 		print("No app named {0}".format(app))
 		sys.exit(1)
