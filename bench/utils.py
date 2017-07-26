@@ -33,11 +33,13 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	from bench.patches import set_all_patches_executed
 
 	if os.path.exists(path):
-		print('Directory {} already exists!'.format(path))
-		raise Exception("Site directory already exists")
-		# sys.exit(1)
-
-	os.makedirs(path)
+		path_empty = False if len(os.listdir(path)) != 0 else True;
+		if not path_empty :
+			print('Directory {} is not empty !'.format(path))
+			sys.exit(1)
+	else:
+		os.makedirs(path)
+	
 	for dirname in folders_in_bench:
 		os.mkdir(os.path.join(path, dirname))
 
