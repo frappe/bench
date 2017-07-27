@@ -26,19 +26,31 @@ def get_env_cmd(cmd, bench_path='.'):
 
 def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None,
-		verbose=False, clone_from=None):
+		verbose=False, clone_from=None, skip_bench_mkdir=False):
 	from .app import get_app, install_apps_from_path
 	from .config.common_site_config import make_config
 	from .config import redis
 	from .config.procfile import setup_procfile
 	from bench.patches import set_all_patches_executed
 
-	if os.path.exists(path):
-		print('Directory {} already exists!'.format(path))
-		raise Exception("Site directory already exists")
-		# sys.exit(1)
+	if(skip_bench_mkdir):
+		## Remove the files and subfolders inside frappe bench
+		folder = path
+		for the_file in os.listdir(folder):
+			file_path = os.path.join(folder, the_file)
+			try:
+				if os.path.isfile(file_path):
+					os.unlink(file_path)
+				elif os.path.isdir(file_path): shutil.rmtree(file_path)
+			except Exception as e:
+				print(e)
+	else:
+		if os.path.exists(path):
+			print('Directory {} already exists!'.format(path))
+			raise Exception("Site directory already exists")
+			# sys.exit(1)
+		os.makedirs(path)
 
-	os.makedirs(path)
 	for dirname in folders_in_bench:
 		os.mkdir(os.path.join(path, dirname))
 
@@ -421,7 +433,7 @@ def update_npm_packages(bench_path='.'):
 							package_json[key].extend(value)
 						else:
 							package_json[key] = value
-	
+
 	if package_json is {}:
 		with open(os.path.join(os.path.dirname(__file__), 'package.json'), 'r') as f:
 			package_json = json.loads(f.read())
@@ -651,7 +663,7 @@ def update_translations(app, lang):
 				f.flush()
 
 	print('downloaded for', app, lang)
-	
+
 def download_chart_of_accounts():
 	charts_dir = os.path.join('apps', "erpnext", "erpnext", 'accounts', 'chart_of_accounts', "submitted")
 	csv_file = os.path.join(translations_dir, lang + '.csv')
