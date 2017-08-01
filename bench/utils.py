@@ -85,7 +85,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	set_all_patches_executed(bench_path=path)
 	build_assets(bench_path=path)
 
-	if(not skip_redis_config_generation):
+	if not skip_redis_config_generation:
 		redis.generate_config(path)
 
 	if not no_procfile:
