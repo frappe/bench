@@ -53,12 +53,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		os.makedirs(path)
 
 	for dirname in folders_in_bench:
-		try:
-			os.makedirs(os.path.join(path, dirname))
-			break
-		except OSError, e:
-			if e.errno != os.errno.EEXIST:
-				pass
+		os.mkdir(os.path.join(path, dirname))
 
 	setup_logging()
 
