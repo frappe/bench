@@ -54,6 +54,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	for dirname in folders_in_bench:
 		try:
+			print(dirname+'\n')
 			os.makedirs(os.path.join(path, dirname))
 			break
 		except OSError, e:
