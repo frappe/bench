@@ -4,6 +4,7 @@ import bench
 from bench import env
 from six import iteritems
 
+
 class PatchError(Exception):
 	pass
 
@@ -34,29 +35,16 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	from bench.patches import set_all_patches_executed
 
 	if(skip_bench_mkdir):
-		## Remove the files and subfolders inside frappe bench
-		# folder = path
-		# for the_file in os.listdir(folder):
-		# 	file_path = os.path.join(folder, the_file)
-		# 	try:
-		# 		if os.path.isfile(file_path):
-		# 			os.unlink(file_path)
-		# 		elif os.path.isdir(file_path): shutil.rmtree(file_path)
-		# 	except Exception as e:
-		# 		print(e)
 		pass
 	else:
 		if os.path.exists(path):
 			print('Directory {} already exists!'.format(path))
 			raise Exception("Site directory already exists")
-			# sys.exit(1)
 		os.makedirs(path)
 
 	for dirname in folders_in_bench:
 		try:
-			print(dirname+'\n')
 			os.makedirs(os.path.join(path, dirname))
-			break
 		except OSError, e:
 			if e.errno != os.errno.EEXIST:
 				pass
