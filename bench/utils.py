@@ -27,7 +27,7 @@ def get_env_cmd(cmd, bench_path='.'):
 
 def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None,
-		verbose=False, clone_from=None, skip_bench_mkdir=False,skip_redis_config_generation=False):
+		verbose=False, clone_from=None, skip_bench_mkdir=False, skip_redis_config_generation=False):
 	from .app import get_app, install_apps_from_path
 	from .config.common_site_config import make_config
 	from .config import redis
