@@ -59,7 +59,7 @@ def get_redis_version():
 	version_string = subprocess.check_output('redis-server --version', shell=True).strip()
 
 	# extract version number from string
-	version = re.findall("\d+\.\d+", version_string)
+	version = re.findall("\d+\.\d+", version_string.decode("utf-8"))
 	if not version:
 		return None
 
