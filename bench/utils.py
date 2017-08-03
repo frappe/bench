@@ -45,7 +45,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	for dirname in folders_in_bench:
 		try:
 			os.makedirs(os.path.join(path, dirname))
-		except OSError, e:
+		except OSError as e:
 			if e.errno != os.errno.EEXIST:
 				pass
 
