@@ -236,8 +236,8 @@ def add_to_crontab(line):
 		if platform.system() == 'FreeBSD':
 			cmd = ["crontab", "-"]
 		s = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-		s.stdin.write(current_crontab)
-		s.stdin.write(line + '\n')
+		s.stdin.write(current_crontab.encode())
+		s.stdin.write((line + '\n').encode())
 		s.stdin.close()
 
 def read_crontab():
