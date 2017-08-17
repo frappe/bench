@@ -241,10 +241,10 @@ def add_to_crontab(line):
 		s.stdin.close()
 
 def read_crontab():
-	s = subprocess.Popen(["crontab", "-l"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-	out = s.stdout.read()
-	s.stdout.close()
-	return out
+	try:
+		return subprocess.check_output(["crontab", "-l"]).decode()
+	except subprocess.CalledProcessError:
+		return b""
 
 def update_bench():
 	logger.info('updating bench')
@@ -696,10 +696,10 @@ def log_line(data, stream):
 	return sys.stdout.write(data)
 
 def get_output(*cmd):
-	s = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-	out = s.stdout.read()
-	s.stdout.close()
-	return out
+	try:
+		return subprocess.check_output(cmd).decode()
+	except subprocess.CalledProcessError:
+		return b""
 
 def before_update(bench_path, requirements):
 	validate_pillow_dependencies(bench_path, requirements)
