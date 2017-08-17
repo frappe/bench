@@ -134,6 +134,10 @@ For production:
 2. For production: Your process will be setup and managed by `nginx` and `supervisor`. [Setup Production](https://frappe.github.io/frappe/user/en/bench/guides/setup-production.html)
 
 ---
+## Docker install for frappe
+1. The docker setup for frappe can be found in this [repository](https://github.com/frappe/frappe_docker/).
+2. The app, mariadb and redis run on individual containers
+3. This setup supports multi-tenancy and exposes the frappe-bench volume as a external storage.
 
 Help
 ====
