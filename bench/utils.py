@@ -170,7 +170,7 @@ def new_site(site, mariadb_root_password=None, admin_password=None, bench_path='
 	exec_cmd("{frappe} {site} --install {db_name} {mysql_root_password_fragment} {admin_password_fragment}".format(
 				frappe=get_frappe(bench_path=bench_path),
 				site=site,
-				db_name=hashlib.sha1(site).hexdigest()[:10],
+				db_name=hashlib.sha1(site.encode()).hexdigest()[:10],
 				mysql_root_password_fragment=mysql_root_password_fragment,
 				admin_password_fragment=admin_password_fragment
 			), cwd=os.path.join(bench_path, 'sites'))
