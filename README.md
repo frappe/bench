@@ -135,6 +135,13 @@ For production:
 
 ---
 
+## Docker Install - For Developers (beta)
+
+1. For developer setup, you can also use the official [Frappé Docker](https://github.com/frappe/frappe_docker/).
+2. The app, mariadb and redis run on individual containers
+3. This setup supports multi-tenancy and exposes the frappe-bench volume as a external storage.
+4. For more details, [read the instructions on the Frappé Docker README](https://github.com/frappe/frappe_docker/)
+
 Help
 ====
 
