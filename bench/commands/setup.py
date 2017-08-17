@@ -118,6 +118,12 @@ def setup_socketio():
 	from bench.utils import setup_socketio
 	setup_socketio()
 
+@click.command('requirements')
+def setup_requirements():
+	"Setup python and node requirements"
+	from bench.utils import update_requirements, update_npm_packages
+	update_requirements()
+	update_npm_packages()
 
 @click.command('config')
 def setup_config():
@@ -155,17 +161,18 @@ def remove_domain(domain, site=None):
 	remove_domain(site, domain, bench_path='.')
 
 @click.command('sync-domains')
-@click.argument('domains')
+@click.option('--domain', multiple=True)
 @click.option('--site', prompt=True)
-def sync_domains(domains, site=None):
+def sync_domains(domain=None, site=None):
 	from bench.config.site_config import sync_domains
 
 	if not site:
 		print("Please specify site")
 		sys.exit(1)
 
-	domains = json.loads(domains)
-	if not isinstance(domains, list):
+	try:
+		domains = list(map(str,domain))
+	except Exception:
 		print("Domains should be a json list of strings or dictionaries")
 		sys.exit(1)
 
@@ -186,6 +193,7 @@ setup.add_command(setup_backups)
 setup.add_command(setup_env)
 setup.add_command(setup_procfile)
 setup.add_command(setup_socketio)
+setup.add_command(setup_requirements)
 setup.add_command(setup_config)
 setup.add_command(setup_fonts)
 setup.add_command(add_domain)

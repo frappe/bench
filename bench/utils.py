@@ -2,6 +2,8 @@ import os, sys, shutil, subprocess, logging, itertools, requests, json, platform
 from distutils.spawn import find_executable
 import bench
 from bench import env
+from six import iteritems
+
 
 class PatchError(Exception):
 	pass
@@ -25,21 +27,27 @@ def get_env_cmd(cmd, bench_path='.'):
 
 def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None,
-		verbose=False, clone_from=None):
+		verbose=False, clone_from=None, skip_bench_mkdir=False, skip_redis_config_generation=False):
 	from .app import get_app, install_apps_from_path
 	from .config.common_site_config import make_config
 	from .config import redis
 	from .config.procfile import setup_procfile
 	from bench.patches import set_all_patches_executed
 
-	if os.path.exists(path):
-		print('Directory {} already exists!'.format(path))
-		raise Exception("Site directory already exists")
-		# sys.exit(1)
+	if(skip_bench_mkdir):
+		pass
+	else:
+		if os.path.exists(path):
+			print('Directory {} already exists!'.format(path))
+			raise Exception("Site directory already exists")
+		os.makedirs(path)
 
-	os.makedirs(path)
 	for dirname in folders_in_bench:
-		os.mkdir(os.path.join(path, dirname))
+		try:
+			os.makedirs(os.path.join(path, dirname))
+		except OSError, e:
+			if e.errno != os.errno.EEXIST:
+				pass
 
 	setup_logging()
 
@@ -61,11 +69,13 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	bench.set_frappe_version(bench_path=path)
 	if bench.FRAPPE_VERSION > 5:
-		setup_socketio(bench_path=path)
+		update_npm_packages(bench_path=path)
 
 	set_all_patches_executed(bench_path=path)
 	build_assets(bench_path=path)
-	redis.generate_config(path)
+
+	if not skip_redis_config_generation:
+		redis.generate_config(path)
 
 	if not no_procfile:
 		setup_procfile(path)
@@ -119,7 +129,7 @@ def exec_cmd(cmd, cwd='.'):
 
 	logger.info(cmd)
 
-	p = subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=stdout, stderr=stderr)
+	p = subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=stdout, stderr=stderr, universal_newlines=True)
 
 	if async:
 		return_code = print_output(p)
@@ -134,10 +144,12 @@ def setup_env(bench_path='.'):
 	exec_cmd('./env/bin/pip -q install --upgrade pip', cwd=bench_path)
 	exec_cmd('./env/bin/pip -q install wheel', cwd=bench_path)
 	# exec_cmd('./env/bin/pip -q install https://github.com/frappe/MySQLdb1/archive/MySQLdb-1.2.5-patched.tar.gz', cwd=bench_path)
+	exec_cmd('./env/bin/pip -q install six', cwd=bench_path)
 	exec_cmd('./env/bin/pip -q install -e git+https://github.com/frappe/python-pdfkit.git#egg=pdfkit', cwd=bench_path)
 
 def setup_socketio(bench_path='.'):
-	exec_cmd("npm install socket.io redis express superagent cookie", cwd=bench_path)
+	exec_cmd("npm install socket.io redis express superagent cookie babel-core less chokidar \
+		babel-cli babel-preset-es2015 babel-preset-es2016 babel-preset-es2017 babel-preset-babili", cwd=bench_path)
 
 def patch_sites(bench_path='.'):
 	bench.set_frappe_version(bench_path=bench_path)
@@ -352,6 +364,7 @@ def set_default_site(site, bench_path='.'):
 			cwd=os.path.join(bench_path, 'sites'))
 
 def update_requirements(bench_path='.'):
+	print('Updating Python libraries...')
 	pip = os.path.join(bench_path, 'env', 'bin', 'pip')
 
 	# upgrade pip to latest
@@ -366,6 +379,38 @@ def update_requirements(bench_path='.'):
 	for app in os.listdir(apps_dir):
 		req_file = os.path.join(apps_dir, app, 'requirements.txt')
 		install_requirements(pip, req_file)
+
+def update_npm_packages(bench_path='.'):
+	print('Updating node libraries...')
+	apps_dir = os.path.join(bench_path, 'apps')
+	package_json = {}
+
+	for app in os.listdir(apps_dir):
+		package_json_path = os.path.join(apps_dir, app, 'package.json')
+
+		if os.path.exists(package_json_path):
+			with open(package_json_path, "r") as f:
+				app_package_json = json.loads(f.read())
+				# package.json is usually a dict in a dict
+				for key, value in iteritems(app_package_json):
+					if not key in package_json:
+						package_json[key] = value
+					else:
+						if isinstance(value, dict):
+							package_json[key].update(value)
+						elif isinstance(value, list):
+							package_json[key].extend(value)
+						else:
+							package_json[key] = value
+
+	if package_json is {}:
+		with open(os.path.join(os.path.dirname(__file__), 'package.json'), 'r') as f:
+			package_json = json.loads(f.read())
+
+	with open(os.path.join(bench_path, 'package.json'), 'w') as f:
+		f.write(json.dumps(package_json, indent=1, sort_keys=True))
+
+	exec_cmd('npm install', cwd=bench_path)
 
 def install_requirements(pip, req_file):
 	if os.path.exists(req_file):

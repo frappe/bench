@@ -82,6 +82,7 @@ Note: Please do not remove the bench directory the above commands will create
 - This is an opinionated setup so it is best to setup on a blank server.
 - Works on Ubuntu 14.04 to 16.04, CentOS 7+, Debian 7 to 8 and MacOS X.
 - You may have to install Python 2.7 (eg on Ubuntu 16.04+) by running `apt-get install python-minimal`
+- You may also have to install build-essential and python-setuptools by running `apt-get install build-essential python-setuptools`
 - This script will install the pre-requisites, install bench and setup an ERPNext site
 - Passwords for Frappe Administrator and MariaDB (root) will be asked
 - You can then login as **Administrator** with the Administrator password
@@ -133,6 +134,13 @@ For production:
 2. For production: Your process will be setup and managed by `nginx` and `supervisor`. [Setup Production](https://frappe.github.io/frappe/user/en/bench/guides/setup-production.html)
 
 ---
+
+## Docker Install - For Developers (beta)
+
+1. For developer setup, you can also use the official [Frappé Docker](https://github.com/frappe/frappe_docker/).
+2. The app, mariadb and redis run on individual containers
+3. This setup supports multi-tenancy and exposes the frappe-bench volume as a external storage.
+4. For more details, [read the instructions on the Frappé Docker README](https://github.com/frappe/frappe_docker/)
 
 Help
 ====

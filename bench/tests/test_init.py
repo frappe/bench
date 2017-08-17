@@ -40,6 +40,7 @@ class TestBenchInit(unittest.TestCase):
 		self.assert_common_site_config("test-bench-1", {
 			"webserver_port": 8000,
 			"socketio_port": 9000,
+			"file_watcher_port": 6787,
 			"redis_queue": "redis://localhost:11000",
 			"redis_socketio": "redis://localhost:12000",
 			"redis_cache": "redis://localhost:13000"
@@ -51,6 +52,7 @@ class TestBenchInit(unittest.TestCase):
 		self.assert_common_site_config("test-bench-2", {
 			"webserver_port": 8001,
 			"socketio_port": 9001,
+			"file_watcher_port": 6788,
 			"redis_queue": "redis://localhost:11001",
 			"redis_socketio": "redis://localhost:12001",
 			"redis_cache": "redis://localhost:13001"
@@ -210,7 +212,7 @@ class TestBenchInit(unittest.TestCase):
 		self.assert_exists(python_path, "site-packages", "pip")
 
 		site_packages = os.listdir(os.path.join(python_path, "site-packages"))
-		self.assertTrue(any(package.startswith("MySQL_python-1.2.5") for package in site_packages))
+		self.assertTrue(any(package.startswith("mysqlclient-1.3.10") for package in site_packages))
 
 	def assert_config(self, bench_name):
 		for config, search_key in (
