@@ -30,7 +30,7 @@ def update_latest():
 		json.dump(get_latest(), f)
 
 def get_latest():
-	md5 = subprocess.check_output("md5sum {}".format(get_filepath()), shell=True).split()[0]
+	md5 = subprocess.check_output("md5sum {}".format(get_filepath()), shell=True).decode().split()[0]
 	return {
 		"filename": get_filename(),
 		"md5": md5
