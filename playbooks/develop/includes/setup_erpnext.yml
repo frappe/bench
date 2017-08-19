@@ -1,0 +1,20 @@
+---
+  - name: create a new default site 
+    command: bench new-site site1.default
+    args:
+      chdir: "{{ bench_path }}"
+
+  - name: get erpnext
+    command: bench get-app erpnext https://github.com/frappe/erpnext
+    args:
+      creates: "{{ bench_path }}/apps/erpnext"
+      chdir: "{{ bench_path }}"
+
+  - name: install erpnext to default site
+    command: bench --site site1.local install-app erpnext
+    args:
+      chdir: "{{ bench_path }}"
+
+# bench new-site site1.local
+# bench get-app erpnext https://github.com/frappe/erpnext
+# bench --site site1.local install-app erpnext

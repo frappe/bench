@@ -107,3 +107,5 @@
   # setup development environment
   - include: includes/setup_dev_env.yml
     when: not production and not run_travis and not without_bench_setup
+
+  - include: includes/setup_erpnext.yml
