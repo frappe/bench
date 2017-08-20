@@ -1,6 +1,6 @@
 ---
   - name: create a new default site 
-    command: bench new-site site1.default --admin-password {{ admin_password }} --mariadb-root-password {{ mysql_root_password }}
+    command: bench new-site site1.local --admin-password {{ admin_password }} --mariadb-root-password {{ mysql_root_password }}
     args:
       chdir: "{{ bench_path }}"
 
@@ -11,7 +11,7 @@
       chdir: "{{ bench_path }}"
 
   - name: install erpnext to default site
-    command: bench --site site1.default install-app erpnext
+    command: bench --site site1.local install-app erpnext
     args:
       chdir: "{{ bench_path }}"
 

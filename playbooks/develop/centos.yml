@@ -85,5 +85,5 @@
   - include: includes/setup_dev_env.yml
     when: not run_travis and not production
   
-  # setup an erpnext site called site1.default
+  # setup an erpnext site called site1.local
   - include: includes/setup_erpnext.yml
