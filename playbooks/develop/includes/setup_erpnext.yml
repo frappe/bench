@@ -1,6 +1,6 @@
 ---
   - name: create a new default site 
-    command: bench new-site site1.default
+    command: bench new-site site1.default --admin-password {{ admin_password }} --mariadb-root-password {{ mysql_root_password }}
     args:
       chdir: "{{ bench_path }}"
 
