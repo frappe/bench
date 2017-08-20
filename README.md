@@ -126,7 +126,7 @@ For production:
 - Install all the pre-requisites
 - Install the command line `bench`
 - Create a new bench (a folder that will contain your entire frappe/erpnext setup)
-- Create a new site on the bench
+- Create a new ERPNext site on the bench 
 
 #### How do I start ERPNext
 
