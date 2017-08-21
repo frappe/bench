@@ -13,7 +13,7 @@
     become: yes
     become_user: root
 
-  - name: install prequisites
+  - name: install prerequisites
     yum: pkg={{ item }} state=present
     with_items:
       # basic installs
