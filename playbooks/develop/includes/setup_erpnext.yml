@@ -1,14 +1,4 @@
 ---
-  - name: Check whether a site called site1.local exists
-    stat: path="{{ bench_path }}/sites/site1.local"
-    register: site_folder
-
-  - name: create a new default site 
-    command: bench new-site site1.local --admin-password {{ admin_password }} --mariadb-root-password {{ mysql_root_password }}
-    args:
-      chdir: "{{ bench_path }}"
-    when: not site_folder.stat.exists
-  
   - name: Check if ERPNext App exists
     stat: path="{{ bench_path }}/apps/erpnext"
     register: app
@@ -19,6 +9,16 @@
       creates: "{{ bench_path }}/apps/erpnext"
       chdir: "{{ bench_path }}"
     when: not app.stat.exists
+
+  - name: Check whether a site called site1.local exists
+    stat: path="{{ bench_path }}/sites/site1.local"
+    register: site_folder
+
+  - name: create a new default site 
+    command: bench new-site site1.local --admin-password {{ admin_password }} --mariadb-root-password {{ mysql_root_password }}
+    args:
+      chdir: "{{ bench_path }}"
+    when: not site_folder.stat.exists
 
   - name: install erpnext to default site
     command: bench --site site1.local install-app erpnext
