@@ -14,3 +14,7 @@
    args:
      creates: "{{ bench_path }}/config/redis_socketio.conf"
      chdir: "{{ bench_path }}"
+
+
+ # Setup an ERPNext site called site1.local
+ - include: includes/setup_erpnext.yml

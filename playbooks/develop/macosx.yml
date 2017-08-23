@@ -32,7 +32,4 @@
   # setup development environment
   - include: includes/setup_dev_env.yml
     when: not production
-
-  # setup an erpnext site called site1.local
-  - include: includes/setup_erpnext.yml
-    when: not production and not run_travis
+  
