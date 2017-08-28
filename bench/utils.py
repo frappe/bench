@@ -26,8 +26,9 @@ def get_env_cmd(cmd, bench_path='.'):
 	return os.path.abspath(os.path.join(bench_path, 'env', 'bin', cmd))
 
 def init(path, apps_path=None, no_procfile=False, no_backups=False,
-		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None,
-		verbose=False, clone_from=None, skip_bench_mkdir=False, skip_redis_config_generation=False):
+		 no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None,
+		 verbose=False, clone_from=None, skip_bench_mkdir=False, skip_redis_config_generation=False,
+		 clone_without_update=False):
 	from .app import get_app, install_apps_from_path
 	from .config.common_site_config import make_config
 	from .config import redis
@@ -56,7 +57,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	make_config(path)
 
 	if clone_from:
-		clone_apps_from(bench_path=path, clone_from=clone_from)
+		clone_apps_from(bench_path=path, clone_from=clone_from, update_app=not clone_without_update)
 	else:
 		if not frappe_path:
 			frappe_path = 'https://github.com/frappe/frappe.git'
@@ -84,33 +85,34 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	if not no_auto_update:
 		setup_auto_update(bench_path=path)
 
-def clone_apps_from(bench_path, clone_from):
+def clone_apps_from(bench_path, clone_from, update_app=True):
 	from .app import install_app
 	print('Copying apps from {0}...'.format(clone_from))
 	subprocess.check_output(['cp', '-R', os.path.join(clone_from, 'apps'), bench_path])
 
-	print('Copying node_modules from {0}...'.format(clone_from))
-	subprocess.check_output(['cp', '-R', os.path.join(clone_from, 'node_modules'), bench_path])
+	if os.path.exists(os.path.join(clone_from, 'node_modules')):
+		print('Copying node_modules from {0}...'.format(clone_from))
+		subprocess.check_output(['cp', '-R', os.path.join(clone_from, 'node_modules'), bench_path])
 
 	def setup_app(app):
 		# run git reset --hard in each branch, pull latest updates and install_app
 		app_path = os.path.join(bench_path, 'apps', app)
-		if os.path.exists(os.path.join(app_path, '.git')):
-			print('Cleaning up {0}'.format(app))
 
-			# remove .egg-ino
-			subprocess.check_output(['rm', '-rf', app + '.egg-info'], cwd=app_path)
+		# remove .egg-ino
+		subprocess.check_output(['rm', '-rf', app + '.egg-info'], cwd=app_path)
 
+		if update_app and os.path.exists(os.path.join(app_path, '.git')):
 			remotes = subprocess.check_output(['git', 'remote'], cwd=app_path).strip().split()
 			if 'upstream' in remotes:
 				remote = 'upstream'
 			else:
 				remote = remotes[0]
+			print('Cleaning up {0}'.format(app))
 			branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=app_path).strip()
 			subprocess.check_output(['git', 'reset', '--hard'], cwd=app_path)
 			subprocess.check_output(['git', 'pull', '--rebase', remote, branch], cwd=app_path)
 
-			install_app(app, bench_path)
+		install_app(app, bench_path)
 
 	with open(os.path.join(clone_from, 'sites', 'apps.txt'), 'r') as f:
 		apps = f.read().splitlines()
