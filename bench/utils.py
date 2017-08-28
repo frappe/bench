@@ -46,7 +46,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		try:
 			os.makedirs(os.path.join(path, dirname))
 		except OSError, e:
-			if e.errno != os.errno.EEXIST:
+			if e.errno == os.errno.EEXIST:
 				pass
 
 	setup_logging()
