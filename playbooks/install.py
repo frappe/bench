@@ -103,6 +103,9 @@ def install_bench(args):
 
 	branch = 'master' if args.production else 'develop'
 	extra_vars.update(branch=branch)
+	
+	bench_name = 'frappe-bench' if not args.bench_name else args.bench_name
+	extra_vars.update(bench_name=bench_name)
 
 	if args.develop:
 		run_playbook('develop/install.yml', sudo=True, extra_vars=extra_vars)
@@ -364,6 +367,7 @@ def parse_commandline_args():
 	# set passwords
 	parser.add_argument('--mysql-root-password', dest='mysql_root_password', help='Set mysql root password')
 	parser.add_argument('--admin-password', dest='admin_password', help='Set admin password')
+	parser.add_argument('--bench-name', dest='bench_name', help='Create bench with specified name. Default name is frappe-bench')
 
 	args = parser.parse_args()
 
