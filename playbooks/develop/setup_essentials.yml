@@ -1,0 +1,48 @@
+---
+  - name: Setup Essentials
+    hosts: localhost
+    become: yes
+    become_user: root
+
+    tasks:
+      - name: Install the 'Development tools' package group (Redhat)
+        yum: name="@Development tools" state=present
+        when: ansible_os_family == 'RedHat'
+
+      - name: Install EPEL
+        yum: name='epel-release' state=present
+        when: ansible_os_family == 'RedHat'
+
+      - name: Install libselinux-python
+        yum: name={{ item }} state=present
+        with_items:
+          - python-devel
+          - python-setuptools
+          - python-pip
+          - libselinux-python
+        when: ansible_os_family == 'RedHat'
+
+      - name: Add dotdeb apt repository key for Debian < 8
+        apt_key:
+          url: http://www.dotdeb.org/dotdeb.gpg
+          state: present
+        become: yes
+        become_user: root
+        when: ansible_distribution == 'Debian' and ansible_distribution_version | version_compare('8', 'lt')
+
+      - name: Add dotdeb apt repository for redis-server for Debian < 8
+        apt_repository:
+          repo: 'deb http://packages.dotdeb.org wheezy all'
+          state: present
+        become: yes
+        become_user: root
+        when: ansible_distribution == 'Debian' and ansible_distribution_version | version_compare('8', 'lt')  
+
+      - name: Install libselinux-python
+        apt: pkg={{ item }} state=present force=yes
+        with_items:
+          - build-essential
+          - python-dev
+          - python-pip
+          - libselinux-python
+        when: ansible_os_family == 'Debian' or ansible_os_family == 'Ubuntu'

@@ -1,0 +1,21 @@
+---
+
+- name: Add apt key for mariadb for Debian <= 8
+  apt_key: keyserver=hkp://keyserver.ubuntu.com:80 id=0xcbcb082a1bb943db state=present
+  when: ansible_distribution_major_version | version_compare('8', 'le')
+
+- name: Add apt repository
+  apt_repository:
+    repo: 'deb [arch=amd64,i386] http://nyc2.mirrors.digitalocean.com/mariadb/repo/10.1/debian {{ ansible_distribution_release }} main'
+    state: present
+
+- name: Unattended package installation
+  shell: export DEBIAN_FRONTEND=noninteractive
+
+- name: apt-get install
+  apt: pkg={{ item }} update_cache=yes state=present
+  with_items:
+    - mariadb-server
+    - mariadb-client
+    - mariadb-common
+    - libmariadbclient-dev

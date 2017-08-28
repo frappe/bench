@@ -1,0 +1,38 @@
+---
+- name: Import Node source RPM key
+  rpm_key:
+    key: https://rpm.nodesource.com/pub/el/NODESOURCE-GPG-SIGNING-KEY-EL
+    state: present
+  when: ansible_os_family == 'RedHat'
+
+- name: Add Node Repo for RedHat
+  yum:
+    name: 'https://rpm.nodesource.com/pub_6.x/el/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/nodesource-release-el{{ ansible_distribution_major_version }}-1.noarch.rpm'
+    state: present
+    update_cache: yes
+  when: ansible_os_family == 'RedHat'
+
+- name: Install node v6
+  yum: name=nodejs state=present
+
+- name: Add apt key for node repo
+  apt_key:
+    url: https://keyserver.ubuntu.com/pks/lookup?op=get&fingerprint=on&search=0x1655A0AB68576280
+    id: "68576280"
+    state: present
+  when: ansible_os_family == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: Add repo
+  apt_repository:
+    repo: "deb [arch=amd64,i386] https://deb.nodesource.com/node_6.x {{ ansible_distribution_release }} main"
+    state: present
+  register: node_repo
+  when: ansible_os_family == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: Install nodejs 6.x
+  apt:
+    name: nodejs
+    state: present
+    update_cache: yes
+    force: yes
+  when: ansible_os_family == 'Debian' or ansible_distribution == 'Ubuntu'

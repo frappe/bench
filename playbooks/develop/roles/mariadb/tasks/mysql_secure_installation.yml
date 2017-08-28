@@ -1,0 +1,64 @@
+---
+# Set root password
+# UPDATE mysql.user SET Password=PASSWORD('mysecret') WHERE User='root';
+# FLUSH PRIVILEGES;
+
+
+- name: Set root Password
+  mysql_user: name=root host={{ item }} password={{ mysql_root_password }} state=present
+  with_items:
+    - localhost
+    - 127.0.0.1
+    - ::1
+  ignore_errors: yes
+
+- name: Add .my.cnf
+  template: src=my.cnf.j2 dest=/root/.my.cnf owner=root group=root mode=0600
+
+- name: Reload privilege tables
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - FLUSH PRIVILEGES
+  changed_when: False
+
+- name: Remove anonymous users
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - DELETE FROM mysql.user WHERE User=''
+  changed_when: False
+
+- name: Disallow root login remotely
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1')
+  changed_when: False
+
+- name: Remove test database and access to it
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - DROP DATABASE if exists test
+    - DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'
+  changed_when: False
+  ignore_errors: True
+
+- name: Reload privilege tables
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - FLUSH PRIVILEGES
+  changed_when: False
+
+- name: add launchagents folder mac
+  file: path=~/Library/LaunchAgents state=directory
+  when: ansible_distribution == 'MacOSX'
+
+- name: add mysql to mac startup
+  file: src=/usr/local/opt/mariadb/homebrew.mxcl.mariadb.plist path=~/Library/LaunchAgents/homebrew.mxcl.mariadb.plist state=link force=yes
+  when: ansible_distribution == 'MacOSX'
+
+- name: stop mysql mac
+  command: launchctl unload ~/Library/LaunchAgents/homebrew.mxcl.mariadb.plist
+  when: ansible_distribution == 'MacOSX'
+
+- name: start mysql mac
+  command: launchctl load ~/Library/LaunchAgents/homebrew.mxcl.mariadb.plist
+  when: ansible_distribution == 'MacOSX'

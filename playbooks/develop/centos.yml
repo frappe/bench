@@ -1,13 +1,26 @@
 ---
+- include: setup_essentials.yml
+
 - hosts: localhost
+  become: yes
+  become_user: root
   vars:
     bench_repo_path: "/home/{{ ansible_user_id }}/.bench"
     bench_path: "/home/{{ ansible_user_id }}/frappe-bench"
-    mysql_config_template: "templates/simple_mariadb_config.cnf"
-    mysql_conf_dir: /etc/my.cnf.d/
-
+    mysql_conf_tpl: ../files/mariadb_config.cnf
+    mysql_secure_installation: True
+  roles:
+    - prerequisites
+    - mariadb
+    - wkhtmltopdf
+    - nodejs
+    - psutils
   tasks:
+   # setup frappe-bench
+   - include: includes/setup_bench.yml
+     when: not run_travis and not without_bench_setup
 
+<<<<<<< 7a7c61105c87ac4cccea9c39c23691b0a61f9836
   - name: development tools package
     yum: name="@Development tools" state=present
     become: yes
@@ -85,3 +98,8 @@
   - include: includes/setup_dev_env.yml
     when: not run_travis and not production
     
+=======
+   # setup development environment
+   - include: includes/setup_dev_env.yml
+     when: not run_travis and not production
+>>>>>>>  create roles to install pre-requisites
