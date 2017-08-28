@@ -124,6 +124,17 @@ def setup_requirements():
 	update_requirements()
 	update_npm_packages()
 
+@click.command('manager')
+def setup_manager():
+	"Setup bench_manager site and app"
+	_new_site_ = "bench new-site bench_manager"
+	_add_app_bench_manager = "bench get-app bench_manager https://github.com/frappe/bench_manager"
+	_install_bench_manager_ = "bench --site bench_manager install-app bench_manager"
+	c_list = [_new_site_, _add_app_bench_manager, _install_bench_manager_]
+	for c in c_list:
+		out = subprocess.check_output(c.split())
+		print(out)
+
 @click.command('config')
 def setup_config():
 	"overwrite or make config.json"
@@ -199,3 +210,4 @@ setup.add_command(remove_domain)
 setup.add_command(sync_domains)
 setup.add_command(setup_firewall)
 setup.add_command(set_ssh_port)
+setup.add_command(setup_manager)
