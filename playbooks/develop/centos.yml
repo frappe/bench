@@ -1,7 +1,8 @@
 ---
 - include: setup_essentials.yml
 
-- hosts: localhost
+- name: "Setup prerequisites, mariadb, wkhtmltopdf, nodejs and psutil"
+  hosts: localhost
   become: yes
   become_user: root
   vars:
@@ -14,82 +15,9 @@
     - mariadb
     - wkhtmltopdf
     - nodejs
-    - psutils
+    - psutil
+
   tasks:
-   # setup frappe-bench
-   - include: includes/setup_bench.yml
-     when: not run_travis and not without_bench_setup
-
-<<<<<<< 7a7c61105c87ac4cccea9c39c23691b0a61f9836
-  - name: development tools package
-    yum: name="@Development tools" state=present
-    become: yes
-    become_user: root
-
-  - name: install prerequisites
-    yum: pkg={{ item }} state=present
-    with_items:
-      # basic installs
-      - redis
-
-      # for mariadb
-      - libselinux-python
-      - mysql-devel
-      - mysql-libs
-
-      # for wkhtmltopdf
-      - libXrender
-      - libXext
-      - xorg-x11-fonts-75dpi
-      - xorg-x11-fonts-Type1
-
-      # for Pillow
-      - libjpeg-devel
-      - zlib-devel
-      - libzip-devel
-      - freetype-devel
-      - lcms2-devel
-      - libwebp-devel
-      - libtiff-devel
-      - tcl-devel
-      - tk-devel
-
-      # Python LDAP
-      - openldap-devel
-
-    become: yes
-    become_user: root
-
-  - name: Import Node source RPM key
-    rpm_key:
-      key: https://rpm.nodesource.com/pub/el/NODESOURCE-GPG-SIGNING-KEY-EL
-      state: present
-    become: yes
-    become_user: root
-
-  - name: Add Node Repo
-    yum:
-      name: 'https://rpm.nodesource.com/pub_6.x/el/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/nodesource-release-el{{ ansible_distribution_major_version }}-1.noarch.rpm'
-      state: present
-    become: yes
-    become_user: root
-
-  - name: Install nodejs
-    yum:
-      name: nodejs
-      state: present
-    become: yes
-    become_user: root
-
-  # install MariaDB
-  - include: includes/mariadb_centos.yml
-
-  # install WKHTMLtoPDF
-  - include: includes/wkhtmltopdf.yml
-
-  # setup MariaDB
-  - include: includes/setup_mariadb.yml
-
   # setup frappe-bench
   - include: includes/setup_bench.yml
     when: not run_travis and not without_bench_setup
@@ -97,9 +25,3 @@
   # setup development environment
   - include: includes/setup_dev_env.yml
     when: not run_travis and not production
-    
-=======
-   # setup development environment
-   - include: includes/setup_dev_env.yml
-     when: not run_travis and not production
->>>>>>>  create roles to install pre-requisites

@@ -1,28 +1,29 @@
 ---
 - include: setup_essentials.yml
 
-- hosts: localhost
+- name: "Setup prerequisites, mariadb, wkhtmltopdf, nodejs and psutil"
+  hosts: localhost
   become: yes
   become_user: root
   vars:
     bench_repo_path: "/home/{{ ansible_user_id }}/.bench"
     bench_path: "/home/{{ ansible_user_id }}/frappe-bench"
     mysql_conf_tpl: ../files/mariadb_config.cnf
-    mysql_conf_dir: /etc/mysql/conf.d/
+    mysql_secure_installation: True
   roles:
     - prerequisites
     - mariadb
     - wkhtmltopdf
     - nodejs
-    - psutils
+    - psutil
   tasks:
-   - debug:
-     var: run_travis
+  - debug:
+      var: run_travis
 
-   # setup frappe-bench
-   - include: includes/setup_bench.yml
-     when: not without_bench_setup and not run_travis
+  # setup frappe-bench
+  - include: includes/setup_bench.yml
+    when: not without_bench_setup and not run_travis
 
-   # setup development environment
-   - include: includes/setup_dev_env.yml
-     when: not production and not run_travis and not without_bench_setup
+  # setup development environment
+  - include: includes/setup_dev_env.yml
+    when: not production and not run_travis and not without_bench_setup
