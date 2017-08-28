@@ -6,8 +6,6 @@
   become: yes
   become_user: root
   vars:
-    bench_repo_path: "/home/{{ ansible_user_id }}/.bench"
-    bench_path: "/home/{{ ansible_user_id }}/frappe-bench"
     mysql_conf_tpl: ../files/mariadb_config.cnf
     mysql_secure_installation: True
   roles:
@@ -17,6 +15,11 @@
     - nodejs
     - psutil
 
+- name: setup bench and dev environment
+  hosts: localhost
+  vars:
+    bench_repo_path: "/home/{{ ansible_user_id }}/.bench"
+    bench_path: "/home/{{ ansible_user_id }}/frappe-bench"
   tasks:
   # setup frappe-bench
   - include: includes/setup_bench.yml

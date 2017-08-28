@@ -38,11 +38,11 @@
         become_user: root
         when: ansible_distribution == 'Debian' and ansible_distribution_version | version_compare('8', 'lt')  
 
-      - name: Install libselinux-python
+      - name: Install python selinux
         apt: pkg={{ item }} state=present force=yes
         with_items:
           - build-essential
           - python-dev
           - python-pip
-          - libselinux-python
+          - python-selinux
         when: ansible_os_family == 'Debian' or ansible_os_family == 'Ubuntu'

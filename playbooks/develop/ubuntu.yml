@@ -16,6 +16,12 @@
     - wkhtmltopdf
     - nodejs
     - psutil
+
+- name: setup bench and dev environment
+  hosts: localhost
+  vars:
+    bench_repo_path: "/home/{{ ansible_user_id }}/.bench"
+    bench_path: "/home/{{ ansible_user_id }}/frappe-bench"
   tasks:
   - debug:
       var: run_travis

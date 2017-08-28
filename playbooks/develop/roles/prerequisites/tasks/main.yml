@@ -51,10 +51,8 @@
     - htop
     - libcrypto++-dev
     - libfreetype6-dev
-    - libjpeg8-dev
     - liblcms2-dev
     - libssl-dev
-    - libtiff5-dev
     - libwebp-dev
     - libxext6
     - libxrender1
@@ -69,8 +67,6 @@
     - redis-server
     - screen
     - supervisor
-    - tcl8.6-dev
-    - tk8.6-dev
     - vim
     - xfonts-75dpi
     - xfonts-base
@@ -78,10 +74,17 @@
     - apt-transport-https
     - libsasl2-dev
     - libldap2-dev
+    - libjpeg8-dev
   when: ansible_os_family == 'Debian' or ansible_distribution == 'Ubuntu'
 
+- include: ubuntu.yml
+  when: ansible_distribution == 'Ubuntu'
+
+- include: debian.yml
+  when: ansible_os_family == 'Debian'
+
 # Prerequisite for MACOS
-- name: install prequisites
+- name: install prequisites for macos
   homebrew: name={{ item }} state=present
   with_items:
     - cmake
