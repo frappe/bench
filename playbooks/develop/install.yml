@@ -1,14 +1,45 @@
 ---
 - hosts: localhost
 
+- include: setup_essentials.yml
+
+- include: ../prerequisites/install_prerequisites.yml
+
 - include: macosx.yml
   when: ansible_distribution == 'MacOSX'
 
-- include: ubuntu.yml
-  when: ansible_distribution == 'Ubuntu'
+- name: "Setup mariadb, wkhtmltopdf, nodejs and psutil"
+  hosts: localhost
+  become: yes
+  become_user: root
+  vars:
+    mysql_conf_tpl: ../files/mariadb_config.cnf
+    mysql_secure_installation: True
+  roles:
+    - mariadb
+    - wkhtmltopdf
+    - nodejs
+    - psutil
 
-- include: centos.yml
-  when: ansible_distribution == 'CentOS'
+- name: setup bench and dev environment
+  hosts: localhost
+  vars:
+    bench_repo_path: "/home/{{ ansible_user_id }}/.bench"
+    bench_path: "/home/{{ ansible_user_id }}/{{ bench_name }}"
+  tasks:
+  # setup frappe-bench
+  - include: includes/setup_bench.yml
+    when: not run_travis and not without_bench_setup
 
-- include: debian.yml
-  when: ansible_distribution == 'Debian'
+  # setup development environment
+  - include: includes/setup_dev_env.yml
+    when: not run_travis and not production
+
+# - include: ubuntu.yml
+#   when: ansible_distribution == 'Ubuntu'
+#
+# - include: centos.yml
+#   when: ansible_distribution == 'CentOS'
+#
+# - include: debian.yml
+#   when: ansible_distribution == 'Debian'

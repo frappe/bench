@@ -1,0 +1,98 @@
+---
+- name: "Setup prerequisites"
+  hosts: localhost
+  become: yes
+  become_user: root
+  tasks:
+  - name: Install yum packages
+    yum: name={{ item }} state=present
+    with_items:
+      - bzip2-devel
+      - cronie
+      - dnsmasq
+      - freetype-devel
+      - git
+      - htop
+      - lcms2-devel
+      - libjpeg-devel
+      - libtiff-devel
+      - libffi-devel
+      - libwebp-devel
+      - libXext
+      - libXrender
+      - libzip-devel
+      - libffi-devel
+      - ntp
+      - openssl-devel
+      - postfix
+      - python-devel
+      - python-setuptools
+      - python-pip
+      - redis
+      - screen
+      - sudo
+      - supervisor
+      - tcl-devel
+      - tk-devel
+      - vim
+      - which
+      - xorg-x11-fonts-75dpi
+      - xorg-x11-fonts-Type1
+      - zlib-devel
+      - openssl-devel
+      - openldap-devel
+    when: ansible_os_family == 'RedHat'
+
+  # Prerequisite for Debian and Ubuntu
+  - name: Install apt packages
+    apt: pkg={{ item }} state=present force=yes
+    with_items:
+      - build-essential
+      - software-properties-common
+      - dnsmasq
+      - fontconfig
+      - git
+      - htop
+      - libcrypto++-dev
+      - libfreetype6-dev
+      - liblcms2-dev
+      - libssl-dev
+      - libwebp-dev
+      - libxext6
+      - libxrender1
+      - libxslt1-dev
+      - libxslt1.1
+      - libffi-dev
+      - ntp
+      - postfix
+      - python-dev
+      - python-pip
+      - python-tk
+      - redis-server
+      - screen
+      - supervisor
+      - vim
+      - xfonts-75dpi
+      - xfonts-base
+      - zlib1g-dev
+      - apt-transport-https
+      - libsasl2-dev
+      - libldap2-dev
+      - libjpeg8-dev
+    when: ansible_os_family == 'Debian' or ansible_distribution == 'Ubuntu'
+
+  - include: ubuntu.yml
+    when: ansible_distribution == 'Ubuntu'
+
+  - include: debian.yml
+    when: ansible_os_family == 'Debian'
+
+  # Prerequisite for MACOS
+  - name: install prequisites for macos
+    homebrew: name={{ item }} state=present
+    with_items:
+      - cmake
+      - redis
+      - mariadb
+      - nodejs
+    when: ansible_distribution == 'MacOSX'

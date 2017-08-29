@@ -9,7 +9,6 @@
     mysql_conf_tpl: ../files/mariadb_config.cnf
     mysql_secure_installation: True
   roles:
-    - prerequisites
     - mariadb
     - wkhtmltopdf
     - nodejs
