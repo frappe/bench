@@ -16,10 +16,10 @@
     mysql_conf_tpl: ../files/mariadb_config.cnf
     mysql_secure_installation: True
   roles:
-    - mariadb
-    - wkhtmltopdf
-    - nodejs
-    - psutil
+    - { role: mariadb, tags: "mariadb" }
+    - { role: wkhtmltopdf, tags: "wkhtmltopdf" }
+    - { role: nodejs, tags: "nodejs" }
+    - { role: psutil, tags: "psutil" }
 
 - name: setup bench and dev environment
   hosts: localhost

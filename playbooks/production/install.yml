@@ -10,15 +10,15 @@
     vars:
       - nginx_conf_file: files/nginx.conf
     roles:
-      - locale
-      - swap
-      - logwatch
-      - bash_screen_wall
-      - frappe_selinux
-      - dns_caching
-      - ntpd
-      - nginx
-      - fail2ban
+      - { role: locale, tags: "locale" }
+      - { role: swap, tags: "swap" }
+      - { role: logwatch, tags: "logwatch" }
+      - { role: bash_screen_wall, tags: "bash_screen_wall" }
+      - { role: frappe_selinux, tags: "frappe_selinux" }
+      - { role: dns_caching, tags: "dns_caching" }
+      - { role: ntpd, tags: "ntpd" }
+      - { role: nginx, tags: "nginx" }
+      - { role: fail2ban, tags: "fail2ban" }
     tasks:
       - name: Set hostname
         hostname: name='{{ hostname }}'
