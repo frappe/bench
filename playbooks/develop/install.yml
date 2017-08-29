@@ -34,12 +34,3 @@
   # setup development environment
   - include: includes/setup_dev_env.yml
     when: not run_travis and not production
-
-# - include: ubuntu.yml
-#   when: ansible_distribution == 'Ubuntu'
-#
-# - include: centos.yml
-#   when: ansible_distribution == 'CentOS'
-#
-# - include: debian.yml
-#   when: ansible_distribution == 'Debian'
