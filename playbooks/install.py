@@ -343,6 +343,9 @@ def parse_commandline_args():
 
 	parser.add_argument('--site', dest='site', action='store', default='site1.local',
 		help='Specifiy name for your first ERPNext site')
+	
+	parser.add_argument('--without-site', dest='without_site', action='store_true',
+		default=False)
 
 	parser.add_argument('--verbose', dest='verbosity', action='store_true', default=False,
 		help='Run the script in verbose mode')

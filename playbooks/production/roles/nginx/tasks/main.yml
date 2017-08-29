@@ -15,6 +15,10 @@
 - include: setup-Debian.yml
   when: ansible_os_family == 'Debian'
 
+# Replace default nginx config with nginx template
+- name: Rename default nginx.conf to nginx.conf.old
+  command: mv /etc/nginx/nginx.conf /etc/nginx/nginx.conf.old
+
 # Nginx setup.
 - name: Copy nginx configuration in place.
   template:
