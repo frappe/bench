@@ -18,6 +18,7 @@
 # Replace default nginx config with nginx template
 - name: Rename default nginx.conf to nginx.conf.old
   command: mv /etc/nginx/nginx.conf /etc/nginx/nginx.conf.old
+  when: ansible_os_family == 'Debian'
 
 # Nginx setup.
 - name: Copy nginx configuration in place.

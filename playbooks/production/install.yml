@@ -8,7 +8,7 @@
     become: yes
     become_user: root
     vars:
-      - nginx_conf_file: ../files/nginx.conf
+      - nginx_conf_file: files/nginx.conf
     roles:
       - locale
       - swap
@@ -26,16 +26,13 @@
 
       - name: Start NTPD
         service: name=ntpd state=started
+        when: ansible_distribution == 'CentOS'
 
-      - name: insert/update inputrc for history
-        blockinfile:
-          dest: "/home/{{ ansible_user_id }}/.inputrc"
-          create: yes
-          block: |
-            ## arrow up
-            "\e[A":history-search-backward
-            ## arrow down
-            "\e[B":history-search-forward
+      - name: Start NTPD
+        service: name=ntp state=started
+        when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+  - include: includes/setup_inputrc.yml
 
   # Setup Bench for production environment
   - include: includes/setup_bench_production.yml

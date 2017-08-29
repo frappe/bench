@@ -1,6 +1,11 @@
 ---
 - name: Install fail2ban
   yum: name=fail2ban state=present
+  when: ansible_distribution == 'CentOS'
+
+- name: Install fail2ban
+  apt: name=fail2ban state=present
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
 - name: Enable fail2ban
   service: name=fail2ban enabled=yes
