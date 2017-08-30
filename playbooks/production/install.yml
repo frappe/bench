@@ -2,36 +2,6 @@
   # Install the common pre-requisites for the setting up bench
   - include: ../develop/install.yml
 
-  #install production pre-requisites
-  - name: Apply basic roles
-    hosts: localhost
-    become: yes
-    become_user: root
-    vars:
-      - nginx_conf_file: files/nginx.conf
-    roles:
-      - { role: locale, tags: "locale" }
-      - { role: swap, tags: "swap" }
-      - { role: logwatch, tags: "logwatch" }
-      - { role: bash_screen_wall, tags: "bash_screen_wall" }
-      - { role: frappe_selinux, tags: "frappe_selinux" }
-      - { role: dns_caching, tags: "dns_caching" }
-      - { role: ntpd, tags: "ntpd" }
-      - { role: nginx, tags: "nginx" }
-      - { role: fail2ban, tags: "fail2ban" }
-    tasks:
-      - name: Set hostname
-        hostname: name='{{ hostname }}'
-        when: hostname is defined
-
-      - name: Start NTPD
-        service: name=ntpd state=started
-        when: ansible_distribution == 'CentOS'
-
-      - name: Start NTPD
-        service: name=ntp state=started
-        when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
-
   - include: includes/setup_inputrc.yml
 
   # Setup Bench for production environment

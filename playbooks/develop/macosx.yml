@@ -22,10 +22,9 @@
         - wkhtmltopdf
 
     - name: configure mariadb
-      include_role:
-        name: mariadb
+      include: ../prerequisites/roles/mariadb/main.yml
       vars:
-        mysql_conf_tpl: ../files/mariadb_config.cnf
+        mysql_conf_tpl: ../prerequisites/files/mariadb_config.cnf
 
     - name: Install MySQLdb in global env
       pip: name=mysql-python version=1.2.5

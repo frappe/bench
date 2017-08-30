@@ -1,4 +1,6 @@
 ---
+#- include: setup_essentials.yml
+
 - name: "Setup prerequisites"
   hosts: localhost
   become: yes
