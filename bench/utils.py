@@ -768,3 +768,11 @@ def run_playbook(playbook_name, extra_vars=None):
 	if extra_vars:
 		args.extend(['-e', json.dumps(extra_vars)])
 	subprocess.check_call(args, cwd=os.path.join(os.path.dirname(bench.__path__[0]), 'playbooks'))
+
+
+def check_apps_status():
+	for app in os.listdir('./apps'):
+		if os.path.isdir(os.path.join('./apps', app)):
+			print app.upper()
+			exec_cmd('git status', os.path.join('apps', app))
+			print "\n"

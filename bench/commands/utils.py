@@ -143,3 +143,9 @@ def bench_src():
 	"""Prints bench source folder path, which can be used as: cd `bench src` """
 	import bench
 	print(os.path.dirname(bench.__path__[0]))
+
+@click.command('status')
+def apps_status():
+	""" Give git status for every app """ 
+	from bench.utils import check_apps_status
+	check_apps_status()
