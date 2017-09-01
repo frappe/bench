@@ -85,6 +85,7 @@ Note: Please do not remove the bench directory the above commands will create
 - You may also have to install build-essential and python-setuptools by running `apt-get install build-essential python-setuptools`
 - This script will install the pre-requisites, install bench and setup an ERPNext site
 - Passwords for Frappe Administrator and MariaDB (root) will be asked
+- MariaDB (root) password may be `password` on a fresh server
 - You can then login as **Administrator** with the Administrator password
 - If you find any problems, post them on the forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
 
@@ -126,7 +127,7 @@ For production:
 - Install all the pre-requisites
 - Install the command line `bench`
 - Create a new bench (a folder that will contain your entire frappe/erpnext setup)
-- Create a new site on the bench
+- Create a new ERPNext site on the bench 
 
 #### How do I start ERPNext
 
