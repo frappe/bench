@@ -130,7 +130,7 @@ def setup_manager():
 	_new_site_ = "bench new-site bench-manager.local"
 	_add_app_bench_manager_ = "bench get-app bench_manager https://github.com/frappe/bench_manager"
 	_install_bench_manager_ = "bench --site bench-manager.local install-app bench_manager"
-	c_list = [_new_site_, _add_app_bench_manager, _install_bench_manager_]
+	c_list = [_new_site_, _add_app_bench_manager_, _install_bench_manager_]
 	for c in c_list:
 		out = subprocess.check_output(c.split())
 		print(out)
