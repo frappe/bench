@@ -1,4 +1,7 @@
 ---
+- name: Setup OpenSSL dependancy
+  pip: name=pyOpenSSL version=16.2.0
+
 - name: install pillow prerequisites for Debian < 8
   apt: pkg={{ item }} state=present
   with_items:
