@@ -80,14 +80,13 @@
       - apt-transport-https
       - libsasl2-dev
       - libldap2-dev
-      - libjpeg8-dev
-    when: ansible_os_family == 'Debian' or ansible_distribution == 'Ubuntu'
+    when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
   - include: ubuntu.yml
     when: ansible_distribution == 'Ubuntu'
 
   - include: debian.yml
-    when: ansible_os_family == 'Debian'
+    when: ansible_distribution == 'Debian'
 
   # Prerequisite for MACOS
   - name: install prequisites for macos

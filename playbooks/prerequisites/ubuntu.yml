@@ -2,6 +2,7 @@
 - name: install pillow prerequisites for Ubuntu < 14.04
   apt: pkg={{ item }} state=present force=yes
   with_items:
+   - libjpeg8-dev
    - libtiff4-dev
    - tcl8.5-dev
    - tk8.5-dev
@@ -10,6 +11,7 @@
 - name: install pillow prerequisites for Ubuntu >= 14.04
   apt: pkg={{ item }} state=present force=yes
   with_items:
+   - libjpeg8-dev
    - libtiff5-dev
    - tcl8.6-dev
    - tk8.6-dev
