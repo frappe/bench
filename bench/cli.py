@@ -47,10 +47,10 @@ def check_uid():
 		sys.exit(1)
 
 def cmd_requires_root():
-	if len(sys.argv) > 2 and sys.argv[2] in ('production', 'sudoers', 'lets-encrypt', 'fonts', 'reload-nginx', 'firewall', 'ssh-port'):
-	    return True
+	if len(sys.argv) > 2 and sys.argv[2] in ('production', 'sudoers', 'lets-encrypt', 'fonts', 'print', 'firewall', 'ssh-port', 'prerequisites', 'role'):
+		return True
 	if len(sys.argv) >= 2 and sys.argv[1] in ('patch', 'renew-lets-encrypt', 'disable-production'):
-	    return True
+		return True
 
 def change_dir():
 	if os.path.exists('config.json') or "init" in sys.argv:

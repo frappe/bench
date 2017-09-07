@@ -1,0 +1,6 @@
+---
+mysql_conf_dir:
+  "CentOS": /etc/my.cnf.d
+  "Ubuntu": /etc/mysql/conf.d
+  "Debian": /etc/mysql/conf.d
+  "MacOSX": /usr/local/etc/my.cnf.d
