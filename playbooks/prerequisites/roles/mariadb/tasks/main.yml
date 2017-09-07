@@ -21,6 +21,9 @@
 - name: Start and enable service
   service: name=mysql state=started enabled=yes
 
+- debug:
+    msg: "{{ mysql_root_password }}"
+
 - include: mysql_secure_installation.yml
   when: mysql_root_password is defined
 

@@ -22,7 +22,7 @@
         - wkhtmltopdf
 
     - name: configure mariadb
-      include: ../prerequisites/roles/mariadb/task/main.yml
+      include: ../prerequisites/roles/mariadb/tasks/main.yml
       vars:
         mysql_conf_tpl: ../prerequisites/files/mariadb_config.cnf
 

@@ -3,6 +3,8 @@
 # UPDATE mysql.user SET Password=PASSWORD('mysecret') WHERE User='root';
 # FLUSH PRIVILEGES;
 
+- debug:
+    msg: "{{ mysql_root_password }}"
 
 - name: Set root Password
   mysql_user: name=root host={{ item }} password={{ mysql_root_password }} state=present
@@ -13,30 +15,40 @@
 - name: Add .my.cnf
   template: src=my.cnf.j2 dest=/root/.my.cnf owner=root group=root mode=0600
 
+- name: display .my.cnf
+  command: cat /root/.my.cnf
+  register: details
+
+- debug:
+    msg: "{{ details.stdout_lines }}"
+
 - name: Set root Password
   mysql_user: name=root host={{ item }} password={{ mysql_root_password }} state=present
   with_items:
     - 127.0.0.1
     - ::1
-  ignore_errors: yes
+  when: not run_travis
 
 - name: Reload privilege tables
   command: 'mysql -ne "{{ item }}"'
   with_items:
     - FLUSH PRIVILEGES
   changed_when: False
+  when: not run_travis
 
 - name: Remove anonymous users
   command: 'mysql -ne "{{ item }}"'
   with_items:
     - DELETE FROM mysql.user WHERE User=''
   changed_when: False
+  when: not run_travis
 
 - name: Disallow root login remotely
   command: 'mysql -ne "{{ item }}"'
   with_items:
     - DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1')
   changed_when: False
+  when: not run_travis
 
 - name: Remove test database and access to it
   command: 'mysql -ne "{{ item }}"'
@@ -44,13 +56,14 @@
     - DROP DATABASE if exists test
     - DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'
   changed_when: False
-  ignore_errors: True
+  when: not run_travis
 
 - name: Reload privilege tables
   command: 'mysql -ne "{{ item }}"'
   with_items:
     - FLUSH PRIVILEGES
   changed_when: False
+  when: not run_travis
 
 - name: add launchagents folder mac
   file: path=~/Library/LaunchAgents state=directory
