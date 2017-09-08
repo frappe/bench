@@ -191,12 +191,6 @@ def sync_domains(domain=None, site=None):
 	# if changed, success, else failure
 	sys.exit(0 if changed else 1)
 
-@click.command('prerequisites')
-def setup_prerequisites():
-	"Install prerequisites"
-	from bench.utils import run_playbook
-	run_playbook('prerequisites/install_prerequisites.yml')
-
 @click.command('role')
 @click.argument('role')
 @click.option('--admin_emails', default='')
@@ -234,5 +228,4 @@ setup.add_command(remove_domain)
 setup.add_command(sync_domains)
 setup.add_command(setup_firewall)
 setup.add_command(set_ssh_port)
-setup.add_command(setup_prerequisites)
 setup.add_command(setup_roles)
