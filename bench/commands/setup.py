@@ -76,24 +76,35 @@ def setup_env():
 	setup_env()
 
 @click.command('firewall')
-def setup_firewall():
+@click.option('--ssh_port')
+@click.option('--force')
+def setup_firewall(ssh_port=None, force=False):
 	"Setup firewall"
 	from bench.utils import run_playbook
-	click.confirm('Setting up the firewall will block all ports except 80, 443 and 22\n'
-		'Do you want to continue?',
-		abort=True)
-	run_playbook('production/setup_firewall.yml')
+
+	if not force:
+		click.confirm('Setting up the firewall will block all ports except 80, 443 and 22\n'
+			'Do you want to continue?',
+			abort=True)
+
+	if not ssh_port:
+		ssh_port = 22
+
+	run_playbook('production/setup_firewall.yml', {"ssh_port": ssh_port})
 
 @click.command('ssh-port')
 @click.argument('port')
-def set_ssh_port(port):
+@click.option('--force')
+def set_ssh_port(port, force=False):
 	"Set SSH Port"
 	from bench.utils import run_playbook
-	click.confirm('This will change your SSH Port to {}\n'
-		'Do you want to continue?'.format(port),
-		abort=True)
-	run_playbook('production/change_ssh_port.yml', {"ssh_port": port})
 
+	if not force:
+		click.confirm('This will change your SSH Port to {}\n'
+			'Do you want to continue?'.format(port),
+			abort=True)
+
+	run_playbook('production/change_ssh_port.yml', {"ssh_port": port})
 
 @click.command('lets-encrypt')
 @click.argument('site')
