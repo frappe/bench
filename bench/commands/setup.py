@@ -1,4 +1,5 @@
 import click, sys, json
+from subprocess import Popen, PIPE, STDOUT
 
 @click.group()
 def setup():
@@ -126,14 +127,27 @@ def setup_requirements():
 
 @click.command('manager')
 def setup_manager():
-	"Setup bench_manager site and app"
-	_new_site_ = "bench new-site bench-manager.local"
-	_add_app_bench_manager_ = "bench get-app bench_manager https://github.com/frappe/bench_manager"
-	_install_bench_manager_ = "bench --site bench-manager.local install-app bench_manager"
-	c_list = [_new_site_, _add_app_bench_manager_, _install_bench_manager_]
-	for c in c_list:
-		out = subprocess.check_output(c.split())
-		print(out)
+	"Setup bench-manager.local site with the bench_manager app installed on it"
+
+ 	_new_site_ = "bench new-site bench-manager.local"
+  	_add_app_bench_manager_ = "bench get-app bench_manager https://github.com/frappe/bench_manager"
+  	_install_bench_manager_ = "bench --site bench-manager.local install-app bench_manager"
+
+	c_list = [_new_site_.split(), _add_app_bench_manager_.split(), _install_bench_manager_.split()]
+  	for c in c_list:
+
+ 		subprocess = Popen(c, stdout=PIPE, stderr=STDOUT)
+
+ 		while subprocess.poll() is None:
+ 			for char in iter(lambda: subprocess.stdout.read(1) if subprocess.poll() is None else '', b''):
+ 				char = char.decode('ascii')
+ 				if char == u'':
+ 					break
+ 				sys.stdout.write(char)
+ 		sys.stdout.flush()
+
+ 		if subprocess.returncode != 0:
+ 			raise Exception("This subprocess did not terminate correctly")
 
 @click.command('config')
 def setup_config():
