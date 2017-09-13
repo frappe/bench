@@ -115,21 +115,19 @@ def switch_to_branch(branch, apps, upgrade=False):
 	print('Please run `bench update --patch` to be safe from any differences in database schema')
 
 @click.command('switch-to-master')
-@click.option('--upgrade',is_flag=True)
-def switch_to_master(upgrade=False):
+def switch_to_master():
 	"Switch frappe and erpnext to master branch"
 	from bench.app import switch_to_master
-	switch_to_master(upgrade=upgrade, apps=['frappe', 'erpnext'])
+	switch_to_master(apps=['frappe', 'erpnext'])
 	print()
 	print('Switched to master')
 	print('Please run `bench update --patch` to be safe from any differences in database schema')
 
 @click.command('switch-to-develop')
-@click.option('--upgrade',is_flag=True)
 def switch_to_develop(upgrade=False):
 	"Switch frappe and erpnext to develop branch"
 	from bench.app import switch_to_develop
-	switch_to_develop(upgrade=upgrade, apps=['frappe', 'erpnext'])
+	switch_to_develop(apps=['frappe', 'erpnext'])
 	print()
 	print('Switched to develop')
 	print('Please run `bench update --patch` to be safe from any differences in database schema')
