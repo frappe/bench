@@ -15,11 +15,10 @@ from bench import patches
 @click.option('--requirements',is_flag=True, help="Update requirements")
 @click.option('--restart-supervisor',is_flag=True, help="restart supervisor processes after update")
 @click.option('--auto',is_flag=True)
-@click.option('--upgrade',is_flag=True, help="Required for major version updates")
 @click.option('--no-backup',is_flag=True)
 @click.option('--force',is_flag=True)
 @click.option('--reset', is_flag=True, help="Hard resets git branch's to their new states overriding any changes and overriding rebase on pull")
-def update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, requirements=False, no_backup=False, upgrade=False, force=False, reset=False):
+def update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, requirements=False, no_backup=False, force=False, reset=False):
 	"Update bench"
 
 	if not (pull or patch or build or bench or requirements):
@@ -40,7 +39,6 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 				'requirements': requirements,
 				'no-backup': no_backup,
 				'restart-supervisor': restart_supervisor,
-				'upgrade': upgrade,
 				'reset':reset
 		})
 
@@ -48,29 +46,14 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 		print('Release bench, cannot update')
 		sys.exit(1)
 
-	version_upgrade = is_version_upgrade()
-
-	if version_upgrade[0] and not upgrade:
-		print()
-		print()
-		print("This update will cause a major version change in Frappe/ERPNext from {0} to {1}.".format(*version_upgrade[1:]))
-		print("This would take significant time to migrate and might break custom apps. Please run `bench update --upgrade` to confirm.")
-		print()
-		print("You can stay on the latest stable release by running `bench switch-to-master` or pin your bench to {0} by running `bench switch-to-v{0}`".format(version_upgrade[1]))
-		sys.exit(1)
-
-	_update(pull, patch, build, bench, auto, restart_supervisor, requirements, no_backup, upgrade, force=force, reset=reset)
-
+	_update(pull, patch, build, bench, auto, restart_supervisor, requirements, no_backup, force=force, reset=reset)
 
 def _update(pull=False, patch=False, build=False, update_bench=False, auto=False, restart_supervisor=False,
-		requirements=False, no_backup=False, upgrade=False, bench_path='.', force=False, reset=False):
+		requirements=False, no_backup=False, bench_path='.', force=False, reset=False):
 	conf = get_config(bench_path=bench_path)
 	version_upgrade = is_version_upgrade(bench_path=bench_path)
 
-	if version_upgrade[0] and not upgrade:
-		raise Exception("Major Version Upgrade")
-
-	if upgrade and (version_upgrade[0] or (not version_upgrade[0] and force)):
+	if version_upgrade[0] or (not version_upgrade[0] and force):
 		validate_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
 
 	before_update(bench_path=bench_path, requirements=requirements)
@@ -82,7 +65,7 @@ def _update(pull=False, patch=False, build=False, update_bench=False, auto=False
 		update_requirements(bench_path=bench_path)
 		update_npm_packages(bench_path=bench_path)
 
-	if upgrade and (version_upgrade[0] or (not version_upgrade[0] and force)):
+	if version_upgrade[0] or (not version_upgrade[0] and force):
 		pre_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
 		import bench.utils, bench.app
 		print('Reloading bench...')
@@ -98,7 +81,7 @@ def _update(pull=False, patch=False, build=False, update_bench=False, auto=False
 		patch_sites(bench_path=bench_path)
 	if build:
 		build_assets(bench_path=bench_path)
-	if upgrade and (version_upgrade[0] or (not version_upgrade[0] and force)):
+	if version_upgrade[0] or (not version_upgrade[0] and force):
 		post_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
 	if restart_supervisor or conf.get('restart_supervisor_on_update'):
 		restart_supervisor_processes(bench_path=bench_path)
@@ -108,7 +91,6 @@ def _update(pull=False, patch=False, build=False, update_bench=False, auto=False
 	print("Open source depends on your contributions, so please contribute bug reports, patches, fixes or cash and be a part of the community")
 	print()
 
-
 @click.command('retry-upgrade')
 @click.option('--version', default=5)
 def retry_upgrade(version):
@@ -117,11 +99,9 @@ def retry_upgrade(version):
 	build_assets()
 	post_upgrade(version-1, version)
 
-
 def restart_update(kwargs):
 	args = ['--'+k for k, v in list(kwargs.items()) if v]
 	os.execv(sys.argv[0], sys.argv[:2] + args)
-
 
 @click.command('switch-to-branch')
 @click.argument('branch')
@@ -134,7 +114,6 @@ def switch_to_branch(branch, apps, upgrade=False):
 	print('Switched to ' + branch)
 	print('Please run `bench update --patch` to be safe from any differences in database schema')
 
-
 @click.command('switch-to-master')
 @click.option('--upgrade',is_flag=True)
 def switch_to_master(upgrade=False):
@@ -145,7 +124,6 @@ def switch_to_master(upgrade=False):
 	print('Switched to master')
 	print('Please run `bench update --patch` to be safe from any differences in database schema')
 
-
 @click.command('switch-to-develop')
 @click.option('--upgrade',is_flag=True)
 def switch_to_develop(upgrade=False):
@@ -155,5 +133,3 @@ def switch_to_develop(upgrade=False):
 	print()
 	print('Switched to develop')
 	print('Please run `bench update --patch` to be safe from any differences in database schema')
-
-
