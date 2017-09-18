@@ -20,7 +20,7 @@
       with_items:
         - 80
         - 443
-        - {{ ssh_port }}
+        - "{{ ssh_port }}"
       when: ansible_distribution == 'CentOS'
 
     - name: Restart Firewall
@@ -41,6 +41,6 @@
       with_items:
         - 80
         - 443
-        - {{ ssh_port }}
+        - "{{ ssh_port }}"
       when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
 

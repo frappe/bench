@@ -17,8 +17,10 @@ def install_prerequisites():
 @click.option('--mysql_root_password')
 def install_maridb(mysql_root_password=''):
 	"Install mariadb 10.1"
-	extra_vars.update(mysql_root_password)
-	run_playbook('prerequisites/install_roles.yml', extra_vars=extra_vars, tag='maridb')
+	if mysql_root_password:
+		extra_vars.update({"mysql_root_password": mysql_root_password})
+
+	run_playbook('prerequisites/install_roles.yml', extra_vars=extra_vars, tag='mariadb')
 
 @click.command('wkhtmltopdf')
 def install_wkhtmltopdf():
