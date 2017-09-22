@@ -3,9 +3,9 @@ from bench.config.supervisor import generate_supervisor_config
 from bench.config.nginx import make_nginx_conf
 import os, subprocess
 
-def setup_production(user, bench_path='.'):
-	generate_supervisor_config(bench_path=bench_path, user=user)
-	make_nginx_conf(bench_path=bench_path)
+def setup_production(user, bench_path='.', yes=False):
+	generate_supervisor_config(bench_path=bench_path, user=user, yes=yes)
+	make_nginx_conf(bench_path=bench_path, yes=yes)
 	fix_prod_setup_perms(bench_path, frappe_user=user)
 	remove_default_nginx_configs()
 
