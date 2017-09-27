@@ -45,6 +45,15 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 	if conf.get('release_bench'):
 		print('Release bench, cannot update')
 		sys.exit(1)
+	
+	version_upgrade = is_version_upgrade()
+	
+	if version_upgrade[0]:
+		print()
+		print()
+		print("This update will cause a major version change in Frappe/ERPNext from {0} to {1}.".format(*version_upgrade[1:]))
+		print("This would take significant time to migrate and might break custom apps.")
+		click.confirm('Do you want to continue?', abort=True)
 
 	_update(pull, patch, build, bench, auto, restart_supervisor, requirements, no_backup, force=force, reset=reset)
 
