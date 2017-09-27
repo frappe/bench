@@ -53,9 +53,17 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 		print()
 		print("This update will cause a major version change in Frappe/ERPNext from {0} to {1}.".format(*version_upgrade[1:]))
 		print("This would take significant time to migrate and might break custom apps.")
-		click.confirm('Do you want to continue?', abort=True)
+		print("You can stay on the latest stable release by switching branch to `v{0}_x_x`".format(version_upgrade[1]))
+		print()
+		print()
 
-	_update(pull, patch, build, bench, auto, restart_supervisor, requirements, no_backup, force=force, reset=reset)
+		if click.confirm('Do you want to upgrade from version {0} to {1}?'.format(*version_upgrade[1:])):
+			_update(pull, patch, build, bench, auto, restart_supervisor, requirements, no_backup, force=force, reset=reset)
+		else:
+			from bench.app import switch_to_branch
+
+			old_major_stable_branch = 'v{0}_x_x'.format(version_upgrade[1])
+			switch_to_branch(old_major_stable_branch, apps=['frappe', 'erpnext'])
 
 def _update(pull=False, patch=False, build=False, update_bench=False, auto=False, restart_supervisor=False,
 		requirements=False, no_backup=False, bench_path='.', force=False, reset=False):
