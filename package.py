@@ -3,6 +3,12 @@
 import os
 import io
 
+# Python 2
+try:
+    FileNotFoundError
+except NameError:
+    FileNotFoundError = IOError
+
 basedir = os.path.dirname(__file__)
 srcpath = os.path.join(basedir, 'bench', '__attr__.py')
 
@@ -23,7 +29,6 @@ def get_long_description(*filepaths):
 				raise ValueError('Not a file: {filepath}'.format(filepath = abspath))
 		else:
 			raise FileNotFoundError('No such file found: {filepath}'.format(filepath = abspath))
-
 
 def get_dependencies(type_ = None, dirpath = 'requirements'):
 	abspath = dirpath if os.path.isabs(dirpath) else os.path.join(basedir, dirpath)
