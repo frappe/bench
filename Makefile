@@ -21,3 +21,10 @@ install:
 	$(PYTHON) setup.py install
 
 	make clean
+
+publish:
+	python setup.py sdist
+
+	twine upload -r pypitest dist/*
+
+	make clean
