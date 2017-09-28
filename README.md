@@ -1,4 +1,6 @@
-# Bench
+<div class="text-center">
+	<h1>Bench</h1>
+</div>
 
 [![Build Status](https://travis-ci.org/frappe/bench.svg?branch=master)](https://travis-ci.org/frappe/bench)
 
