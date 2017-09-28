@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # imports - standard imports
 import sys, os, shutil
 from distutils.core          import Command

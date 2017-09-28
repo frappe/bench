@@ -1,6 +1,7 @@
 # inspired by npm's package.json
 # imports - standard imports
 import os
+import io
 
 basedir = os.path.dirname(__file__)
 srcpath = os.path.join(basedir, 'bench', '__attr__.py')
@@ -9,9 +10,20 @@ with open(srcpath) as f:
 	code = f.read()
 	exec(code)
 
-def get_long_description(*files):
-	for f in files:
-		pass
+def get_long_description(*filepaths):
+	for filepath in filepaths:
+		abspath = os.path.abspath(filepath)
+
+		if os.path.exists(abspath):
+			if os.path.isfile(abspath):
+				if os.path.getsize(abspath) > 0:
+					with io.open(abspath, mode = 'r', encoding = 'utf-8') as f:
+						content = f.read()
+			else:
+				raise ValueError('Not a file: {filepath}'.format(filepath = abspath))
+		else:
+			raise FileNotFoundError('No such file found: {filepath}'.format(filepath = abspath))
+
 
 def get_dependencies(type_ = None, dirpath = 'requirements'):
 	abspath = dirpath if os.path.isabs(dirpath) else os.path.join(basedir, dirpath)
