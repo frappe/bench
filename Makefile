@@ -1,4 +1,8 @@
+.PHONY: docs
+
 PYTHON   ?= python
+BASEDIR   = $(realpath .)
+DOCSDIR   = $(BASEDIR)/docs
 
 venv:
 	virtualenv .venv/py2 --python=python2
@@ -21,6 +25,9 @@ install:
 	$(PYTHON) setup.py install
 
 	make clean
+
+docs:
+	$(DOCSDIR)
 
 publish:
 	python setup.py sdist
