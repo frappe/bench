@@ -62,7 +62,7 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 		else:
 			from bench.app import switch_to_branch
 
-			old_major_stable_branch = 'v{0}_x_x'.format(version_upgrade[1])
+			old_major_stable_branch = 'v{0}.x.x'.format(version_upgrade[1])
 			switch_to_branch(old_major_stable_branch, apps=['frappe', 'erpnext'])
 
 def _update(pull=False, patch=False, build=False, update_bench=False, auto=False, restart_supervisor=False,
