@@ -2,6 +2,8 @@
 
 PYTHON   ?= python
 BASEDIR   = $(realpath .)
+PACKAGE   = bench
+SOURCEDIR = $(BASEDIR)/$(PACKAGE)
 DOCSDIR   = $(BASEDIR)/docs
 
 venv:
@@ -28,6 +30,9 @@ install:
 
 docs:
 	$(DOCSDIR)
+
+loc:
+	find $(SOURCEDIR) -name '*.py' | xargs wc -l
 
 publish:
 	python setup.py sdist
