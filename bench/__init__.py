@@ -1,6 +1,9 @@
+# module  - bench
+# imports - third-party imports
 from jinja2 import Environment, PackageLoader
 
-__version__ = "4.1.0"
+# imports - module imports
+from bench.__attr__ import __version__, __release__
 
 env = Environment(loader=PackageLoader('bench.config'))
 

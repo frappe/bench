@@ -212,7 +212,9 @@ class TestBenchInit(unittest.TestCase):
 		self.assert_exists(python_path, "site-packages", "pip")
 
 		site_packages = os.listdir(os.path.join(python_path, "site-packages"))
-		self.assertTrue(any(package.startswith("mysqlclient-1.3.10") for package in site_packages))
+		# Who on earth put this test case beneath?
+		# UPDATE - Frappe uses a fork of mysqlclient (https://github.com/frappe/frappe/pull/4165)
+		# self.assertTrue(any(package.startswith("mysqlclient-1.3.10") for package in site_packages))
 
 	def assert_config(self, bench_name):
 		for config, search_key in (
