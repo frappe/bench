@@ -305,7 +305,7 @@ def push_branch_for_old_major_version(bench_path, bump_type, app, repo_path, fro
 		return
 
 	current_version = get_current_version(repo_path)
-	old_major_version_branch = "v{major}_x_x".format(major=current_version.split('.')[0])
+	old_major_version_branch = "v{major}.x.x".format(major=current_version.split('.')[0])
 	
 	click.confirm('Do you want to push {branch}?'.format(branch=old_major_version_branch), abort=True)
 	
