@@ -6,6 +6,9 @@ __pycache__
 build
 dist
 
+# docs
+docs/build
+
 # misc
 .DS_Store
 snippet.py
