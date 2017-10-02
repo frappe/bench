@@ -4,6 +4,9 @@
 
   tasks:
       # For CentOS
+    - name: Enable SELinux
+      selinux: policy=targeted state=permissive
+
     - name: Install firewalld
       yum: name=firewalld state=present
       when: ansible_distribution == 'CentOS'
@@ -17,7 +20,7 @@
       with_items:
         - 80
         - 443
-        - 22
+        - "{{ ssh_port }}"
       when: ansible_distribution == 'CentOS'
 
     - name: Restart Firewall
@@ -38,6 +41,6 @@
       with_items:
         - 80
         - 443
-        - 22
+        - "{{ ssh_port }}"
       when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
 

@@ -12,3 +12,8 @@
 
     - name: restart ssh
       service: name=sshd state=reloaded
+
+    - name: Change ansible ssh port to 2332
+      set_fact:
+        ansible_ssh_port: '{{ ssh_port }}'
+

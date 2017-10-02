@@ -1,0 +1,35 @@
+---
+- name: Apply basic roles, mariadb, wkhtmltopdf, nodejs, nginx, fail2ban and psutil
+  hosts: localhost
+  become: yes
+  become_user: root
+  vars:
+    - mysql_conf_tpl: files/mariadb_config.cnf
+    - nginx_conf_file: files/nginx.conf
+    - mysql_secure_installation: True
+  roles:
+    - { role: locale, tags: "locale" }
+    - { role: swap, tags: "swap", when: production }
+    - { role: logwatch, tags: "logwatch", when: production }
+    - { role: bash_screen_wall, tags: "bash_screen_wall", when: production }
+    - { role: frappe_selinux, tags: "frappe_selinux", when: production }
+    - { role: dns_caching, tags: "dns_caching", when: production }
+    - { role: ntpd, tags: "ntpd", when: production }
+    - { role: mariadb, tags: "mariadb" }
+    - { role: wkhtmltopdf, tags: "wkhtmltopdf" }
+    - { role: nodejs, tags: "nodejs" }
+    - { role: psutil, tags: "psutil" }
+    - { role: nginx, tags: "nginx", when: production }
+    - { role: fail2ban, tags: "fail2ban" , when: production }
+  tasks:
+    - name: Set hostname
+      hostname: name='{{ hostname }}'
+      when: hostname is defined and production
+
+    - name: Start NTPD
+      service: name=ntpd state=started
+      when: ansible_distribution == 'CentOS' and production
+
+    - name: Start NTPD
+      service: name=ntp state=started
+      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu' and production

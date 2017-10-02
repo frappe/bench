@@ -1,0 +1,18 @@
+---
+- name: Add nginx apt repository key for Debian < 8
+  apt_key:
+    url: http://nginx.org/keys/nginx_signing.key
+    state: present
+  when: ansible_distribution == 'Debian' and ansible_distribution_version | version_compare('8', 'lt')
+
+- name: Add nginx apt repository for Debian < 8
+  apt_repository:
+    repo: 'deb [arch=amd64,i386] http://nginx.org/packages/debian/ {{ ansible_distribution_release }} nginx'
+    state: present
+  when: ansible_distribution == 'Debian' and ansible_distribution_version | version_compare('8', 'lt')
+    
+- name: Ensure nginx is installed.
+  apt:
+    pkg: nginx
+    state: installed
+    default_release: "{{ nginx_default_release }}"

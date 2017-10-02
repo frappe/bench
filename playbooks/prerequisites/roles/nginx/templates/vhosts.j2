@@ -1,0 +1,24 @@
+{% for vhost in nginx_vhosts %}
+server {
+    listen {{ vhost.listen | default('80 default_server') }};
+    server_name {{ vhost.server_name }};
+
+    root {{ vhost.root }};
+    index {{ vhost.index | default('index.html index.htm') }};
+
+    {% if vhost.error_page is defined %}
+    error_page {{ vhost.error_page }};
+    {% endif %}
+    {% if vhost.access_log is defined %}
+    access_log {{ vhost.access_log }};
+    {% endif %}
+
+    {% if vhost.return is defined %}
+    return {{ vhost.return }};
+    {% endif %}
+
+    {% if vhost.extra_parameters is defined %}
+    {{ vhost.extra_parameters }};
+    {% endif %}
+}
+{% endfor %}
