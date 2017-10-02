@@ -22,4 +22,4 @@
 
   # setup development environment
   - include: includes/setup_dev_env.yml
-    when: not run_travis and not production
+    when: not run_travis and not production and (not without_bench_setup and ansible_distribution == 'Ubuntu')
