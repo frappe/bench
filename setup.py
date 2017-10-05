@@ -17,7 +17,7 @@ class CleanCommand(Clean):
 
 		basedir = os.path.abspath(os.path.dirname(__file__))
 
-		for relpath in ['build', '.cache', '.coverage', 'dist', 'bench.egg-info'.format(name = package['name'].replace('-', '_'))]:
+		for relpath in ['build', '.cache', '.coverage', 'dist', '{name}.egg-info'.format(name = package['name'].replace('-', '_'))]:
 			abspath = os.path.join(basedir, relpath)
 			
 			if os.path.exists(abspath):
