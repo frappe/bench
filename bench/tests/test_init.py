@@ -115,7 +115,7 @@ class TestBenchInit(unittest.TestCase):
 		# install it to site
 		subprocess.check_output(["bench", "--site", site_name, "install-app", "erpnext"], cwd=bench_path)
 
-		out = subprocess.check_output(["bench", "--site", site_name, "list-apps"], cwd=bench_path)
+		out = subprocess.check_output(["bench", "--site", site_name, "list-apps"], cwd=bench_path).decode()
 		self.assertTrue("erpnext" in out)
 
 
@@ -142,12 +142,12 @@ class TestBenchInit(unittest.TestCase):
 		app_path = os.path.join(bench_path, "apps", "frappe")
 
 		bench.app.switch_branch(branch="master", apps=["frappe"], bench_path=bench_path, check_upgrade=False)
-		out = subprocess.check_output(['git', 'status'], cwd=app_path)
+		out = subprocess.check_output(['git', 'status'], cwd=app_path).decode()
 		self.assertTrue("master" in out)
 
 		# bring it back to develop!
 		bench.app.switch_branch(branch="develop", apps=["frappe"], bench_path=bench_path, check_upgrade=False)
-		out = subprocess.check_output(['git', 'status'], cwd=app_path)
+		out = subprocess.check_output(['git', 'status'], cwd=app_path).decode()
 		self.assertTrue("develop" in out)
 
 	def init_bench(self, bench_name, **kwargs):

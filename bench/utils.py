@@ -45,7 +45,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	for dirname in folders_in_bench:
 		try:
 			os.makedirs(os.path.join(path, dirname))
-		except OSError, e:
+		except OSError as e:
 			if e.errno != os.errno.EEXIST:
 				pass
 
@@ -101,12 +101,12 @@ def clone_apps_from(bench_path, clone_from):
 			# remove .egg-ino
 			subprocess.check_output(['rm', '-rf', app + '.egg-info'], cwd=app_path)
 
-			remotes = subprocess.check_output(['git', 'remote'], cwd=app_path).strip().split()
+			remotes = subprocess.check_output(['git', 'remote'], cwd=app_path).decode().strip().split()
 			if 'upstream' in remotes:
 				remote = 'upstream'
 			else:
 				remote = remotes[0]
-			branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=app_path).strip()
+			branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=app_path).decode().strip()
 			subprocess.check_output(['git', 'reset', '--hard'], cwd=app_path)
 			subprocess.check_output(['git', 'pull', '--rebase', remote, branch], cwd=app_path)
 
@@ -171,7 +171,7 @@ def new_site(site, mariadb_root_password=None, admin_password=None, bench_path='
 	exec_cmd("{frappe} {site} --install {db_name} {mysql_root_password_fragment} {admin_password_fragment}".format(
 				frappe=get_frappe(bench_path=bench_path),
 				site=site,
-				db_name=hashlib.sha1(site).hexdigest()[:10],
+				db_name=hashlib.sha1(site.encode()).hexdigest()[:10],
 				mysql_root_password_fragment=mysql_root_password_fragment,
 				admin_password_fragment=admin_password_fragment
 			), cwd=os.path.join(bench_path, 'sites'))
@@ -237,15 +237,15 @@ def add_to_crontab(line):
 		if platform.system() == 'FreeBSD':
 			cmd = ["crontab", "-"]
 		s = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-		s.stdin.write(current_crontab)
-		s.stdin.write(line + '\n')
+		s.stdin.write(current_crontab.encode())
+		s.stdin.write((line + '\n').encode())
 		s.stdin.close()
 
 def read_crontab():
-	s = subprocess.Popen(["crontab", "-l"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-	out = s.stdout.read()
-	s.stdout.close()
-	return out
+	try:
+		return subprocess.check_output(["crontab", "-l"]).decode()
+	except subprocess.CalledProcessError:
+		return b""
 
 def update_bench():
 	logger.info('updating bench')
@@ -352,7 +352,7 @@ def check_git_for_shallow_clone():
 
 def get_cmd_output(cmd, cwd='.'):
 	try:
-		return subprocess.check_output(cmd, cwd=cwd, shell=True, stderr=open(os.devnull, 'wb')).strip()
+		return subprocess.check_output(cmd, cwd=cwd, shell=True, stderr=open(os.devnull, 'wb')).decode().strip()
 	except subprocess.CalledProcessError as e:
 		if e.output:
 			print(e.output)
@@ -368,7 +368,7 @@ def restart_supervisor_processes(bench_path='.', web_workers=False):
 		exec_cmd(cmd, cwd=bench_path)
 
 	else:
-		supervisor_status = subprocess.check_output(['sudo', 'supervisorctl', 'status'], cwd=bench_path)
+		supervisor_status = subprocess.check_output(['sudo', 'supervisorctl', 'status'], cwd=bench_path).decode()
 
 		if web_workers and '{bench_name}-web:'.format(bench_name=bench_name) in supervisor_status:
 			group = '{bench_name}-web:	'.format(bench_name=bench_name)
@@ -572,7 +572,7 @@ def get_frappe_cmd_output(*args, **kwargs):
 	bench_path = kwargs.get('bench_path', '.')
 	f = get_env_cmd('python', bench_path=bench_path)
 	sites_dir = os.path.join(bench_path, 'sites')
-	return subprocess.check_output((f, '-m', 'frappe.utils.bench_helper', 'frappe') + args, cwd=sites_dir)
+	return subprocess.check_output((f, '-m', 'frappe.utils.bench_helper', 'frappe') + args, cwd=sites_dir).decode()
 
 def validate_upgrade(from_ver, to_ver, bench_path='.'):
 	if to_ver >= 6:
@@ -697,10 +697,10 @@ def log_line(data, stream):
 	return sys.stdout.write(data)
 
 def get_output(*cmd):
-	s = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-	out = s.stdout.read()
-	s.stdout.close()
-	return out
+	try:
+		return subprocess.check_output(cmd).decode()
+	except subprocess.CalledProcessError:
+		return b""
 
 def before_update(bench_path, requirements):
 	validate_pillow_dependencies(bench_path, requirements)

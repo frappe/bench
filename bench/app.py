@@ -119,7 +119,7 @@ def remove_app(app, bench_path='.'):
 	for site in os.listdir(site_path):
 		req_file = os.path.join(site_path, site, 'site_config.json')
 		if os.path.exists(req_file):
-			out = subprocess.check_output(["bench", "--site", site, "list-apps"], cwd=bench_path)
+			out = subprocess.check_output(["bench", "--site", site, "list-apps"], cwd=bench_path).decode()
 			if re.search(r'\b' + app + r'\b', out):
 				print("Cannot remove, app is installed on site: {0}".format(site))
 				sys.exit(1)
@@ -141,7 +141,7 @@ def pull_all_apps(bench_path='.', reset=False):
 		for app in get_apps(bench_path=bench_path):
 			app_dir = get_repo_dir(app, bench_path=bench_path)
 			if os.path.exists(os.path.join(app_dir, '.git')):
-				out = subprocess.check_output(["git", "status"], cwd=app_dir)
+				out = subprocess.check_output(["git", "status"], cwd=app_dir).decode()
 				if not re.search(r'nothing to commit, working (directory|tree) clean', out):
 					print('''
 
@@ -203,7 +203,7 @@ def get_current_branch(app, bench_path='.'):
 def get_remote(app, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	contents = subprocess.check_output(['git', 'remote', '-v'], cwd=repo_dir,
-									   stderr=subprocess.STDOUT)
+									   stderr=subprocess.STDOUT).decode()
 	if re.findall('upstream[\s]+', contents):
 		remote = 'upstream'
 	else:
@@ -237,7 +237,7 @@ def get_upstream_version(app, branch=None, bench_path='.'):
 	if not branch:
 		branch = get_current_branch(app, bench_path=bench_path)
 	try:
-		contents = subprocess.check_output(['git', 'show', 'upstream/{branch}:{app}/__init__.py'.format(branch=branch, app=app)], cwd=repo_dir, stderr=subprocess.STDOUT)
+		contents = subprocess.check_output(['git', 'show', 'upstream/{branch}:{app}/__init__.py'.format(branch=branch, app=app)], cwd=repo_dir, stderr=subprocess.STDOUT).decode()
 	except subprocess.CalledProcessError as e:
 		if "Invalid object" in e.output:
 			return None
@@ -247,7 +247,7 @@ def get_upstream_version(app, branch=None, bench_path='.'):
 
 def get_upstream_url(app, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
-	return subprocess.check_output(['git', 'config', '--get', 'remote.upstream.url'], cwd=repo_dir).strip()
+	return subprocess.check_output(['git', 'config', '--get', 'remote.upstream.url'], cwd=repo_dir).decode().strip()
 
 def get_repo_dir(app, bench_path='.'):
 	return os.path.join(bench_path, 'apps', app)
