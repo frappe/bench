@@ -34,6 +34,10 @@ def install_nodejs():
 def install_psutil():
 	run_playbook('prerequisites/install_roles.yml', extra_vars=extra_vars, tag='psutil')
 
+@click.command('supervisor')
+def install_supervisor():
+	run_playbook('prerequisites/install_roles.yml', extra_vars=extra_vars, tag='supervisor')
+
 @click.command('nginx')
 def install_nginx():
 	run_playbook('prerequisites/install_roles.yml', extra_vars=extra_vars, tag='nginx')
@@ -47,5 +51,6 @@ install.add_command(install_maridb)
 install.add_command(install_wkhtmltopdf)
 install.add_command(install_nodejs)
 install.add_command(install_psutil)
+install.add_command(install_supervisor)
 install.add_command(install_nginx)
 install.add_command(install_failtoban)

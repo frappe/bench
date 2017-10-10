@@ -19,6 +19,7 @@
     - { role: wkhtmltopdf, tags: "wkhtmltopdf" }
     - { role: nodejs, tags: "nodejs" }
     - { role: psutil, tags: "psutil" }
+    - { role: supervisor, tags: "supervisor", when: production }
     - { role: nginx, tags: "nginx", when: production }
     - { role: fail2ban, tags: "fail2ban" , when: production }
   tasks:
