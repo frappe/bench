@@ -1,5 +1,5 @@
 import os, sys, json, click
-from bench.utils import run_playbook
+from bench.utils import run_playbook, setup_sudoers
 
 extra_vars = {"production": True}
 
@@ -35,12 +35,18 @@ def install_psutil():
 	run_playbook('prerequisites/install_roles.yml', extra_vars=extra_vars, tag='psutil')
 
 @click.command('supervisor')
-def install_supervisor():
+@click.option('--user')
+def install_supervisor(user=None):
 	run_playbook('prerequisites/install_roles.yml', extra_vars=extra_vars, tag='supervisor')
+	if user:
+		setup_sudoers(user)
 
 @click.command('nginx')
-def install_nginx():
+@click.option('--user')
+def install_nginx(user=None):
 	run_playbook('prerequisites/install_roles.yml', extra_vars=extra_vars, tag='nginx')
+	if user:
+		setup_sudoers(user)
 
 @click.command('fail2ban')
 def install_failtoban():
