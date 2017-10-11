@@ -61,7 +61,7 @@ def install_bench(args):
 	# Restricting ansible version due to following bug in ansible 2.1
 	# https://github.com/ansible/ansible-modules-core/issues/3752
 	success = run_os_command({
-		'pip': "sudo pip install ansible"
+		'pip': "sudo pip install ansible==2.3.1"
 	})
 
 	if not success:
