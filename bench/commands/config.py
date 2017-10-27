@@ -1,8 +1,6 @@
 import click, json
 from bench.config.common_site_config import update_config
 
-## Config
-## Not DRY
 @click.group()
 def config():
 	"change bench configuration"
