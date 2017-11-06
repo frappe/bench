@@ -144,11 +144,12 @@ def setup_env(bench_path='.'):
 	exec_cmd('./env/bin/pip -q install --upgrade pip', cwd=bench_path)
 	exec_cmd('./env/bin/pip -q install wheel', cwd=bench_path)
 	# exec_cmd('./env/bin/pip -q install https://github.com/frappe/MySQLdb1/archive/MySQLdb-1.2.5-patched.tar.gz', cwd=bench_path)
+	exec_cmd('./env/bin/pip -q install six', cwd=bench_path)
 	exec_cmd('./env/bin/pip -q install -e git+https://github.com/frappe/python-pdfkit.git#egg=pdfkit', cwd=bench_path)
 
 def setup_socketio(bench_path='.'):
-	exec_cmd("npm install socket.io redis express superagent cookie", cwd=bench_path)
-
+	exec_cmd("npm install socket.io redis express superagent cookie babel-core less chokidar \
+		babel-cli babel-preset-es2015 babel-preset-es2016 babel-preset-es2017 babel-preset-babili", cwd=bench_path)
 
 def new_site(site, mariadb_root_password=None, admin_password=None, bench_path='.'):
 	"""
@@ -760,11 +761,16 @@ def set_git_remote_url(git_url, bench_path='.'):
 	if os.path.exists(os.path.join(app_dir, '.git')):
 		exec_cmd("git remote set-url upstream {}".format(git_url), cwd=app_dir)
 
-def run_playbook(playbook_name, extra_vars=None):
+def run_playbook(playbook_name, extra_vars=None, tag=None):
 	if not find_executable('ansible'):
 		print("Ansible is needed to run this command, please install it using 'pip install ansible'")
 		sys.exit(1)
 	args = ['ansible-playbook', '-c', 'local', playbook_name]
+	
 	if extra_vars:
 		args.extend(['-e', json.dumps(extra_vars)])
+	
+	if tag:
+		args.extend(['-t', tag])
+	
 	subprocess.check_call(args, cwd=os.path.join(os.path.dirname(bench.__path__[0]), 'playbooks'))

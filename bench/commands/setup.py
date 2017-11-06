@@ -50,10 +50,11 @@ def setup_fonts():
 
 @click.command('production')
 @click.argument('user')
-def setup_production(user):
+@click.option('--yes', help='Yes to regeneration config', is_flag=True, default=False)
+def setup_production(user, yes=False):
 	"setup bench for production"
 	from bench.config.production_setup import setup_production
-	setup_production(user=user)
+	setup_production(user=user, yes=yes)
 
 
 @click.command('auto-update')
@@ -76,24 +77,35 @@ def setup_env():
 	setup_env()
 
 @click.command('firewall')
-def setup_firewall():
+@click.option('--ssh_port')
+@click.option('--force')
+def setup_firewall(ssh_port=None, force=False):
 	"Setup firewall"
 	from bench.utils import run_playbook
-	click.confirm('Setting up the firewall will block all ports except 80, 443 and 22\n'
-		'Do you want to continue?',
-		abort=True)
-	run_playbook('production/setup_firewall.yml')
+
+	if not force:
+		click.confirm('Setting up the firewall will block all ports except 80, 443 and 22\n'
+			'Do you want to continue?',
+			abort=True)
+
+	if not ssh_port:
+		ssh_port = 22
+
+	run_playbook('production/setup_firewall.yml', {"ssh_port": ssh_port})
 
 @click.command('ssh-port')
 @click.argument('port')
-def set_ssh_port(port):
+@click.option('--force')
+def set_ssh_port(port, force=False):
 	"Set SSH Port"
 	from bench.utils import run_playbook
-	click.confirm('This will change your SSH Port to {}\n'
-		'Do you want to continue?'.format(port),
-		abort=True)
-	run_playbook('production/change_ssh_port.yml', {"ssh_port": port})
 
+	if not force:
+		click.confirm('This will change your SSH Port to {}\n'
+			'Do you want to continue?'.format(port),
+			abort=True)
+
+	run_playbook('production/change_ssh_port.yml', {"ssh_port": port})
 
 @click.command('lets-encrypt')
 @click.argument('site')
@@ -171,17 +183,18 @@ def remove_domain(domain, site=None):
 	remove_domain(site, domain, bench_path='.')
 
 @click.command('sync-domains')
-@click.argument('domains')
+@click.option('--domain', multiple=True)
 @click.option('--site', prompt=True)
-def sync_domains(domains, site=None):
+def sync_domains(domain=None, site=None):
 	from bench.config.site_config import sync_domains
 
 	if not site:
 		print("Please specify site")
 		sys.exit(1)
 
-	domains = json.loads(domains)
-	if not isinstance(domains, list):
+	try:
+		domains = list(map(str,domain))
+	except Exception:
 		print("Domains should be a json list of strings or dictionaries")
 		sys.exit(1)
 
@@ -189,6 +202,23 @@ def sync_domains(domains, site=None):
 
 	# if changed, success, else failure
 	sys.exit(0 if changed else 1)
+
+@click.command('role')
+@click.argument('role')
+@click.option('--admin_emails', default='')
+@click.option('--mysql_root_password')
+def setup_roles(role, **kwargs):
+	"Install dependancies via roles"
+	from bench.utils import run_playbook
+
+	extra_vars = {"production": True}
+	extra_vars.update(kwargs)
+
+	if role:
+		run_playbook('prerequisites/install_roles.yml', extra_vars=extra_vars, tag=role)
+	else:
+		run_playbook('prerequisites/install_roles.yml', extra_vars=extra_vars)
+
 
 setup.add_command(setup_sudoers)
 setup.add_command(setup_nginx)
@@ -210,4 +240,4 @@ setup.add_command(remove_domain)
 setup.add_command(sync_domains)
 setup.add_command(setup_firewall)
 setup.add_command(set_ssh_port)
-setup.add_command(setup_manager)
+setup.add_command(setup_roles)

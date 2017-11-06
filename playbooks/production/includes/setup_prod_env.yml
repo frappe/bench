@@ -3,60 +3,6 @@
 
   tasks:
 
-  - name: Add nginx apt repository key for Debian < 8
-    apt_key:
-      url: http://nginx.org/keys/nginx_signing.key
-      state: present
-    become: yes
-    become_user: root
-    when: ansible_distribution == 'Debian' and ansible_distribution_version | version_compare('8', 'lt')
-
-  - name: Add nginx apt repository for Debian < 8
-    apt_repository:
-      repo: 'deb [arch=amd64,i386] http://nginx.org/packages/debian/ {{ ansible_distribution_release }} nginx'
-      state: present
-    become: yes
-    become_user: root
-    when: ansible_distribution == 'Debian' and ansible_distribution_version | version_compare('8', 'lt')
-
-  #####################################
-  # Ubuntu Production Environment Setup
-  - name: Install production pre-requisites
-    become: yes
-    become_user: root
-    apt: pkg={{ item }} state=present
-    with_items:
-      - nginx
-      - screen
-      - vim
-      - htop
-      - git
-      - postfix
-      - supervisor
-    when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
-
-  #####################################
-  # CentOS Production Environment Setup
-  - name: Install production pre-requisites
-    become: yes
-    become_user: root
-    yum: pkg={{ item }} state=present
-    with_items:
-      - nginx
-      - screen
-      - vim
-      - htop
-      - git
-      - postfix
-      - MySQL-python
-    when: ansible_distribution == 'CentOS'
-
-  - name: Install supervisor using yum for Centos 7
-    yum: pkg=supervisor state=present
-    become: yes
-    become_user: root
-    when: ansible_distribution == 'CentOS' and ansible_lsb.major_release == '7'
-
   ####################################################
   # Replace default nginx config with nginx template
   - name: Rename default nginx.conf to nginx.conf.old
@@ -146,12 +92,3 @@
     become_user: root
     when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
 
-  - name: insert/update inputrc for history
-    blockinfile:
-      dest: "/home/{{ ansible_user_id }}/.inputrc"
-      create: yes
-      block: |
-        ## arrow up
-        "\e[A":history-search-backward
-        ## arrow down
-        "\e[B":history-search-forward

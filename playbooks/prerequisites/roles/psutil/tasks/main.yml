@@ -1,0 +1,3 @@
+---
+- name: Install psutil
+  pip: name=psutil state=latest

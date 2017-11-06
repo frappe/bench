@@ -1,0 +1,13 @@
+setuptools
+twine
+sphinx
+six
+click
+requests
+semantic_version
+virtualenv
+jinja2
+psutil
+GitPython
+honcho
+python-crontab

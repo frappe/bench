@@ -1,8 +1,15 @@
+# python
+.venv
 *.pyc
-*.py~
-*.swp
+__pycache__
+*.egg-info
+build
+dist
+
+# docs
+docs/build
+
+# misc
 .DS_Store
-build/
-dist/
-*.egg-info/
-tags
+snippet.py
+.vscode

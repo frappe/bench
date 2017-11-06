@@ -1,4 +1,6 @@
-# Bench
+<div class="text-center">
+	<h1>Bench</h1>
+</div>
 
 [![Build Status](https://travis-ci.org/frappe/bench.svg?branch=master)](https://travis-ci.org/frappe/bench)
 
@@ -82,8 +84,10 @@ Note: Please do not remove the bench directory the above commands will create
 - This is an opinionated setup so it is best to setup on a blank server.
 - Works on Ubuntu 14.04 to 16.04, CentOS 7+, Debian 7 to 8 and MacOS X.
 - You may have to install Python 2.7 (eg on Ubuntu 16.04+) by running `apt-get install python-minimal`
+- You may also have to install build-essential and python-setuptools by running `apt-get install build-essential python-setuptools`
 - This script will install the pre-requisites, install bench and setup an ERPNext site
 - Passwords for Frappe Administrator and MariaDB (root) will be asked
+- MariaDB (root) password may be `password` on a fresh server
 - You can then login as **Administrator** with the Administrator password
 - If you find any problems, post them on the forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
 
@@ -125,7 +129,7 @@ For production:
 - Install all the pre-requisites
 - Install the command line `bench`
 - Create a new bench (a folder that will contain your entire frappe/erpnext setup)
-- Create a new site on the bench
+- Create a new ERPNext site on the bench 
 
 #### How do I start ERPNext
 
@@ -133,6 +137,13 @@ For production:
 2. For production: Your process will be setup and managed by `nginx` and `supervisor`. [Setup Production](https://frappe.github.io/frappe/user/en/bench/guides/setup-production.html)
 
 ---
+
+## Docker Install - For Developers (beta)
+
+1. For developer setup, you can also use the official [Frappé Docker](https://github.com/frappe/frappe_docker/).
+2. The app, mariadb and redis run on individual containers
+3. This setup supports multi-tenancy and exposes the frappe-bench volume as a external storage.
+4. For more details, [read the instructions on the Frappé Docker README](https://github.com/frappe/frappe_docker/)
 
 Help
 ====
