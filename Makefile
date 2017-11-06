@@ -10,11 +10,11 @@ venv:
 	virtualenv .venv/py2 --python=python2
 	virtualenv .venv/py3 --python=python3
 
-clean-py:
+clean.py:
 	python setup.py clean
 
 clean:
-	make clean-py
+	make clean.py
 
 	clear
 
