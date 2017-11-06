@@ -77,24 +77,35 @@ def setup_env():
 	setup_env()
 
 @click.command('firewall')
-def setup_firewall():
+@click.option('--ssh_port')
+@click.option('--force')
+def setup_firewall(ssh_port=None, force=False):
 	"Setup firewall"
 	from bench.utils import run_playbook
-	click.confirm('Setting up the firewall will block all ports except 80, 443 and 22\n'
-		'Do you want to continue?',
-		abort=True)
-	run_playbook('production/setup_firewall.yml')
+
+	if not force:
+		click.confirm('Setting up the firewall will block all ports except 80, 443 and 22\n'
+			'Do you want to continue?',
+			abort=True)
+
+	if not ssh_port:
+		ssh_port = 22
+
+	run_playbook('production/setup_firewall.yml', {"ssh_port": ssh_port})
 
 @click.command('ssh-port')
 @click.argument('port')
-def set_ssh_port(port):
+@click.option('--force')
+def set_ssh_port(port, force=False):
 	"Set SSH Port"
 	from bench.utils import run_playbook
-	click.confirm('This will change your SSH Port to {}\n'
-		'Do you want to continue?'.format(port),
-		abort=True)
-	run_playbook('production/change_ssh_port.yml', {"ssh_port": port})
 
+	if not force:
+		click.confirm('This will change your SSH Port to {}\n'
+			'Do you want to continue?'.format(port),
+			abort=True)
+
+	run_playbook('production/change_ssh_port.yml', {"ssh_port": port})
 
 @click.command('lets-encrypt')
 @click.argument('site')
@@ -192,6 +203,23 @@ def sync_domains(domain=None, site=None):
 	# if changed, success, else failure
 	sys.exit(0 if changed else 1)
 
+@click.command('role')
+@click.argument('role')
+@click.option('--admin_emails', default='')
+@click.option('--mysql_root_password')
+def setup_roles(role, **kwargs):
+	"Install dependancies via roles"
+	from bench.utils import run_playbook
+
+	extra_vars = {"production": True}
+	extra_vars.update(kwargs)
+
+	if role:
+		run_playbook('prerequisites/install_roles.yml', extra_vars=extra_vars, tag=role)
+	else:
+		run_playbook('prerequisites/install_roles.yml', extra_vars=extra_vars)
+
+
 setup.add_command(setup_sudoers)
 setup.add_command(setup_nginx)
 setup.add_command(reload_nginx)
@@ -212,4 +240,4 @@ setup.add_command(remove_domain)
 setup.add_command(sync_domains)
 setup.add_command(setup_firewall)
 setup.add_command(set_ssh_port)
-setup.add_command(setup_manager)
+setup.add_command(setup_roles)

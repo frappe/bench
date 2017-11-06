@@ -68,3 +68,6 @@ from bench.commands.git import remote_set_url, remote_reset_url, remote_urls
 bench_command.add_command(remote_set_url)
 bench_command.add_command(remote_reset_url)
 bench_command.add_command(remote_urls)
+
+from bench.commands.install import install
+bench_command.add_command(install)

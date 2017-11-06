@@ -1,0 +1,8 @@
+---
+- name: Install supervisor on centos
+  yum: name=supervisor state=present
+  when: ansible_os_family == 'RedHat'
+
+- name: Install supervisor on debian
+  apt: pkg=supervisor state=present force=yes
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
