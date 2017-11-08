@@ -69,10 +69,10 @@ def get_app(app, branch=None, bench_path='.', build_asset_files=True, verbose=Fa
 	
 	if urlparse(app).scheme:
 		url     = app
-		name    = osp.splitext(osp.basename(app))[0]
 	else:
 		url     = urljoin('https://github.com/frappe', app)
-		name    = app
+
+	name        = osp.splitext(osp.basename(url))[0]
 
 	capppath    = osp.join(cappspath, name)
 	command     = 'git clone {remote} {branch} {shallow} --origin upstream'.format(
