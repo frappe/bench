@@ -71,8 +71,8 @@ def get_app(app, branch=None, bench_path='.', build_asset_files=True, verbose=Fa
 		url     = app
 	else:
 		url     = urljoin('https://github.com/frappe', app)
-
-	name        = osp.splitext(osp.basename(url))[0]
+		
+	name    	= osp.splitext(osp.basename(url))[0]
 
 	capppath    = osp.join(cappspath, name)
 	command     = 'git clone {remote} {branch} {shallow} --origin upstream'.format(
@@ -89,7 +89,7 @@ def get_app(app, branch=None, bench_path='.', build_asset_files=True, verbose=Fa
 		target  = osp.join(bench_path, 'apps', name)
 	))
 
-	setup = osp.join(bench_path, 'apps', app, 'setup.py')
+	setup = osp.join(bench_path, 'apps', name, 'setup.py')
 	with io.open(setup, 'r', encoding = 'utf-8') as f:
 		content    = f.read()
 		registered = re.search(r'name\s*=\s*[\'"](.*)[\'"]', content).group(1)
