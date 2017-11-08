@@ -4,6 +4,7 @@ try:
 	from urlparse import urlparse, urljoin
 except ImportError:
 	from urllib.parse import urlparse, urljoin
+import io
 
 import os
 from .utils import (exec_cmd, get_frappe, check_git_for_shallow_clone, build_assets,
@@ -56,9 +57,10 @@ def write_appstxt(apps, bench_path='.'):
 		return f.write('\n'.join(apps))
 
 def get_app(app, branch=None, bench_path='.', build_asset_files=True, verbose=False):
-	print('here')
 	cachepath   = osp.join(osp.expanduser('~'), '.frappe')
-	cappspath   = osp.join(cachepath, 'apps')
+	cappspath   = osp.join(cachepath,  'apps')
+	bappspath   = osp.join(bench_path, 'apps')
+
 	try:
 		os.makedirs(cappspath)
 	except OSError as e:
@@ -87,6 +89,14 @@ def get_app(app, branch=None, bench_path='.', build_asset_files=True, verbose=Fa
 		target  = osp.join(bench_path, 'apps', name)
 	))
 
+	setup = osp.join(bench_path, 'apps', app, 'setup.py')
+	with io.open(setup, 'r', encoding = 'utf-8') as f:
+		content    = f.read()
+		registered = re.search(r'name\s*=\s*[\'"](.*)[\'"]', content).group(1)
+
+		if name != registered:
+			os.rename(osp.join(bappspath, name), osp.join(bappspath, registered))
+
 	install_app(
 		app 	   = name,
 		bench_path = bench_path,
@@ -98,45 +108,7 @@ def get_app(app, branch=None, bench_path='.', build_asset_files=True, verbose=Fa
 	config = get_config(bench_path = bench_path)
 	if config.get('restart_supervisor_on_update'):
 		restart_supervisor_processes(bench_path = bench_path)
-
-
-	
-
-
-
-	
-	# #less verbose app install
-	# if '/' not in git_url:
-	# 	git_url = 'https://github.com/frappe/' + git_url
-	# #Gets repo name from URL
-	# repo_name = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
-	# logger.info('getting app {}'.format(repo_name))
-	# shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
-	# branch = '--branch {branch}'.format(branch=branch) if branch else ''
-
-	# exec_cmd("git clone {git_url} {branch} {shallow_clone} --origin upstream".format(
-	# 			git_url=git_url,
-	# 			shallow_clone=shallow_clone,
-	# 			branch=branch),
-	# 		cwd=os.path.join(bench_path, 'apps'))
-
-	#Retrieves app name from setup.py
-	# app_path = os.path.join(bench_path, 'apps', repo_name, 'setup.py')
-	# with open(app_path, 'rb') as f:
-	# 	app_name = re.search(r'name\s*=\s*[\'"](.*)[\'"]', f.read().decode('utf-8')).group(1)
-	# 	if repo_name != app_name:
-	# 		apps_path = os.path.join(os.path.abspath(bench_path), 'apps')
-	# 		os.rename(os.path.join(apps_path, repo_name), os.path.join(apps_path, app_name))
-
-	# print('installing', app_name)
-	# install_app(app=app_name, bench_path=bench_path, verbose=verbose)
-
-	# if build_asset_files:
-	# 	build_assets(bench_path=bench_path)
-	# conf = get_config(bench_path=bench_path)
-	# if conf.get('restart_supervisor_on_update'):
-	# 	restart_supervisor_processes(bench_path=bench_path)
-
+		
 def new_app(app, bench_path='.'):
 	# For backwards compatibility
 	app = app.lower().replace(" ", "_").replace("-", "_")
