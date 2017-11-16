@@ -1,7 +1,9 @@
-import os, sys, shutil, subprocess, logging, itertools, requests, json, platform, select, pwd, grp, multiprocessing
+import os, sys, shutil, subprocess, logging, itertools, requests, json, platform, select, pwd, grp, multiprocessing, hashlib
 from distutils.spawn import find_executable
 import bench
 from bench import env
+from six import iteritems
+
 
 class PatchError(Exception):
 	pass
@@ -16,8 +18,8 @@ folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 def get_frappe(bench_path='.'):
 	frappe = get_env_cmd('frappe', bench_path=bench_path)
 	if not os.path.exists(frappe):
-		print 'frappe app is not installed. Run the following command to install frappe'
-		print 'bench get-app https://github.com/frappe/frappe.git'
+		print('frappe app is not installed. Run the following command to install frappe')
+		print('bench get-app https://github.com/frappe/frappe.git')
 	return frappe
 
 def get_env_cmd(cmd, bench_path='.'):
@@ -25,21 +27,27 @@ def get_env_cmd(cmd, bench_path='.'):
 
 def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None,
-		verbose=False, clone_from=None):
+		verbose=False, clone_from=None, skip_bench_mkdir=False, skip_redis_config_generation=False):
 	from .app import get_app, install_apps_from_path
 	from .config.common_site_config import make_config
 	from .config import redis
 	from .config.procfile import setup_procfile
 	from bench.patches import set_all_patches_executed
 
-	if os.path.exists(path):
-		print 'Directory {} already exists!'.format(path)
-		raise Exception("Site directory already exists")
-		# sys.exit(1)
+	if(skip_bench_mkdir):
+		pass
+	else:
+		if os.path.exists(path):
+			print('Directory {} already exists!'.format(path))
+			raise Exception("Site directory already exists")
+		os.makedirs(path)
 
-	os.makedirs(path)
 	for dirname in folders_in_bench:
-		os.mkdir(os.path.join(path, dirname))
+		try:
+			os.makedirs(os.path.join(path, dirname))
+		except OSError, e:
+			if e.errno != os.errno.EEXIST:
+				pass
 
 	setup_logging()
 
@@ -61,11 +69,13 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	bench.set_frappe_version(bench_path=path)
 	if bench.FRAPPE_VERSION > 5:
-		setup_socketio(bench_path=path)
+		update_npm_packages(bench_path=path)
 
 	set_all_patches_executed(bench_path=path)
 	build_assets(bench_path=path)
-	redis.generate_config(path)
+
+	if not skip_redis_config_generation:
+		redis.generate_config(path)
 
 	if not no_procfile:
 		setup_procfile(path)
@@ -76,17 +86,17 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 def clone_apps_from(bench_path, clone_from):
 	from .app import install_app
-	print 'Copying apps from {0}...'.format(clone_from)
+	print('Copying apps from {0}...'.format(clone_from))
 	subprocess.check_output(['cp', '-R', os.path.join(clone_from, 'apps'), bench_path])
 
-	print 'Copying node_modules from {0}...'.format(clone_from)
+	print('Copying node_modules from {0}...'.format(clone_from))
 	subprocess.check_output(['cp', '-R', os.path.join(clone_from, 'node_modules'), bench_path])
 
 	def setup_app(app):
 		# run git reset --hard in each branch, pull latest updates and install_app
 		app_path = os.path.join(bench_path, 'apps', app)
 		if os.path.exists(os.path.join(app_path, '.git')):
-			print 'Cleaning up {0}'.format(app)
+			print('Cleaning up {0}'.format(app))
 
 			# remove .egg-ino
 			subprocess.check_output(['rm', '-rf', app + '.egg-info'], cwd=app_path)
@@ -116,7 +126,10 @@ def exec_cmd(cmd, cwd='.'):
 		stderr = stdout = subprocess.PIPE
 	else:
 		stderr = stdout = None
-	p = subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=stdout, stderr=stderr)
+
+	logger.info(cmd)
+
+	p = subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=stdout, stderr=stderr, universal_newlines=True)
 
 	if async:
 		return_code = print_output(p)
@@ -131,25 +144,41 @@ def setup_env(bench_path='.'):
 	exec_cmd('./env/bin/pip -q install --upgrade pip', cwd=bench_path)
 	exec_cmd('./env/bin/pip -q install wheel', cwd=bench_path)
 	# exec_cmd('./env/bin/pip -q install https://github.com/frappe/MySQLdb1/archive/MySQLdb-1.2.5-patched.tar.gz', cwd=bench_path)
+	exec_cmd('./env/bin/pip -q install six', cwd=bench_path)
 	exec_cmd('./env/bin/pip -q install -e git+https://github.com/frappe/python-pdfkit.git#egg=pdfkit', cwd=bench_path)
 
 def setup_socketio(bench_path='.'):
-	exec_cmd("npm install socket.io redis express superagent cookie", cwd=bench_path)
+	exec_cmd("npm install socket.io redis express superagent cookie babel-core less chokidar \
+		babel-cli babel-preset-es2015 babel-preset-es2016 babel-preset-es2017 babel-preset-babili", cwd=bench_path)
 
 def new_site(site, mariadb_root_password=None, admin_password=None, bench_path='.'):
-	import hashlib
+	"""
+	Creates a new site in the specified bench, default is current bench
+	"""
+
 	logger.info('creating new site {}'.format(site))
-	mariadb_root_password_fragment = '--root_password {}'.format(mariadb_root_password) if mariadb_root_password else ''
+
+	# consider an existing passwords.txt file
+	passwords_file_path = os.path.join(os.path.expanduser('~'), 'passwords.txt')
+	if os.path.isfile(passwords_file_path):
+		with open(passwords_file_path, 'r') as f:
+			passwords = json.load(f)
+			mariadb_root_password, admin_password = passwords['mysql_root_password'], passwords['admin_password']
+
+	mysql_root_password_fragment = '--root_password {}'.format(mariadb_root_password) if mariadb_root_password else ''
 	admin_password_fragment = '--admin_password {}'.format(admin_password) if admin_password else ''
-	exec_cmd("{frappe} {site} --install {db_name} {mariadb_root_password_fragment} {admin_password_fragment}".format(
+
+	exec_cmd("{frappe} {site} --install {db_name} {mysql_root_password_fragment} {admin_password_fragment}".format(
 				frappe=get_frappe(bench_path=bench_path),
 				site=site,
-				db_name = hashlib.sha1(site).hexdigest()[:10],
-				mariadb_root_password_fragment=mariadb_root_password_fragment,
+				db_name=hashlib.sha1(site).hexdigest()[:10],
+				mysql_root_password_fragment=mysql_root_password_fragment,
 				admin_password_fragment=admin_password_fragment
 			), cwd=os.path.join(bench_path, 'sites'))
+
 	if len(get_sites(bench_path=bench_path)) == 1:
 		exec_cmd("{frappe} --use {site}".format(frappe=get_frappe(bench_path=bench_path), site=site), cwd=os.path.join(bench_path, 'sites'))
+
 
 def patch_sites(bench_path='.'):
 	bench.set_frappe_version(bench_path=bench_path)
@@ -238,7 +267,7 @@ def setup_sudoers(user):
 			f.write('\n#includedir /etc/sudoers.d\n')
 
 		if set_permissions:
-			os.chmod('/etc/sudoers', 0440)
+			os.chmod('/etc/sudoers', 0o440)
 
 	sudoers_file = '/etc/sudoers.d/frappe'
 
@@ -255,7 +284,7 @@ def setup_sudoers(user):
 	with open(sudoers_file, 'w') as f:
 		f.write(frappe_sudoers.encode('utf-8'))
 
-	os.chmod(sudoers_file, 0440)
+	os.chmod(sudoers_file, 0o440)
 
 def setup_logging(bench_path='.'):
 	if os.path.exists(os.path.join(bench_path, 'logs')):
@@ -324,9 +353,9 @@ def check_git_for_shallow_clone():
 def get_cmd_output(cmd, cwd='.'):
 	try:
 		return subprocess.check_output(cmd, cwd=cwd, shell=True, stderr=open(os.devnull, 'wb')).strip()
-	except subprocess.CalledProcessError, e:
+	except subprocess.CalledProcessError as e:
 		if e.output:
-			print e.output
+			print(e.output)
 		raise
 
 def restart_supervisor_processes(bench_path='.', web_workers=False):
@@ -364,6 +393,7 @@ def set_default_site(site, bench_path='.'):
 			cwd=os.path.join(bench_path, 'sites'))
 
 def update_requirements(bench_path='.'):
+	print('Updating Python libraries...')
 	pip = os.path.join(bench_path, 'env', 'bin', 'pip')
 
 	# upgrade pip to latest
@@ -378,6 +408,38 @@ def update_requirements(bench_path='.'):
 	for app in os.listdir(apps_dir):
 		req_file = os.path.join(apps_dir, app, 'requirements.txt')
 		install_requirements(pip, req_file)
+
+def update_npm_packages(bench_path='.'):
+	print('Updating node libraries...')
+	apps_dir = os.path.join(bench_path, 'apps')
+	package_json = {}
+
+	for app in os.listdir(apps_dir):
+		package_json_path = os.path.join(apps_dir, app, 'package.json')
+
+		if os.path.exists(package_json_path):
+			with open(package_json_path, "r") as f:
+				app_package_json = json.loads(f.read())
+				# package.json is usually a dict in a dict
+				for key, value in iteritems(app_package_json):
+					if not key in package_json:
+						package_json[key] = value
+					else:
+						if isinstance(value, dict):
+							package_json[key].update(value)
+						elif isinstance(value, list):
+							package_json[key].extend(value)
+						else:
+							package_json[key] = value
+
+	if package_json is {}:
+		with open(os.path.join(os.path.dirname(__file__), 'package.json'), 'r') as f:
+			package_json = json.loads(f.read())
+
+	with open(os.path.join(bench_path, 'package.json'), 'w') as f:
+		f.write(json.dumps(package_json, indent=1, sort_keys=True))
+
+	exec_cmd('npm install', cwd=bench_path)
 
 def install_requirements(pip, req_file):
 	if os.path.exists(req_file):
@@ -437,7 +499,7 @@ def drop_privileges(uid_name='nobody', gid_name='nogroup'):
 	os.setuid(running_uid)
 
 	# Ensure a very conservative umask
-	os.umask(022)
+	os.umask(0o22)
 
 def fix_prod_setup_perms(bench_path='.', frappe_user=None):
 	from .config.common_site_config import get_config
@@ -456,7 +518,7 @@ def fix_prod_setup_perms(bench_path='.', frappe_user=None):
 		frappe_user = get_config(bench_path).get('frappe_user')
 
 	if not frappe_user:
-		print "frappe user not set"
+		print("frappe user not set")
 		sys.exit(1)
 
 	for path in files:
@@ -468,14 +530,14 @@ def fix_prod_setup_perms(bench_path='.', frappe_user=None):
 def fix_file_perms():
 	for dir_path, dirs, files in os.walk('.'):
 		for _dir in dirs:
-			os.chmod(os.path.join(dir_path, _dir), 0755)
+			os.chmod(os.path.join(dir_path, _dir), 0o755)
 		for _file in files:
-			os.chmod(os.path.join(dir_path, _file), 0644)
+			os.chmod(os.path.join(dir_path, _file), 0o644)
 	bin_dir = './env/bin'
 	if os.path.exists(bin_dir):
 		for _file in os.listdir(bin_dir):
 			if not _file.startswith('activate'):
-				os.chmod(os.path.join(bin_dir, _file), 0755)
+				os.chmod(os.path.join(bin_dir, _file), 0o755)
 
 def get_current_frappe_version(bench_path='.'):
 	from .app import get_current_frappe_version as fv
@@ -537,8 +599,8 @@ def post_upgrade(from_ver, to_ver, bench_path='.'):
 	from .config.supervisor import generate_supervisor_config
 	from .config.nginx import make_nginx_conf
 	conf = get_config(bench_path=bench_path)
-	print "-"*80
-	print "Your bench was upgraded to version {0}".format(to_ver)
+	print("-"*80)
+	print("Your bench was upgraded to version {0}".format(to_ver))
 
 	if conf.get('restart_supervisor_on_update'):
 		redis.generate_config(bench_path=bench_path)
@@ -551,17 +613,17 @@ def post_upgrade(from_ver, to_ver, bench_path='.'):
 		if from_ver <= 5 and to_ver == 6:
 			setup_socketio(bench_path=bench_path)
 
-		print "As you have setup your bench for production, you will have to reload configuration for nginx and supervisor"
-		print "To complete the migration, please run the following commands"
-		print
-		print "sudo service nginx restart"
-		print "sudo supervisorctl reload"
+		print("As you have setup your bench for production, you will have to reload configuration for nginx and supervisor")
+		print("To complete the migration, please run the following commands")
+		print()
+		print("sudo service nginx restart")
+		print("sudo supervisorctl reload")
 
 def update_translations_p(args):
 	try:
 		update_translations(*args)
 	except requests.exceptions.HTTPError:
-		print 'Download failed for', args[0], args[1]
+		print('Download failed for', args[0], args[1])
 
 def download_translations_p():
 	pool = multiprocessing.Pool(4)
@@ -598,7 +660,14 @@ def update_translations(app, lang):
 				f.write(chunk)
 				f.flush()
 
-	print 'downloaded for', app, lang
+	print('downloaded for', app, lang)
+
+def download_chart_of_accounts():
+	charts_dir = os.path.join('apps', "erpnext", "erpnext", 'accounts', 'chart_of_accounts', "submitted")
+	csv_file = os.path.join(translations_dir, lang + '.csv')
+	url = "https://translate.erpnext.com/files/{}-{}.csv".format(app, lang)
+	r = requests.get(url, stream=True)
+	r.raise_for_status()
 
 def print_output(p):
 	while p.poll() is None:
@@ -648,18 +717,18 @@ def validate_pillow_dependencies(bench_path, requirements):
 		distro = platform.linux_distribution()
 		distro_name = distro[0].lower()
 		if "centos" in distro_name or "fedora" in distro_name:
-			print "Please install these dependencies using the command:"
-			print "sudo yum install libtiff-devel libjpeg-devel libzip-devel freetype-devel lcms2-devel libwebp-devel tcl-devel tk-devel"
+			print("Please install these dependencies using the command:")
+			print("sudo yum install libtiff-devel libjpeg-devel libzip-devel freetype-devel lcms2-devel libwebp-devel tcl-devel tk-devel")
 
 			raise
 
 		elif "ubuntu" in distro_name or "elementary os" in distro_name or "debian" in distro_name:
-			print "Please install these dependencies using the command:"
+			print("Please install these dependencies using the command:")
 
 			if "ubuntu" in distro_name and distro[1]=="12.04":
-				print "sudo apt-get install -y libtiff4-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.5-dev tk8.5-dev python-tk"
+				print("sudo apt-get install -y libtiff4-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.5-dev tk8.5-dev python-tk")
 			else:
-				print "sudo apt-get install -y libtiff5-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python-tk"
+				print("sudo apt-get install -y libtiff5-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python-tk")
 
 			raise
 
@@ -685,18 +754,23 @@ def set_git_remote_url(git_url, bench_path='.'):
 	app = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
 
 	if app not in bench.app.get_apps(bench_path):
-		print "No app named {0}".format(app)
+		print("No app named {0}".format(app))
 		sys.exit(1)
 
 	app_dir = bench.app.get_repo_dir(app, bench_path=bench_path)
 	if os.path.exists(os.path.join(app_dir, '.git')):
 		exec_cmd("git remote set-url upstream {}".format(git_url), cwd=app_dir)
 
-def run_playbook(playbook_name, extra_vars=None):
+def run_playbook(playbook_name, extra_vars=None, tag=None):
 	if not find_executable('ansible'):
-		print "Ansible is needed to run this command, please install it using 'pip install ansible'"
+		print("Ansible is needed to run this command, please install it using 'pip install ansible'")
 		sys.exit(1)
 	args = ['ansible-playbook', '-c', 'local', playbook_name]
+	
 	if extra_vars:
 		args.extend(['-e', json.dumps(extra_vars)])
+	
+	if tag:
+		args.extend(['-t', tag])
+	
 	subprocess.check_call(args, cwd=os.path.join(os.path.dirname(bench.__path__[0]), 'playbooks'))

@@ -86,10 +86,10 @@ def renew_lets_encrypt():
 @click.command()
 def shell(bench_path='.'):
 	if not os.environ.get('SHELL'):
-		print "Cannot get shell"
+		print("Cannot get shell")
 		sys.exit(1)
 	if not os.path.exists('sites'):
-		print "sites dir doesn't exist"
+		print("sites dir doesn't exist")
 		sys.exit(1)
 	env = copy.copy(os.environ)
 	env['PS1'] = '(' + os.path.basename(os.path.dirname(os.path.abspath(__file__))) + ')' + env.get('PS1', '')
@@ -104,7 +104,7 @@ def backup_site(site):
 	"backup site"
 	from bench.utils import get_sites, backup_site
 	if not site in get_sites(bench_path='.'):
-		print 'site not found'
+		print('site not found')
 		sys.exit(1)
 	backup_site(site, bench_path='.')
 
@@ -119,17 +119,24 @@ def backup_all_sites():
 @click.command('release')
 @click.argument('app')
 @click.argument('bump-type', type=click.Choice(['major', 'minor', 'patch', 'stable', 'prerelease']))
-@click.option('--develop', default='develop')
-@click.option('--master', default='master')
+@click.option('--from-branch', default='develop')
+@click.option('--to-branch', default='master')
 @click.option('--remote', default='upstream')
 @click.option('--owner', default='frappe')
 @click.option('--repo-name')
-def release(app, bump_type, develop, master, owner, repo_name, remote):
+def release(app, bump_type, from_branch, to_branch, owner, repo_name, remote):
 	"Release app (internal to the Frappe team)"
 	from bench.release import release
-	release(bench_path='.', app=app, bump_type=bump_type, develop=develop, master=master,
+	release(bench_path='.', app=app, bump_type=bump_type, from_branch=from_branch, to_branch=to_branch,
 		remote=remote, owner=owner, repo_name=repo_name)
 
+@click.command('prepare-staging')
+@click.argument('app')
+def prepare_staging(app):
+	"""Prepare staging branch from develop branch"""
+	from bench.prepare_staging import prepare_staging
+	prepare_staging(bench_path='.', app=app)
+	
 
 @click.command('disable-production')
 def disable_production():
@@ -142,4 +149,4 @@ def disable_production():
 def bench_src():
 	"""Prints bench source folder path, which can be used as: cd `bench src` """
 	import bench
-	print os.path.dirname(bench.__path__[0])
+	print(os.path.dirname(bench.__path__[0]))

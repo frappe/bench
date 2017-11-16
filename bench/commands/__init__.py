@@ -29,19 +29,16 @@ bench_command.add_command(remove_app)
 bench_command.add_command(new_site)
 
 
-from bench.commands.update import update, retry_upgrade, switch_to_branch, switch_to_master, switch_to_develop, switch_to_v4, switch_to_v5
+from bench.commands.update import update, retry_upgrade, switch_to_branch, switch_to_master, switch_to_develop
 bench_command.add_command(update)
 bench_command.add_command(retry_upgrade)
 bench_command.add_command(switch_to_branch)
 bench_command.add_command(switch_to_master)
 bench_command.add_command(switch_to_develop)
-bench_command.add_command(switch_to_v4)
-bench_command.add_command(switch_to_v5)
-
 
 from bench.commands.utils import (start, restart, set_nginx_port, set_ssl_certificate, set_ssl_certificate_key, set_url_root,
 	set_mariadb_host, set_default_site, download_translations, shell, backup_site, backup_all_sites, release, renew_lets_encrypt,
-	disable_production, bench_src)
+	disable_production, bench_src, prepare_staging)
 bench_command.add_command(start)
 bench_command.add_command(restart)
 bench_command.add_command(set_nginx_port)
@@ -55,6 +52,7 @@ bench_command.add_command(shell)
 bench_command.add_command(backup_site)
 bench_command.add_command(backup_all_sites)
 bench_command.add_command(release)
+bench_command.add_command(prepare_staging)
 bench_command.add_command(renew_lets_encrypt)
 bench_command.add_command(disable_production)
 bench_command.add_command(bench_src)
@@ -70,3 +68,6 @@ from bench.commands.git import remote_set_url, remote_reset_url, remote_urls
 bench_command.add_command(remote_set_url)
 bench_command.add_command(remote_reset_url)
 bench_command.add_command(remote_urls)
+
+from bench.commands.install import install
+bench_command.add_command(install)

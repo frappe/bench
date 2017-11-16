@@ -26,9 +26,9 @@ def cli():
 		return frappe_cmd()
 
 	elif len(sys.argv) > 1 and sys.argv[1]=="--help":
-		print click.Context(bench_command).get_help()
-		print
-		print get_frappe_help()
+		print(click.Context(bench_command).get_help())
+		print()
+		print(get_frappe_help())
 		return
 
 	elif len(sys.argv) > 1 and sys.argv[1] in get_apps():
@@ -43,14 +43,16 @@ def cli():
 
 def check_uid():
 	if cmd_requires_root() and not is_root():
-		print 'superuser privileges required for this command'
+		print('superuser privileges required for this command')
 		sys.exit(1)
 
 def cmd_requires_root():
-	if len(sys.argv) > 2 and sys.argv[2] in ('production', 'sudoers', 'lets-encrypt', 'fonts', 'reload-nginx', 'firewall', 'ssh-port'):
-	    return True
-	if len(sys.argv) >= 2 and sys.argv[1] in ('patch', 'renew-lets-encrypt', 'disable-production'):
-	    return True
+	if len(sys.argv) > 2 and sys.argv[2] in ('production', 'sudoers', 'lets-encrypt', 'fonts',
+		'print', 'firewall', 'ssh-port', 'role'):
+		return True
+	if len(sys.argv) >= 2 and sys.argv[1] in ('patch', 'renew-lets-encrypt', 'disable-production',
+		'install'):
+		return True
 
 def change_dir():
 	if os.path.exists('config.json') or "init" in sys.argv:
@@ -69,7 +71,7 @@ def change_uid():
 			drop_privileges(uid_name=frappe_user, gid_name=frappe_user)
 			os.environ['HOME'] = pwd.getpwnam(frappe_user).pw_dir
 		else:
-			print 'You should not run this command as root'
+			print('You should not run this command as root')
 			sys.exit(1)
 
 def old_frappe_cli(bench_path='.'):

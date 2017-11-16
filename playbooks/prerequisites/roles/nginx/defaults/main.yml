@@ -1,0 +1,48 @@
+---
+# Used only for Debian/Ubuntu installation, as the -t option for apt.
+nginx_default_release: ""
+
+nginx_worker_processes: "1"
+nginx_worker_connections: "1024"
+
+nginx_error_log: "/var/log/nginx/error.log warn"
+nginx_access_log: "/var/log/nginx/access.log main buffer=16k"
+
+nginx_sendfile: "on"
+nginx_tcp_nopush: "on"
+nginx_tcp_nodelay: "on"
+
+nginx_keepalive_timeout: "65"
+nginx_keepalive_requests: "100"
+
+nginx_client_max_body_size: "64m"
+
+nginx_proxy_cache_path: ""
+
+nginx_remove_default_vhost: false
+nginx_vhosts: []
+# Example vhost below, showing all available options:
+# - {
+#   listen: "80 default_server", # default: "80 default_server"
+#   server_name: "example.com", # default: N/A
+#   root: "/var/www/example.com", # default: N/A
+#   index: "index.html index.htm", # default: "index.html index.htm"
+#
+#   # Properties that are only added if defined:
+#   error_page: "",
+#   access_log: "",
+#   extra_config: "" # Can be used to add extra config blocks (multiline).
+# }
+
+nginx_upstreams: []
+# - {
+#   name: myapp1,
+#   strategy: "ip_hash", # "least_conn", etc.
+#   servers: {
+#     "srv1.example.com",
+#     "srv2.example.com weight=3",
+#     "srv3.example.com"
+#   }
+# }
+nginx_conf_file: nginx.conf.j2
+setup_www_redirect: false

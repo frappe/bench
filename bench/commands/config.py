@@ -64,7 +64,7 @@ def config_http_timeout(seconds):
 
 
 @click.command('set-common-config')
-@click.option('configs', '-c', '--config', multiple=True, type=(unicode, unicode))
+@click.option('configs', '-c', '--config', multiple=True, type=(str, str))
 def set_common_config(configs):
 	import ast
 	from bench.config.common_site_config import update_config

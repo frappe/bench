@@ -4,6 +4,10 @@
 
   tasks:
       # For CentOS
+    - name: Enable SELinux
+      selinux: policy=targeted state=permissive
+      when: ansible_distribution == 'CentOS'
+
     - name: Install firewalld
       yum: name=firewalld state=present
       when: ansible_distribution == 'CentOS'
@@ -17,7 +21,7 @@
       with_items:
         - 80
         - 443
-        - 22
+        - "{{ ssh_port }}"
       when: ansible_distribution == 'CentOS'
 
     - name: Restart Firewall
@@ -26,7 +30,10 @@
 
       # For Ubuntu / Debian
     - name: Install ufw
-      apt: name=ufw state=present
+      apt: name={{ item }} state=present force=yes
+      with_items:
+       - python-selinux
+       - ufw
       when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
 
     - name: Enable Firewall
@@ -38,6 +45,6 @@
       with_items:
         - 80
         - 443
-        - 22
+        - "{{ ssh_port }}"
       when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
 

@@ -43,7 +43,7 @@ def add_domain(site, domain, ssl_certificate, ssl_certificate_key, bench_path='.
 	domains = get_domains(site, bench_path)
 	for d in domains:
 		if (isinstance(d, dict) and d['domain']==domain) or d==domain:
-			print "Domain {0} already exists".format(domain)
+			print("Domain {0} already exists".format(domain))
 			return
 
 	if ssl_certificate_key and ssl_certificate:
@@ -75,7 +75,7 @@ def sync_domains(site, domains, bench_path='.'):
 		changed = True
 
 	else:
-		for d in existing_domains.values():
+		for d in list(existing_domains.values()):
 			if d != new_domains.get(d['domain']):
 				changed = True
 				break
@@ -92,7 +92,7 @@ def get_domains(site, bench_path='.'):
 def get_domains_dict(domains):
 	domains_dict = defaultdict(dict)
 	for d in domains:
-		if isinstance(d, basestring):
+		if isinstance(d, str):
 			domains_dict[d] = { 'domain': d }
 
 		elif isinstance(d, dict):

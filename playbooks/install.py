@@ -30,7 +30,7 @@ def install_bench(args):
 		})
 
 	if not success:
-		print 'Could not install pre-requisites. Please check for errors or install them manually.'
+		print('Could not install pre-requisites. Please check for errors or install them manually.')
 		return
 
 	# secure pip installation
@@ -61,7 +61,7 @@ def install_bench(args):
 	# Restricting ansible version due to following bug in ansible 2.1
 	# https://github.com/ansible/ansible-modules-core/issues/3752
 	success = run_os_command({
-		'pip': "sudo pip install 'ansible==2.0.2.0'"
+		'pip': "sudo pip install ansible==2.3.1"
 	})
 
 	if not success:
@@ -75,7 +75,7 @@ def install_bench(args):
 		if args.production:
 			args.user = 'frappe'
 
-		elif os.environ.has_key('SUDO_USER'):
+		elif 'SUDO_USER' in os.environ:
 			args.user = os.environ['SUDO_USER']
 
 		else:
@@ -97,12 +97,15 @@ def install_bench(args):
 	extra_vars.update(repo_path=repo_path)
 	run_playbook('develop/create_user.yml', extra_vars=extra_vars)
 
-	extra_vars.update(get_passwords(args.run_travis or args.without_bench_setup))
+	extra_vars.update(get_passwords(args))
 	if args.production:
 		extra_vars.update(max_worker_connections=multiprocessing.cpu_count() * 1024)
 
 	branch = 'master' if args.production else 'develop'
 	extra_vars.update(branch=branch)
+	
+	bench_name = 'frappe-bench' if not args.bench_name else args.bench_name
+	extra_vars.update(bench_name=bench_name)
 
 	if args.develop:
 		run_playbook('develop/install.yml', sudo=True, extra_vars=extra_vars)
@@ -122,9 +125,9 @@ def check_distribution_compatibility():
 		if float(dist_version) in supported_dists[dist_name]:
 			return
 
-	print "Sorry, the installer doesn't support {0} {1}. Aborting installation!".format(dist_name, dist_version)
+	print("Sorry, the installer doesn't support {0} {1}. Aborting installation!".format(dist_name, dist_version))
 	if dist_name in supported_dists:
-		print "Install on {0} {1} instead".format(dist_name, supported_dists[dist_name][-1])
+		print("Install on {0} {1} instead".format(dist_name, supported_dists[dist_name][-1]))
 	sys.exit(1)
 
 def get_distribution_info():
@@ -142,7 +145,7 @@ def install_python27():
 	if version == (2, 7):
 		return
 
-	print 'Installing Python 2.7'
+	print('Installing Python 2.7')
 
 	# install python 2.7
 	success = run_os_command({
@@ -210,9 +213,9 @@ def clone_bench_repo(args):
 def run_os_command(command_map):
 	'''command_map is a dictionary of {'executable': command}. For ex. {'apt-get': 'sudo apt-get install -y python2.7'} '''
 	success = True
-	for executable, commands in command_map.items():
+	for executable, commands in list(command_map.items()):
 		if find_executable(executable):
-			if isinstance(commands, basestring):
+			if isinstance(commands, str):
 				commands = [commands]
 
 			for command in commands:
@@ -229,9 +232,31 @@ def could_not_install(package):
 def is_sudo_user():
 	return os.geteuid() == 0
 
-def get_passwords(ignore_prompt=False):
+
+def get_passwords(args):
+	"""
+	Returns a dict of passwords for further use
+	and creates passwords.txt in the bench user's home directory
+	"""
+
+	ignore_prompt = args.run_travis or args.without_bench_setup
+	mysql_root_password, admin_password = '', ''
+	passwords_file_path = os.path.join(os.path.expanduser('~' + args.user), 'passwords.txt')
+
 	if not ignore_prompt:
-		mysql_root_password, admin_password = '', ''
+		# set passwords from existing passwords.txt
+		if os.path.isfile(passwords_file_path):
+			with open(passwords_file_path, 'r') as f:
+				passwords = json.load(f)
+				mysql_root_password, admin_password = passwords['mysql_root_password'], passwords['admin_password']
+
+		# set passwords from cli args
+		if args.mysql_root_password:
+			mysql_root_password = args.mysql_root_password
+		if args.admin_password:
+			admin_password = args.admin_password
+
+		# prompt for passwords
 		pass_set = True
 		while pass_set:
 			# mysql root password
@@ -262,19 +287,19 @@ def get_passwords(ignore_prompt=False):
 	}
 
 	if not ignore_prompt:
-		passwords_file_path = os.path.join(os.path.expanduser('~'), 'passwords.txt')
 		with open(passwords_file_path, 'w') as f:
 			json.dump(passwords, f, indent=1)
 
-		print 'Passwords saved at ~/passwords.txt'
+		print('Passwords saved at ~/passwords.txt')
 
 	return passwords
+
 
 def get_extra_vars_json(extra_args):
 	# We need to pass production as extra_vars to the playbook to execute conditionals in the
 	# playbook. Extra variables can passed as json or key=value pair. Here, we will use JSON.
 	json_path = os.path.join('/tmp', 'extra_vars.json')
-	extra_vars = dict(extra_args.items())
+	extra_vars = dict(list(extra_args.items()))
 	with open(json_path, mode='w') as j:
 		json.dump(extra_vars, j, indent=1, sort_keys=True)
 
@@ -318,6 +343,9 @@ def parse_commandline_args():
 
 	parser.add_argument('--site', dest='site', action='store', default='site1.local',
 		help='Specifiy name for your first ERPNext site')
+	
+	parser.add_argument('--without-site', dest='without_site', action='store_true',
+		default=False)
 
 	parser.add_argument('--verbose', dest='verbosity', action='store_true', default=False,
 		help='Run the script in verbose mode')
@@ -334,6 +362,15 @@ def parse_commandline_args():
 
 	parser.add_argument('--without-bench-setup', dest='without_bench_setup', action='store_true', default=False,
 		help=argparse.SUPPRESS)
+	
+	# whether to overwrite an existing bench
+	parser.add_argument('--overwrite', dest='overwrite', action='store_true', default=False,
+		help='Whether to overwrite an existing bench')
+
+	# set passwords
+	parser.add_argument('--mysql-root-password', dest='mysql_root_password', help='Set mysql root password')
+	parser.add_argument('--admin-password', dest='admin_password', help='Set admin password')
+	parser.add_argument('--bench-name', dest='bench_name', help='Create bench with specified name. Default name is frappe-bench')
 
 	args = parser.parse_args()
 
@@ -350,4 +387,4 @@ if __name__ == '__main__':
 
 	install_bench(args)
 
-	print '''Frappe/ERPNext has been successfully installed!'''
+	print('''Frappe/ERPNext has been successfully installed!''')

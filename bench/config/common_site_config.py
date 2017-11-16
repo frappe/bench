@@ -1,4 +1,9 @@
-import os, multiprocessing, getpass, json, urlparse
+import os, multiprocessing, getpass, json
+
+try:
+	from urllib.parse import urlparse
+except ImportError:
+	from urlparse import urlparse
 
 default_config = {
 	'restart_supervisor_on_update': False,
@@ -57,7 +62,7 @@ def update_config_for_frappe(config, bench_path):
 		if key not in config:
 			config[key] = "redis://localhost:{0}".format(ports[key])
 
-	for key in ('webserver_port', 'socketio_port'):
+	for key in ('webserver_port', 'socketio_port', 'file_watcher_port'):
 		if key not in config:
 			config[key] = ports[key]
 
@@ -70,6 +75,7 @@ def make_ports(bench_path):
 	default_ports = {
 		"webserver_port": 8000,
 		"socketio_port": 9000,
+		"file_watcher_port": 6787,
 		"redis_queue": 11000,
 		"redis_socketio": 12000,
 		"redis_cache": 13000
@@ -81,19 +87,19 @@ def make_ports(bench_path):
 		bench_path = os.path.join(benches_path, folder)
 		if os.path.isdir(bench_path):
 			bench_config = get_config(bench_path)
-			for key in default_ports.keys():
+			for key in list(default_ports.keys()):
 				value = bench_config.get(key)
 
 				# extract port from redis url
 				if value and (key in ('redis_cache', 'redis_queue', 'redis_socketio')):
-					value = urlparse.urlparse(value).port
+					value = urlparse(value).port
 
 				if value:
 					existing_ports.setdefault(key, []).append(value)
 
 	# new port value = max of existing port value + 1
 	ports = {}
-	for key, value in default_ports.items():
+	for key, value in list(default_ports.items()):
 		existing_value = existing_ports.get(key, [])
 		if existing_value:
 			value = max(existing_value) + 1

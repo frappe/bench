@@ -1,0 +1,28 @@
+---
+- name: Install fail2ban
+  yum: name=fail2ban state=present
+  when: ansible_distribution == 'CentOS'
+
+- name: Install fail2ban
+  apt: name=fail2ban state=present
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: Enable fail2ban
+  service: name=fail2ban enabled=yes
+
+- name: Create jail.d
+  file: path=/etc/fail2ban/jail.d state=directory
+
+- name: Setup filters
+  template: src="{{item}}-filter.conf.j2" dest="/etc/fail2ban/filter.d/{{item}}.conf"
+  with_items:
+    - nginx-proxy
+  notify:
+  - restart fail2ban
+
+- name: setup jails
+  template: src="{{item}}-jail.conf.j2" dest="/etc/fail2ban/jail.d/{{item}}.conf"
+  with_items:
+    - nginx-proxy
+  notify:
+  - restart fail2ban

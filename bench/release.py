@@ -4,10 +4,8 @@ import os
 import sys
 import semantic_version
 import git
-import json
 import requests
 import getpass
-import argparse
 import re
 from requests.auth import HTTPBasicAuth
 import requests.exceptions
@@ -15,30 +13,39 @@ from time import sleep
 from .config.common_site_config import get_config
 import click
 
+branches_to_update = {
+	'develop': [],
+	'hotfix': ['develop']
+}
+
 github_username = None
 github_password = None
 
-def release(bench_path, app, bump_type, develop='develop', master='master',
+def release(bench_path, app, bump_type, from_branch='develop', to_branch='master',
 		remote='upstream', owner='frappe', repo_name=None):
 
-	validate(bench_path)
-
-	bump(bench_path, app, bump_type, develop=develop, master=master, owner=owner,
-		repo_name=repo_name, remote=remote)
-
-def validate(bench_path):
 	config = get_config(bench_path)
+
 	if not config.get('release_bench'):
-		print 'bench not configured to release'
+		print('bench not configured to release')
 		sys.exit(1)
 
+	if config.get('branches_to_update'):
+		branches_to_update.update(config.get('branches_to_update'))
+
+	validate(bench_path, config)
+
+	bump(bench_path, app, bump_type, from_branch=from_branch, to_branch=to_branch, owner=owner,
+		repo_name=repo_name, remote=remote)
+
+def validate(bench_path, config):
 	global github_username, github_password
 
 	github_username = config.get('github_username')
 	github_password = config.get('github_password')
 
 	if not github_username:
-		github_username = raw_input('Username: ')
+		github_username = click.prompt('Username', type=str)
 
 	if not github_password:
 		github_password = getpass.getpass()
@@ -46,42 +53,43 @@ def validate(bench_path):
 	r = requests.get('https://api.github.com/user', auth=HTTPBasicAuth(github_username, github_password))
 	r.raise_for_status()
 
-def bump(bench_path, app, bump_type, develop, master, remote, owner, repo_name=None):
+def bump(bench_path, app, bump_type, from_branch, to_branch, remote, owner, repo_name=None):
 	assert bump_type in ['minor', 'major', 'patch', 'stable', 'prerelease']
 
 	repo_path = os.path.join(bench_path, 'apps', app)
-	update_branches_and_check_for_changelog(repo_path, develop, master, remote=remote)
-	message = get_release_message(repo_path, develop=develop, master=master, remote=remote)
+	update_branches_and_check_for_changelog(repo_path, from_branch, to_branch, remote=remote)
+	message = get_release_message(repo_path, from_branch=from_branch, to_branch=to_branch, remote=remote)
 
 	if not message:
-		print 'No commits to release'
+		print('No commits to release')
 		return
 
-	print
-	print message
-	print
+	print()
+	print(message)
+	print()
 
 	click.confirm('Do you want to continue?', abort=True)
 
-	new_version = bump_repo(repo_path, bump_type, develop=develop, master=master)
+	new_version = bump_repo(repo_path, bump_type, from_branch=from_branch, to_branch=to_branch)
 	commit_changes(repo_path, new_version)
-	tag_name = create_release(repo_path, new_version, develop=develop, master=master)
-	push_release(repo_path, develop=develop, master=master, remote=remote)
+	tag_name = create_release(repo_path, new_version, from_branch=from_branch, to_branch=to_branch)
+	push_release(repo_path, from_branch=from_branch, to_branch=to_branch, remote=remote)
 	create_github_release(repo_path, tag_name, message, remote=remote, owner=owner, repo_name=repo_name)
-	print 'Released {tag} for {repo_path}'.format(tag=tag_name, repo_path=repo_path)
+	print('Released {tag} for {repo_path}'.format(tag=tag_name, repo_path=repo_path))
 
-def update_branches_and_check_for_changelog(repo_path, develop='develop', master='master', remote='upstream'):
+def update_branches_and_check_for_changelog(repo_path, from_branch='develop', to_branch='master', remote='upstream'):
 
-	update_branch(repo_path, master, remote=remote)
-	update_branch(repo_path, develop, remote=remote)
-	if develop != 'develop':
-		update_branch(repo_path, 'develop', remote=remote)
+	update_branch(repo_path, to_branch, remote=remote)
+	update_branch(repo_path, from_branch, remote=remote)
 
-	git.Repo(repo_path).git.checkout(develop)
+	for branch in branches_to_update[from_branch]:
+		update_branch(repo_path, branch, remote=remote)
+
+	git.Repo(repo_path).git.checkout(from_branch)
 	check_for_unmerged_changelog(repo_path)
 
 def update_branch(repo_path, branch, remote):
-	print "updating local branch of", repo_path, 'using', remote + '/' + branch
+	print("updating local branch of", repo_path, 'using', remote + '/' + branch)
 
 	repo = git.Repo(repo_path)
 	g = repo.git
@@ -94,22 +102,22 @@ def check_for_unmerged_changelog(repo_path):
 	if os.path.exists(current) and [f for f in os.listdir(current) if f != "readme.md"]:
 		raise Exception("Unmerged change log! in " + repo_path)
 
-def get_release_message(repo_path, develop='develop', master='master', remote='upstream'):
-	print 'getting release message for', repo_path, 'comparing', master, '...', develop
+def get_release_message(repo_path, from_branch='develop', to_branch='master', remote='upstream'):
+	print('getting release message for', repo_path, 'comparing', to_branch, '...', from_branch)
 
 	repo = git.Repo(repo_path)
 	g = repo.git
-	log = g.log('{remote}/{master}..{remote}/{develop}'.format(
-		remote=remote, master=master, develop=develop), '--format=format:%s', '--no-merges')
+	log = g.log('{remote}/{to_branch}..{remote}/{from_branch}'.format(
+		remote=remote, to_branch=to_branch, from_branch=from_branch), '--format=format:%s', '--no-merges')
 
 	if log:
 		return "* " + log.replace('\n', '\n* ')
 
-def bump_repo(repo_path, bump_type, develop='develop', master='master'):
+def bump_repo(repo_path, bump_type, from_branch='develop', to_branch='master'):
 	current_version = get_current_version(repo_path)
 	new_version = get_bumped_version(current_version, bump_type)
 
-	print 'bumping version from', current_version, 'to', new_version
+	print('bumping version from', current_version, 'to', new_version)
 
 	set_version(repo_path, new_version)
 	return new_version
@@ -154,7 +162,7 @@ def get_bumped_version(version, bump_type):
 		else:
 			v.prerelease[1] = str(int(v.prerelease[1]) + 1)
 
-	return unicode(v)
+	return str(v)
 
 def set_version(repo_path, version):
 	set_filename_version(os.path.join(repo_path, os.path.basename(repo_path),'__init__.py'), version, '__version__')
@@ -192,76 +200,76 @@ def set_filename_version(filename, version_number, pattern):
 		f.write(contents)
 
 def commit_changes(repo_path, new_version):
-	print 'committing version change to', repo_path
+	print('committing version change to', repo_path)
 
 	repo = git.Repo(repo_path)
 	app_name = os.path.basename(repo_path)
 	repo.index.add([os.path.join(app_name, '__init__.py')])
 	repo.index.commit('bumped to version {}'.format(new_version))
 
-def create_release(repo_path, new_version, develop='develop', master='master'):
-	print 'creating release for version', new_version
+def create_release(repo_path, new_version, from_branch='develop', to_branch='master'):
+	print('creating release for version', new_version)
 	repo = git.Repo(repo_path)
 	g = repo.git
-	g.checkout(master)
+	g.checkout(to_branch)
 	try:
-		g.merge(develop, '--no-ff')
-	except git.exc.GitCommandError, e:
-		handle_merge_error(e, source=develop, target=master)
+		g.merge(from_branch, '--no-ff')
+	except git.exc.GitCommandError as e:
+		handle_merge_error(e, source=from_branch, target=to_branch)
 
 	tag_name = 'v' + new_version
 	repo.create_tag(tag_name, message='Release {}'.format(new_version))
-	g.checkout(develop)
+	g.checkout(from_branch)
 
 	try:
-		g.merge(master)
-	except git.exc.GitCommandError, e:
-		handle_merge_error(e, source=master, target=develop)
+		g.merge(to_branch)
+	except git.exc.GitCommandError as e:
+		handle_merge_error(e, source=to_branch, target=from_branch)
 
-	if develop != 'develop':
-		print 'merging master into develop'
-		g.checkout('develop')
+	for branch in branches_to_update[from_branch]:
+		print('merging master into', branch)
+		g.checkout(branch)
 		try:
-			g.merge(master)
-		except git.exc.GitCommandError, e:
-			handle_merge_error(e, source=master, target='develop')
+			g.merge(to_branch)
+		except git.exc.GitCommandError as e:
+			handle_merge_error(e, source=to_branch, target=branch)
 
 	return tag_name
 
 def handle_merge_error(e, source, target):
-	print '-'*80
-	print 'Error when merging {source} into {target}'.format(source=source, target=target)
-	print e
-	print 'You can open a new terminal, try to manually resolve the conflict/error and continue'
-	print '-'*80
+	print('-'*80)
+	print('Error when merging {source} into {target}'.format(source=source, target=target))
+	print(e)
+	print('You can open a new terminal, try to manually resolve the conflict/error and continue')
+	print('-'*80)
 	click.confirm('Have you manually resolved the error?', abort=True)
 
-def push_release(repo_path, develop='develop', master='master', remote='upstream'):
-	print 'pushing branches', master, develop, 'of', repo_path
+def push_release(repo_path, from_branch='develop', to_branch='master', remote='upstream'):
+	print('pushing branches', to_branch, from_branch, 'of', repo_path)
 	repo = git.Repo(repo_path)
 	g = repo.git
 	args = [
-		'{master}:{master}'.format(master=master),
-		'{develop}:{develop}'.format(develop=develop)
+		'{to_branch}:{to_branch}'.format(to_branch=to_branch),
+		'{from_branch}:{from_branch}'.format(from_branch=from_branch)
 	]
 
-	if develop != 'develop':
-		print 'pushing develop branch of', repo_path
-		args.append('develop:develop')
+	for branch in branches_to_update[from_branch]:
+		print('pushing {0} branch of'.format(branch), repo_path)
+		args.append('{branch}:{branch}'.format(branch=branch))
 
 	args.append('--tags')
 
-	print g.push(remote, *args)
+	print(g.push(remote, *args))
 
 def create_github_release(repo_path, tag_name, message, remote='upstream', owner='frappe', repo_name=None,
 		gh_username=None, gh_password=None):
 
-	print 'creating release on github'
+	print('creating release on github')
 
 	global github_username, github_password
 	if not (gh_username and gh_password):
 		if not (github_username and github_password):
-			raise Exception, "No credentials"
+			raise Exception("No credentials")
 		gh_username = github_username
 		gh_password = github_password
 
@@ -274,7 +282,7 @@ def create_github_release(repo_path, tag_name, message, remote='upstream', owner
 		'draft': False,
 		'prerelease': False
 	}
-	for i in xrange(3):
+	for i in range(3):
 		try:
 			r = requests.post('https://api.github.com/repos/{owner}/{repo_name}/releases'.format(
 				owner=owner, repo_name=repo_name),
@@ -282,12 +290,12 @@ def create_github_release(repo_path, tag_name, message, remote='upstream', owner
 			r.raise_for_status()
 			break
 		except requests.exceptions.HTTPError:
-			print 'request failed, retrying....'
+			print('request failed, retrying....')
 			sleep(3*i + 1)
 			if i !=2:
 				continue
 			else:
-				print r.json()
+				print(r.json())
 				raise
 	return r
 
