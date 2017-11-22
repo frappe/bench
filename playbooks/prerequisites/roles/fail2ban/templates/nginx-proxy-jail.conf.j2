@@ -4,5 +4,6 @@ enabled = true
 filter = nginx-proxy
 logpath = {{ fail2ban_nginx_access_log }}
 action = iptables-multiport[name=NoNginxProxy, port="http,https"]
-maxretry = 2
-bantime  = 86400
+maxretry = {{ maxretry }}
+bantime  = {{ bantime }}
+findtime = {{ findtime }}

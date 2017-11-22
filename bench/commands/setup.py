@@ -208,6 +208,13 @@ def setup_roles(role, **kwargs):
 	else:
 		run_playbook('prerequisites/install_roles.yml', extra_vars=extra_vars)
 
+@click.command('fail2ban')
+@click.option('--maxretry', default=6, help="Number of matches (i.e. value of the counter) which triggers ban action on the IP. Default is 6 seconds" )
+@click.option('--bantime', default=600, help="The counter is set to zero if no match is found within 'findtime' seconds. Default is 600 seconds")
+@click.option('--findtime', default=600, help='Duration (in seconds) for IP to be banned for. Negative number for "permanent" ban. Default is 600 seconds')
+def setup_nginx_proxy_jail(**kwargs):
+	from bench.utils import run_playbook
+	run_playbook('prerequisites/setup_nginx_proxy_jail.yml', extra_vars=kwargs)
 
 setup.add_command(setup_sudoers)
 setup.add_command(setup_nginx)
@@ -230,3 +237,4 @@ setup.add_command(sync_domains)
 setup.add_command(setup_firewall)
 setup.add_command(set_ssh_port)
 setup.add_command(setup_roles)
+setup.add_command(setup_nginx_proxy_jail)
