@@ -49,7 +49,11 @@ def install_nginx(user=None):
 		setup_sudoers(user)
 
 @click.command('fail2ban')
-def install_failtoban():
+@click.option('--maxretry', default=6, help="Number of matches (i.e. value of the counter) which triggers ban action on the IP.")
+@click.option('--bantime', default=600, help="The counter is set to zero if no match is found within 'findtime' seconds.")
+@click.option('--findtime', default=600, help='Duration (in seconds) for IP to be banned for. Negative number for "permanent" ban.')
+def install_failtoban(**kwargs):
+	extra_vars.update(kwargs)
 	run_playbook('prerequisites/install_roles.yml', extra_vars=extra_vars, tag='fail2ban')
 
 install.add_command(install_prerequisites)

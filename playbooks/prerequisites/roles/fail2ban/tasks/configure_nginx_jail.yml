@@ -1,0 +1,11 @@
+- name: Configure fail2ban jail options
+  hosts: localhost
+  become: yes
+  become_user: root
+  vars_files:
+    - ../defaults/main.yml
+  tasks:
+    - name: Setup jail
+      template: src="../templates/nginx-proxy-jail.conf.j2" dest="/etc/fail2ban/jail.d/nginx-proxy.conf"
+    - name: restart service
+      service: name=fail2ban state=restarted
