@@ -1,31 +1,30 @@
 import click
 import sys, os
-import ast
 from bench.config.common_site_config import get_config
 from bench.app import pull_all_apps, is_version_upgrade
 from bench.utils import (update_bench, validate_upgrade, pre_upgrade, post_upgrade, before_update,
 	update_requirements, update_node_packages, backup_all_sites, patch_sites, build_assets, restart_supervisor_processes)
 from bench import patches
 
-#TODO: Not DRY
+# TODO: Not DRY
+
+
 @click.command('update')
-@click.option('--exclude', default=[], required=False, help="Exclude pull for the apps")
+@click.option('--exclude-apps', is_flag=True, help="Exclude pull for the apps")
 @click.option('--pull', is_flag=True, help="Pull changes in all the apps in bench")
-@click.option('--patch',is_flag=True, help="Run migrations for all sites in the bench")
-@click.option('--build',is_flag=True, help="Build JS and CSS artifacts for the bench")
-@click.option('--bench',is_flag=True, help="Update bench")
-@click.option('--requirements',is_flag=True, help="Update requirements")
-@click.option('--restart-supervisor',is_flag=True, help="restart supervisor processes after update")
-@click.option('--auto',is_flag=True)
-@click.option('--no-backup',is_flag=True)
-@click.option('--force',is_flag=True)
+@click.option('--patch', is_flag=True, help="Run migrations for all sites in the bench")
+@click.option('--build', is_flag=True, help="Build JS and CSS artifacts for the bench")
+@click.option('--bench', is_flag=True, help="Update bench")
+@click.option('--requirements', is_flag=True, help="Update requirements")
+@click.option('--restart-supervisor', is_flag=True, help="restart supervisor processes after update")
+@click.option('--auto', is_flag=True)
+@click.option('--no-backup', is_flag=True)
+@click.option('--force', is_flag=True)
 @click.option('--reset', is_flag=True, help="Hard resets git branch's to their new states overriding any changes and overriding rebase on pull")
-def update(exclude=[], pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, requirements=False, no_backup=False, force=False, reset=False):
-	"Update bench"
-	print("Exclude {}".format(exclude))
+def update(exclude=False, pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, requirements=False, no_backup=False, force=False, reset=False):
+	"""Update bench"""
 	if not (pull or patch or build or bench or requirements):
 		pull, patch, build, bench, requirements = True, True, True, True, True
-	exclude = ast.literal_eval(exclude)
 	if auto:
 		sys.exit(1)
 
@@ -35,13 +34,14 @@ def update(exclude=[], pull=False, patch=False, build=False, bench=False, auto=F
 	if bench and conf.get('update_bench_on_update'):
 		update_bench()
 		restart_update({
+		        'exclude': exclude,
 				'pull': pull,
 				'patch': patch,
 				'build': build,
 				'requirements': requirements,
 				'no-backup': no_backup,
 				'restart-supervisor': restart_supervisor,
-				'reset':reset
+				'reset': reset
 		})
 
 	if conf.get('release_bench'):
@@ -57,9 +57,9 @@ def update(exclude=[], pull=False, patch=False, build=False, bench=False, auto=F
 		print("This would take significant time to migrate and might break custom apps.")
 		click.confirm('Do you want to continue?', abort=True)
 
-	_update(pull, patch, build, bench, auto, restart_supervisor, requirements, no_backup, force=force, reset=reset)
+	_update(exclude, pull, patch, build, bench, auto, restart_supervisor, requirements, no_backup, force=force, reset=reset)
 
-def _update(exclude=[], pull=False, patch=False, build=False, update_bench=False, auto=False, restart_supervisor=False,
+def _update(exclude=False, pull=False, patch=False, build=False, update_bench=False, auto=False, restart_supervisor=False,
 		requirements=False, no_backup=False, bench_path='.', force=False, reset=False):
 	conf = get_config(bench_path=bench_path)
 	version_upgrade = is_version_upgrade(bench_path=bench_path)
