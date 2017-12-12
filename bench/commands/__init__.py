@@ -191,3 +191,6 @@ bench_command.add_command(include_update)
 
 from bench.commands.exclude_update import exclude_update
 bench_command.add_command(exclude_update)
+
+from bench.commands.exclude_update import include_update
+bench_command.add_command(include_update)
