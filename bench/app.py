@@ -162,13 +162,17 @@ def remove_app(app, bench_path='.'):
 		restart_supervisor_processes(bench_path=bench_path)
 
 
-def pull_all_apps(bench_path='.', reset=False):
+def pull_all_apps(bench_path='.', reset=False, exclude=[]):
 	'''Check all apps if there no local changes, pull'''
 	rebase = '--rebase' if get_config(bench_path).get('rebase_on_pull') else ''
 
 	# chech for local changes
 	if not reset:
 		for app in get_apps(bench_path=bench_path):
+			if app in exclude:
+				print("Here")
+				print("Skipping pull for app {}".format(app))
+				continue
 			app_dir = get_repo_dir(app, bench_path=bench_path)
 			if os.path.exists(os.path.join(app_dir, '.git')):
 				out = subprocess.check_output(["git", "status"], cwd=app_dir)

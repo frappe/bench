@@ -1,5 +1,6 @@
 import click
 import sys, os
+import ast
 from bench.config.common_site_config import get_config
 from bench.app import pull_all_apps, is_version_upgrade
 from bench.utils import (update_bench, validate_upgrade, pre_upgrade, post_upgrade, before_update,
@@ -8,6 +9,7 @@ from bench import patches
 
 #TODO: Not DRY
 @click.command('update')
+@click.option('--exclude', default=[], required=False, help="Exclude pull for the apps")
 @click.option('--pull', is_flag=True, help="Pull changes in all the apps in bench")
 @click.option('--patch',is_flag=True, help="Run migrations for all sites in the bench")
 @click.option('--build',is_flag=True, help="Build JS and CSS artifacts for the bench")
@@ -18,12 +20,12 @@ from bench import patches
 @click.option('--no-backup',is_flag=True)
 @click.option('--force',is_flag=True)
 @click.option('--reset', is_flag=True, help="Hard resets git branch's to their new states overriding any changes and overriding rebase on pull")
-def update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, requirements=False, no_backup=False, force=False, reset=False):
+def update(exclude=[], pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, requirements=False, no_backup=False, force=False, reset=False):
 	"Update bench"
-
+	print("Exclude {}".format(exclude))
 	if not (pull or patch or build or bench or requirements):
 		pull, patch, build, bench, requirements = True, True, True, True, True
-
+	exclude = ast.literal_eval(exclude)
 	if auto:
 		sys.exit(1)
 
@@ -57,7 +59,7 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 
 	_update(pull, patch, build, bench, auto, restart_supervisor, requirements, no_backup, force=force, reset=reset)
 
-def _update(pull=False, patch=False, build=False, update_bench=False, auto=False, restart_supervisor=False,
+def _update(exclude=[], pull=False, patch=False, build=False, update_bench=False, auto=False, restart_supervisor=False,
 		requirements=False, no_backup=False, bench_path='.', force=False, reset=False):
 	conf = get_config(bench_path=bench_path)
 	version_upgrade = is_version_upgrade(bench_path=bench_path)
@@ -68,7 +70,7 @@ def _update(pull=False, patch=False, build=False, update_bench=False, auto=False
 	before_update(bench_path=bench_path, requirements=requirements)
 
 	if pull:
-		pull_all_apps(bench_path=bench_path, reset=reset)
+		pull_all_apps(bench_path=bench_path, reset=reset, exclude=exclude)
 
 	if requirements:
 		update_requirements(bench_path=bench_path)
