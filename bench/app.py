@@ -80,6 +80,12 @@ def write_excluded_appstxt(apps, bench_path='.'):
 	with open(os.path.join(bench_path, 'sites', 'excluded_apps.txt'), 'w') as f:
 		return f.write('\n'.join(apps))
 
+def remove_from_exclided_appsstxt(app, bench_path='.'):
+	apps = get_apps(bench_path=bench_path)
+	if app in apps:
+		apps.remove(app)
+		return write_excluded_appstxt(apps, bench_path=bench_path)
+
 def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbose=False):
 	# from bench.utils import check_url
 	try:
