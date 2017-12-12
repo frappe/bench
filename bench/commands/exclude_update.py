@@ -16,6 +16,6 @@ from bench.app import add_to_excluded_appstxt
 @click.command('exclude-app')
 @click.argument('app_name')
 def exclude_update(app_name):
-    """Update bench"""
-    add_to_excluded_appstxt(app_name)
-    return
+	"""Update bench"""
+	add_to_excluded_appstxt(app_name)
+	return
