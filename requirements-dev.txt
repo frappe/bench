@@ -1,0 +1,9 @@
+Click
+jinja2
+virtualenv
+requests
+honcho
+psutil
+python-crontab
+semantic_version
+GitPython==0.3.2.1
