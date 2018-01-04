@@ -6,9 +6,9 @@ VENVBIN    ?= $(VENV)/py3/bin
 PYTHON     ?= $(VENVBIN)/python
 PIP        ?= $(VENVBIN)/pip
 
-BASEDIR     = $(realpath .)
-PACKAGE     = bench
-SOURCEDIR   = $(realpath $(PACKAGE))
+BASEDIR    := $(realpath .)
+PACKAGE    := bench
+SOURCEDIR  := $(realpath $(PACKAGE))
 
 venv2:
 	$(VIRTUALENV) $(VENV)/py2 --python python2
