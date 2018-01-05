@@ -4,6 +4,9 @@ import bench
 from bench import env
 from six import iteritems
 
+# imports - compatibility imports
+from urllib.parse import urlparse
+
 # imports - standard imports
 import os, errno
 
@@ -775,10 +778,17 @@ def makedirs(dirs, exists_ok = False):
 	try:
 		os.makedirs(dirs)
 	except OSError as e:
-		if not exists_ok or e.errno != errno.EEXIST:
+		if not exists_ok and e.errno != errno.EEXIST:
 			raise
 
 def assign_if_empty(a, b):
 	if not a:
 		a = b
 	return a
+
+def check_url(string, raise_err = False):
+	if not urlparse(string).scheme:
+		if raise_err:
+			raise TypeError('Not a valid URL.')
+
+	return True

@@ -7,6 +7,8 @@ PYTHON     := $(VENVBIN)/python
 IPYTHON    := $(VENVBIN)/ipython
 PIP        := $(VENVBIN)/pip
 
+BENCH      := $(VENVBIN)/bench
+
 PYTEST     := $(VENVBIN)/pytest
 CANIUSEPY3 := $(VENVBIN)/caniusepython3
 
@@ -38,7 +40,7 @@ install:
 	cat $(BASEDIR)/requirements/*.txt          > $(BASEDIR)/requirements-dev.txt
 	cat $(BASEDIR)/requirements/production.txt > $(BASEDIR)/requirements.txt
 
-	$(PIP) install -r $(BASEDIR)/requirements-dev.txt
+	$(PIP) install --upgrade -r $(BASEDIR)/requirements-dev.txt
 
 	$(PYTHON) setup.py install
 

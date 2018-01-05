@@ -2,6 +2,9 @@
 import os
 import os.path as osp
 
+# imports - third-party imports
+import git
+
 # imports - module imports
 from bench import utils
 
@@ -12,12 +15,15 @@ class Cache(object):
 
 	def create(self, exists_ok = True):
 		path = osp.join(self.location, self.dirname)
-
-		utils.makedirs(path, exists_ok = True)
+		utils.makedirs(path, exists_ok = exists_ok)
 		
-	def get(app):
-		path = osp.join(self.location, self.dirname, 'app')
-		utils.makedirs(path, exists_ok = True)
+	def get(self, app, target = None):
+		path = osp.join(self.location, self.dirname)
+		dest = utils.assign_if_empty(target, os.getcwd())
 
-		# if not osp.exists(osp.join(path, app)):
-			
+		# check url
+		if not utils.check_url(app, raise_err = False):
+			pass
+
+		git.Repo.clone_from(app , path)
+		git.Repo.clone_from(path, dest)
