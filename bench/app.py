@@ -13,6 +13,9 @@ import bench
 import sys
 import shutil
 
+# imports - module imports
+from bench.cache import Cache
+
 logging.basicConfig(level="DEBUG")
 logger = logging.getLogger(__name__)
 
@@ -48,7 +51,15 @@ def write_appstxt(apps, bench_path='.'):
 	with open(os.path.join(bench_path, 'sites', 'apps.txt'), 'w') as f:
 		return f.write('\n'.join(apps))
 
-def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbose=False):
+def get_app(app, branch=None, bench_path='.', build_asset_files=True, verbose=False):
+	cache = Cache()
+	cache.create()
+
+	if cache.get(app):
+
+
+	
+
 	#less verbose app install
 	if '/' not in git_url:
 		git_url = 'https://github.com/frappe/' + git_url
