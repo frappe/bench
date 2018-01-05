@@ -1,9 +1,14 @@
-import os, sys, shutil, subprocess, logging, itertools, requests, json, platform, select, pwd, grp, multiprocessing, hashlib
+import sys, shutil, subprocess, logging, itertools, requests, json, platform, select, pwd, grp, multiprocessing, hashlib
 from distutils.spawn import find_executable
 import bench
 from bench import env
 from six import iteritems
 
+# imports - compatibility imports
+from urllib.parse import urlparse
+
+# imports - standard imports
+import os, errno
 
 class PatchError(Exception):
 	pass
@@ -768,3 +773,22 @@ def run_playbook(playbook_name, extra_vars=None):
 	if extra_vars:
 		args.extend(['-e', json.dumps(extra_vars)])
 	subprocess.check_call(args, cwd=os.path.join(os.path.dirname(bench.__path__[0]), 'playbooks'))
+
+def makedirs(dirs, exists_ok = False):
+	try:
+		os.makedirs(dirs)
+	except OSError as e:
+		if not exists_ok and e.errno != errno.EEXIST:
+			raise
+
+def assign_if_empty(a, b):
+	if not a:
+		a = b
+	return a
+
+def check_url(string, raise_err = False):
+	if not urlparse(string).scheme:
+		if raise_err:
+			raise TypeError('Not a valid URL.')
+
+	return True
