@@ -19,5 +19,5 @@ class Cache(object):
 		path = osp.join(self.location, self.dirname, 'app')
 		utils.makedirs(path, exists_ok = True)
 
-		if not osp.exists(osp.join(path, app)):
+		# if not osp.exists(osp.join(path, app)):
 			

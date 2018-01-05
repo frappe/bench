@@ -55,11 +55,6 @@ def get_app(app, branch=None, bench_path='.', build_asset_files=True, verbose=Fa
 	cache = Cache()
 	cache.create()
 
-	if cache.get(app):
-
-
-	
-
 	#less verbose app install
 	if '/' not in git_url:
 		git_url = 'https://github.com/frappe/' + git_url
