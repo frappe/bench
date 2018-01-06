@@ -1,3 +1,4 @@
+caniusepython3
 Click
 jinja2
 virtualenv
@@ -7,3 +8,4 @@ psutil
 python-crontab
 semantic_version
 GitPython
+pytest

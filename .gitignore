@@ -1,8 +1,2 @@
-*.pyc
-*.py~
-*.swp
-.DS_Store
-build/
-dist/
-*.egg-info/
-tags
+.venv
+*.egg-info
