@@ -9,7 +9,12 @@
 
 - name: Add apt repository
   apt_repository:
-    repo: 'deb [arch=amd64,i386] http://nyc2.mirrors.digitalocean.com/mariadb/repo/10.1/debian {{ ansible_distribution_release }} main'
+    repo: 'deb [arch=amd64,i386] http://ams2.mirrors.digitalocean.com/mariadb/repo/{{ mariadb_version }}/debian {{ ansible_distribution_release }} main'
+    state: present
+
+- name: Add apt repository
+  apt_repository:
+    repo: 'deb-src [arch=amd64,i386] http://ams2.mirrors.digitalocean.com/mariadb/repo/{{ mariadb_version }}/debian {{ ansible_distribution_release }} main'
     state: present
 
 - name: Unattended package installation
