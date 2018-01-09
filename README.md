@@ -114,11 +114,11 @@ If you are on a fresh server and logged in as root, use --user flag to create a 
 
 	python install.py --develop --user frappe
 
-For developer setup:
+For developer setup [branch - develop(experimental) && setup mode - developer]:
 
 	sudo python install.py --develop
 
-For production:
+For production [branch - master(stable) && setup mode - production]:
 
 	sudo python install.py --production
 
