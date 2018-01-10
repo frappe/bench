@@ -27,5 +27,5 @@
     - mariadb-server
     - mariadb-client
     - mariadb-common
-    - libmariadbclient-dev
+    - libmariadbclient18
     - python-mysqldb
