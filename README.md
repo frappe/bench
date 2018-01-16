@@ -183,6 +183,6 @@ Guides
 Resources
 =======
 
-- [Background Services](https://frappe.github.io/frappe/user/en/bench/resources/background-services.html)
-- [Bench Commands Cheat Sheet](https://frappe.github.io/frappe/user/en/bench/resources/bench-commands-cheatsheet.html)
-- [Bench Procfile](https://frappe.github.io/frappe/user/en/bench/resources/bench-procfile.html)
+- [Background Services](https://frappe.io/docs/user/en/bench/resources/background-services.html)
+- [Bench Commands Cheat Sheet](https://frappe.io/docs/user/en/bench/resources/bench-commands-cheatsheet.html)
+- [Bench Procfile](https://frappe.io/docs/user/en/bench/resources/bench-procfile.html)
