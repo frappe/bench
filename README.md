@@ -132,7 +132,7 @@ For production:
 #### How do I start ERPNext
 
 1. For development: Go to your bench folder (`frappe-bench` by default) and start the bench with `bench start`
-2. For production: Your process will be setup and managed by `nginx` and `supervisor`. [Setup Production](https://frappe.github.io/frappe/user/en/bench/guides/setup-production.html)
+2. For production: Your process will be setup and managed by `nginx` and `supervisor`. [Setup Production](https://frappe.io/docs/user/en/bench/guides/setup-production.html)
 
 ---
 
@@ -170,13 +170,13 @@ You can also run the parts of the bench selectively.
 
 Guides
 =======
-- [Configuring HTTPS](https://frappe.github.io/frappe/user/en/bench/guides/configuring-https.html)
-- [Using Let's Encrypt to setup HTTPS](https://frappe.github.io/frappe/user/en/bench/guides/lets-encrypt-ssl-setup.html)
-- [Diagnosing the Scheduler](https://frappe.github.io/frappe/user/en/bench/guides/diagnosing-the-scheduler.html)
-- [Change Hostname](https://frappe.github.io/frappe/user/en/bench/guides/adding-custom-domains)
-- [Manual Setup](https://frappe.github.io/frappe/user/en/bench/guides/manual-setup.html)
-- [Setup Production](https://frappe.github.io/frappe/user/en/bench/guides/setup-production.html)
-- [Setup Multitenancy](https://frappe.github.io/frappe/user/en/bench/guides/setup-multitenancy.html)
+- [Configuring HTTPS](https://frappe.io/docs/user/en/bench/guides/configuring-https.html)
+- [Using Let's Encrypt to setup HTTPS](https://frappe.io/docs/user/en/bench/guides/lets-encrypt-ssl-setup.html)
+- [Diagnosing the Scheduler](https://frappe.io/docs/user/en/bench/guides/diagnosing-the-scheduler.html)
+- [Change Hostname](https://frappe.io/docs/user/en/bench/guides/adding-custom-domains)
+- [Manual Setup](https://frappe.io/docs/user/en/bench/guides/manual-setup.html)
+- [Setup Production](https://frappe.io/docs/user/en/bench/guides/setup-production.html)
+- [Setup Multitenancy](https://frappe.io/docs/user/en/bench/guides/setup-multitenancy.html)
 - [Stopping Production](https://github.com/frappe/bench/wiki/Stopping-Production-and-starting-Development)
 
 
