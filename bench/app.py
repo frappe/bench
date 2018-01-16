@@ -1,3 +1,11 @@
+# imports - standard imports
+import os.path as osp, errno
+try:
+	from urlparse import urlparse, urljoin
+except ImportError:
+	from urllib.parse import urlparse, urljoin
+import io
+
 import os
 from .utils import (exec_cmd, get_frappe, check_git_for_shallow_clone, build_assets,
 	restart_supervisor_processes, get_cmd_output, run_frappe_cmd, CommandFailedError)
@@ -48,39 +56,59 @@ def write_appstxt(apps, bench_path='.'):
 	with open(os.path.join(bench_path, 'sites', 'apps.txt'), 'w') as f:
 		return f.write('\n'.join(apps))
 
-def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbose=False):
-	#less verbose app install
-	if '/' not in git_url:
-		git_url = 'https://github.com/frappe/' + git_url
-	#Gets repo name from URL
-	repo_name = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
-	logger.info('getting app {}'.format(repo_name))
-	shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
-	branch = '--branch {branch}'.format(branch=branch) if branch else ''
+def get_app(app, branch=None, bench_path='.', build_asset_files=True, verbose=False):
+	cachepath   = osp.join(osp.expanduser('~'), '.frappe')
+	cappspath   = osp.join(cachepath,  'apps')
+	bappspath   = osp.join(bench_path, 'apps')
 
-	exec_cmd("git clone {git_url} {branch} {shallow_clone} --origin upstream".format(
-				git_url=git_url,
-				shallow_clone=shallow_clone,
-				branch=branch),
-			cwd=os.path.join(bench_path, 'apps'))
+	try:
+		os.makedirs(cappspath)
+	except OSError as e:
+		if e.errno != errno.EEXIST:
+			raise
+	
+	if urlparse(app).scheme:
+		url     = app
+	else:
+		url     = urljoin('https://github.com/frappe', app)
+		
+	name    	= osp.splitext(osp.basename(url))[0]
 
-	#Retrieves app name from setup.py
-	app_path = os.path.join(bench_path, 'apps', repo_name, 'setup.py')
-	with open(app_path, 'rb') as f:
-		app_name = re.search(r'name\s*=\s*[\'"](.*)[\'"]', f.read().decode('utf-8')).group(1)
-		if repo_name != app_name:
-			apps_path = os.path.join(os.path.abspath(bench_path), 'apps')
-			os.rename(os.path.join(apps_path, repo_name), os.path.join(apps_path, app_name))
+	capppath    = osp.join(cappspath, name)
+	command     = 'git clone {remote} {branch} {shallow} --origin upstream'.format(
+		remote  = url,
+		branch  = '--branch {branch}'.format(branch = branch) if branch else '',
+		shallow = '--depth 1' if check_git_for_shallow_clone() else ''
+	)
 
-	print('installing', app_name)
-	install_app(app=app_name, bench_path=bench_path, verbose=verbose)
+	if not osp.exists(capppath):
+		exec_cmd(command, cwd = cappspath)
+
+	exec_cmd('git clone {source} {target}'.format(
+		source  = capppath,
+		target  = osp.join(bench_path, 'apps', name)
+	))
+
+	setup = osp.join(bench_path, 'apps', name, 'setup.py')
+	with io.open(setup, 'r', encoding = 'utf-8') as f:
+		content    = f.read()
+		registered = re.search(r'name\s*=\s*[\'"](.*)[\'"]', content).group(1)
+
+		if name != registered:
+			os.rename(osp.join(bappspath, name), osp.join(bappspath, registered))
+
+	install_app(
+		app 	   = name,
+		bench_path = bench_path,
+		verbose    = verbose
+	)
 
 	if build_asset_files:
-		build_assets(bench_path=bench_path)
-	conf = get_config(bench_path=bench_path)
-	if conf.get('restart_supervisor_on_update'):
-		restart_supervisor_processes(bench_path=bench_path)
-
+		build_assets(bench_path = bench_path)
+	config = get_config(bench_path = bench_path)
+	if config.get('restart_supervisor_on_update'):
+		restart_supervisor_processes(bench_path = bench_path)
+		
 def new_app(app, bench_path='.'):
 	# For backwards compatibility
 	app = app.lower().replace(" ", "_").replace("-", "_")
