@@ -12,6 +12,8 @@
   - name: move /tmp/.bench if it exists
     command: 'cp -R /tmp/.bench {{ bench_repo_path }}'
     when: tmp_bench.stat.exists and not bench_repo_register.stat.exists
+    become: yes
+    become_user: frappe
 
   - name: install bench
     pip: name={{ bench_repo_path }} extra_args='-e'
