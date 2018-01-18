@@ -20,6 +20,7 @@
       dest: "/var/run/mysqld/mysqld.sock"
       state: link
     become: yes
+    become_user: root
 
   - name: Link mysql.pid file for MariaDB
     file:
@@ -27,14 +28,13 @@
       dest: "/var/run/mysqld/mysqld.pid"
       state: link
     become: yes
+    become_user: root
 
   - name: create a new default site 
     command: bench new-site site1.local --admin-password {{ admin_password }} --mariadb-root-password {{ mysql_root_password }}
     args:
       chdir: "{{ bench_path }}"
     when: not site_folder.stat.exists
-    become: yes
-    become_user: frappe
 
   - name: install erpnext to default site
     command: bench --site site1.local install-app erpnext
