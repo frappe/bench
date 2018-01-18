@@ -14,6 +14,22 @@
     stat: path="{{ bench_path }}/sites/site1.local"
     register: site_folder
 
+  - name: Add additional conf for MariaDB 10.2 in mariadb.conf.d
+    blockinfile:
+      path: /etc/mysql/mariadb.conf.d/erpnext.cnf
+      block: |
+        [mysqld]
+        pid-file        = /var/run/mysqld/mysqld.pid
+        socket          = /var/run/mysqld/mysqld.sock
+      create: yes
+    become: yes
+    become_user: root
+
+  - name: restart mysql
+    service: name=mysql state=restarted
+    become: yes
+    become_user: root
+
   - name: create a new default site 
     command: bench new-site site1.local --admin-password {{ admin_password }} --mariadb-root-password {{ mysql_root_password }}
     args:
