@@ -59,6 +59,3 @@ slow-query-log-file            = /var/lib/mysql/mysql-slow.log
 
 [mysql]
 default-character-set = utf8mb4
-
-# Import all .cnf files from configuration directory
-!includedir /etc/mysql/mariadb.conf.d/
