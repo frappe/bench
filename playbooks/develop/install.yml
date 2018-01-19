@@ -13,8 +13,8 @@
 - name: setup bench and dev environment
   hosts: localhost
   vars:
-    bench_repo_path: "/home/{{ ansible_user_id }}/.bench"
-    bench_path: "/home/{{ ansible_user_id }}/{{ bench_name }}"
+    bench_repo_path: "/home/{{ frappe_user }}/.bench"
+    bench_path: "/home/{{ frappe_user }}/{{ bench_name }}"
   tasks:
   # setup frappe-bench
   - include: includes/setup_bench.yml
