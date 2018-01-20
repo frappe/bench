@@ -13,15 +13,23 @@ from bench.app import remove_from_exclided_appsstxt
 
 @click.command('exclude-app')
 @click.argument('app_name')
-def exclude_update(app_name):
-	"""Update bench"""
+def exclude_app_for_update(app_name):
+	"""
+	Update bench exclude app for update
+
+	:param app_name(str): App name
+	"""
 	add_to_excluded_appstxt(app_name)
 	return
 
 
 @click.command('include-app')
 @click.argument('app_name')
-def include_update(app_name):
-    """Update bench"""
-    add_to_excluded_appstxt(app_name)
-    return
+def include_app_for_update(app_name):
+	"""
+	Update bench include app for update.
+
+	:param app_name(str): App name
+	"""
+	remove_from_exclided_appsstxt(app_name)
+	return
