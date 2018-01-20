@@ -70,21 +70,21 @@ def get_excluded_apps(bench_path='.'):
 	except IOError:
 		return []
 
-def add_to_excluded_appstxt(app, bench_path='.'):
+def add_to_excluded_apps_txt(app, bench_path='.'):
 	apps = get_excluded_apps(bench_path=bench_path)
 	if app not in apps:
 		apps.append(app)
-		return write_excluded_appstxt(apps, bench_path=bench_path)
+		return write_excluded_apps_txt(apps, bench_path=bench_path)
 
-def write_excluded_appstxt(apps, bench_path='.'):
+def write_excluded_apps_txt(apps, bench_path='.'):
 	with open(os.path.join(bench_path, 'sites', 'excluded_apps.txt'), 'w') as f:
 		return f.write('\n'.join(apps))
 
-def remove_from_exclided_appsstxt(app, bench_path='.'):
-	apps = get_apps(bench_path=bench_path)
+def remove_from_excluded_apps_txt(app, bench_path='.'):
+	apps = get_excluded_apps(bench_path=bench_path)
 	if app in apps:
 		apps.remove(app)
-		return write_excluded_appstxt(apps, bench_path=bench_path)
+		return write_excluded_apps_txt(apps, bench_path=bench_path)
 
 def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbose=False):
 	# from bench.utils import check_url
@@ -188,7 +188,6 @@ def remove_app(app, bench_path='.'):
 def pull_all_apps(bench_path='.', reset=False, exclude=True):
 	'''Check all apps if there no local changes, pull'''
 	rebase = '--rebase' if get_config(bench_path).get('rebase_on_pull') else ''
-	print("Pull all apps {}".format(exclude))
 	# chech for local changes
 	if not reset:
 		for app in get_apps(bench_path=bench_path):

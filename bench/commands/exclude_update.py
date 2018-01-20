@@ -8,8 +8,8 @@ bench exclude-app <app-name>
 
 
 import click
-from bench.app import add_to_excluded_appstxt
-from bench.app import remove_from_exclided_appsstxt
+from bench.app import add_to_excluded_apps_txt
+from bench.app import remove_from_excluded_apps_txt
 
 @click.command('exclude-app')
 @click.argument('app_name')
@@ -19,7 +19,7 @@ def exclude_app_for_update(app_name):
 
 	:param app_name(str): App name
 	"""
-	add_to_excluded_appstxt(app_name)
+	add_to_excluded_apps_txt(app_name)
 	return
 
 
@@ -31,5 +31,5 @@ def include_app_for_update(app_name):
 
 	:param app_name(str): App name
 	"""
-	remove_from_exclided_appsstxt(app_name)
+	remove_from_excluded_apps_txt(app_name)
 	return

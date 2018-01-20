@@ -21,7 +21,7 @@ from bench import patches
 @click.option('--no-backup', is_flag=True)
 @click.option('--force', is_flag=True)
 @click.option('--reset', is_flag=True, help="Hard resets git branch's to their new states overriding any changes and overriding rebase on pull")
-def update(exclude=False, pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, requirements=False, no_backup=False, force=False, reset=False):
+def update(exclude_apps=False, pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, requirements=False, no_backup=False, force=False, reset=False):
 	"""Update bench"""
 	if not (pull or patch or build or bench or requirements):
 		pull, patch, build, bench, requirements = True, True, True, True, True
@@ -34,7 +34,7 @@ def update(exclude=False, pull=False, patch=False, build=False, bench=False, aut
 	if bench and conf.get('update_bench_on_update'):
 		update_bench()
 		restart_update({
-		        'exclude': exclude,
+				'exclude-apps': exclude_apps,
 				'pull': pull,
 				'patch': patch,
 				'build': build,
@@ -57,7 +57,7 @@ def update(exclude=False, pull=False, patch=False, build=False, bench=False, aut
 		print("This would take significant time to migrate and might break custom apps.")
 		click.confirm('Do you want to continue?', abort=True)
 
-	_update(exclude, pull, patch, build, bench, auto, restart_supervisor, requirements, no_backup, force=force, reset=reset)
+	_update(exclude_apps, pull, patch, build, bench, auto, restart_supervisor, requirements, no_backup, force=force, reset=reset)
 
 def _update(exclude=False, pull=False, patch=False, build=False, update_bench=False, auto=False, restart_supervisor=False,
 		requirements=False, no_backup=False, bench_path='.', force=False, reset=False):

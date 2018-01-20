@@ -278,7 +278,6 @@ def update_bench():
 
 	# bench-repo folder
 	cwd = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-	print(cwd)
 	exec_cmd("git pull", cwd=cwd)
 
 def setup_sudoers(user):
