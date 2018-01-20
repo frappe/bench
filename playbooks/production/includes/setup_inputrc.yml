@@ -3,7 +3,7 @@
   tasks:
   - name: insert/update inputrc for history
     blockinfile:
-      dest: "/home/{{ ansible_user_id }}/.inputrc"
+      dest: "/home/{{ frappe_user }}/.inputrc"
       create: yes
       block: |
         ## arrow up

@@ -1,7 +1,7 @@
 ---
   - hosts: localhost
     vars:
-      bench_path: "/home/{{ ansible_user_id }}/{{ bench_name }}"
+      bench_path: "/home/{{ frappe_user }}/{{ bench_name }}"
 
     tasks:
 
@@ -9,6 +9,33 @@
     - name: Check whether a site exists
       stat: path="{{ bench_path }}/sites/{{ site }}"
       register: site_folder
+
+    - name: Add additional conf for MariaDB 10.2 in mariadb.conf.d
+      blockinfile:
+        path: /etc/mysql/conf.d/settings.cnf
+        block: |
+          # Import all .cnf files from configuration directory
+          !includedir /etc/mysql/mariadb.conf.d/
+      become: yes
+      become_user: root
+      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
+
+    - name: Add additional conf for MariaDB 10.2 in mariadb.conf.d
+      blockinfile:
+        path: /etc/mysql/mariadb.conf.d/erpnext.cnf
+        block: |
+          [mysqld]
+          pid-file        = /var/run/mysqld/mysqld.pid
+          socket          = /var/run/mysqld/mysqld.sock
+        create: yes
+      become: yes
+      become_user: root
+      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
+
+    - name: restart mysql
+      service: name=mysql state=restarted
+      become: yes
+      become_user: root
 
     - name: Create new site
       command: bench new-site {{ site }} --admin-password {{ admin_password }} --mariadb-root-password {{ mysql_root_password }}
@@ -36,9 +63,9 @@
       become: yes
       become_user: root
       file:
-        dest: '{{ ansible_env.HOME }}'
-        owner: '{{ ansible_user_id }}'
-        group: '{{ ansible_user_id }}'
+        dest: '/home/{{ frappe_user }}'
+        owner: '{{ frappe_user }}'
+        group: '{{ frappe_user }}'
         mode: 0755
         recurse: yes
         state: directory
@@ -46,14 +73,14 @@
     - name: Setup production
       become: yes
       become_user: root
-      command: bench setup production {{ ansible_user_id }}
+      command: bench setup production {{ frappe_user }}
       args:
         chdir: '{{ bench_path }}'
 
     - name: Setup Sudoers
       become: yes
       become_user: root
-      command: bench setup sudoers {{ ansible_user_id }}
+      command: bench setup sudoers {{ frappe_user }}
       args:
         chdir: '{{ bench_path }}'
 
