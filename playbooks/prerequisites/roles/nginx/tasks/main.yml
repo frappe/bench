@@ -40,6 +40,10 @@
   notify: restart nginx
   when: setup_www_redirect
 
+- name: Enable SELinux
+  selinux: policy=targeted state=permissive
+  when: ansible_distribution == 'CentOS'
+
 - name: Ensure nginx is started and enabled to start at boot.
   service: name=nginx state=started enabled=yes
 
