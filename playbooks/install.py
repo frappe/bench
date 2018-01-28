@@ -58,8 +58,6 @@ def install_bench(args):
 				'pip': 'sudo pip install --upgrade pip setuptools',
 			})
 
-	# Restricting ansible version due to following bug in ansible 2.1
-	# https://github.com/ansible/ansible-modules-core/issues/3752
 	success = run_os_command({
 		'pip': "sudo pip install ansible==2.3.1"
 	})
@@ -117,7 +115,7 @@ def install_bench(args):
 		shutil.rmtree(tmp_bench_repo)
 
 def check_distribution_compatibility():
-	supported_dists = {'ubuntu': [14, 15, 16], 'debian': [7, 8],
+	supported_dists = {'ubuntu': [14, 15, 16], 'debian': [7, 8, 9],
 		'centos': [7], 'macos': [10.9, 10.10, 10.11, 10.12]}
 
 	dist_name, dist_version = get_distribution_info()
