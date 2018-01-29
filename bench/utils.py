@@ -254,7 +254,7 @@ def add_to_crontab(line):
 			cmd = ["crontab", "-"]
 		s = subprocess.Popen(cmd, stdin=subprocess.PIPE)
 		s.stdin.write(current_crontab)
-		s.stdin.write(line + '\n')
+		s.stdin.write(line + b'\n')
 		s.stdin.close()
 
 def read_crontab():
