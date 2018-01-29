@@ -247,6 +247,7 @@ def setup_backups(bench_path='.'):
 
 def add_to_crontab(line):
 	current_crontab = read_crontab()
+	line = str.encode(line)
 	if not line in current_crontab:
 		cmd = ["crontab"]
 		if platform.system() == 'FreeBSD':
