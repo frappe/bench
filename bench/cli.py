@@ -95,7 +95,9 @@ def get_frappe_commands(bench_path='.'):
 	if not os.path.exists(sites_path):
 		return []
 	try:
-		return json.loads(get_cmd_output("{python} -m frappe.utils.bench_helper get-frappe-commands".format(python=python), cwd=sites_path))
+		output = get_cmd_output("{python} -m frappe.utils.bench_helper get-frappe-commands".format(python=python), cwd=sites_path)
+		output = output.decode('utf-8')
+		return json.loads(output)
 	except subprocess.CalledProcessError:
 		return []
 
