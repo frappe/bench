@@ -4,15 +4,13 @@ import click, sys, json
 def setup():
 	"Setup bench"
 	pass
-
-
+	
 @click.command('sudoers')
 @click.argument('user')
 def setup_sudoers(user):
 	"Add commands to sudoers list for execution without password"
 	from bench.utils import setup_sudoers
 	setup_sudoers(user)
-
 
 @click.command('nginx')
 @click.option('--yes', help='Yes to regeneration of nginx config file', default=False, is_flag=True)
