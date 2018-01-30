@@ -347,7 +347,9 @@ def check_cmd(cmd, cwd='.'):
 def get_git_version():
 	'''returns git version from `git --version`
 	extracts version number from string `get version 1.9.1` etc'''
-	version = get_cmd_output("git --version").strip().split()[2]
+	version = get_cmd_output("git --version")
+	version = version.decode('utf-8')
+	version = version.strip().split()[2]
 	version = '.'.join(version.split('.')[0:2])
 	return float(version)
 
