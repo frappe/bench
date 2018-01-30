@@ -1,6 +1,6 @@
 <div align="center">
     <img src="https://github.com/frappe/design/blob/master/logos/bench-logo.svg" height="128">
-    <h2 style="margin-bottom:1em">Frappe Bench</h2>
+    <h2>Frappe Bench</h2>
 </div>
 
 [![Build Status](https://travis-ci.org/frappe/bench.svg?branch=master)](https://travis-ci.org/frappe/bench)
