@@ -792,3 +792,4 @@ def run_playbook(playbook_name, extra_vars=None, tag=None):
 		args.extend(['-t', tag])
 	
 	subprocess.check_call(args, cwd=os.path.join(os.path.dirname(bench.__path__[0]), 'playbooks'))
+	
