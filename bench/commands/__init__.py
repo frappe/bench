@@ -71,3 +71,101 @@ bench_command.add_command(remote_urls)
 
 from bench.commands.install import install
 bench_command.add_command(install)
+
+# If you're scared with this code, contact me at <achilles@frappe.io>
+import contextlib
+import os, shutil, tempfile
+
+@contextlib.contextmanager
+def tempchdir(dirpath, cleanup):
+	import os.path as osp
+	basedir = os.getcwd()
+	os.chdir(osp.expanduser(dirpath))
+	try:
+		yield
+	finally:
+		os.chdir(basedir)
+		cleanup()
+
+@contextlib.contextmanager
+def tempdir():
+	import tempfile
+	dirpath = tempfile.mkdtemp()
+	def cleanup():
+		shutil.rmtree(dirpath)
+	with tempchdir(dirpath, cleanup):
+		yield dirpath
+
+@click.command('migrate-env')
+@click.argument('python', type = click.Choice(['python2', 'python3']))
+@click.option('--from', 'from_', help = 'Path to virtual environment to migrate to')
+@click.option('--no-backup', default = False, help = 'Do not backup the existing Virtual Environment')
+def migrate_env(python, from_ = None, no_backup = False):
+	"""
+	Migrate Virtual Environment to desired Python Version.
+	"""
+	import os
+	import os.path as osp
+
+	from bench.utils import which
+	python = which(python)
+
+	path   = os.getcwd()
+	# This is with the assumption that a bench is set-up within path.
+	try:
+		with tempdir() as dirpath:
+			virtualenv = which('virtualenv')
+			
+			nvenv      = 'env'
+			pvenv      = osp.join(dirpath, nvenv)
+			
+			from bench.utils import exec_cmd
+			exec_cmd('{virtualenv} --python {python} {pvenv}'.format(
+				virtualenv = virtualenv,
+				python     = python,
+				pvenv      = pvenv
+			), cwd = dirpath)
+
+			# TODO: Options
+
+			papps  = osp.join(path, 'apps')
+			for app in os.listdir(papps):
+				papp = osp.join(papps, app)
+				if osp.isdir(papp) and osp.exists(osp.join(papp, 'setup.py')):
+					pip = osp.join(pvenv, 'bin', 'pip')
+					exec_cmd('{pip} install -e {app}'.format(
+						pip = pip, app = papp
+					))
+
+			# I know, bad name for a flag. Thanks, Ameya! :| - <achilles@frappe.io>
+			if not no_backup:
+				# Back, the f*ck up.
+				parch = osp.join(path, 'archived_envs')
+				if not osp.exists(parch):
+					os.mkdir(parch)
+				
+				# Simply moving. Thanks, Ameya.
+				# I'm keen to zip.
+				source = osp.join(path, 'env')
+				target = parch
+
+				print('Backing up Virtual Environment')
+				from datetime import datetime
+				stamp  = datetime.now().strftime('%Y%m%d_%H%M%S')
+				dest   = osp.join(path, str(stamp))
+				
+				os.rename(source, dest)
+				shutil.move(dest, target)
+			
+			print('Setting up a New Virtual Environment')
+			source = pvenv
+			target = path
+
+			shutil.move(source, target)
+		
+		print('Migration Successful')
+	except:
+		print('Migration Error')
+		raise
+
+bench_command.add_command(migrate_env)
