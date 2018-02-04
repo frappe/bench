@@ -1,5 +1,5 @@
 ---
-#- include: setup_essentials.yml
+#- include_tasks: setup_essentials.yml
 
 - name: "Setup prerequisites"
   hosts: localhost
@@ -80,10 +80,10 @@
       - libldap2-dev
     when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
-  - include: ubuntu.yml
+  - include_tasks: ubuntu.yml
     when: ansible_distribution == 'Ubuntu'
 
-  - include: debian.yml
+  - include_tasks: debian.yml
     when: ansible_distribution == 'Debian'
 
   # Prerequisite for MACOS

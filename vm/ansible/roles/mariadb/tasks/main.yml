@@ -1,8 +1,8 @@
 ---
-- include: centos.yml
+- include_tasks: centos.yml
   when: ansible_distribution == 'CentOS' and ansible_distribution_major_version|int >= 6
 
-- include: ubuntu.yml
+- include_tasks: ubuntu.yml
   when: ansible_distribution == 'Ubuntu' and ansible_distribution_version == '14.04'
 
 - name: Add configuration
@@ -13,6 +13,6 @@
 - name: Start and enable service
   service: name=mysql state=started enabled=yes
 
-- include: mysql_secure_installation.yml
+- include_tasks: mysql_secure_installation.yml
   debug: var=mysql_secure_installation
   when: mysql_secure_installation and mysql_root_password is defined

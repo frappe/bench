@@ -9,10 +9,10 @@
   when: nginx_user is not defined
 
 # Setup/install tasks.
-- include: setup-RedHat.yml
+- include_tasks: setup-RedHat.yml
   when: ansible_os_family == 'RedHat'
 
-- include: setup-Debian.yml
+- include_tasks: setup-Debian.yml
   when: ansible_os_family == 'Debian'
 
 # Nginx setup.
@@ -28,4 +28,4 @@
 - name: Ensure nginx is started and enabled to start at boot.
   service: name=nginx state=started enabled=yes
 
-- include: vhosts.yml
+- include_tasks: vhosts.yml

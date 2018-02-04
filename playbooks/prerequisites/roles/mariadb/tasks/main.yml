@@ -1,8 +1,8 @@
 ---
-- include: centos.yml
+- include_tasks: centos.yml
   when: ansible_distribution == 'CentOS' and ansible_distribution_major_version|int >= 6
 
-- include: ubuntu.yml
+- include_tasks: ubuntu.yml
   when: ansible_distribution == 'Ubuntu'
 
 - name: Add configuration
@@ -10,7 +10,7 @@
   when: mysql_conf_tpl != 'change_me' and ansible_distribution != 'Debian'
   notify: restart mysql
 
-- include: debian.yml
+- include_tasks: debian.yml
   when: ansible_distribution == 'Debian'
 
 - name: Add configuration
@@ -24,7 +24,7 @@
 - debug:
     msg: "{{ mysql_root_password }}"
 
-- include: mysql_secure_installation.yml
+- include_tasks: mysql_secure_installation.yml
   when: mysql_root_password is defined
 
 - debug: var=mysql_secure_installation

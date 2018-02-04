@@ -59,7 +59,7 @@ def install_bench(args):
 			})
 
 	success = run_os_command({
-		'pip': "sudo pip install ansible==2.3.1"
+		'pip': "sudo pip install ansible==2.4.1"
 	})
 
 	if not success:
@@ -93,7 +93,7 @@ def install_bench(args):
 		repo_path = os.path.join(os.path.expanduser('~'), 'bench')
 
 	extra_vars.update(repo_path=repo_path)
-	run_playbook('develop/create_user.yml', extra_vars=extra_vars)
+	run_playbook('prerequisites/create_user.yml', extra_vars=extra_vars)
 
 	extra_vars.update(get_passwords(args))
 	if args.production:

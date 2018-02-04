@@ -1,5 +1,5 @@
 ---
-- include: base.yml
+- include_tasks: base.yml
 - name: Clone bench
   hosts: all
   user: "{{ frappe_user }}"

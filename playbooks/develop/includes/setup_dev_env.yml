@@ -17,4 +17,4 @@
 
 
  # Setup an ERPNext site called site1.local
- - include: includes/setup_erpnext.yml
+ - include_tasks: includes/setup_erpnext.yml
