@@ -45,7 +45,6 @@ def setup_fonts():
 	from bench.utils import setup_fonts
 	setup_fonts()
 
-
 @click.command('production')
 @click.argument('user')
 @click.option('--yes', help='Yes to regeneration config', is_flag=True, default=False)
