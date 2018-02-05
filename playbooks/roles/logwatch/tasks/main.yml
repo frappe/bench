@@ -1,0 +1,13 @@
+---
+- name: Install logwatch
+  yum: name=logwatch state=present
+  when: ansible_distribution == 'CentOS'
+
+- name: Install logwatch on Ubuntu or Debian
+  apt: name=logwatch state=present
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: Copy logwatch config
+  template: src=logwatch.conf.j2 dest=/etc/logwatch/conf/logwatch.conf backup=yes
+  when: admin_emails is defined
+...

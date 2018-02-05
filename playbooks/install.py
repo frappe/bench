@@ -13,8 +13,8 @@ def install_bench(args):
 
 	success = run_os_command({
 		'apt-get': [
-			'sudo apt-get update',
-			'sudo apt-get install -y git build-essential python-setuptools python-dev libffi-dev libssl-dev'
+			'sudo apt-get update'
+			# 'sudo apt-get install -y git build-essential python-setuptools python-dev libffi-dev libssl-dev'
 		],
 		'yum': [
 			'sudo yum groupinstall -y "Development tools"',
@@ -93,7 +93,7 @@ def install_bench(args):
 		repo_path = os.path.join(os.path.expanduser('~'), 'bench')
 
 	extra_vars.update(repo_path=repo_path)
-	run_playbook('prerequisites/create_user.yml', extra_vars=extra_vars)
+	run_playbook('create_user.yml', extra_vars=extra_vars)
 
 	extra_vars.update(get_passwords(args))
 	if args.production:
@@ -105,11 +105,12 @@ def install_bench(args):
 	bench_name = 'frappe-bench' if not args.bench_name else args.bench_name
 	extra_vars.update(bench_name=bench_name)
 
-	if args.develop:
-		run_playbook('develop/install.yml', sudo=True, extra_vars=extra_vars)
+	# Will install ERPNext production setup by default
+	run_playbook('site.yml', sudo=True, extra_vars=extra_vars)
 
-	elif args.production:
-		run_playbook('production/install.yml', sudo=True, extra_vars=extra_vars)
+	# # Will do changes for production if --production flag is passed
+	# if args.production:
+	# 	run_playbook('production.yml', sudo=True, extra_vars=extra_vars)
 
 	if os.path.exists(tmp_bench_repo):
 		shutil.rmtree(tmp_bench_repo)
@@ -147,7 +148,7 @@ def install_python27():
 
 	# install python 2.7
 	success = run_os_command({
-		'apt-get': 'sudo apt-get install -y python2.7',
+		'apt-get': 'sudo apt-get install -y python-dev',
 		'yum': 'sudo yum install -y python27',
 		'brew': 'brew install python'
 	})

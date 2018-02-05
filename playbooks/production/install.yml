@@ -1,9 +1,0 @@
----
-  # Install the common pre-requisites for the setting up bench
-  - include_tasks: ../develop/install.yml
-
-  - include_tasks: includes/setup_inputrc.yml
-
-  # Setup Bench for production environment
-  - include_tasks: includes/setup_bench_production.yml
-    when: not run_travis

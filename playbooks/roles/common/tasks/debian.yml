@@ -1,0 +1,56 @@
+---
+
+- name: Install prerequisites using apt-get
+  become: yes
+  become_user: root
+  apt: pkg={{ item }} state=present force=yes
+  with_items:
+    - dnsmasq
+    - fontconfig
+    - git                     # Version control
+    - htop                    # Server stats
+    - libcrypto++-dev
+    - libfreetype6-dev
+    - liblcms2-dev
+    - libssl-dev
+    - libwebp-dev
+    - libxext6
+    - libxrender1
+    - libxslt1-dev
+    - libxslt1.1
+    - libffi-dev
+    - ntp                     # Clock synchronization
+    - postfix                 # Mail Server
+    - python-dev              # Installing python developer suite 
+    - python3-dev
+    - python-tk               # Why !?
+    - screen
+    - vim
+    - xfonts-75dpi
+    - xfonts-base
+    - zlib1g-dev
+    - apt-transport-https
+    - libsasl2-dev
+    - libldap2-dev
+
+- name: Install pillow prerequisites for Debian < 8 and Ubuntu < 14.04
+  apt: pkg={{ item }} state=present force=yes
+  with_items:
+   - libjpeg8-dev
+   - libtiff4-dev
+   - tcl8.5-dev
+   - tk8.5-dev
+  when: (ansible_distribution == "Debian" and ansible_distribution_major_version < "8") or
+        (ansible_distribution == "Ubuntu" and ansible_distribution_major_version < "14")
+
+- name: Install pillow prerequisites for Debian >= 8 and Ubuntu >= 14.04
+  apt: pkg={{ item }} state=present force=yes
+  with_items:
+   - libjpeg8-dev
+   - libtiff5-dev
+   - tcl8.6-dev
+   - tk8.6-dev
+  when: (ansible_distribution == "Debian" and ansible_distribution_major_version >= "8") or
+        (ansible_distribution == "Ubuntu" and ansible_distribution_major_version >= "16")
+
+...
