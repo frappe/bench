@@ -101,17 +101,6 @@ def tempdir():
 	with tempchdir(dirpath, cleanup):
 		yield dirpath
 
-def copytree(source, destination, symlinks = False, ignore = None):
-	for f in os.listdir(source):
-		
-		s = os.path.join(source, f)
-		d = os.path.join(destination, f)
-
-		if os.path.isdir(s):
-			shutil.copytree(s, d, symlinks, ignore)
-		else:
-			shutil.copy2(s, d)
-
 @click.command('migrate-env')
 @click.argument('python', type = click.Choice(['python2', 'python3']))
 @click.option('--no-backup', default = False, help = 'Do not backup the existing Virtual Environment')
