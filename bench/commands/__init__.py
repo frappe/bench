@@ -1,5 +1,17 @@
 import click
 
+import os, shutil, tempfile
+import os.path as osp
+import contextlib
+import logging
+
+from datetime import datetime
+
+from bench.utils import which, exec_cmd
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.ERROR)
+
 def print_bench_version(ctx, param, value):
 	"""Prints current bench version"""
 	if not value or ctx.resilient_parsing:
@@ -72,13 +84,8 @@ bench_command.add_command(remote_urls)
 from bench.commands.install import install
 bench_command.add_command(install)
 
-# If you're scared with this code, contact me at <achilles@frappe.io>
-import contextlib
-import os, shutil, tempfile
-
 @contextlib.contextmanager
 def tempchdir(dirpath, cleanup):
-	import os.path as osp
 	basedir = os.getcwd()
 	os.chdir(osp.expanduser(dirpath))
 	try:
@@ -89,7 +96,6 @@ def tempchdir(dirpath, cleanup):
 
 @contextlib.contextmanager
 def tempdir():
-	import tempfile
 	dirpath = tempfile.mkdtemp()
 	def cleanup():
 		shutil.rmtree(dirpath)
@@ -98,16 +104,12 @@ def tempdir():
 
 @click.command('migrate-env')
 @click.argument('python', type = click.Choice(['python2', 'python3']))
-@click.option('--from', 'from_', help = 'Path to virtual environment to migrate to')
 @click.option('--no-backup', default = False, help = 'Do not backup the existing Virtual Environment')
-def migrate_env(python, from_ = None, no_backup = False):
+def migrate_env(python, no_backup = False):
 	"""
 	Migrate Virtual Environment to desired Python Version.
 	"""
-	import os
-	import os.path as osp
 
-	from bench.utils import which
 	python = which(python)
 
 	path   = os.getcwd()
@@ -118,8 +120,7 @@ def migrate_env(python, from_ = None, no_backup = False):
 			
 			nvenv      = 'env'
 			pvenv      = osp.join(dirpath, nvenv)
-			
-			from bench.utils import exec_cmd
+
 			exec_cmd('{virtualenv} --python {python} {pvenv}'.format(
 				virtualenv = virtualenv,
 				python     = python,
@@ -149,23 +150,26 @@ def migrate_env(python, from_ = None, no_backup = False):
 				source = osp.join(path, 'env')
 				target = parch
 
-				print('Backing up Virtual Environment')
-				from datetime import datetime
+				log.debug('Backing up Virtual Environment')
 				stamp  = datetime.now().strftime('%Y%m%d_%H%M%S')
 				dest   = osp.join(path, str(stamp))
 				
 				os.rename(source, dest)
 				shutil.move(dest, target)
 			
-			print('Setting up a New Virtual Environment')
+			log.debug('Setting up a New Virtual {python} Environment'.format(
+				python = python
+			))
 			source = pvenv
 			target = path
 
 			shutil.move(source, target)
 		
-		print('Migration Successful')
+		log.debug('Migration Successful to {python}'.format(
+			python = python
+		))
 	except:
-		print('Migration Error')
+		log.debug('Migration Error')
 		raise
 
 bench_command.add_command(migrate_env)
