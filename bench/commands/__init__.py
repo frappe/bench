@@ -26,7 +26,6 @@ def print_bench_version(ctx, param, value):
 def bench_command(bench_path='.'):
 	"""Bench manager for Frappe"""
 	import bench
-	from bench.app import get_current_frappe_version
 	from bench.utils import setup_logging
 
 	bench.set_frappe_version(bench_path=bench_path)
