@@ -26,7 +26,6 @@ def print_bench_version(ctx, param, value):
 def bench_command(bench_path='.'):
 	"""Bench manager for Frappe"""
 	import bench
-	from bench.app import get_current_frappe_version
 	from bench.utils import setup_logging
 
 	bench.set_frappe_version(bench_path=bench_path)
@@ -117,7 +116,7 @@ def migrate_env(python, no_backup = False):
 	try:
 		with tempdir() as dirpath:
 			virtualenv = which('virtualenv')
-			
+
 			nvenv      = 'env'
 			pvenv      = osp.join(dirpath, nvenv)
 
@@ -129,9 +128,12 @@ def migrate_env(python, no_backup = False):
 
 			# TODO: Options
 
-			papps  = osp.join(path, 'apps')
-			for app in os.listdir(papps):
-				papp = osp.join(papps, app)
+			apps_path = osp.join(path, 'apps')
+			apps  = os.listdir(apps_path)
+			apps = ['frappe'] + [app for app in apps if app!='frappe']
+
+			for app in apps:
+				papp = osp.join(apps_path, app)
 				if osp.isdir(papp) and osp.exists(osp.join(papp, 'setup.py')):
 					pip = osp.join(pvenv, 'bin', 'pip')
 					exec_cmd('{pip} install -e {app}'.format(
@@ -144,7 +146,7 @@ def migrate_env(python, no_backup = False):
 				parch = osp.join(path, 'archived_envs')
 				if not osp.exists(parch):
 					os.mkdir(parch)
-				
+
 				# Simply moving. Thanks, Ameya.
 				# I'm keen to zip.
 				source = osp.join(path, 'env')
@@ -153,10 +155,10 @@ def migrate_env(python, no_backup = False):
 				log.debug('Backing up Virtual Environment')
 				stamp  = datetime.now().strftime('%Y%m%d_%H%M%S')
 				dest   = osp.join(path, str(stamp))
-				
+
 				os.rename(source, dest)
 				shutil.move(dest, target)
-			
+
 			log.debug('Setting up a New Virtual {python} Environment'.format(
 				python = python
 			))
@@ -164,7 +166,7 @@ def migrate_env(python, no_backup = False):
 			target = path
 
 			shutil.move(source, target)
-		
+
 		log.debug('Migration Successful to {python}'.format(
 			python = python
 		))
