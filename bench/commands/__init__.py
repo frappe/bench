@@ -1,8 +1,7 @@
 import click
 
-import os, shutil, tempfile
+import os, shutil
 import os.path as osp
-import contextlib
 import logging
 
 from datetime import datetime
@@ -82,24 +81,6 @@ bench_command.add_command(remote_urls)
 
 from bench.commands.install import install
 bench_command.add_command(install)
-
-@contextlib.contextmanager
-def tempchdir(dirpath, cleanup):
-	basedir = os.getcwd()
-	os.chdir(osp.expanduser(dirpath))
-	try:
-		yield
-	finally:
-		os.chdir(basedir)
-		cleanup()
-
-@contextlib.contextmanager
-def tempdir():
-	dirpath = tempfile.mkdtemp()
-	def cleanup():
-		shutil.rmtree(dirpath)
-	with tempchdir(dirpath, cleanup):
-		yield dirpath
 
 @click.command('migrate-env')
 @click.argument('python', type = click.Choice(['python2', 'python3']))
