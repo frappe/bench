@@ -83,7 +83,7 @@ from bench.commands.install import install
 bench_command.add_command(install)
 
 @click.command('migrate-env')
-@click.argument('python', type = click.Choice(['python2', 'python3']))
+@click.argument('python', type = str)
 @click.option('--no-backup', default = False, help = 'Do not backup the existing Virtual Environment')
 def migrate_env(python, no_backup = False):
 	"""
@@ -99,7 +99,7 @@ def migrate_env(python, no_backup = False):
 			parch = osp.join(path, 'archived_envs')
 			if not osp.exists(parch):
 				os.mkdir(parch)
-			
+
 			# Simply moving. Thanks, Ameya.
 			# I'm keen to zip.
 			source = osp.join(path, 'env')
@@ -108,18 +108,18 @@ def migrate_env(python, no_backup = False):
 			log.debug('Backing up Virtual Environment')
 			stamp  = datetime.now().strftime('%Y%m%d_%H%M%S')
 			dest   = osp.join(path, str(stamp))
-			
+
 			# WARNING: This is an archive, you might have to use virtualenv --relocate
 			# That's because virtualenv creates symlinks with shebangs pointing to executables.
-			
+
 			# ...and shutil.copytree is a f*cking mess.
 			os.rename(source, dest)
 			shutil.move(dest, target)
-		
+
 		log.debug('Setting up a New Virtual {python} Environment'.format(
 			python = python
 		))
-		
+
 		# Path to Python Executable (Basically $PYTHONPTH)
 		python     = which(python)
 

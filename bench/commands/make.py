@@ -2,7 +2,7 @@ import click
 
 @click.command()
 @click.argument('path')
-@click.option('--python', type = click.Choice(['python2', 'python3']), default = 'python2', help = 'Path to Python Executable.')
+@click.option('--python', type = str, default = 'python2', help = 'Path to Python Executable.')
 @click.option('--ignore-exist', is_flag = True, default = False, help = "Ignore if Bench instance exists.")
 @click.option('--apps_path', default=None, help="path to json files with apps to install after init")
 @click.option('--frappe-path', default=None, help="path to frappe repo")
