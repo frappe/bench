@@ -135,6 +135,9 @@ def migrate_env(python, no_backup = False):
 			pvenv      = pvenv
 		), cwd = path)
 
+		pip = osp.join(pvenv, 'bin', 'pip')
+		exec_cmd('{pip} install --upgrade pip'.format(pip=pip))
+		exec_cmd('{pip} install --upgrade setuptools'.format(pip=pip))
 		# TODO: Options
 
 		papps  = osp.join(path, 'apps')
@@ -143,7 +146,6 @@ def migrate_env(python, no_backup = False):
 		for app in apps:
 			papp = osp.join(papps, app)
 			if osp.isdir(papp) and osp.exists(osp.join(papp, 'setup.py')):
-				pip = osp.join(pvenv, 'bin', 'pip')
 				exec_cmd('{pip} install -e {app}'.format(
 					pip = pip, app = papp
 				))

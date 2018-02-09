@@ -68,10 +68,11 @@ def setup_backups():
 	setup_backups()
 
 @click.command('env')
-def setup_env():
+@click.option('--python', type = str, default = 'python', help = 'Path to Python Executable.')
+def setup_env(python='python'):
 	"Setup virtualenv for bench"
 	from bench.utils import setup_env
-	setup_env()
+	setup_env(python=python)
 
 @click.command('firewall')
 @click.option('--ssh_port')

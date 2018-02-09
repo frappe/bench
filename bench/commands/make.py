@@ -2,7 +2,7 @@ import click
 
 @click.command()
 @click.argument('path')
-@click.option('--python', type = str, default = 'python2', help = 'Path to Python Executable.')
+@click.option('--python', type = str, default = 'python', help = 'Path to Python Executable.')
 @click.option('--ignore-exist', is_flag = True, default = False, help = "Ignore if Bench instance exists.")
 @click.option('--apps_path', default=None, help="path to json files with apps to install after init")
 @click.option('--frappe-path', default=None, help="path to frappe repo")
@@ -16,7 +16,7 @@ import click
 def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups,
 		no_auto_update, clone_from, verbose, skip_redis_config_generation,
 		ignore_exist = False,
-		python 		 = 'python2'): # Let's change we're ready. - <achilles@frappe.io>
+		python 		 = 'python'): # Let's change we're ready. - <achilles@frappe.io>
 	'''
 	Create a New Bench Instance.
 	'''
