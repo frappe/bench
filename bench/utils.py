@@ -29,7 +29,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None,
 		verbose=False, clone_from=None, skip_redis_config_generation=False,
 		ignore_exist = False,
-		python		 = 'python2'): # Let's change when we're ready. - <achilles@frappe.io>
+		python		 = 'python'): # Let's change when we're ready. - <achilles@frappe.io>
 	from .app import get_app, install_apps_from_path
 	from .config.common_site_config import make_config
 	from .config import redis
@@ -152,7 +152,7 @@ def which(executable, raise_err = False):
 
 	return exec_
 
-def setup_env(bench_path='.', python = 'python2'):
+def setup_env(bench_path='.', python = 'python'):
 	python = which(python, raise_err = True)
 
 	exec_cmd('virtualenv -q {} -p {}'.format('env', python), cwd=bench_path)
