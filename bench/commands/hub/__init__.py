@@ -19,7 +19,7 @@ hub.add_command(setup)
 @click.option('--validate', is_flag = True, default = False, help = 'Validate Bench Instances')
 def init(bench = None, group = None, validate = False):
     """
-    Initialize a Group of Benches for hubmarket.org
+    Initialize a Bench / Group of Benches for hubmarket.org
     """
     from bench.hub import init
     init(bench = bench, group = group, validate = validate)
@@ -27,10 +27,12 @@ def init(bench = None, group = None, validate = False):
 hub.add_command(init)
 
 @click.command('start')
-def start():
+@click.option('-d', '--daemonize', is_flag = True, help = 'Run Hub in background.')
+def start(daemonize = False):
     """
     Start the Hub Processes
     """
-    pass
+    from bench.hub import start
+    start(daemonize = daemonize)
 
 hub.add_command(start)

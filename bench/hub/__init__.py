@@ -5,7 +5,8 @@ import os.path as osp
 
 from bench.hub.config import set_config
 from bench.hub.bench  import Bench, check_bench
-from bench.hub.util   import assign_if_empty
+from bench.hub.util   import assign_if_empty, which
+from bench.hub.setup  import setup_procfile
 
 def init(bench = None, group = None, validate = False):
     benches = [Bench(path) for path in bench if check_bench(path, raise_err = validate)]
@@ -25,4 +26,17 @@ def init(bench = None, group = None, validate = False):
                 bench = bench
             ))
 
-    
+    setup_procfile()
+
+def start(daemonize = False):
+    if daemonize:
+        pass
+    else:
+        procfile = setup_procfile()
+        honcho   = which('honcho')
+
+        args     = [honcho, 'start',
+            '-f', procfile
+        ]
+
+        os.execv(honcho, args)
