@@ -14,14 +14,15 @@ hub.add_command(install)
 hub.add_command(setup)
 
 @click.command('init')
-@click.option('-b', '--bench', type = str, multiple = True, default = 'Path to Bench Instances')
-@click.option('-g', '--group', type = str, default = 'Path to Group of Benches')
-def init(bench = None, group = None):
+@click.option('-b', '--bench', type = str, multiple = True,  help = 'Path to Bench Instances')
+@click.option('-g', '--group', type = str,  default = None,  help = 'Path to Group of Benches')
+@click.option('--validate', is_flag = True, default = False, help = 'Validate Bench Instances')
+def init(bench = None, group = None, validate = False):
     """
     Initialize a Group of Benches for hubmarket.org
     """
     from bench.hub import init
-    init(bench = bench, group = group)
+    init(bench = bench, group = group, validate = validate)
 
 hub.add_command(init)
 

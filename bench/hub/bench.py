@@ -1,5 +1,8 @@
 import os
 import os.path as osp
+import json
+
+import subprocess
 
 def check_bench(path, raise_err = False):
     """
@@ -21,5 +24,33 @@ class Bench(object):
 
         self.path = path
 
+    def get_config(self):
+        path = osp.join(self.path, 'sites', 'common_site_config.json')
+
+        with open(path, 'r') as f:
+            config = json.load(f)
+        
+        return config
+
+    def has_app(self, app, installed = False):
+        path = osp.join(self.path, 'apps', app)
+        if osp.exists(path):
+            if installed:
+                pip  = osp.join(self.path, 'env', 'bin', 'pip')
+                out  = subprocess.check_output('{pip} show {app}'.format(
+                    pip = pip, app = app
+                ), shell = True)
+                
+                if out:
+                    return True
+                else:
+                    return False
+                    
+            return True
+
+        return False
+
+    def __repr__(self):
+        return '<Bench {path}>'.format(path = self.path)
 
         
