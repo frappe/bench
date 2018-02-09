@@ -23,3 +23,6 @@ def which(executable, raise_err = False):
             executable = executable
         ))
     return exec_
+
+def popen(command):
+    pass

@@ -52,5 +52,3 @@ class Bench(object):
 
     def __repr__(self):
         return '<Bench {path}>'.format(path = self.path)
-
-        

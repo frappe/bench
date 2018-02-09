@@ -1,5 +1,7 @@
 import click
 
+from bench.hub.config import set_config
+
 @click.group('setup')
 def setup():
     """

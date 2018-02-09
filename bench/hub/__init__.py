@@ -8,7 +8,7 @@ from bench.hub.bench  import Bench, check_bench
 from bench.hub.util   import assign_if_empty, which
 from bench.hub.setup  import setup_procfile
 
-def init(bench = None, group = None, validate = False):
+def init(bench = None, group = None, validate = False, reinit = False):
     benches = [Bench(path) for path in bench if check_bench(path, raise_err = validate)]
     group   = assign_if_empty(group, os.getcwd())
 
@@ -26,7 +26,7 @@ def init(bench = None, group = None, validate = False):
                 bench = bench
             ))
 
-    setup_procfile()
+    setup_procfile(reinit = reinit)
 
 def start(daemonize = False):
     if daemonize:

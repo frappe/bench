@@ -6,20 +6,19 @@ import json
 
 from bench.hub.setup  import setup_config
 from bench.hub.util   import makedirs
-
-class Config(dict):
-    pass
     
 def set_config(key, value):
+    path   = setup_config()
+
     pconf  = osp.join(path, 'config.json')
-    config = Config()
+    config = dict()
 
     if not osp.exists(pconf):
         with open(pconf, 'w') as f:
             json.dump(config, f)
 
     with open(pconf, 'r') as f:
-        config = json.load(f)
+        config  = json.load(f)
 
     with open(pconf, 'w') as f:
         json.dump(config, f)
