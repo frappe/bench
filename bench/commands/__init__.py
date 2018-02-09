@@ -158,3 +158,6 @@ def migrate_env(python, no_backup = False):
 		raise
 
 bench_command.add_command(migrate_env)
+
+from bench.commands.hub import hub
+bench_command.add_command(hub)
