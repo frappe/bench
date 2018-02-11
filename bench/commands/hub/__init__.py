@@ -29,6 +29,16 @@ def init(bench = None, group = None, validate = False, reinit = False):
 
 hub.add_command(init)
 
+@click.command('migrate')
+def migrate():
+    """
+    Migrate registered Site Databases to Hub Database.
+    """
+    from bench.hub import migrate
+    migrate()
+
+hub.add_command(migrate)
+
 @click.command('start')
 @click.option('-d', '--daemonize', is_flag = True, help = 'Run Hub in background.')
 def start(daemonize = False):

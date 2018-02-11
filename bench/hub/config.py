@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+from collections import MutableMapping
+
 import os.path as osp
 import json
 
@@ -24,6 +26,27 @@ class Config(dict):
                 config  = Config(**{ k: config })
 
         self.super.update(config)
+
+def get_config(key = None):
+    path   = setup_config()
+    pconf  = osp.join(path, 'config.json')
+
+    with open(pconf, 'r') as f:
+        config  = Config(json.load(f))
+
+    if not key:
+        return config
+    else:
+        value = None
+
+        keys  = key.split('.')
+        for key in keys:
+            if isinstance(value, MutableMapping):
+                value = value[key]
+            else:
+                value = config[key]
+
+        return value
     
 def set_config(key, value):
     path   = setup_config()
