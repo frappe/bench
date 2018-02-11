@@ -14,10 +14,10 @@ def install():
     pass
 
 @click.command('elasticsearch')
-@click.option('--upgrade', is_flag = True, default = False, help = 'Upgrade elasticsearch')
-@click.option('--with-logstash', 'logstash', help  = 'Install Logstash')
-@click.option('--with-kibana',   'kibana',   help  = 'Install Kibana')
-@click.option('--verbose', is_flag = True, default = True,  help = 'Display a verbose output')
+@click.option('--upgrade', is_flag = True, default = False,  help = 'Upgrade elasticsearch')
+@click.option('--with-logstash', 'logstash', is_flag = True, help = 'Install Logstash')
+@click.option('--with-kibana',   'kibana',   is_flag = True, help = 'Install Kibana')
+@click.option('--quiet',   is_flag = True, default = True,   help = 'Display a verbose output')
 def elasticsearch(upgrade = False, logstash = False, kibana = False, verbose = True):
     """
     Install elasticsearch
@@ -28,7 +28,7 @@ def elasticsearch(upgrade = False, logstash = False, kibana = False, verbose = T
             'elasticsearch',
             'logstash' if logstash else None,
             'kibana'   if kibana   else None
-        ]), upgrade = upgrade, verbose = verbose)
+        ]), upgrade = upgrade, verbose = not quiet)
     else:
         raise NotImplementedError
 
