@@ -61,7 +61,7 @@ def health(verbose = False):
 
 @click.command('doctor')
 @click.option('--force', is_flag = True, default = False, help = 'Force Healing (Force Stop / Restart Processes).')
-def doctor():
+def doctor(force = False):
     """
     Diagnose and Heal Hub issues.
     """

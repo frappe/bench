@@ -7,7 +7,7 @@ from bench.hub.util import popen, which
 
 log = logging.getLogger(__name__)
 
-def brew_install(formulae, upgrade = False, verbose = True):
+def brew_install(formulae, update = False, upgrade = False, verbose = True):
     brew = which('brew')
     if not brew:
         log.info('Installing HomeBrew')
@@ -16,7 +16,11 @@ def brew_install(formulae, upgrade = False, verbose = True):
             ruby = which('ruby', raise_err = True)
         ))
         
-    brew     = which('brew', raise_err = True)
+    brew = which('brew', raise_err = True)
+
+    if update:
+        popen('{brew} update'.format(brew = brew))
+
     formulae = [formulae] if isinstance(formulae, str) else formulae
     
     for formula in formulae:

@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 @click.group('install')
 def install():
     """
-    Install dependencies for hubmarket.org
+    Install dependencies for Hub
     """
     pass
 
@@ -28,7 +28,7 @@ def elasticsearch(upgrade = False, logstash = True, kibana = False, quiet = Fals
             'elasticsearch',
             'logstash' if logstash else None,
             'kibana'   if kibana   else None
-        ]), upgrade = upgrade, verbose = not quiet)
+        ]), update = True, upgrade = upgrade, verbose = not quiet)
     else:
         raise NotImplementedError
 
