@@ -41,12 +41,12 @@ class Bench(object):
         path = osp.join(self.path, 'apps', app)
         if osp.exists(path):
             if installed:
-                pip  = osp.join(self.path, 'env', 'bin', 'pip')
-                out  = popen('{pip} show {app}'.format(
+                pip       = osp.join(self.path, 'env', 'bin', 'pip')
+                out, ret  = popen('{pip} show {app}'.format(
                     pip = pip, app = app
                 ))
                 
-                if out:
+                if ret:
                     return True
                 else:
                     return False
