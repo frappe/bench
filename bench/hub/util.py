@@ -1,6 +1,7 @@
 import os
 import os.path as osp
 import errno
+import uuid
 
 import subprocess
 
@@ -42,3 +43,9 @@ def popen(command, *args, **kwargs):
         raise subprocess.CalledProcessError(return_, command)
 
     return return_
+
+def get_uuid():
+    string   = str(uuid.uuid4())
+    sanitize = string.replace('-', '')
+
+    return sanitize

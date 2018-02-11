@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import click
 
 from bench.hub.config import set_config
@@ -18,7 +20,8 @@ def search(bench, cluster, node, port):
     """
     Setup a Search-Engine for a group of Benches.
     """
-    pass
+    from bench.hub.setup import search
+    search()
 
 setup.add_command(search)
 

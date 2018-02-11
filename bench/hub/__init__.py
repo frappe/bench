@@ -4,8 +4,8 @@ import os
 import os.path as osp
 
 from bench.hub.config import Config, get_config, set_config
-from bench.hub.bench  import Bench
-from bench.hub.util   import assign_if_empty, which
+from bench.hub.bench  import Bench, check_bench
+from bench.hub.util   import assign_if_empty, which, get_uuid
 from bench.hub.setup  import setup_procfile
 
 def init(bench = None, group = None, validate = False, reinit = False):
@@ -21,7 +21,7 @@ def init(bench = None, group = None, validate = False, reinit = False):
     if not benches:
         raise ValueError('No benches found at {path}'.format(path = group))
 
-    paths = list()
+    confs = list()
     for bench in benches:
         if not bench.has_app('erpnext', installed = True) and validate:
             raise ValueError('{bench} does not have erpnext for hub installed.'.format(
@@ -29,15 +29,17 @@ def init(bench = None, group = None, validate = False, reinit = False):
             ))
         else:
             # TODO: Check if site has Hub enabled.
-            paths.append(bench.path)
+            confs.append({
+                  'id': get_uuid(),
+                'path': bench.path
+            })
             
-    set_config('benches', paths)
+    set_config('benches', confs)
 
     setup_procfile(reinit = reinit)
 
 def migrate():
-    benches = [Bench(path) for path in get_config('benches')]
-
+    benches = [Bench(conf['path']) for conf in get_config('benches')]
 
 def start(daemonize = False):
     if daemonize:

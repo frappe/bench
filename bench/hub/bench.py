@@ -86,5 +86,21 @@ class Site(object):
         self.path = path
         self.name = osp.basename(path)
 
+    def get_config(self):
+        pcom = osp.join(self.path, '..', 'common_site_config.json')
+        path = osp.join(self.path, 'site_config.json')
+
+        comm = dict()
+
+        with open(pcom, 'r') as f:
+            comm = json.load(f)
+
+        conf = dict()
+        with open(path, 'r') as f:
+            conf = json.load(f)
+            comm.update(conf)
+
+        return comm
+
     def __repr__(self):
         return '<Site {name}>'.format(name = self.name)
