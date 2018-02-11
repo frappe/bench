@@ -5,7 +5,7 @@ from bench.hub.config import set_config
 @click.group('setup')
 def setup():
     """
-    Setup Commands for hubmarket.org
+    Setup Commands for Hub
     """
     pass
 
@@ -21,3 +21,10 @@ def search(bench, cluster, node, port):
     pass
 
 setup.add_command(search)
+
+@click.command('production')
+def production():
+    """
+    Setup Hub for production.
+    """
+    pass

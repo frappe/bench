@@ -7,7 +7,7 @@ from bench.commands.hub.setup   import setup
 @click.group('hub')
 def hub():
     """
-    Setup Bench for hubmarket.org
+    Setup Bench for Hub
     """
     pass
 
@@ -22,7 +22,7 @@ hub.add_command(setup)
 @click.option('--reinit',   is_flag = True, default = False, help = 'Reinitialize Bench Instances for Hub.')
 def init(bench = None, group = None, validate = False, reinit = False):
     """
-    Initialize a Bench / Group of Benches for hubmarket.org
+    Initialize a Bench / Group of Benches for Hub
     """
     from bench.hub import init
     init(bench = bench, group = group, validate = validate, reinit = reinit)

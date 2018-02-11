@@ -16,7 +16,7 @@ def init(bench = None, group = None, validate = False, reinit = False):
         if check_bench(path, raise_err = validate):
             bench = Bench(path)
             benches.append(bench)
-
+            
     if not benches:
         raise ValueError('No benches found at {path}'.format(path = group))
 

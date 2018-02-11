@@ -11,7 +11,8 @@ def check_bench(path, raise_err = False):
     """
     # I know, bad check.
     path = osp.join(path, 'apps', 'frappe')
-    if not osp.exists(path):
+    
+    if not osp.exists(path) and not osp.exists(osp.join(path, 'sites')):
         if raise_err:
             raise TypeError('{path} Not a Bench Instance.'.format(
                 path = path
