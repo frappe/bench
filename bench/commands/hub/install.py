@@ -15,10 +15,10 @@ def install():
 
 @click.command('elasticsearch')
 @click.option('--upgrade', is_flag = True, default = False,  help = 'Upgrade elasticsearch')
-@click.option('--with-logstash', 'logstash', is_flag = True, help = 'Install Logstash')
-@click.option('--with-kibana',   'kibana',   is_flag = True, help = 'Install Kibana')
-@click.option('--quiet',   is_flag = True, default = True,   help = 'Display a verbose output')
-def elasticsearch(upgrade = False, logstash = False, kibana = False, verbose = True):
+@click.option('--with-logstash', 'logstash', is_flag = True, default = True,  help = 'Install Logstash')
+@click.option('--with-kibana',   'kibana',   is_flag = True, default = False, help = 'Install Kibana')
+@click.option('--quiet',   is_flag = True, default = False,  help = 'Display a verbose output')
+def elasticsearch(upgrade = False, logstash = True, kibana = False, quiet = False):
     """
     Install elasticsearch
     """

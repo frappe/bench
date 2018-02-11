@@ -68,4 +68,4 @@ def doctor():
     from bench.hub.health import doctor
     doctor(force = force)
 
-hub.add_command(verbose)
+hub.add_command(doctor)
