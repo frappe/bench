@@ -40,7 +40,7 @@ def migrate():
 hub.add_command(migrate)
 
 @click.command('start')
-@click.option('-d', '--daemonize', is_flag = True, help = 'Run Hub in background.')
+@click.option('-d', '--daemonize', is_flag = True, help = 'Run Hub in background')
 def start(daemonize = False):
     """
     Start the Hub Processes
@@ -49,3 +49,23 @@ def start(daemonize = False):
     start(daemonize = daemonize)
 
 hub.add_command(start)
+
+@click.command('health')
+@click.option('--verbose', is_flag = True, default = False, help = 'Display a verbose output')
+def health(verbose = False):
+    """
+    Display current Hub Cluster / Server Node information.
+    """
+    from bench.hub.health import health
+    health(verbose = verbose)
+
+@click.command('doctor')
+@click.option('--force', is_flag = True, default = False, help = 'Force Healing (Force Stop / Restart Processes).')
+def doctor():
+    """
+    Diagnose and Heal Hub issues.
+    """
+    from bench.hub.health import doctor
+    doctor(force = force)
+
+hub.add_command(verbose)

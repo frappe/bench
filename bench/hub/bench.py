@@ -6,7 +6,6 @@ import json
 
 from bench.hub.util import popen
 
-
 def check_bench(path, raise_err = False):
     """
     """
