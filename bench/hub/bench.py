@@ -6,6 +6,7 @@ import json
 
 from bench.hub.util import popen
 
+
 def check_bench(path, raise_err = False):
     """
     """
@@ -14,18 +15,19 @@ def check_bench(path, raise_err = False):
     
     if not osp.exists(path) and not osp.exists(osp.join(path, 'sites')):
         if raise_err:
-            raise TypeError('{path} Not a Bench Instance.'.format(
+            raise TypeError('{path} not a Bench Instance.'.format(
                 path = path
             ))
         else:
             return False
     return True
-
 class Bench(object):
+
     def __init__(self, path):
         check_bench(path, raise_err = True)
 
         self.path = path
+        self.name = osp.basename(path)
 
     def get_config(self):
         path = osp.join(self.path, 'sites', 'common_site_config.json')
@@ -53,5 +55,37 @@ class Bench(object):
 
         return False
 
+    def get_sites(self):
+        sites = list()
+
+        path  = osp.join(self.path, 'sites')
+        for site in os.listdir(path):
+            abspath  = osp.join(path, site)
+            if check_site(abspath, raise_err = False):
+                site = Site(abspath)
+
+                sites.append(site)
+
+        return sites
+
     def __repr__(self):
-        return '<Bench {path}>'.format(path = self.path)
+        return '<Bench {name}>'.format(name = self.name)
+
+def check_site(path, raise_err = True):
+    if not osp.exists(osp.join(path, 'site_config.json')):
+        if raise_err:
+            raise TypeError('{path} not a Site.'.format(
+                path = path
+            ))
+        else:
+            return False
+    return True
+class Site(object):
+    def __init__(self, path):
+        check_site(path, raise_err = True)
+
+        self.path = path
+        self.name = osp.basename(path)
+
+    def __repr__(self):
+        return '<Site {name}>'.format(name = self.name)

@@ -16,10 +16,10 @@ hub.add_command(config)
 hub.add_command(setup)
 
 @click.command('init')
-@click.option('-b', '--bench', type = str, multiple = True,  help = 'Path to Bench Instances')
-@click.option('-g', '--group', type = str,  default = None,  help = 'Path to Group of Benches')
-@click.option('--validate', is_flag = True, default = False, help = 'Validate Bench Instances')
-@click.option('--reinit',   is_flag = True, default = False, help = 'Reinitialize Bench Instances for Hub.')
+@click.option('-b', '--bench',  type = str, multiple = True,  help = 'Path to Bench Instances')
+@click.option('-g', '--group',  type = str,  default = None,  help = 'Path to Group of Benches')
+@click.option('--validate', is_flag = True, default = False,  help = 'Validate Bench Instances')
+@click.option('--reinit',   is_flag = True, default = False,  help = 'Reinitialize Bench Instances for Hub.')
 def init(bench = None, group = None, validate = False, reinit = False):
     """
     Initialize a Bench / Group of Benches for Hub
