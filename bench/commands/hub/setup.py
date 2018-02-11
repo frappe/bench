@@ -7,7 +7,7 @@ from bench.hub.config import set_config
 @click.group('setup')
 def setup():
     """
-    Setup Commands for Hub
+    Setup commands for Hub
     """
     pass
 

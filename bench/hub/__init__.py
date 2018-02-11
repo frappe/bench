@@ -19,7 +19,8 @@ def init(bench = None, group = None, validate = False, reinit = False):
             benches.append(bench)
             
     if not benches:
-        raise ValueError('No benches found at {path}'.format(path = group))
+        print('No benches found at {path}'.format(path = group))
+        return
 
     confs = list()
     for bench in benches:

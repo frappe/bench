@@ -7,7 +7,7 @@ from bench.commands.hub.setup   import setup
 @click.group('hub')
 def hub():
     """
-    Setup Bench for Hub
+    Setup Hub
     """
     pass
 
@@ -43,7 +43,7 @@ hub.add_command(migrate)
 @click.option('-d', '--daemonize', is_flag = True, help = 'Run Hub in background')
 def start(daemonize = False):
     """
-    Start the Hub Processes
+    Start Hub Processes
     """
     from bench.hub import start
     start(daemonize = daemonize)
