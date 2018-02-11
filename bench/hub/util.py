@@ -2,6 +2,8 @@ import os
 import os.path as osp
 import errno
 
+import subprocess
+
 from distutils.spawn import find_executable
 
 def makedirs(dirs, exists_ok = False):
@@ -24,5 +26,19 @@ def which(executable, raise_err = False):
         ))
     return exec_
 
-def popen(command):
-    pass
+def popen(command, *args, **kwargs):
+    output  = kwargs.get('output')
+
+    proc    = subprocess.Popen(command,
+        stdout = subprocess.PIPE,
+        stderr = subprocess.PIPE,
+        shell  = True
+    )
+
+    if output:
+        for line in proc.stdout.readlines():
+            print(line)
+
+    return_ = proc.wait()
+
+    return return_

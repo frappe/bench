@@ -1,8 +1,10 @@
+from __future__ import absolute_import
+
 import os
 import os.path as osp
 import json
 
-import subprocess
+from bench.hub.util import popen
 
 def check_bench(path, raise_err = False):
     """
@@ -37,9 +39,9 @@ class Bench(object):
         if osp.exists(path):
             if installed:
                 pip  = osp.join(self.path, 'env', 'bin', 'pip')
-                out  = subprocess.check_output('{pip} show {app}'.format(
+                out  = popen('{pip} show {app}'.format(
                     pip = pip, app = app
-                ), shell = True)
+                ))
                 
                 if out:
                     return True

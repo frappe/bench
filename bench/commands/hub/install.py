@@ -4,7 +4,7 @@ import click
 @click.group('install')
 def install():
     """
-    Install Dependencies for hubmarket.org
+    Install dependencies for hubmarket.org
     """
     pass
 
@@ -16,6 +16,7 @@ def elasticsearch():
     system = platform.system()
     if system == 'Darwin':
         pass
-    raise NotImplementedError
+    else:
+        raise NotImplementedError
 
 install.add_command(elasticsearch)
