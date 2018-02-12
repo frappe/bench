@@ -25,6 +25,9 @@ def elasticsearch(upgrade = False, logstash = True, kibana = False, quiet = Fals
     """
     system = platform.system()
     if system == 'Darwin':
+        brew_install('java8', caskroom = 'versions',
+            update = True, upgrade = upgrade, verbose = not quiet)
+
         brew_install(filter(None, [
             'elasticsearch',
             'logstash' if logstash else None,

@@ -16,12 +16,13 @@ def setup():
 @click.option('-c', '--cluster', type = str, default  = None, help = 'Cluster Name')
 @click.option('-n', '--node',    type = str, default  = None, help = 'Node Name')
 @click.option('-p', '--port',    type = int, default  = None, help = 'Port')
-def search(bench, cluster, node, port):
+@click.option('--jar',           type = str, default  = None, help = 'Path to MariaDB Java Connector')
+def search(bench, cluster, node, port, jar = None):
     """
     Setup a Search-Engine for a group of Benches.
     """
     from bench.hub.setup import search
-    search()
+    search(jar = jar)
 
 setup.add_command(search)
 

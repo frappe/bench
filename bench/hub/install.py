@@ -7,7 +7,7 @@ from bench.hub.util import popen, which
 
 log = logging.getLogger(__name__)
 
-def brew_install(formulae, update = False, upgrade = False, verbose = True):
+def brew_install(formulae, caskroom = False, update = False, upgrade = False, verbose = True):
     brew = which('brew')
     if not brew:
         log.info('Installing HomeBrew')
@@ -22,10 +22,17 @@ def brew_install(formulae, update = False, upgrade = False, verbose = True):
         popen('{brew} update'.format(brew = brew))
 
     formulae = [formulae] if isinstance(formulae, str) else formulae
-    
+
+    if caskroom:
+        popen('{brew} tap caskroom/{caskroom}'.format(
+            brew     = brew,
+            caskroom = caskroom
+        ))
+        
     for formula in formulae:
-        ret = popen('{brew} install {formula}'.format(
+        ret = popen('{brew} {cask} install {formula}'.format(
             brew    = brew,
+            cask    = 'cask' if caskroom else '',
             formula = formula
         ), output   = verbose)
 
