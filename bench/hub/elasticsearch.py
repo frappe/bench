@@ -6,7 +6,7 @@ import logging
 import elasticsearch as es
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.NOTSET)
 
 def doctype_to_index(name):
     name = name.lower()

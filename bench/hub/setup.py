@@ -43,8 +43,12 @@ def setup_procfile(reinit = False):
 
     content  = \
 """
-search: {elasticsearch}
-""".format(elasticsearch = which('elasticsearch'))
+search:    {elasticsearch}
+analytics: {kibana}
+""".format(
+    elasticsearch = which('elasticsearch'),
+    kibana        = which('kibana')
+)
 
     if not osp.exists(procfile) or reinit:
         with open(procfile, 'w') as f:

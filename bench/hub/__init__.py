@@ -42,6 +42,7 @@ def init(bench = None, group = None, validate = False, reinit = False):
             })
             
     set_config('benches', confs)
+    set_config('environment', 'development')
 
     setup_procfile(reinit = reinit)
 
@@ -63,6 +64,7 @@ def migrate(doctype = [ ], file_ = None):
         doctypes = doctypes + temp['doctype']
 
     elasitc = ESearch()
+    
     benches = [Bench(conf['path']) for conf in get_config('benches')]
     for b in benches:
         sites = b.get_sites()

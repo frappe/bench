@@ -31,12 +31,14 @@ class DataBase(object):
         )
 
     def sql(self, statement):
-        connect = self.connection
+        if not self.connection.open:
+            self.connect()
+            
         try:
-            with connect.cursor() as cursor:
+            with self.connection.cursor() as cursor:
                 cursor.execute(statement)
                 result = cursor.fetchall()
 
                 return result
         finally:
-            connect.close()
+            self.connection.close()
