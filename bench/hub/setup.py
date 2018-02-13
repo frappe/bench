@@ -69,30 +69,20 @@ def search(jar = None):
             makedirs(bconf, exists_ok = True)
 
         for site in sites:
-            sconf = site.get_config()
-            psite = osp.join(bconf, site.name)
+            sconf  = site.get_config()
+            psite  = osp.join(bconf, site.name)
             makedirs(psite, exists_ok = True)
 
-            conf  = LOGSTASH_CONFIGURATION.format(
+            dbname = sconf.get('db_name')
+            config = LOGSTASH_CONFIGURATION.format(
                 db_dialect   = 'mariadb',
                 driver_path  = jar,
-                driver_class = 'org.mariadb.jdbc.Driver',
+                driver_class = 'Java::org.mariadb.jdbc.Driver',
 
-                db_host      = sconf.get('db_host') or 'localhost',
-                db_port      = sconf.get('db_port') or 3306,
-                db_name      = sconf.get('db_name'),
-                db_user      = sconf.get('db_user') or '',
-                db_pass      = sconf.get('db_password'),
-
-                statement    = 'SELECT * FROM tabItem',
-
-                es_index     = 'Items',
-                es_doctype   = 'Item',
-                es_id        = '%{name}',
-
-                es_host      = 'localhost',
-                es_port      = 9200
+                db_name      = dbname,
+                db_host      = sconf.get('db_host', 'localhost'),
+                db_port      = sconf.get('db_port', 3306),
+                
+                db_user      = sconf.get('db_user', dbname),
+                db_pass      = sconf.get('db_password', '')
             )
-
-            with open('foo.conf', 'w') as f:
-                f.write(conf)

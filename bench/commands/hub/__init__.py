@@ -30,12 +30,14 @@ def init(bench = None, group = None, validate = False, reinit = False):
 hub.add_command(init)
 
 @click.command('migrate')
-def migrate():
+@click.option('-d', '--doctype', type = str, multiple = True,  help = 'DocType to migrate')
+@click.option('-f', '--file',    type = str, default  = False, help = 'Tool from File')
+def migrate(doctype, file):
     """
     Migrate registered Site Databases to Hub Database.
     """
     from bench.hub import migrate
-    migrate()
+    migrate(doctype = doctype, file = file)
 
 hub.add_command(migrate)
 

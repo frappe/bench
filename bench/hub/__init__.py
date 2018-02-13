@@ -3,10 +3,12 @@ from __future__ import absolute_import
 import os
 import os.path as osp
 
-from bench.hub.config import Config, get_config, set_config
-from bench.hub.bench  import Bench, check_bench
-from bench.hub.util   import assign_if_empty, which, get_uuid
-from bench.hub.setup  import setup_procfile
+from bench.hub.config   import Config, get_config, set_config
+from bench.hub.bench    import Bench, check_bench
+from bench.hub.util     import assign_if_empty, which, get_uuid
+from bench.hub.setup    import setup_procfile
+
+from bench.hub.database import DataBase
 
 def init(bench = None, group = None, validate = False, reinit = False):
     benches = [Bench(path) for path in bench if check_bench(path, raise_err = validate)]
@@ -39,8 +41,28 @@ def init(bench = None, group = None, validate = False, reinit = False):
 
     setup_procfile(reinit = reinit)
 
-def migrate():
+def migrate(doctype = [ ], file = None):
     benches = [Bench(conf['path']) for conf in get_config('benches')]
+    for b in benches:
+        sites = b.get_sites()
+        for site in sites:
+            sconf  = site.get_config()
+            
+            dbname = sconf.get('db_name')
+            db     = DataBase(dbname,
+                host     = sconf.get('db_host', 'localhost'),
+                port     = sconf.get('db_port', 3306),
+                user     = sconf.get('db_user', dbname), # WTF Frappe?
+                password = sconf.get('db_password'),
+                charset  = sconf.get('db_charset', 'utf8')
+            )
+            db.connect()
+
+            for doc in doctype:
+                results = db.sql("SELECT * FROM `tab{doctype}` LIMIT 1".format(
+                    doctype = doc
+                ))
+                print(results)
 
 def start(daemonize = False):
     if daemonize:

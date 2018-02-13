@@ -28,7 +28,7 @@ def brew_install(formulae, caskroom = False, update = False, upgrade = False, ve
             brew     = brew,
             caskroom = caskroom
         ))
-        
+
     for formula in formulae:
         ret = popen('{brew} {cask} install {formula}'.format(
             brew    = brew,
@@ -36,6 +36,8 @@ def brew_install(formulae, caskroom = False, update = False, upgrade = False, ve
             formula = formula
         ), output   = verbose)
 
+        # TODO: caskroom upgrade
+        
         if ret and upgrade:
             popen('{brew} upgrade {formula}'.format(
                 brew    = brew,
