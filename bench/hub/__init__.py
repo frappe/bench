@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import os
 import os.path as osp
+import json
 
 from collections import MutableMapping
 
@@ -82,7 +83,7 @@ def migrate(doctype = [ ], file_ = None):
                 fields  = doc['fields']
                 results = db.sql("SELECT {fields} FROM `tab{doctype}`".format(
                     doctype = doc['name'],
-                    fields  = fields if fields else '*',
+                    fields  = ", ".join(['name'] + fields) if fields else '*',
                 ))
 
                 elasitc.insert(doc['name'], results)
