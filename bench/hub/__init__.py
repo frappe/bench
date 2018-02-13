@@ -9,6 +9,7 @@ from bench.hub.util     import assign_if_empty, which, get_uuid
 from bench.hub.setup    import setup_procfile
 
 from bench.hub.database import DataBase
+from bench.hub.elasticsearch import ESearch
 
 def init(bench = None, group = None, validate = False, reinit = False):
     benches = [Bench(path) for path in bench if check_bench(path, raise_err = validate)]
@@ -42,6 +43,7 @@ def init(bench = None, group = None, validate = False, reinit = False):
     setup_procfile(reinit = reinit)
 
 def migrate(doctype = [ ], file = None):
+    elasitc = ESearch()
     benches = [Bench(conf['path']) for conf in get_config('benches')]
     for b in benches:
         sites = b.get_sites()
@@ -62,7 +64,7 @@ def migrate(doctype = [ ], file = None):
                 results = db.sql("SELECT * FROM `tab{doctype}` LIMIT 1".format(
                     doctype = doc
                 ))
-                print(results)
+                
 
 def start(daemonize = False):
     if daemonize:
