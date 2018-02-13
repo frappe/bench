@@ -30,14 +30,14 @@ def init(bench = None, group = None, validate = False, reinit = False):
 hub.add_command(init)
 
 @click.command('migrate')
-@click.option('-d', '--doctype', type = str, multiple = True,  help = 'DocType to migrate')
-@click.option('-f', '--file',    type = str, default  = False, help = 'Tool from File')
+@click.option('-d', '--doctype', type = str, multiple = True, help = 'DocType to migrate')
+@click.option('-f', '--file',    type = str,                  help = 'Tool from File')
 def migrate(doctype, file):
     """
     Migrate registered Site Databases to Hub Database.
     """
     from bench.hub import migrate
-    migrate(doctype = doctype, file = file)
+    migrate(doctype = doctype, file_ = file)
 
 hub.add_command(migrate)
 
@@ -71,3 +71,11 @@ def doctor(force = False):
     doctor(force = force)
 
 hub.add_command(doctor)
+
+@click.command('console')
+def console():
+    """
+    Open Hub Console.
+    """
+    from bench.hub.health import console
+    console()

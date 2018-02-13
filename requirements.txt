@@ -9,3 +9,4 @@ semantic_version
 GitPython==0.3.2.1
 PyMySQL
 elasticsearch-dsl
+IPython

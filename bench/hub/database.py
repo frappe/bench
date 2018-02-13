@@ -26,7 +26,8 @@ class DataBase(object):
             user     = self.user,
             password = self.password,
             db       = self.name,
-            charset  = self.charset
+            charset  = self.charset,
+            cursorclass = pymysql.cursors.DictCursor
         )
 
     def sql(self, statement):

@@ -3,12 +3,14 @@ from __future__ import absolute_import
 import os
 import os.path as osp
 
+from collections import MutableMapping
+
 from bench.hub.config   import Config, get_config, set_config
 from bench.hub.bench    import Bench, check_bench
 from bench.hub.util     import assign_if_empty, which, get_uuid
 from bench.hub.setup    import setup_procfile
 
-from bench.hub.database import DataBase
+from bench.hub.database      import DataBase
 from bench.hub.elasticsearch import ESearch
 
 def init(bench = None, group = None, validate = False, reinit = False):
@@ -42,7 +44,23 @@ def init(bench = None, group = None, validate = False, reinit = False):
 
     setup_procfile(reinit = reinit)
 
-def migrate(doctype = [ ], file = None):
+def migrate(doctype = [ ], file_ = None):
+    doctypes = [dict(name = doc, fields = None) for doc in doctype]
+
+    # Load from file.
+    if file_:
+        path = osp.abspath(file_)
+        if not osp.exists(path):
+            raise ValueError('{file} does not exist.'.format(file = file))
+
+        with open(path, 'r') as f:
+            temp = json.load(f)
+            
+        if isinstance(temp['doctype'], MutableMapping):
+            temp['doctype'] = [temp['doctype']]
+
+        doctypes = doctypes + temp['doctype']
+
     elasitc = ESearch()
     benches = [Bench(conf['path']) for conf in get_config('benches')]
     for b in benches:
@@ -60,11 +78,14 @@ def migrate(doctype = [ ], file = None):
             )
             db.connect()
 
-            for doc in doctype:
-                results = db.sql("SELECT * FROM `tab{doctype}` LIMIT 1".format(
-                    doctype = doc
+            for doc in doctypes:
+                fields  = doc['fields']
+                results = db.sql("SELECT {fields} FROM `tab{doctype}`".format(
+                    doctype = doc['name'],
+                    fields  = fields if fields else '*',
                 ))
-                
+
+                elasitc.insert(doc['name'], results)
 
 def start(daemonize = False):
     if daemonize:
