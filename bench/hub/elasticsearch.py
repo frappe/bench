@@ -6,9 +6,12 @@ import logging
 import elasticsearch as es
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.NOTSET)
+log.setLevel(logging.DEBUG)
 
 def doctype_to_index(name):
+    """
+    TODO: Should be better.
+    """
     name = name.lower()
     name = name.replace(' ', '')
 
