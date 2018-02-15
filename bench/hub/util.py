@@ -30,11 +30,13 @@ def which(executable, raise_err = False):
 def popen(command, *args, **kwargs):
     output     = kwargs.get('output', True)
     raise_err  = kwargs.get('raise_err')
+    directory  = kwargs.get('directory')
 
     proc       = subprocess.Popen(command,
         stdout = None if output else subprocess.PIPE,
         stderr = None if output else subprocess.PIPE,
-        shell  = True
+        shell  = True,
+        cwd    = directory
     )
     
     return_    = proc.wait()
