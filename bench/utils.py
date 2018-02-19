@@ -434,7 +434,7 @@ def update_npm_packages(bench_path='.'):
 	for app in os.listdir(apps_dir):
 		app_path = os.path.join(apps_dir, app)
 		if os.path.exists(os.path.join(app_path, 'package.json')):
-			exec_cmd('yarn install', cwd=app_path)
+			exec_cmd('./node_modules/.bin/yarn install', cwd=app_path)
 
 
 def install_requirements(pip, req_file):

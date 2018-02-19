@@ -1,4 +1,5 @@
-import subprocess
+import os
+from bench.utils import exec_cmd
 
 def execute(bench_path):
-	subprocess.check_output(['sudo', 'npm', 'install', '-g', 'yarn'])
+	exec_cmd('npm install yarn', os.path.join(bench_path, 'apps/frappe'))
