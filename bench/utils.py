@@ -431,13 +431,15 @@ def update_npm_packages(bench_path='.'):
 	print('Updating node libraries...')
 	apps_dir = os.path.join(bench_path, 'apps')
 
+	if not find_executable('yarn'):
+		print("Please install yarn using below command and try again.")
+		print("`npm install -g yarn`")
+		return
+
 	for app in os.listdir(apps_dir):
 		app_path = os.path.join(apps_dir, app)
 		if os.path.exists(os.path.join(app_path, 'package.json')):
-			yarn_executable = './node_modules/.bin/yarn'
-			if not os.path.exists(os.path.join(app_path, yarn_executable)):
-				exec_cmd('npm install yarn', cwd=app_path)
-			exec_cmd('{yarn} install'.format(yarn=yarn_executable), cwd=app_path)
+			exec_cmd('yarn install', cwd=app_path)
 
 
 def install_requirements(pip, req_file):
