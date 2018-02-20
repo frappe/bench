@@ -13,7 +13,8 @@ def setup_procfile(bench_path, yes=False):
 	procfile = bench.env.get_template('Procfile').render(
 		node=find_executable("node") or find_executable("nodejs"),
 		use_rq=use_rq(bench_path),
-		webserver_port=config.get('webserver_port'))
+		webserver_port=config.get('webserver_port'),
+		CI=os.environ.get('CI'))
 
 	with open(procfile_path, 'w') as f:
 		f.write(procfile)
