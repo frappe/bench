@@ -35,17 +35,6 @@ hub.add_command(init)
 def migrate(doctype, file):
     """
     Migrate registered Site Databases to Hub Database.
-
-    :param: file - Migration Map
-    {
-        "doctype":
-        [
-            {
-                  "name": "DocName",
-                "fields": ["field1", "field2"]
-            }
-        ]
-    }
     """
     from bench.hub import migrate
     migrate(doctype = doctype, file_ = file)

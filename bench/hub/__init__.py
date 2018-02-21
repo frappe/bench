@@ -82,7 +82,7 @@ def migrate(doctype = [ ], file_ = None):
             db.connect()
 
             for doc in doctypes:
-                fields  = doc['fields']
+                fields  = doc['fields'] if 'fields' in doc else [ ]
                 results = db.sql("SELECT {fields} FROM `tab{doctype}`".format(
                     doctype = doc['name'],
                     fields  = ", ".join(['name'] + fields) if fields else '*',
