@@ -99,8 +99,8 @@ on http://localhost:8000/ after `bench start`
 
 1. Update your package list: `sudo apt-get update -y`
 2. Upgrade your packages: `sudo apt-get upgrade -y`
-3. Install python 2.7 `apt-get install python-minimal -y`
-4. Install build-essentials: `apt-get install build-essential python-setuptools -y`
+3. Install python 2.7 `sudo apt-get install python-minimal -y`
+4. Install build-essentials: `sudo apt-get install build-essential python-setuptools -y`
 
 **For MacOS:**
 
