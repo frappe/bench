@@ -14,10 +14,11 @@ def setup_sudoers(user):
 
 @click.command('nginx')
 @click.option('--yes', help='Yes to regeneration of nginx config file', default=False, is_flag=True)
-def setup_nginx(yes=False):
+@click.argument('--cors', is_flag = True, default = False, help = 'Setup Cross-Origin Resource Sharing.')
+def setup_nginx(yes=False, cors=False):
 	"generate config for nginx"
 	from bench.config.nginx import make_nginx_conf
-	make_nginx_conf(bench_path=".", yes=yes)
+	make_nginx_conf(bench_path=".", yes=yes, cors=cors)
 
 @click.command('reload-nginx')
 def reload_nginx():
@@ -48,10 +49,11 @@ def setup_fonts():
 @click.command('production')
 @click.argument('user')
 @click.option('--yes', help='Yes to regeneration config', is_flag=True, default=False)
-def setup_production(user, yes=False):
+@click.argument('--cors', is_flag = True, default = False, help = 'Setup Cross-Origin Resource Sharing.')
+def setup_production(user, yes=False, cors=False):
 	"setup bench for production"
 	from bench.config.production_setup import setup_production
-	setup_production(user=user, yes=yes)
+	setup_production(user=user, yes=yes, cors=cors)
 
 
 @click.command('auto-update')

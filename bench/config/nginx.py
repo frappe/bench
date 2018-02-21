@@ -1,7 +1,7 @@
 import os, json, click, random, string, hashlib
 from bench.utils import get_sites, get_bench_name, exec_cmd
 
-def make_nginx_conf(bench_path, yes=False):
+def make_nginx_conf(bench_path, yes=False, cors=False):
 	from bench import env
 	from bench.config.common_site_config import get_config
 
@@ -25,7 +25,8 @@ def make_nginx_conf(bench_path, yes=False):
 		"error_pages": get_error_pages(),
 		"allow_rate_limiting": allow_rate_limiting,
 		# for nginx map variable
-		"random_string": "".join(random.choice(string.ascii_lowercase) for i in range(7))
+		"random_string": "".join(random.choice(string.ascii_lowercase) for i in range(7)),
+		"cors": cors
 	}
 
 	if allow_rate_limiting:
