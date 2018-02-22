@@ -4,7 +4,7 @@ import click, sys, json
 def setup():
 	"Setup bench"
 	pass
-	
+
 @click.command('sudoers')
 @click.argument('user')
 def setup_sudoers(user):
@@ -130,9 +130,18 @@ def setup_socketio():
 @click.command('requirements')
 def setup_requirements():
 	"Setup python and node requirements"
-	from bench.utils import update_requirements, update_npm_packages
+	setup_python_requirements()
+	setup_node_requirements()
+
+@click.command('python-requirements')
+def setup_python_requirements():
+	from bench.utils import update_requirements
 	update_requirements()
-	update_npm_packages()
+
+@click.command('node-requirements')
+def setup_node_requirements():
+	from bench.utils import update_node_packages
+	update_node_packages()
 
 @click.command('config')
 def setup_config():
@@ -227,6 +236,8 @@ setup.add_command(setup_env)
 setup.add_command(setup_procfile)
 setup.add_command(setup_socketio)
 setup.add_command(setup_requirements)
+setup.add_command(setup_python_requirements)
+setup.add_command(setup_node_requirements)
 setup.add_command(setup_config)
 setup.add_command(setup_fonts)
 setup.add_command(add_domain)

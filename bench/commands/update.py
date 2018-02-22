@@ -3,7 +3,7 @@ import sys, os
 from bench.config.common_site_config import get_config
 from bench.app import pull_all_apps, is_version_upgrade
 from bench.utils import (update_bench, validate_upgrade, pre_upgrade, post_upgrade, before_update,
-	update_requirements, update_npm_packages, backup_all_sites, patch_sites, build_assets, restart_supervisor_processes)
+	update_requirements, update_node_packages, backup_all_sites, patch_sites, build_assets, restart_supervisor_processes)
 from bench import patches
 
 #TODO: Not DRY
@@ -45,9 +45,9 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 	if conf.get('release_bench'):
 		print('Release bench, cannot update')
 		sys.exit(1)
-	
+
 	version_upgrade = is_version_upgrade()
-	
+
 	if version_upgrade[0]:
 		print()
 		print()
@@ -72,7 +72,7 @@ def _update(pull=False, patch=False, build=False, update_bench=False, auto=False
 
 	if requirements:
 		update_requirements(bench_path=bench_path)
-		update_npm_packages(bench_path=bench_path)
+		update_node_packages(bench_path=bench_path)
 
 	if version_upgrade[0] or (not version_upgrade[0] and force):
 		pre_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
