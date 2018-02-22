@@ -60,9 +60,9 @@ def check_url(url, raise_err = True):
 			raise TypeError('{url} Not a valid URL'.format(url = url))
 		else:
 			return False
-	
+
 	return True
-	
+
 def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbose=False):
 	# from bench.utils import check_url
 	try:
@@ -165,7 +165,7 @@ def remove_app(app, bench_path='.'):
 def pull_all_apps(bench_path='.', reset=False):
 	'''Check all apps if there no local changes, pull'''
 	rebase = '--rebase' if get_config(bench_path).get('rebase_on_pull') else ''
-	
+
 	# chech for local changes
 	if not reset:
 		for app in get_apps(bench_path=bench_path):
@@ -283,7 +283,7 @@ def get_repo_dir(app, bench_path='.'):
 	return os.path.join(bench_path, 'apps', app)
 
 def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrade=True):
-	from .utils import update_requirements, update_npm_packages, backup_all_sites, patch_sites, build_assets, pre_upgrade, post_upgrade
+	from .utils import update_requirements, update_node_packages, backup_all_sites, patch_sites, build_assets, pre_upgrade, post_upgrade
 	from . import utils
 	apps_dir = os.path.join(bench_path, 'apps')
 	version_upgrade = (False,)
@@ -323,7 +323,7 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 
 	if version_upgrade[0] and upgrade:
 		update_requirements()
-		update_npm_packages()
+		update_node_packages()
 		pre_upgrade(version_upgrade[1], version_upgrade[2])
 		reload(utils)
 		backup_all_sites()
