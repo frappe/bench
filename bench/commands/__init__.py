@@ -161,3 +161,6 @@ bench_command.add_command(migrate_env)
 
 from bench.commands.hub import hub
 bench_command.add_command(hub)
+
+from bench.commands.hook import hook
+bench_command.add_command(hook)
