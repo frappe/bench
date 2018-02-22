@@ -1,6 +1,7 @@
 import os, sys, shutil, subprocess, logging, itertools, requests, json, platform, select, pwd, grp, multiprocessing, hashlib
 from distutils.spawn import find_executable
 import bench
+import semantic_version
 from bench import env
 from six import iteritems
 
@@ -427,8 +428,19 @@ def update_requirements(bench_path='.'):
 		req_file = os.path.join(apps_dir, app, 'requirements.txt')
 		install_requirements(pip, req_file)
 
-def update_npm_packages(bench_path='.'):
-	print('Updating node libraries...')
+def update_node_packages(bench_path='.'):
+	print('Updating node packages...')
+	from bench.app import get_current_version
+	v = semantic_version.Version(get_current_version('frappe'))
+
+	# After rollup was merged, frappe_version = 10.1
+	# anything before that was npm based
+	if v.major <= 10 and v.minor < 1:
+		update_npm_packages(bench_path)
+	else:
+		update_yarn_packages(bench_path)
+
+def update_yarn_packages(bench_path='.'):
 	apps_dir = os.path.join(bench_path, 'apps')
 	pacman   = None
 	for exec_ in ['yarn', 'npm']:
@@ -449,6 +461,38 @@ def update_npm_packages(bench_path='.'):
 		app_path = os.path.join(apps_dir, app)
 		if os.path.exists(os.path.join(app_path, 'package.json')):
 			exec_cmd('yarn install', cwd=app_path)
+
+
+def update_npm_packages(bench_path='.'):
+	apps_dir = os.path.join(bench_path, 'apps')
+	package_json = {}
+
+	for app in os.listdir(apps_dir):
+		package_json_path = os.path.join(apps_dir, app, 'package.json')
+
+		if os.path.exists(package_json_path):
+			with open(package_json_path, "r") as f:
+				app_package_json = json.loads(f.read())
+				# package.json is usually a dict in a dict
+				for key, value in iteritems(app_package_json):
+					if not key in package_json:
+						package_json[key] = value
+					else:
+						if isinstance(value, dict):
+							package_json[key].update(value)
+						elif isinstance(value, list):
+							package_json[key].extend(value)
+						else:
+							package_json[key] = value
+
+	if package_json is {}:
+		with open(os.path.join(os.path.dirname(__file__), 'package.json'), 'r') as f:
+			package_json = json.loads(f.read())
+
+	with open(os.path.join(bench_path, 'package.json'), 'w') as f:
+		f.write(json.dumps(package_json, indent=1, sort_keys=True))
+
+	exec_cmd('npm install', cwd=bench_path)
 
 
 def install_requirements(pip, req_file):
