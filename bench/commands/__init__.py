@@ -158,3 +158,7 @@ def migrate_env(python, no_backup = False):
 		raise
 
 bench_command.add_command(migrate_env)
+
+# Hook Services to Apps. :dancer:
+from bench.commands.hook import hook
+bench_command.add_command(hook)
