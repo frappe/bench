@@ -27,31 +27,33 @@ def get_env_cmd(cmd, bench_path='.'):
 
 def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None,
-		verbose=False, clone_from=None, skip_bench_mkdir=False, skip_redis_config_generation=False):
+		verbose=False, clone_from=None, skip_redis_config_generation=False,
+		ignore_exist = False,
+		python		 = 'python'): # Let's change when we're ready. - <achilles@frappe.io>
 	from .app import get_app, install_apps_from_path
 	from .config.common_site_config import make_config
 	from .config import redis
 	from .config.procfile import setup_procfile
 	from bench.patches import set_all_patches_executed
 
-	if(skip_bench_mkdir):
-		pass
+	import os.path as osp
+
+	if osp.exists(path):
+		if not ignore_exist:
+			raise ValueError('Bench Instance {path} already exists.'.format(path = path))
 	else:
-		if os.path.exists(path):
-			print('Directory {} already exists!'.format(path))
-			raise Exception("Site directory already exists")
 		os.makedirs(path)
 
 	for dirname in folders_in_bench:
 		try:
 			os.makedirs(os.path.join(path, dirname))
-		except OSError, e:
+		except OSError as e:
 			if e.errno != os.errno.EEXIST:
 				pass
 
 	setup_logging()
 
-	setup_env(bench_path=path)
+	setup_env(bench_path=path, python = python)
 
 	make_config(path)
 
@@ -139,8 +141,21 @@ def exec_cmd(cmd, cwd='.'):
 	if return_code > 0:
 		raise CommandFailedError(cmd)
 
-def setup_env(bench_path='.'):
-	exec_cmd('virtualenv -q {} -p {}'.format('env', sys.executable), cwd=bench_path)
+def which(executable, raise_err = False):
+	from distutils.spawn import find_executable
+	exec_ = find_executable(executable)
+
+	if not exec_ and raise_err:
+		raise ValueError('{executable} not found.'.format(
+			executable = executable
+		))
+
+	return exec_
+
+def setup_env(bench_path='.', python = 'python'):
+	python = which(python, raise_err = True)
+
+	exec_cmd('virtualenv -q {} -p {}'.format('env', python), cwd=bench_path)
 	exec_cmd('./env/bin/pip -q install --upgrade pip', cwd=bench_path)
 	exec_cmd('./env/bin/pip -q install wheel', cwd=bench_path)
 	# exec_cmd('./env/bin/pip -q install https://github.com/frappe/MySQLdb1/archive/MySQLdb-1.2.5-patched.tar.gz', cwd=bench_path)
@@ -232,13 +247,14 @@ def setup_backups(bench_path='.'):
 
 def add_to_crontab(line):
 	current_crontab = read_crontab()
+	line = str.encode(line)
 	if not line in current_crontab:
 		cmd = ["crontab"]
 		if platform.system() == 'FreeBSD':
 			cmd = ["crontab", "-"]
 		s = subprocess.Popen(cmd, stdin=subprocess.PIPE)
 		s.stdin.write(current_crontab)
-		s.stdin.write(line + '\n')
+		s.stdin.write(line + b'\n')
 		s.stdin.close()
 
 def read_crontab():
@@ -331,7 +347,9 @@ def check_cmd(cmd, cwd='.'):
 def get_git_version():
 	'''returns git version from `git --version`
 	extracts version number from string `get version 1.9.1` etc'''
-	version = get_cmd_output("git --version").strip().split()[2]
+	version = get_cmd_output("git --version")
+	version = version.decode('utf-8')
+	version = version.strip().split()[2]
 	version = '.'.join(version.split('.')[0:2])
 	return float(version)
 
@@ -412,34 +430,17 @@ def update_requirements(bench_path='.'):
 def update_npm_packages(bench_path='.'):
 	print('Updating node libraries...')
 	apps_dir = os.path.join(bench_path, 'apps')
-	package_json = {}
+
+	if not find_executable('yarn'):
+		print("Please install yarn using below command and try again.")
+		print("`npm install -g yarn`")
+		return
 
 	for app in os.listdir(apps_dir):
-		package_json_path = os.path.join(apps_dir, app, 'package.json')
+		app_path = os.path.join(apps_dir, app)
+		if os.path.exists(os.path.join(app_path, 'package.json')):
+			exec_cmd('yarn install', cwd=app_path)
 
-		if os.path.exists(package_json_path):
-			with open(package_json_path, "r") as f:
-				app_package_json = json.loads(f.read())
-				# package.json is usually a dict in a dict
-				for key, value in iteritems(app_package_json):
-					if not key in package_json:
-						package_json[key] = value
-					else:
-						if isinstance(value, dict):
-							package_json[key].update(value)
-						elif isinstance(value, list):
-							package_json[key].extend(value)
-						else:
-							package_json[key] = value
-
-	if package_json is {}:
-		with open(os.path.join(os.path.dirname(__file__), 'package.json'), 'r') as f:
-			package_json = json.loads(f.read())
-
-	with open(os.path.join(bench_path, 'package.json'), 'w') as f:
-		f.write(json.dumps(package_json, indent=1, sort_keys=True))
-
-	exec_cmd('npm install', cwd=bench_path)
 
 def install_requirements(pip, req_file):
 	if os.path.exists(req_file):
@@ -766,11 +767,11 @@ def run_playbook(playbook_name, extra_vars=None, tag=None):
 		print("Ansible is needed to run this command, please install it using 'pip install ansible'")
 		sys.exit(1)
 	args = ['ansible-playbook', '-c', 'local', playbook_name]
-	
+
 	if extra_vars:
 		args.extend(['-e', json.dumps(extra_vars)])
-	
+
 	if tag:
 		args.extend(['-t', tag])
-	
+
 	subprocess.check_call(args, cwd=os.path.join(os.path.dirname(bench.__path__[0]), 'playbooks'))

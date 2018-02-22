@@ -37,3 +37,8 @@
     update_cache: yes
     force: yes
   when: ansible_os_family == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: Install yarn
+  command: npm install -g yarn
+  become: yes
+  become_user: root

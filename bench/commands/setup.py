@@ -4,15 +4,13 @@ import click, sys, json
 def setup():
 	"Setup bench"
 	pass
-
-
+	
 @click.command('sudoers')
 @click.argument('user')
 def setup_sudoers(user):
 	"Add commands to sudoers list for execution without password"
 	from bench.utils import setup_sudoers
 	setup_sudoers(user)
-
 
 @click.command('nginx')
 @click.option('--yes', help='Yes to regeneration of nginx config file', default=False, is_flag=True)
@@ -47,7 +45,6 @@ def setup_fonts():
 	from bench.utils import setup_fonts
 	setup_fonts()
 
-
 @click.command('production')
 @click.argument('user')
 @click.option('--yes', help='Yes to regeneration config', is_flag=True, default=False)
@@ -71,10 +68,11 @@ def setup_backups():
 	setup_backups()
 
 @click.command('env')
-def setup_env():
+@click.option('--python', type = str, default = 'python', help = 'Path to Python Executable.')
+def setup_env(python='python'):
 	"Setup virtualenv for bench"
 	from bench.utils import setup_env
-	setup_env()
+	setup_env(python=python)
 
 @click.command('firewall')
 @click.option('--ssh_port')

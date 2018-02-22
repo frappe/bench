@@ -48,10 +48,40 @@ def write_appstxt(apps, bench_path='.'):
 	with open(os.path.join(bench_path, 'sites', 'apps.txt'), 'w') as f:
 		return f.write('\n'.join(apps))
 
+def check_url(url, raise_err = True):
+	try:
+		from urlparse import urlparse
+	except ImportError:
+		from urllib.parse import urlparse
+
+	parsed = urlparse(url)
+	if not parsed.scheme:
+		if raise_err:
+			raise TypeError('{url} Not a valid URL'.format(url = url))
+		else:
+			return False
+	
+	return True
+	
 def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbose=False):
-	#less verbose app install
-	if '/' not in git_url:
-		git_url = 'https://github.com/frappe/' + git_url
+	# from bench.utils import check_url
+	try:
+		from urlparse import urljoin
+	except ImportError:
+		from urllib.parse import urljoin
+
+	if not check_url(git_url, raise_err = False):
+		orgs = ['frappe', 'erpnext']
+		for org in orgs:
+			url = 'https://api.github.com/repos/{org}/{app}'.format(org = org, app = git_url)
+			res = requests.get(url)
+			if res.ok:
+				data    = res.json()
+				if 'name' in data:
+					if git_url == data['name']:
+						git_url = 'https://github.com/{org}/{app}'.format(org = org, app = git_url)
+						break
+
 	#Gets repo name from URL
 	repo_name = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
 	logger.info('getting app {}'.format(repo_name))
@@ -239,7 +269,7 @@ def get_upstream_version(app, branch=None, bench_path='.'):
 	try:
 		contents = subprocess.check_output(['git', 'show', 'upstream/{branch}:{app}/__init__.py'.format(branch=branch, app=app)], cwd=repo_dir, stderr=subprocess.STDOUT)
 	except subprocess.CalledProcessError as e:
-		if "Invalid object" in e.output:
+		if b"Invalid object" in e.output:
 			return None
 		else:
 			raise

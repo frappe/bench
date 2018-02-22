@@ -1,5 +1,16 @@
 import click
 
+import os, shutil
+import os.path as osp
+import logging
+
+from datetime import datetime
+
+from bench.utils import which, exec_cmd
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.ERROR)
+
 def print_bench_version(ctx, param, value):
 	"""Prints current bench version"""
 	if not value or ctx.resilient_parsing:
@@ -14,7 +25,6 @@ def print_bench_version(ctx, param, value):
 def bench_command(bench_path='.'):
 	"""Bench manager for Frappe"""
 	import bench
-	from bench.app import get_current_frappe_version
 	from bench.utils import setup_logging
 
 	bench.set_frappe_version(bench_path=bench_path)
@@ -71,3 +81,80 @@ bench_command.add_command(remote_urls)
 
 from bench.commands.install import install
 bench_command.add_command(install)
+
+@click.command('migrate-env')
+@click.argument('python', type = str)
+@click.option('--no-backup', default = False, help = 'Do not backup the existing Virtual Environment')
+def migrate_env(python, no_backup = False):
+	"""
+	Migrate Virtual Environment to desired Python Version.
+	"""
+	try:
+		# This is with the assumption that a bench is set-up within path.
+		path       = os.getcwd()
+
+		# I know, bad name for a flag. Thanks, Ameya! :| - <achilles@frappe.io>
+		if not no_backup:
+			# Back, the f*ck up.
+			parch = osp.join(path, 'archived_envs')
+			if not osp.exists(parch):
+				os.mkdir(parch)
+
+			# Simply moving. Thanks, Ameya.
+			# I'm keen to zip.
+			source = osp.join(path, 'env')
+			target = parch
+
+			log.debug('Backing up Virtual Environment')
+			stamp  = datetime.now().strftime('%Y%m%d_%H%M%S')
+			dest   = osp.join(path, str(stamp))
+
+			# WARNING: This is an archive, you might have to use virtualenv --relocate
+			# That's because virtualenv creates symlinks with shebangs pointing to executables.
+
+			# ...and shutil.copytree is a f*cking mess.
+			os.rename(source, dest)
+			shutil.move(dest, target)
+
+		log.debug('Setting up a New Virtual {python} Environment'.format(
+			python = python
+		))
+
+		# Path to Python Executable (Basically $PYTHONPTH)
+		python     = which(python)
+
+
+		virtualenv = which('virtualenv')
+
+		nvenv      = 'env'
+		pvenv      = osp.join(path, nvenv)
+
+		exec_cmd('{virtualenv} --python {python} {pvenv}'.format(
+			virtualenv = virtualenv,
+			python     = python,
+			pvenv      = pvenv
+		), cwd = path)
+
+		pip = osp.join(pvenv, 'bin', 'pip')
+		exec_cmd('{pip} install --upgrade pip'.format(pip=pip))
+		exec_cmd('{pip} install --upgrade setuptools'.format(pip=pip))
+		# TODO: Options
+
+		papps  = osp.join(path, 'apps')
+		apps   = ['frappe'] + [app for app in os.listdir(papps) if app != 'frappe']
+
+		for app in apps:
+			papp = osp.join(papps, app)
+			if osp.isdir(papp) and osp.exists(osp.join(papp, 'setup.py')):
+				exec_cmd('{pip} install -e {app}'.format(
+					pip = pip, app = papp
+				))
+
+		log.debug('Migration Successful to {python}'.format(
+			python = python
+		))
+	except:
+		log.debug('Migration Error')
+		raise
+
+bench_command.add_command(migrate_env)
