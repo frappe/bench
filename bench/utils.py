@@ -428,7 +428,7 @@ def update_requirements(bench_path='.'):
 		req_file = os.path.join(apps_dir, app, 'requirements.txt')
 		install_requirements(pip, req_file)
 
-def update_node_packages():
+def update_node_packages(bench_path='.'):
 	print('Updating node packages...')
 	from bench.app import get_current_version
 	v = semantic_version.Version(get_current_version('frappe'))
@@ -436,9 +436,9 @@ def update_node_packages():
 	# After rollup was merged, frappe_version = 10.1
 	# anything before that was npm based
 	if v.major <= 10 and v.minor < 1:
-		update_npm_packages()
+		update_npm_packages(bench_path)
 	else:
-		update_yarn_packages()
+		update_yarn_packages(bench_path)
 
 def update_yarn_packages(bench_path='.'):
 	apps_dir = os.path.join(bench_path, 'apps')
