@@ -201,24 +201,30 @@ Here are your choices:
 			exec_cmd('find . -name "*.pyc" -delete', cwd=app_dir)
 
 
-def is_version_upgrade(app='frappe', bench_path='.', branch=None):
-	try:
-		fetch_upstream(app, bench_path=bench_path)
-	except CommandFailedError:
-		raise InvalidRemoteException("No remote named upstream for {0}".format(app))
+def is_version_upgrade(app=None, bench_path='.', branch=None):
+	is_upgraded = False
+	apps = [app] if app else ['frappe', 'erpnext']
+	upstream_version, local_version = '0.0.0', '0.0.0'
 
-	upstream_version = get_upstream_version(app=app, branch=branch, bench_path=bench_path)
+	for app in apps:
+		try:
+			fetch_upstream(app, bench_path=bench_path)
+		except CommandFailedError:
+			raise InvalidRemoteException("No remote named upstream for {0}".format(app))
 
-	if not upstream_version:
-		raise InvalidBranchException("Specified branch of app {0} is not in upstream".format(app))
+		upstream_version = get_upstream_version(app=app, branch=branch, bench_path=bench_path)
 
-	local_version = get_major_version(get_current_version(app, bench_path=bench_path))
-	upstream_version = get_major_version(upstream_version)
+		if not upstream_version:
+			raise InvalidBranchException("Specified branch of app {0} is not in upstream".format(app))
 
-	if upstream_version - local_version > 0:
-		return (True, local_version, upstream_version)
-
-	return (False, local_version, upstream_version)
+		local_version = get_major_version(get_current_version(app, bench_path=bench_path))
+		upstream_version = get_major_version(upstream_version)
+		
+		if upstream_version - local_version > 0:
+			is_upgraded = True
+			break
+	
+	return (is_upgraded, local_version, upstream_version)
 
 def get_current_frappe_version(bench_path='.'):
 	try:
@@ -233,7 +239,7 @@ def get_current_branch(app, bench_path='.'):
 def get_remote(app, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	contents = subprocess.check_output(['git', 'remote', '-v'], cwd=repo_dir,
-									   stderr=subprocess.STDOUT)
+				stderr=subprocess.STDOUT)
 	if re.findall('upstream[\s]+', contents):
 		remote = 'upstream'
 	else:
