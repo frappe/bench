@@ -1,5 +1,24 @@
 import os
+import errno
 import subprocess
+
+def which(executable, raise_err = False):
+	from distutils.spawn import find_executable
+	exec_ = find_executable(executable)
+
+	if not exec_ and raise_err:
+		raise ValueError('{executable} not found.'.format(
+			executable = executable
+		))
+
+	return exec_
+
+def makedirs(dirs, exists_ok = False):
+    try:
+        os.makedirs(dirs)
+    except OSError as e:
+        if not exists_ok or e.errno != errno.EEXIST:
+            raise
 
 def popen(*params, **kwargs):
     output      = kwargs.get('output', False)

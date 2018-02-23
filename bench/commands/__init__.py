@@ -164,3 +164,6 @@ bench_command.add_command(hub)
 
 from bench.commands.hook import hook
 bench_command.add_command(hook)
+
+from bench.commands.node import link
+bench_command.add_command(link)
