@@ -122,15 +122,20 @@ class App(object):
             self._hook_node(force = force)
 
     def link(self, force = False, onto = None):
-        name   = self.name
-        _, prefix, _ = popen('{npm} config get prefix'.format(npm = which('npm', raise_err = True)),
-            output = True
-        )
+        name    = self.name
         
-        source = osp.join(self.path, self.name, 'node')
-        dest   = osp.join(prefix, 'lib', 'node_modules', self.name)
+        source  = osp.join(self.path, self.name, 'node')
 
-        create = True
+        bench   = osp.abspath(osp.join(self.path, '..', '..'))
+
+        environ = osp.join(bench, 'npm')
+        nodemod = osp.join(environ, 'lib', 'node_modules')
+
+        makedirs(nodemod, exists_ok = True)
+
+        dest    = osp.join(nodemod, self.name)
+
+        create  = True
 
         if osp.exists(dest):
             if force:
