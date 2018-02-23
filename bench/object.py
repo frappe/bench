@@ -15,7 +15,7 @@ log.setLevel(logging.CRITICAL)
 
 TEMPLATE_NODE_INDEX   = \
 """
-// FrappeJS
+// Frappe-Node
 // Do something awesome!
 const frappe   = require("frappe");
 const {app}    = {{ }};
@@ -244,6 +244,19 @@ class Bench(object):
         apps = sequencify(self.get_app(app, raise_err = raise_err))
         for app in apps:
             app.link(force = force, onto = onto)
+            
+            papp    = osp.join(self.path, 'app.js')
+            content = None
+            with open(papp, 'r') as f:
+                content = f.read()
+
+            with open(papp, 'a') as f:
+                # Will break on Windows, but who the fuck cares?
+                require = 'require("./apps/{app}/{app}/node");\n'.format(
+                    app = app.name
+                )
+                if require.strip() not in content:
+                    f.write(require)
         
     def __repr__(self):
         return '<Bench {name}>'.format(name = self.name)

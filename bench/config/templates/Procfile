@@ -3,7 +3,7 @@ redis_socketio: redis-server config/redis_socketio.conf
 redis_queue: redis-server config/redis_queue.conf
 web: bench serve {% if webserver_port -%} --port {{ webserver_port }} {%- endif %}
 
-socketio: {{ node }} apps/frappe/socketio.js
+socketio: {{ node }} ./app.js
 {% if not CI %}
 watch: bench watch
 {% endif %}
