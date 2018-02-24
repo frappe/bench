@@ -129,18 +129,21 @@ def setup_socketio():
 	from bench.utils import setup_socketio
 	setup_socketio()
 
-@click.command('requirements')
-def setup_requirements():
+@click.command('requirements', help="Update Python and Node packages")
+@click.option('--node', help="Update only Node packages", default=False, is_flag=True)
+@click.option('--python', help="Update only Python packages", default=False, is_flag=True)
+def setup_requirements(node=False, python=False):
 	"Setup python and node requirements"
-	setup_python_requirements()
-	setup_node_requirements()
 
-@click.command('python-requirements')
+	if not node:
+		setup_python_requirements()
+	if not python:
+		setup_node_requirements()
+
 def setup_python_requirements():
 	from bench.utils import update_requirements
 	update_requirements()
 
-@click.command('node-requirements')
 def setup_node_requirements():
 	from bench.utils import update_node_packages
 	update_node_packages()
@@ -238,8 +241,6 @@ setup.add_command(setup_env)
 setup.add_command(setup_procfile)
 setup.add_command(setup_socketio)
 setup.add_command(setup_requirements)
-setup.add_command(setup_python_requirements)
-setup.add_command(setup_node_requirements)
 setup.add_command(setup_config)
 setup.add_command(setup_fonts)
 setup.add_command(add_domain)
