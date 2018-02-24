@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import os
 import os.path as osp
+import shutil
 import json
 import logging
 
@@ -15,7 +16,7 @@ log.setLevel(logging.CRITICAL)
 
 TEMPLATE_NODE_INDEX   = \
 """
-// Frappe-Node
+// FrappeJS
 // Do something awesome!
 const frappe   = require("frappe");
 const {app}    = {{ }};
@@ -30,6 +31,10 @@ TEMPLATE_NODE_PACKAGE = \
   "version": "0.1.0",
   "main": "index.js"
 }}
+"""
+TEMPLATE_NODE_NPMRC   = \
+"""
+prefix = {prefix}
 """
 
 # TODO: bench.TREE
@@ -121,25 +126,21 @@ class App(object):
         if node:
             self._hook_node(force = force)
 
-    def link(self, force = False, onto = None):
+    def link(self, env = None, force = False, onto = None):
         name    = self.name
+
+        env     = assign_if_empty(env,
+            osp.abspath(osp.join(self.path, '..', '..', 'npm', 'lib', 'node_modules'))
+        )
         
         source  = osp.join(self.path, self.name, 'node')
-
-        bench   = osp.abspath(osp.join(self.path, '..', '..'))
-
-        environ = osp.join(bench, 'npm')
-        nodemod = osp.join(environ, 'lib', 'node_modules')
-
-        makedirs(nodemod, exists_ok = True)
-
-        dest    = osp.join(nodemod, self.name)
+        dest    = osp.join(env, self.name)
 
         create  = True
 
         if osp.exists(dest):
             if force:
-                os.remove(source)
+                os.unlink(dest)
             else:
                 log.warn("App Link {dest} already exists.".format(dest = dest))
                 create = False
@@ -187,6 +188,8 @@ class App(object):
             self.node = pnode
 
             # ensure the app has been linked.
+            self.link(force = force)
+
             # link frappe to this app.
             app_ = self.get_frappe()
             app_.link(onto = self.name)
@@ -247,6 +250,10 @@ class Bench(object):
 
     def link_app(self, app = None, force = False, onto = None, raise_err = True):
         apps = sequencify(self.get_app(app, raise_err = raise_err))
+        
+        if apps:
+            self.create_environment(type_ = 'node', force = force)
+
         for app in apps:
             app.link(force = force, onto = onto)
             
@@ -262,6 +269,21 @@ class Bench(object):
                 )
                 if require.strip() not in content:
                     f.write(require)
+
+    def create_environment(self, type_ = 'python', force = False):
+        if type_ == 'node':
+            environ = osp.join(self.path, 'npm')
+            makedirs(environ, exists_ok = True)
+
+            nodemod = osp.join(environ, 'lib', 'node_modules')
+            makedirs(nodemod, exists_ok = True)
+                
+            npmrc   = osp.join(self.path, '.npmrc')
+            if not osp.exists(npmrc) or force:
+                with open(npmrc, 'w') as f:
+                    f.write(TEMPLATE_NODE_NPMRC.format(
+                        prefix = environ
+                    ))
         
     def __repr__(self):
         return '<Bench {name}>'.format(name = self.name)
