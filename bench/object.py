@@ -258,6 +258,10 @@ class Bench(object):
             app.link(force = force, onto = onto)
             
             papp    = osp.join(self.path, 'app.js')
+            if not osp.exists(papp):
+                with open(papp, 'w') as f:
+                    pass
+
             content = None
             with open(papp, 'r') as f:
                 content = f.read()
