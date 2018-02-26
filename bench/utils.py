@@ -433,7 +433,7 @@ def update_requirements(bench_path='.'):
 def update_node_packages(bench_path='.'):
 	print('Updating node packages...')
 	from bench.app import get_current_version
-	v = semantic_version.Version(get_current_version('frappe'))
+	v = semantic_version.Version(get_current_version('frappe', bench_path = bench_path))
 
 	# After rollup was merged, frappe_version = 10.1
 	# anything before that was npm based
