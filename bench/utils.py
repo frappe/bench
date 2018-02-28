@@ -433,7 +433,7 @@ def update_requirements(bench_path='.'):
 def update_node_packages(bench_path='.'):
 	print('Updating node packages...')
 	from bench.app import get_develop_version
-	v = semantic_version.Version(get_current_version('frappe', bench_path = bench_path))	+	from distutils.version import LooseVersion
+	from distutils.version import LooseVersion
 	v = LooseVersion(get_develop_version('frappe', bench_path = bench_path))
 
 
