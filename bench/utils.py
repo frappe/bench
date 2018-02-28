@@ -72,7 +72,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	bench.set_frappe_version(bench_path=path)
 	if bench.FRAPPE_VERSION > 5:
-		update_npm_packages(bench_path=path)
+		update_node_packages(bench_path=path)
 
 	set_all_patches_executed(bench_path=path)
 	build_assets(bench_path=path)
@@ -92,8 +92,10 @@ def clone_apps_from(bench_path, clone_from):
 	print('Copying apps from {0}...'.format(clone_from))
 	subprocess.check_output(['cp', '-R', os.path.join(clone_from, 'apps'), bench_path])
 
-	print('Copying node_modules from {0}...'.format(clone_from))
-	subprocess.check_output(['cp', '-R', os.path.join(clone_from, 'node_modules'), bench_path])
+	node_modules_path = os.path.join(clone_from, 'node_modules')
+	if os.path.exists(node_modules_path):
+		print('Copying node_modules from {0}...'.format(clone_from))
+		subprocess.check_output(['cp', '-R', node_modules_path, bench_path])
 
 	def setup_app(app):
 		# run git reset --hard in each branch, pull latest updates and install_app
@@ -428,17 +430,17 @@ def update_requirements(bench_path='.'):
 		req_file = os.path.join(apps_dir, app, 'requirements.txt')
 		install_requirements(pip, req_file)
 
-def update_node_packages():
+def update_node_packages(bench_path='.'):
 	print('Updating node packages...')
 	from bench.app import get_current_version
-	v = semantic_version.Version(get_current_version('frappe'))
+	v = semantic_version.Version(get_current_version('frappe', bench_path = bench_path))
 
 	# After rollup was merged, frappe_version = 10.1
 	# anything before that was npm based
 	if v.major <= 10 and v.minor < 1:
-		update_npm_packages()
+		update_npm_packages(bench_path)
 	else:
-		update_yarn_packages()
+		update_yarn_packages(bench_path)
 
 def update_yarn_packages(bench_path='.'):
 	apps_dir = os.path.join(bench_path, 'apps')
