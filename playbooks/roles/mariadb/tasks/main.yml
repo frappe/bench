@@ -15,7 +15,7 @@
   when: ansible_distribution == 'Debian'
 
 - name: Add configuration
-  template: src=debian_mariadb_config.cnf dest={{ mysql_conf_dir[ansible_distribution] }}/{{ mysql_conf_file }} owner=root group=root mode=0644
+  template: src={{ mysql_conf_tpl }} dest={{ mysql_conf_dir[ansible_distribution] }}/{{ mysql_conf_file }} owner=root group=root mode=0644
   when: mysql_conf_tpl != 'change_me' and ansible_distribution == 'Debian'
   notify: restart mysql
 
