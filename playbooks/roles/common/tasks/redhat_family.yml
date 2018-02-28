@@ -1,6 +1,6 @@
 ---
 
-- name: "Setup prerequisites"
+- name: "Setup prerequisites using yum"
   become: yes
   become_user: root
   tasks:
