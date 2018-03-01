@@ -432,12 +432,14 @@ def update_requirements(bench_path='.'):
 
 def update_node_packages(bench_path='.'):
 	print('Updating node packages...')
-	from bench.app import get_current_version
-	v = semantic_version.Version(get_current_version('frappe', bench_path = bench_path))
+	from bench.app import get_develop_version
+	from distutils.version import LooseVersion
+	v = LooseVersion(get_develop_version('frappe', bench_path = bench_path))
+
 
 	# After rollup was merged, frappe_version = 10.1
-	# anything before that was npm based
-	if v.major <= 10 and v.minor < 1:
+	# if develop_verion is 11 and up, only then install yarn
+	if v < LooseVersion('11.x.x-develop'):
 		update_npm_packages(bench_path)
 	else:
 		update_yarn_packages(bench_path)

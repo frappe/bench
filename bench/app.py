@@ -262,6 +262,11 @@ def get_current_version(app, bench_path='.'):
 		with open(os.path.join(repo_dir, 'setup.py')) as f:
 			return get_version_from_string(f.read(), field='version')
 
+def get_develop_version(app, bench_path='.'):
+	repo_dir = get_repo_dir(app, bench_path=bench_path)
+	with open(os.path.join(repo_dir, os.path.basename(repo_dir), 'hooks.py')) as f:
+		return get_version_from_string(f.read(), field='develop_version')
+
 def get_upstream_version(app, branch=None, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	if not branch:
