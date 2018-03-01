@@ -28,11 +28,17 @@
     stat: path="{{ bench_path }}"
     register: bench_stat
 
-  - name: init bench
+  - name:  python3 bench init for develop
+    command: bench init {{ bench_path }} --frappe-branch {{ branch }} --python python3
+    args:
+      creates: "{{ bench_path }}"
+    when: not bench_stat.stat.exists and develop
+
+  - name: python2 bench init for develop
     command: bench init {{ bench_path }} --frappe-branch {{ branch }}
     args:
       creates: "{{ bench_path }}"
-    when: not bench_stat.stat.exists
+    when: not bench_stat.stat.exists and production
 
   # setup common_site_config
   - name: setup config
