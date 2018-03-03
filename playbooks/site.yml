@@ -5,7 +5,7 @@
   become: yes
   become_user: root
   roles:
-    - common
+    - { role: common,            tags: "common"                             }
     - { role: locale,            tags: "locale"                             }
     - { role: swap,              tags: "swap",             when: production }
     - { role: logwatch,          tags: "logwatch",         when: production }

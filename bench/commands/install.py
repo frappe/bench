@@ -11,12 +11,11 @@ def install():
 @click.command('prerequisites')
 def install_prerequisites():
 	"Install prerequisites"
-	run_playbook('prerequisites/install_prerequisites.yml')
+	run_playbook('site.yml', tag='common, redis')
 
 @click.command('mariadb')
 @click.option('--mysql_root_password')
 def install_maridb(mysql_root_password=''):
-	"Install mariadb 10.1"
 	if mysql_root_password:
 		extra_vars.update({"mysql_root_password": mysql_root_password})
 

@@ -22,10 +22,10 @@
     - ntp                     # Clock synchronization
     - postfix                 # Mail Server
     - python-dev              # Installing python developer suite 
-    - python3-dev
-    - python-tk               # Why !?
-    - screen
-    - vim
+    - python3-dev             # For python3 compatibility
+    - python-tk
+    - screen                  # To aid ssh sessions with connectivity problems 
+    - vim                     # Is that supposed to be a question!?
     - xfonts-75dpi
     - xfonts-base
     - zlib1g-dev
