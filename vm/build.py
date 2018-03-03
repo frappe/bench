@@ -26,7 +26,7 @@ def install_packer():
 	check_output(['bench', 'install', 'packer'])
 
 def build_vm():
-	check_output("./packer build vm.json", shell=True)
+	check_output("/opt/packer build vm.json", shell=True)
 
 def move_to_public():
 	src = get_filepath()

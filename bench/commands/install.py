@@ -48,11 +48,11 @@ def install_nginx(user=None):
 
 @click.command('virtualbox')
 def install_virtualbox():
-	run_playbook('roles/virtualbox/tasks/main.yml')
+	run_playbook('vm_build.yml', tag='virtualbox')
 
 @click.command('packer')
 def install_packer():
-	run_playbook('roles/packer/tasks/main.yml')
+	run_playbook('vm_build.yml', tag='packer')
 
 @click.command('fail2ban')
 @click.option('--maxretry', default=6, help="Number of matches (i.e. value of the counter) which triggers ban action on the IP.")

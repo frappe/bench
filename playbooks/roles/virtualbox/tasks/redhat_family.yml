@@ -1,16 +1,17 @@
 ---
+- name: Install the 'Development tools' package group
+  yum:
+    name: "@Development tools"
+    state: present
 
-- name: Add VirtualBox Repository
-  yum_repository:
-    name: Oracle Linux / RHEL / CentOS-$releasever / $basearch - VirtualBox
-    description: Official VirtualBox Yum Repo
-    baseurl: http://download.virtualbox.org/virtualbox/rpm/el/$releasever/$basearch
-    gpgkey: https://www.virtualbox.org/download/oracle_vbox.asc
-    gpgcheck: yes
+- name: Install dependencies
+  yum: name={{ item }} state=present
+  with_items:
+    - kernel-devel
+    - deltarpm
+
+- copy: src=virtualbox_centos.repo dest=/etc/yum.repos.d/virtualbox.repo owner=root group=root mode=0644 force=no
 
 - name: Install VirtualBox
-  yum: name={{ item }} enablerepo=mariadb state=present
-  with_items:
-    - VirtualBox-5.2
-
+  command: yum install -y VirtualBox-{{ virtualbox_version }}
 ...

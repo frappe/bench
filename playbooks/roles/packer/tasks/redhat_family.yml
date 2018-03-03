@@ -1,7 +1,7 @@
 ---
 
 - name: Install unzip
-  yum: name={{ item }} enablerepo=mariadb state=present
+  yum: name={{ item }} state=present
   with_items:
     - unzip
 ...
