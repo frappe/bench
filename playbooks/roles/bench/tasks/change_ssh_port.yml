@@ -1,0 +1,20 @@
+---
+- name: Change ssh port
+  gather_facts: false
+  hosts: localhost
+  user: root
+  tasks:
+    - name: change sshd config
+      lineinfile: >
+        dest=/etc/ssh/sshd_config
+        regexp="^Port"
+        line="Port {{ ssh_port }}"
+        state=present
+
+    - name: restart ssh
+      service: name=sshd state=reloaded
+
+    - name: Change ansible ssh port to 2332
+      set_fact:
+        ansible_ssh_port: '{{ ssh_port }}'
+...

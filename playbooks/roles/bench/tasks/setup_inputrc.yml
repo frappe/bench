@@ -1,0 +1,11 @@
+---
+- name: insert/update inputrc for history
+  blockinfile:
+    dest: "/home/{{ frappe_user }}/.inputrc"
+    create: yes
+    block: |
+      ## arrow up
+      "\e[A":history-search-backward
+      ## arrow down
+      "\e[B":history-search-forward
+...

@@ -1,2 +1,0 @@
----
-- include: ../prerequisites/roles/fail2ban/tasks/configure_nginx_jail.yml
