@@ -1,5 +1,5 @@
 import os, sys, json, click
-from bench.utils import run_playbook, setup_sudoers
+from bench.utils import run_playbook, setup_sudoers, is_root
 
 extra_vars = {"production": True}
 
@@ -48,7 +48,11 @@ def install_nginx(user=None):
 
 @click.command('virtualbox')
 def install_virtualbox():
-	run_playbook('roles/virtualbox/tasks/main.yml', extra_vars=extra_vars)
+	run_playbook('roles/virtualbox/tasks/main.yml')
+
+@click.command('packer')
+def install_packer():
+	run_playbook('roles/packer/tasks/main.yml')
 
 @click.command('fail2ban')
 @click.option('--maxretry', default=6, help="Number of matches (i.e. value of the counter) which triggers ban action on the IP.")
@@ -67,3 +71,4 @@ install.add_command(install_supervisor)
 install.add_command(install_nginx)
 install.add_command(install_failtoban)
 install.add_command(install_virtualbox)
+install.add_command(install_packer)

@@ -23,7 +23,7 @@ def install_virtualbox():
 	check_output(['bench', 'install', 'virtualbox'])
 
 def install_packer():
-	pass
+	check_output(['bench', 'install', 'packer'])
 
 def build_vm():
 	check_output("./packer build vm.json", shell=True)
