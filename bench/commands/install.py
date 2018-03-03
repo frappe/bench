@@ -46,6 +46,10 @@ def install_nginx(user=None):
 	if user:
 		setup_sudoers(user)
 
+@click.command('virtualbox')
+def install_virtualbox():
+	run_playbook('roles/virtualbox/tasks/main.yml', extra_vars=extra_vars)
+
 @click.command('fail2ban')
 @click.option('--maxretry', default=6, help="Number of matches (i.e. value of the counter) which triggers ban action on the IP.")
 @click.option('--bantime', default=600, help="The counter is set to zero if no match is found within 'findtime' seconds.")
@@ -62,3 +66,4 @@ install.add_command(install_psutil)
 install.add_command(install_supervisor)
 install.add_command(install_nginx)
 install.add_command(install_failtoban)
+install.add_command(install_virtualbox)

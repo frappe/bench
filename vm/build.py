@@ -1,22 +1,32 @@
 """
 Builds a vm and puts it in ~/public with a latest.json that has its filename and md5sum
 """
-import os
-import subprocess
-import json
-import stat
+
+# imports - standard imports
+import 	os
+import 	json
+import 	stat
+from 	subprocess import check_output
 
 OUTPUT_DIR = 'output-virtualbox-ovf'
 PUBLIC_DIR = os.path.join(os.path.expanduser('~'),  'public')
 
 def main():
+	install_virtualbox()
+	install_packer()
 	build_vm()
 	update_latest()
 	move_to_public()
 	cleanup()
 
+def install_virtualbox():
+	check_output(['bench', 'install', 'virtualbox'])
+
+def install_packer():
+	pass
+
 def build_vm():
-	subprocess.check_call("./packer build vm.json", shell=True)
+	check_output("./packer build vm.json", shell=True)
 
 def move_to_public():
 	src = get_filepath()
@@ -30,7 +40,7 @@ def update_latest():
 		json.dump(get_latest(), f)
 
 def get_latest():
-	md5 = subprocess.check_output("md5sum {}".format(get_filepath()), shell=True).split()[0]
+	md5 = check_output("md5sum {}".format(get_filepath()), shell=True).split()[0]
 	return {
 		"filename": get_filename(),
 		"md5": md5
