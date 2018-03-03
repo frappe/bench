@@ -89,7 +89,7 @@ def setup_firewall(ssh_port=None, force=False):
 	if not ssh_port:
 		ssh_port = 22
 
-	run_playbook('production/setup_firewall.yml', {"ssh_port": ssh_port})
+	run_playbook('roles/bench/tasks/setup_firewall.yml', {"ssh_port": ssh_port})
 
 @click.command('ssh-port')
 @click.argument('port')
@@ -103,7 +103,7 @@ def set_ssh_port(port, force=False):
 			'Do you want to continue?'.format(port),
 			abort=True)
 
-	run_playbook('production/change_ssh_port.yml', {"ssh_port": port})
+	run_playbook('roles/bench/tasks/change_ssh_port.yml', {"ssh_port": port})
 
 @click.command('lets-encrypt')
 @click.argument('site')
@@ -214,9 +214,9 @@ def setup_roles(role, **kwargs):
 	extra_vars.update(kwargs)
 
 	if role:
-		run_playbook('prerequisites/install_roles.yml', extra_vars=extra_vars, tag=role)
+		run_playbook('site.yml', extra_vars=extra_vars, tag=role)
 	else:
-		run_playbook('prerequisites/install_roles.yml', extra_vars=extra_vars)
+		run_playbook('site.yml', extra_vars=extra_vars)
 
 @click.command('fail2ban')
 @click.option('--maxretry', default=6, help="Number of matches (i.e. value of the counter) which triggers ban action on the IP. Default is 6 seconds" )
@@ -224,7 +224,7 @@ def setup_roles(role, **kwargs):
 @click.option('--findtime', default=600, help='Duration (in seconds) for IP to be banned for. Negative number for "permanent" ban. Default is 600 seconds')
 def setup_nginx_proxy_jail(**kwargs):
 	from bench.utils import run_playbook
-	run_playbook('prerequisites/setup_nginx_proxy_jail.yml', extra_vars=kwargs)
+	run_playbook('roles/fail2ban/tasks/configure_nginx_jail.yml', extra_vars=kwargs)
 
 setup.add_command(setup_sudoers)
 setup.add_command(setup_nginx)

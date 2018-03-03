@@ -23,9 +23,9 @@
         - wkhtmltopdf
 
     - name: configure mariadb
-      include_tasks: ../prerequisites/roles/mariadb/tasks/main.yml
+      include_tasks: roles/mariadb/tasks/main.yml
       vars:
-        mysql_conf_tpl: ../prerequisites/files/mariadb_config.cnf
+        mysql_conf_tpl: roles/mariadb/files/mariadb_config.cnf
 
     # setup frappe-bench
     - include_tasks: includes/setup_bench.yml
