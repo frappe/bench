@@ -6,6 +6,7 @@ Builds a vm and puts it in ~/public with a latest.json that has its filename and
 import 	os
 import 	json
 import 	stat
+import  errno
 from 	subprocess import check_output
 
 OUTPUT_DIR = 'output-virtualbox-ovf'
@@ -26,7 +27,19 @@ def install_packer():
 	check_output(['bench', 'install', 'packer'])
 
 def build_vm():
+	download_latest_ubuntu_ova()
 	check_output("/opt/packer build vm.json", shell=True)
+
+def download_latest_ubuntu_ova():
+	silent_remove('/tmp/ubuntu-16.04-server-cloudimg-amd64.ova')
+	check_output(['wget', 'https://cloud-images.ubuntu.com/releases/16.04/release/ubuntu-16.04-server-cloudimg-amd64.ova'], cwd='/tmp/')
+
+def silent_remove(filename):
+    try:
+        os.remove(filename)
+    except OSError as e: 			# this would be "except OSError, e:" before Python 2.6
+        if e.errno != errno.ENOENT: # errno.ENOENT = no such file or directory
+            raise 					# re-raise exception if a different error occurred
 
 def move_to_public():
 	src = get_filepath()
