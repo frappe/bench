@@ -1,6 +1,7 @@
 {
 	"builders": [{
-		"vm_name": "ERPNext-{{isotime \"20060102150405\"}}",
+		"vm_name": "ERPNext-Develop-{{isotime \"20060102150405\"}}",
+		"output_directory": "ERPNext-Develop-Images",
 		"type": "virtualbox-iso",
 		"boot_command": [
 			"<enter><wait><f6><esc><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
@@ -71,7 +72,7 @@
 	}, {
 		"type": "shell",
 		"execute_command": "echo 'frappe' | {{.Vars}} sudo -S -E bash '{{.Path}}'",
-		"script": "scripts/debian_family/install_erpnext.sh"
+		"script": "scripts/debian_family/install_erpnext_develop.sh"
 	}, {
 		"type": "shell",
 		"execute_command": "echo 'frappe' | {{.Vars}} sudo -S -E bash '{{.Path}}'",
@@ -79,5 +80,14 @@
 	}, {
 		"type": "shell",
 		"script": "scripts/set_message.sh"
+	}],
+	"post-processors": [{
+		"type": "checksum",
+		"checksum_types": ["md5", "sha256", "sha512"]
+	}, {
+		"type": "vagrant",
+		"keep_input_artifact": true,
+		"output": "Vagrant_builds/ERPNext-Vagrant-Develop.box",
+		"vagrantfile_template": "Vagrantfile"
 	}]
 }
