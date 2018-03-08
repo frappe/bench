@@ -32,7 +32,7 @@
     command: bench init {{ bench_path }} --frappe-branch {{ branch }} --python python3
     args:
       creates: "{{ bench_path }}"
-    when: not bench_stat.stat.exists and develop
+    when: not bench_stat.stat.exists and not production
 
   - name: python2 bench init for develop
     command: bench init {{ bench_path }} --frappe-branch {{ branch }}
