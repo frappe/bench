@@ -32,9 +32,9 @@
     command: bench init {{ bench_path }} --frappe-branch {{ branch }} --python python3
     args:
       creates: "{{ bench_path }}"
-    when: not bench_stat.stat.exists and develop
+    when: not bench_stat.stat.exists and not production
 
-  - name: python2 bench init for develop
+  - name: python2 bench init for production
     command: bench init {{ bench_path }} --frappe-branch {{ branch }}
     args:
       creates: "{{ bench_path }}"
@@ -47,16 +47,25 @@
       creates: "{{ bench_path }}/sites/common_site_config.json"
       chdir: "{{ bench_path }}"
 
-  - name: install frappe app
-    command: bench get-app frappe https://github.com/frappe/frappe
+  - include_tasks: setup_inputrc.yml
+
+  # Setup Procfile
+  - name: Setup Procfile
+    command: bench setup procfile
     args:
-      creates: "{{ bench_path }}/apps/frappe"
+      creates: "{{ bench_path }}/Procfile"
       chdir: "{{ bench_path }}"
 
-  - include_tasks: setup_dev_env.yml
-    when: not run_travis and not production and (not without_bench_setup and ansible_distribution == 'Ubuntu')
+  # Setup Redis env for RQ
+  - name: Setup Redis
+    command: bench setup redis
+    args:
+      creates: "{{ bench_path }}/config/redis_socketio.conf"
+      chdir: "{{ bench_path }}"
 
-  - include_tasks: setup_inputrc.yml
+  # Setup an ERPNext site called site1.local
+  - include_tasks: setup_erpnext.yml
+    when: not run_travis
 
   # Setup Bench for production environment
   - include_tasks: setup_bench_production.yml
