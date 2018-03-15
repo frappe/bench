@@ -10,7 +10,7 @@ import  errno
 from 	subprocess import check_output
 
 OUTPUT_DIR = 'output-virtualbox-ovf'
-PUBLIC_DIR = os.path.join(os.path.expanduser('~'),  'public')
+PUBLIC_DIR = os.path.join(os.path.expanduser('~'), 'public')
 
 def main():
 	install_virtualbox()
