@@ -3,7 +3,7 @@
     stat: path="{{ bench_path }}/apps/erpnext"
     register: app
 
-  - name: get erpnext
+  - name: Get the ERPNext app
     command: bench get-app erpnext https://github.com/frappe/erpnext --branch {{ branch }}
     args:
       creates: "{{ bench_path }}/apps/erpnext"
@@ -14,15 +14,14 @@
     stat: path="{{ bench_path }}/sites/site1.local"
     register: site_folder
 
-  - name: create a new default site 
+  - name: Create a new site
     command: bench new-site site1.local --admin-password {{ admin_password }} --mariadb-root-password {{ mysql_root_password }}
     args:
       chdir: "{{ bench_path }}"
     when: not site_folder.stat.exists
 
-  - name: install erpnext to default site
+  - name: Install ERPNext to default site
     command: bench --site site1.local install-app erpnext
     args:
       chdir: "{{ bench_path }}"
-
 ...
