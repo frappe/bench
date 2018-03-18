@@ -1,7 +1,7 @@
 {
 	"builders": [{
 		"vm_name": "ERPNext-Production-{{isotime \"20060102150405\"}}",
-		"output_directory": "Builds",
+		"output_directory": "Production Builds",
 		"type": "virtualbox-iso",
 		"boot_command": [
 			"<enter><wait><f6><esc><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
@@ -87,7 +87,7 @@
 	}, {
 		"type": "vagrant",
 		"keep_input_artifact": true,
-		"output": "Builds/ERPNext-Vagrant-Production-{{isotime \"20060102150405\"}}.box",
+		"output": "Production Builds/ERPNext-Vagrant-Production-{{isotime \"20060102150405\"}}.box",
 		"vagrantfile_template": "Vagrantfile"
 	}]
 }
