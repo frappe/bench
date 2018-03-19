@@ -407,6 +407,8 @@ def restart_supervisor_processes(bench_path='.', web_workers=False):
 		else:
 			group = 'frappe:'
 
+		if find_executable('systemctl'):
+			exec_cmd('sudo systemctl restart supervisor.service && sleep 1')
 		exec_cmd('sudo supervisorctl restart {group}'.format(group=group), cwd=bench_path)
 
 def set_default_site(site, bench_path='.'):
