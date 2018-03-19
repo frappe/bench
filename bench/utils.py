@@ -16,6 +16,13 @@ logger = logging.getLogger(__name__)
 
 folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 
+def safe_decode(string, encoding = 'utf-8'):
+	try:
+		string = string.decode(encoding)
+	except Exception:
+		pass
+	return string
+
 def get_frappe(bench_path='.'):
 	frappe = get_env_cmd('frappe', bench_path=bench_path)
 	if not os.path.exists(frappe):
@@ -351,7 +358,7 @@ def get_git_version():
 	'''returns git version from `git --version`
 	extracts version number from string `get version 1.9.1` etc'''
 	version = get_cmd_output("git --version")
-	version = version.decode('utf-8')
+	version = safe_decode(version)
 	version = version.strip().split()[2]
 	version = '.'.join(version.split('.')[0:2])
 	return float(version)
