@@ -84,7 +84,9 @@ def install_bench(args):
 
 	# create user if not exists
 	extra_vars = vars(args)
-	extra_vars.update(frappe_user=args.user)
+	extra_vars.update(frappe_user=args.user,
+		python = args.python
+	)
 
 	if os.path.exists(tmp_bench_repo):
 		repo_path = tmp_bench_repo
@@ -370,6 +372,10 @@ def parse_commandline_args():
 	parser.add_argument('--mysql-root-password', dest='mysql_root_password', help='Set mysql root password')
 	parser.add_argument('--admin-password', dest='admin_password', help='Set admin password')
 	parser.add_argument('--bench-name', dest='bench_name', help='Create bench with specified name. Default name is frappe-bench')
+
+	parser.add_argument('--python', dest = 'python', default = 'python',
+		help = 'Python interpreter to be used.'
+	)
 
 	args = parser.parse_args()
 

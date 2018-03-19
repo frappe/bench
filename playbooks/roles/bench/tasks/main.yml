@@ -29,7 +29,7 @@
     register: bench_stat
 
   - name:  python3 bench init for develop
-    command: bench init {{ bench_path }} --frappe-branch {{ branch }} --python python3
+    command: bench init {{ bench_path }} --frappe-branch {{ branch }} --python {{ python }}
     args:
       creates: "{{ bench_path }}"
     when: not bench_stat.stat.exists and not production
