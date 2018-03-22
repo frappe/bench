@@ -22,9 +22,11 @@ github_username = None
 github_password = None
 
 def release(bench_path, app, bump_type, from_branch='develop', to_branch='master',
-		remote='upstream', owner='frappe', repo_name=None):
+		remote='upstream', owner='frappe', repo_name=None, dry_run=False, yes=False):
 
-	confirm_testing()
+	if not yes or not dry_run:
+		confirm_testing()
+
 	config = get_config(bench_path)
 
 	if not config.get('release_bench'):
@@ -37,7 +39,7 @@ def release(bench_path, app, bump_type, from_branch='develop', to_branch='master
 	validate(bench_path, config)
 
 	bump(bench_path, app, bump_type, from_branch=from_branch, to_branch=to_branch, owner=owner,
-		repo_name=repo_name, remote=remote)
+		repo_name=repo_name, remote=remote, dry_run=dry_run, yes=yes)
 
 def validate(bench_path, config):
 	global github_username, github_password
@@ -63,7 +65,7 @@ def confirm_testing():
 	print('')
 	click.confirm('Is manual testing done?', abort = True)
 
-def bump(bench_path, app, bump_type, from_branch, to_branch, remote, owner, repo_name=None):
+def bump(bench_path, app, bump_type, from_branch, to_branch, remote, owner, dry_run, yes, repo_name=None):
 	assert bump_type in ['minor', 'major', 'patch', 'stable', 'prerelease']
 
 	repo_path = os.path.join(bench_path, 'apps', app)
@@ -79,7 +81,11 @@ def bump(bench_path, app, bump_type, from_branch, to_branch, remote, owner, repo
 	print(message)
 	print()
 
-	click.confirm('Do you want to continue?', abort=True)
+	if dry_run:
+		return
+
+	if not yes:
+		click.confirm('Do you want to continue?', abort=True)
 
 	new_version = bump_repo(repo_path, bump_type, from_branch=from_branch, to_branch=to_branch)
 	commit_changes(repo_path, new_version)
