@@ -80,6 +80,10 @@
 	}, {
 		"type": "shell",
 		"script": "scripts/set_message.sh"
+	}, {
+		"type": "shell",
+		"execute_command": "echo 'frappe' | {{.Vars}} sudo -S -E bash '{{.Path}}'",
+		"script": "scripts/restart_supervisor.sh"
 	}],
 	"post-processors": [{
 		"type": "checksum",
