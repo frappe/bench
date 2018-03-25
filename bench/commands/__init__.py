@@ -95,19 +95,22 @@ def migrate_env(python, no_backup = False):
 	"""
 	Migrate Virtual Environment to desired Python Version.
 	"""
-	# Clear Cache before Bench Dies.
-	config = get_config(bench_path = os.getcwd())
-	rredis = urlparse(config['redis_cache'])
+	try:
+		# Clear Cache before Bench Dies.
+		config = get_config(bench_path = os.getcwd())
+		rredis = urlparse(config['redis_cache'])
 
-	redis  = '{redis} -p {port}'.format(
-		redis = which('redis-cli'),
-		port  = rredis.port
-	)
+		redis  = '{redis} -p {port}'.format(
+			redis = which('redis-cli'),
+			port  = rredis.port
+		)
 
-	log.debug('Clearing Redis Cache...')
-	exec_cmd('{redis} FLUSHALL'.format(redis = redis))
-	log.debug('Clearing Redis DataBase...')
-	exec_cmd('{redis} FLUSHDB'.format(redis = redis))
+		log.debug('Clearing Redis Cache...')
+		exec_cmd('{redis} FLUSHALL'.format(redis = redis))
+		log.debug('Clearing Redis DataBase...')
+		exec_cmd('{redis} FLUSHDB'.format(redis = redis))
+	except Exception:
+		log.warn('Please ensure Redis Connections are running or Daemonized.')
 
 	try:
 		# This is with the assumption that a bench is set-up within path.
