@@ -58,7 +58,8 @@
 			[ "modifyvm", "{{.Name}}", "--cpus", "1" ],
 			[ "modifyvm", "{{.Name}}", "--audio", "none" ],
 			[ "modifyvm", "{{.Name}}", "--natpf1", "vm_ssh,tcp,,3022,,22" ],
-			[ "modifyvm", "{{.Name}}", "--natpf1", "vm_http,tcp,,8080,,80" ]
+			[ "modifyvm", "{{.Name}}", "--natpf1", "vm_http,tcp,,8080,,80" ],
+			[ "modifyvm", "{{.Name}}", "--natpf1", "vm_http2,tcp,,8000,,8000" ]
 		]
 	}],
 	"provisioners": [{
