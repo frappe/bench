@@ -25,7 +25,7 @@
 
 - name: Add repo
   apt_repository:
-    repo: "deb [arch=amd64,i386,armhf,arm64] https://deb.nodesource.com/node_6.x {{ ansible_distribution_release }} main"
+    repo: "deb [arch=amd64,arm64,armhf,i386] https://deb.nodesource.com/node_6.x {{ ansible_distribution_release }} main"
     state: present
   register: node_repo
   when: ansible_os_family == 'Debian' or ansible_distribution == 'Ubuntu'
