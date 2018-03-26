@@ -82,6 +82,14 @@ def install_bench(args):
 	if args.user == 'root':
 		raise Exception('Please run this script as a non-root user with sudo privileges, but without using sudo or pass --user=USER')
 
+	# Python executable
+	if not args.production:
+		dist_name, dist_version = get_distribution_info()
+		if dist_name is 'centos':
+			args.python = 'python3.6'
+		else:
+			args.python = 'python3'
+
 	# create user if not exists
 	extra_vars = vars(args)
 	extra_vars.update(frappe_user=args.user)
@@ -370,6 +378,11 @@ def parse_commandline_args():
 	parser.add_argument('--mysql-root-password', dest='mysql_root_password', help='Set mysql root password')
 	parser.add_argument('--admin-password', dest='admin_password', help='Set admin password')
 	parser.add_argument('--bench-name', dest='bench_name', help='Create bench with specified name. Default name is frappe-bench')
+
+	# Python interpreter to be used
+	parser.add_argument('--python', dest='python', default='python',
+		help=argparse.SUPPRESS
+	)
 
 	args = parser.parse_args()
 
