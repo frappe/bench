@@ -85,7 +85,7 @@ def install_bench(args):
 	# Python executable
 	if not args.production:
 		dist_name, dist_version = get_distribution_info()
-		if dist_name is 'centos':
+		if dist_name=='centos':
 			args.python = 'python3.6'
 		else:
 			args.python = 'python3'
