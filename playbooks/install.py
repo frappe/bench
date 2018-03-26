@@ -59,7 +59,7 @@ def install_bench(args):
 			})
 
 	success = run_os_command({
-		'pip': "sudo pip install ansible==2.4.1"
+		'pip': "sudo pip install ansible==2.5.0"
 	})
 
 	if not success:
