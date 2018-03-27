@@ -215,7 +215,7 @@ def is_version_upgrade(app='frappe', bench_path='.', branch=None):
 
 	local_version = get_major_version(get_current_version(app, bench_path=bench_path))
 	upstream_version = get_major_version(upstream_version)
-
+	
 	if upstream_version - local_version > 0:
 		return (True, local_version, upstream_version)
 
