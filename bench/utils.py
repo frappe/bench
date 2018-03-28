@@ -306,9 +306,10 @@ def setup_sudoers(user):
 		'nginx': find_executable('nginx'),
 		'bench': find_executable('bench')
 	})
+	frappe_sudoers = safe_decode(frappe_sudoers)
 
 	with open(sudoers_file, 'w') as f:
-		f.write(frappe_sudoers.encode('utf-8'))
+		f.write(frappe_sudoers)
 
 	os.chmod(sudoers_file, 0o440)
 
@@ -388,6 +389,14 @@ def get_cmd_output(cmd, cwd='.'):
 			print(e.output)
 		raise
 
+def safe_encode(what, encoding = 'utf-8'):
+	try:
+		what = what.encode(encoding)
+	except Exception:
+		pass
+
+	return what
+
 def restart_supervisor_processes(bench_path='.', web_workers=False):
 	from .config.common_site_config import get_config
 	conf = get_config(bench_path=bench_path)
@@ -399,7 +408,8 @@ def restart_supervisor_processes(bench_path='.', web_workers=False):
 
 	else:
 		supervisor_status = subprocess.check_output(['sudo', 'supervisorctl', 'status'], cwd=bench_path)
-
+		supervisor_status = safe_decode(supervisor_status)
+		
 		if web_workers and '{bench_name}-web:'.format(bench_name=bench_name) in supervisor_status:
 			group = '{bench_name}-web:	'.format(bench_name=bench_name)
 
