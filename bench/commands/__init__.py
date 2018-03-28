@@ -165,7 +165,7 @@ def migrate_env(python, no_backup = False):
 		# TODO: Options
 
 		papps  = osp.join(path, 'apps')
-		apps   = ['frappe'] + [app for app in os.listdir(papps) if app != 'frappe']
+		apps   = ['frappe', 'erpnext'] + [app for app in os.listdir(papps) if app not in ['frappe', 'erpnext']]
 
 		for app in apps:
 			papp = osp.join(papps, app)
