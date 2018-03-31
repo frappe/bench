@@ -80,7 +80,7 @@
 		"script": "scripts/debian_family/cleanup.sh"
 	}, {
 		"type": "shell",
-		"script": "scripts/set_message.sh"
+		"script": "scripts/set_message_develop.sh"
 	}, {
 		"type": "shell",
 		"execute_command": "echo 'frappe' | {{.Vars}} sudo -S -E bash '{{.Path}}'",

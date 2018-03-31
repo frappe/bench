@@ -33,7 +33,7 @@ def install_virtualbox():
 		check_output(['bench', 'install', 'virtualbox'])
 
 def install_packer():
-	if not os.path.exits(os.path.join('opt', 'packer'))
+	if not os.path.exists(os.path.join('/', 'opt', 'packer')):
 		check_output(['bench', 'install', 'packer'])
 
 def silent_remove(name, is_dir=False):
@@ -77,7 +77,7 @@ def move_to_public(build, file):
 def generate_md5_hashes():
 	for build in BUILDS:
 		for file in os.listdir('{} Builds'.format(build)):
-			if filename.endswith(".ova") or filename.endswith(".box"):
+			if file.endswith(".ova") or file.endswith(".box"):
 				with open('{} Builds/{}.md5'.format(build, file), 'w') as f:
 					f.write(md5(build, file))
 				move_to_public(build, file)
@@ -118,10 +118,10 @@ def delete_old_vms():
 def move_current_vms():
 	os.mkdir(os.path.join(PUBLIC_DIR, 'BACKUPS')) 
 	for file in os.listdir(PUBLIC_DIR):
-		if file in NEW_FILES or file in SYMLINKS:
+		if file in NEW_FILES or file in SYMLINKS or file == 'BACKUPS':
 			continue
 		src  = os.path.join(PUBLIC_DIR, '{}'.format(file))
-		dest = os.path.join(PUBLIC_DIR, 'BACKUPS/{}'file)
+		dest = os.path.join(PUBLIC_DIR, 'BACKUPS/{}'.format(file))
 		os.rename(src, dest)
 
 if __name__ == "__main__":
