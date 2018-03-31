@@ -1,0 +1,17 @@
+---
+- name: Install the 'Development tools' package group
+  yum:
+    name: "@Development tools"
+    state: present
+
+- name: Install dependencies
+  yum: name={{ item }} state=present
+  with_items:
+    - kernel-devel
+    - deltarpm
+
+- copy: src=virtualbox_centos.repo dest=/etc/yum.repos.d/virtualbox.repo owner=root group=root mode=0644 force=no
+
+- name: Install VirtualBox
+  command: yum install -y VirtualBox-{{ virtualbox_version }}
+...

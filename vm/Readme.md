@@ -1,25 +1,43 @@
 ### ERPNext VM Builder
 
-#### Steps to build a vm image
 
-* Install VirtualBox
-* Place a `base.ova` ubuntu base image in the current directory.
-* `./packer build vm.json` builds a new vm.
+#### Steps to build a VM Image
+
+* `python build.py` builds a new VM
+
+
+#### Requirements 
+
+* Bench should be installed.
+* Ansible should be installed
+
 
 #### How it works
 
-Packer imports the base image in a virtual machine and boots it. It runs the following
+Apart from the above the rest is handled by bench:
 
-* `scripts/install_ansible.sh` sets up ansible on the vm.
-* The `ansible/vm.yml` playbook sets up the dependencies, installs a bench and sets up a site. It also puts it into production.
-* `scripts/set_message.sh` sets welcome message (with update instructions) in the vm.
-* `scripts/zerofree.sh` writes zero to all the free space in the disk, it shrinks the disk image.
+* Install prerequisites if not already installed
+	- virtualbox
+	- packer
+* Cleanup
+	- Clean the required directories
+* Generate the erpnext_develop.json and the erpnext_production.json
+	- Figure out the latest ubuntu iso available, get it's link and the checksum and generate the json files
+* Build the VM using packer
+	- Packer downloads the mentioned Ubuntu iso, boots a virtual machine and preceeds the preseed.cfg file into it in order to setup a clean Ubuntu OS
+	- Then packer uses ssh to enter the virtual machine to execute the required commands
+	- `scripts/debian_family/install_ansible.sh` sets up ansible on the vm.
+	- Depending on the VM being built, the `install_erpnext_develop.sh` or the `install_erpnext_production.sh` is executed
+	- `scripts/set_message.sh` sets welcome message (with update instructions) in the vm.
+	- `scripts/cleanup.sh` writes zero to all the free space in the disk, it shrinks the disk image
+* Set the correct permissions for the built Vagrant and Virtual Appliance Images
+* Cleanup
+	- Delete the generated files from the required directories
+* restart nginx 
+
+The requirements for this to run are Packer and Virtualbox.  imports the base image in a virtual machine and boots it. It runs the following
+
 
 #### For a build server
 
 Running the `build.py` script builds a vm and puts it in `~/public`. It also writes a `latest.json` file in `~/public` with filename of the latest build and its md5sum.
-
-#### Packer binary
-
-The binary included in this tree is compiled (for linux amd64) with a fix for https://github.com/mitchellh/packer/issues/2447. We can remove it once a new version of packer is released.
-
