@@ -88,7 +88,7 @@
 	}],
 	"post-processors": [{
 		"type": "checksum",
-		"checksum_types": ["md5", "sha256", "sha512"]
+		"checksum_types": ["md5"]
 	}, {
 		"type": "vagrant",
 		"keep_input_artifact": true,
