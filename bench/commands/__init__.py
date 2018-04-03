@@ -9,7 +9,7 @@ from datetime import datetime
 from bench.utils import which, exec_cmd
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.ERROR)
+log.setLevel(logging.DEBUG)
 
 def print_bench_version(ctx, param, value):
 	"""Prints current bench version"""
@@ -82,6 +82,12 @@ bench_command.add_command(remote_urls)
 from bench.commands.install import install
 bench_command.add_command(install)
 
+from bench.config.common_site_config import get_config
+try:
+	from urlparse 	  import urlparse
+except ImportError:
+	from urllib.parse import urlparse
+
 @click.command('migrate-env')
 @click.argument('python', type = str)
 @click.option('--no-backup', default = False, help = 'Do not backup the existing Virtual Environment')
@@ -89,6 +95,23 @@ def migrate_env(python, no_backup = False):
 	"""
 	Migrate Virtual Environment to desired Python Version.
 	"""
+	try:
+		# Clear Cache before Bench Dies.
+		config = get_config(bench_path = os.getcwd())
+		rredis = urlparse(config['redis_cache'])
+
+		redis  = '{redis} -p {port}'.format(
+			redis = which('redis-cli'),
+			port  = rredis.port
+		)
+
+		log.debug('Clearing Redis Cache...')
+		exec_cmd('{redis} FLUSHALL'.format(redis = redis))
+		log.debug('Clearing Redis DataBase...')
+		exec_cmd('{redis} FLUSHDB'.format(redis = redis))
+	except Exception:
+		log.warn('Please ensure Redis Connections are running or Daemonized.')
+
 	try:
 		# This is with the assumption that a bench is set-up within path.
 		path       = os.getcwd()
@@ -111,6 +134,7 @@ def migrate_env(python, no_backup = False):
 
 			# WARNING: This is an archive, you might have to use virtualenv --relocate
 			# That's because virtualenv creates symlinks with shebangs pointing to executables.
+			# shebangs, shebangs - ricky martin.
 
 			# ...and shutil.copytree is a f*cking mess.
 			os.rename(source, dest)
@@ -141,7 +165,7 @@ def migrate_env(python, no_backup = False):
 		# TODO: Options
 
 		papps  = osp.join(path, 'apps')
-		apps   = ['frappe'] + [app for app in os.listdir(papps) if app != 'frappe']
+		apps   = ['frappe', 'erpnext'] + [app for app in os.listdir(papps) if app not in ['frappe', 'erpnext']]
 
 		for app in apps:
 			papp = osp.join(papps, app)

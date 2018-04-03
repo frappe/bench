@@ -172,6 +172,7 @@ def pull_all_apps(bench_path='.', reset=False):
 			app_dir = get_repo_dir(app, bench_path=bench_path)
 			if os.path.exists(os.path.join(app_dir, '.git')):
 				out = subprocess.check_output(["git", "status"], cwd=app_dir)
+				out = out.decode('utf-8')
 				if not re.search(r'nothing to commit, working (directory|tree) clean', out):
 					print('''
 
@@ -214,7 +215,7 @@ def is_version_upgrade(app='frappe', bench_path='.', branch=None):
 
 	local_version = get_major_version(get_current_version(app, bench_path=bench_path))
 	upstream_version = get_major_version(upstream_version)
-
+	
 	if upstream_version - local_version > 0:
 		return (True, local_version, upstream_version)
 
@@ -234,6 +235,7 @@ def get_remote(app, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	contents = subprocess.check_output(['git', 'remote', '-v'], cwd=repo_dir,
 									   stderr=subprocess.STDOUT)
+	contents = contents.decode('utf-8')
 	if re.findall('upstream[\s]+', contents):
 		remote = 'upstream'
 	else:
@@ -273,6 +275,7 @@ def get_upstream_version(app, branch=None, bench_path='.'):
 		branch = get_current_branch(app, bench_path=bench_path)
 	try:
 		contents = subprocess.check_output(['git', 'show', 'upstream/{branch}:{app}/__init__.py'.format(branch=branch, app=app)], cwd=repo_dir, stderr=subprocess.STDOUT)
+		contents = contents.decode('utf-8')
 	except subprocess.CalledProcessError as e:
 		if b"Invalid object" in e.output:
 			return None

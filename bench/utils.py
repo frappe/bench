@@ -16,6 +16,13 @@ logger = logging.getLogger(__name__)
 
 folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 
+def safe_decode(string, encoding = 'utf-8'):
+	try:
+		string = string.decode(encoding)
+	except Exception:
+		pass
+	return string
+
 def get_frappe(bench_path='.'):
 	frappe = get_env_cmd('frappe', bench_path=bench_path)
 	if not os.path.exists(frappe):
@@ -299,9 +306,10 @@ def setup_sudoers(user):
 		'nginx': find_executable('nginx'),
 		'bench': find_executable('bench')
 	})
+	frappe_sudoers = safe_decode(frappe_sudoers)
 
 	with open(sudoers_file, 'w') as f:
-		f.write(frappe_sudoers.encode('utf-8'))
+		f.write(frappe_sudoers)
 
 	os.chmod(sudoers_file, 0o440)
 
@@ -351,7 +359,7 @@ def get_git_version():
 	'''returns git version from `git --version`
 	extracts version number from string `get version 1.9.1` etc'''
 	version = get_cmd_output("git --version")
-	version = version.decode('utf-8')
+	version = safe_decode(version)
 	version = version.strip().split()[2]
 	version = '.'.join(version.split('.')[0:2])
 	return float(version)
@@ -373,11 +381,21 @@ def check_git_for_shallow_clone():
 
 def get_cmd_output(cmd, cwd='.'):
 	try:
-		return subprocess.check_output(cmd, cwd=cwd, shell=True, stderr=open(os.devnull, 'wb')).strip()
+		output = subprocess.check_output(cmd, cwd=cwd, shell=True, stderr=open(os.devnull, 'wb')).strip()
+		output = output.decode('utf-8')
+		return output
 	except subprocess.CalledProcessError as e:
 		if e.output:
 			print(e.output)
 		raise
+
+def safe_encode(what, encoding = 'utf-8'):
+	try:
+		what = what.encode(encoding)
+	except Exception:
+		pass
+
+	return what
 
 def restart_supervisor_processes(bench_path='.', web_workers=False):
 	from .config.common_site_config import get_config
@@ -390,7 +408,8 @@ def restart_supervisor_processes(bench_path='.', web_workers=False):
 
 	else:
 		supervisor_status = subprocess.check_output(['sudo', 'supervisorctl', 'status'], cwd=bench_path)
-
+		supervisor_status = safe_decode(supervisor_status)
+		
 		if web_workers and '{bench_name}-web:'.format(bench_name=bench_name) in supervisor_status:
 			group = '{bench_name}-web:	'.format(bench_name=bench_name)
 
