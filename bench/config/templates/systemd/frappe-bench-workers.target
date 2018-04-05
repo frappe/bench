@@ -1,0 +1,6 @@
+[Unit]
+After=network.target
+Wants={{ bench_name }}-frappe-default-worker.service {{ bench_name }}-frappe-short-worker.service {{ bench_name }}-frappe-long-worker.service {{ bench_name }}-frappe-schedule.service
+
+[Install]
+WantedBy=multi-user.target
