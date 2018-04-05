@@ -426,6 +426,35 @@ def restart_supervisor_processes(bench_path='.', web_workers=False):
 
 		exec_cmd('sudo supervisorctl restart {group}'.format(group=group), cwd=bench_path)
 
+def restart_systemcd_processes(bench_path='.', web_workers=False):
+	from .config.common_site_config import get_config
+	conf = get_config(bench_path=bench_path)
+	bench_name = get_bench_name(bench_path)
+
+	cmd = conf.get('systemd_restart_cmd')
+	if cmd:
+		exec_cmd(cmd, cwd=bench_path)
+
+	else:
+		systemd_status = subprocess.check_output(['sudo', 'systemctl', 'status'], cwd=bench_path)
+		systemd_status = safe_decode(supervisor_status)
+		
+		if web_workers and '{bench_name}-web:'.format(bench_name=bench_name) in systemd_status:
+			group = '{bench_name}-web:	'.format(bench_name=bench_name)
+
+		elif '{bench_name}-workers:'.format(bench_name=bench_name) in systemd_status:
+			group = '{bench_name}-workers: {bench_name}-web:'.format(bench_name=bench_name)
+
+		# backward compatibility
+		elif '{bench_name}-processes:'.format(bench_name=bench_name) in systemd_status:
+			group = '{bench_name}-processes:'.format(bench_name=bench_name)
+
+		# backward compatibility
+		else:
+			group = 'frappe:'
+
+		exec_cmd('sudo systemctl restart {group}'.format(group=group), cwd=bench_path)
+
 def set_default_site(site, bench_path='.'):
 	if not site in get_sites(bench_path=bench_path):
 		raise Exception("Site not in bench")
