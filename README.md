@@ -82,17 +82,34 @@ Note: Please do not remove the bench directory the above commands will create
 
 ## Easy Install
 
-- This is an opinionated setup so it is best to setup on a blank server.
-- Works on Ubuntu 14.04 to 16.04, CentOS 7+, Debian 7 to 8 and MacOS X.
-- You may have to install Python 2.7 (eg on Ubuntu 16.04+) by running `apt-get install python-minimal`
-- You may also have to install build-essential and python-setuptools by running `apt-get install build-essential python-setuptools`
-- This script will install the pre-requisites, install bench and setup an ERPNext site
-- Passwords for Frappe Administrator and MariaDB (root) will be asked
-- MariaDB (root) password may be `password` on a fresh server
-- You can then login as **Administrator** with the Administrator password
-- If you find any problems, post them on the forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
+This script will install the pre-requisites, install bench, setup a frappe-bench 
+with ERPNext and setup an ERPNext site for you. It is an opinionated setup so it 
+is best to setup on a blank system. The script has been tested  on Ubuntu 14.04 
+to 16.04, CentOS 7+, Debian 7 to 8 and MacOS.
+
+- Passwords for Frappe Administrator and MariaDB (root) will be prompted, then 
+set and stored in the file `passwords.txt`
+- MariaDB root password may be `password` on a fresh server
+- You can login as **Administrator** with the Administrator password
+on http://localhost:8000/ after `bench start`
+
+#### 1. Prerequisites
+
+**For Ubuntu:**
+
+1. Update your package list: `sudo apt-get update -y`
+2. Upgrade your packages: `sudo apt-get upgrade -y`
+3. Install python 2.7 `sudo apt-get install python-minimal -y`
+4. Install build-essentials: `sudo apt-get install build-essential python-setuptools -y`
+
+**For MacOS:**
 
 Open your Terminal and enter:
+
+1. Install xcode-build: `xcode-select --install`
+2. Agree to the license: `sudo xcodebuild -license`
+3. Install Homebrew (brew.sh) `/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
+4. Install Python 2.7 and Git `brew install python git`
 
 #### 1. Download the install script
 
@@ -100,14 +117,7 @@ For Linux:
 
 	wget https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py
 
-For Mac OSX:
-
-Install X Code (from App store) and HomeBrew (http://brew.sh/) first
-
-	brew install python
-	brew install git
-
-Download the Script
+For MacOS:
 
 	curl "https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py" -o install.py
 
