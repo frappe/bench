@@ -465,6 +465,15 @@ def update_node_packages(bench_path='.'):
 
 def update_yarn_packages(bench_path='.'):
 	apps_dir = os.path.join(bench_path, 'apps')
+	pacman   = None
+	for exec_ in ['yarn', 'npm']:
+		pacman = find_executable(exec_)
+		if pacman:
+			break
+
+	if not find_executable('yarn'):
+		print("Please install yarn using below command and try again.")
+		print("`npm install -g yarn`")
 
 	if not find_executable('yarn'):
 		print("Please install yarn using below command and try again.")
