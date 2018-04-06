@@ -48,7 +48,7 @@ bench_command.add_command(switch_to_develop)
 
 from bench.commands.utils import (start, restart, set_nginx_port, set_ssl_certificate, set_ssl_certificate_key, set_url_root,
 	set_mariadb_host, set_default_site, download_translations, shell, backup_site, backup_all_sites, release, renew_lets_encrypt,
-	disable_production, bench_src, prepare_staging)
+	disable_production, bench_src)
 bench_command.add_command(start)
 bench_command.add_command(restart)
 bench_command.add_command(set_nginx_port)
@@ -62,7 +62,6 @@ bench_command.add_command(shell)
 bench_command.add_command(backup_site)
 bench_command.add_command(backup_all_sites)
 bench_command.add_command(release)
-bench_command.add_command(prepare_staging)
 bench_command.add_command(renew_lets_encrypt)
 bench_command.add_command(disable_production)
 bench_command.add_command(bench_src)

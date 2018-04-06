@@ -130,14 +130,6 @@ def release(app, bump_type, from_branch, to_branch, owner, repo_name, remote):
 	release(bench_path='.', app=app, bump_type=bump_type, from_branch=from_branch, to_branch=to_branch,
 		remote=remote, owner=owner, repo_name=repo_name)
 
-@click.command('prepare-staging')
-@click.argument('app')
-def prepare_staging(app):
-	"""Prepare staging branch from develop branch"""
-	from bench.prepare_staging import prepare_staging
-	prepare_staging(bench_path='.', app=app)
-	
-
 @click.command('disable-production')
 def disable_production():
 	"""Disables production environment for the bench."""
