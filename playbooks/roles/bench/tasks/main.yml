@@ -63,7 +63,7 @@
       creates: "{{ bench_path }}/config/redis_socketio.conf"
       chdir: "{{ bench_path }}"
 
-  # Setup an ERPNext site called site1.local
+  # Setup an ERPNext site
   - include_tasks: setup_erpnext.yml
     when: not run_travis
 
