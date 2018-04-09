@@ -5,7 +5,7 @@
 
 [![Build Status](https://travis-ci.org/frappe/bench.svg?branch=master)](https://travis-ci.org/frappe/bench)
 
-The bench is a command-line utility that helps you to install apps, manage multiple sites and update Frappe / ERPNext apps on */nix (CentOS 6, Debian 7, Ubuntu, etc) for development and production. Bench will also create nginx and supervisor config files, setup backups and much more.
+The bench is a command-line utility that helps you to install apps, manage multiple sites and update Frappe / ERPNext apps on */nix (CentOS, Debian, Ubuntu, etc) for development and production. Bench will also create nginx and supervisor config files, setup backups and much more.
 
 If you are using on a VPS make sure it has >= 1Gb of RAM or has swap setup properly.
 
@@ -83,7 +83,7 @@ Note: Please do not remove the bench directory the above commands will create
 ## Easy Install
 
 - This is an opinionated setup so it is best to setup on a blank server.
-- Works on Ubuntu 14.04 to 16.04, CentOS 7+, Debian 7 to 8 and MacOS X.
+- Works on Ubuntu 16.04, CentOS 7+, Debian 8+
 - You may have to install Python 2.7 (eg on Ubuntu 16.04+) by running `apt-get install python-minimal`
 - You may also have to install build-essential and python-setuptools by running `apt-get install build-essential python-setuptools`
 - This script will install the pre-requisites, install bench and setup an ERPNext site
