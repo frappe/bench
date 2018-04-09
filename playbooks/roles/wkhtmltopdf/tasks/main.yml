@@ -17,6 +17,8 @@
     - xfonts-base
   when: ansible_os_family == 'Debian'
 
+# wkhtmltopdf has been locked down to 0.12.3 intentionally since 0.12.4 has problems.
+# I you want to upgrade try it on multiple platforms and then decide
 - name: download wkthmltox linux
   get_url: url=https://github.com/frappe/wkhtmltopdf/raw/master/wkhtmltox-0.12.3_linux-generic-{{ "amd64" if ansible_architecture == "x86_64" else "i386"}}.tar.xz dest=/tmp/wkhtmltox.tar.xz
 
