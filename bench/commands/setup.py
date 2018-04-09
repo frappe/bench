@@ -1,3 +1,4 @@
+from bench.utils import exec_cmd
 import click, sys, json
 
 @click.group()
@@ -51,6 +52,9 @@ def setup_fonts():
 def setup_production(user, yes=False):
 	"setup bench for production"
 	from bench.config.production_setup import setup_production
+	# Install prereqs for production
+	exec_cmd("sudo pip install ansible")
+	run_playbook('site.yml', tag='production')
 	setup_production(user=user, yes=yes)
 
 
