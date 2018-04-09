@@ -271,7 +271,7 @@ def get_passwords(args):
 				mysql_root_password = getpass.unix_getpass(prompt='Please enter mysql root password: ')
 				conf_mysql_passwd = getpass.unix_getpass(prompt='Re-enter mysql root password: ')
 
-				if mysql_root_password != conf_mysql_passwd:
+				if mysql_root_password != conf_mysql_passwd or mysql_root_password == '':
 					mysql_root_password = ''
 					continue
 
@@ -280,7 +280,7 @@ def get_passwords(args):
 				admin_password = getpass.unix_getpass(prompt='Please enter the default Administrator user password: ')
 				conf_admin_passswd = getpass.unix_getpass(prompt='Re-enter Administrator password: ')
 
-				if admin_password != conf_admin_passswd:
+				if admin_password != conf_admin_passswd or admin_password == '':
 					admin_password = ''
 					continue
 
