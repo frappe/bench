@@ -11,7 +11,7 @@ key-buffer-size                = 32M
 myisam-recover                 = FORCE,BACKUP
 
 # SAFETY #
-max-allowed-packet             = 64M
+max-allowed-packet             = 256M
 max-connect-errors             = 1000000
 innodb                         = FORCE
 
@@ -49,7 +49,7 @@ innodb-large-prefix            = 1
 collation-server               = utf8mb4_unicode_ci
 character-set-server           = utf8mb4
 character-set-client-handshake = FALSE
-max_allowed_packet             = 64M
+max_allowed_packet             = 256M
 
 # LOGGING #
 log-error                      = /var/lib/mysql/mysql-error.log
@@ -59,3 +59,6 @@ slow-query-log-file            = /var/lib/mysql/mysql-slow.log
 
 [mysql]
 default-character-set = utf8mb4
+
+[mysqldump]
+max_allowed_packet=256M

@@ -1,0 +1,18 @@
+---
+- name: Import Node source RPM key
+  rpm_key:
+    key: https://rpm.nodesource.com/pub/el/NODESOURCE-GPG-SIGNING-KEY-EL
+    state: present
+  when: ansible_os_family == 'RedHat'
+
+- name: Add Node Repo for RedHat
+  yum:
+    name: 'https://rpm.nodesource.com/pub_8.x/el/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/nodesource-release-el{{ ansible_distribution_major_version }}-1.noarch.rpm'
+    state: present
+    update_cache: yes
+  when: ansible_os_family == 'RedHat'
+
+- name: Install node v8
+  yum: name=nodejs state=present
+  when: ansible_os_family == 'RedHat'
+...

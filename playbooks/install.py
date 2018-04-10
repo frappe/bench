@@ -59,7 +59,7 @@ def install_bench(args):
 			})
 
 	success = run_os_command({
-		'pip': "sudo pip install ansible==2.5.0"
+		'pip': "sudo pip install ansible"
 	})
 
 	if not success:
@@ -124,7 +124,7 @@ def install_bench(args):
 		shutil.rmtree(tmp_bench_repo)
 
 def check_distribution_compatibility():
-	supported_dists = {'ubuntu': [14, 15, 16], 'debian': [7, 8, 9],
+	supported_dists = {'ubuntu': [15, 16], 'debian': [8, 9],
 		'centos': [7], 'macos': [10.9, 10.10, 10.11, 10.12]}
 
 	dist_name, dist_version = get_distribution_info()
@@ -271,7 +271,7 @@ def get_passwords(args):
 				mysql_root_password = getpass.unix_getpass(prompt='Please enter mysql root password: ')
 				conf_mysql_passwd = getpass.unix_getpass(prompt='Re-enter mysql root password: ')
 
-				if mysql_root_password != conf_mysql_passwd:
+				if mysql_root_password != conf_mysql_passwd or mysql_root_password == '':
 					mysql_root_password = ''
 					continue
 
@@ -280,7 +280,7 @@ def get_passwords(args):
 				admin_password = getpass.unix_getpass(prompt='Please enter the default Administrator user password: ')
 				conf_admin_passswd = getpass.unix_getpass(prompt='Re-enter Administrator password: ')
 
-				if admin_password != conf_admin_passswd:
+				if admin_password != conf_admin_passswd or admin_password == '':
 					admin_password = ''
 					continue
 
