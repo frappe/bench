@@ -198,7 +198,7 @@ def build_assets(bench_path='.'):
 def get_sites(bench_path='.'):
 	sites_dir = os.path.join(bench_path, "sites")
 	sites = [site for site in os.listdir(sites_dir)
-		if os.path.isdir(os.path.join(sites_dir, site)) and site not in ('assets',)]
+		if os.path.isdir(os.path.join(sites_dir, site)) and site not in ('assets','.git')]
 	return sites
 
 def get_sites_dir(bench_path='.'):

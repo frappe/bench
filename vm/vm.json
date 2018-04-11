@@ -1,0 +1,42 @@
+{
+	"builders":[{
+		"vm_name": "ERPNext-{{isotime \"020106\"}}",
+		"type": "virtualbox-ovf",
+		"format": "ova",
+		"headless": true,
+		"source_path": "base.ova",
+		"ssh_username": "frappe",
+		"ssh_password": "frappe",
+		"guest_additions_mode": "disable",
+		"ssh_port": 22,
+		"ssh_wait_timeout": "300s",
+		"export_opts": ["--vsys", "0", "--product", "ERPNext", "--producturl", "https://erpnext.com", "--vendor", "Frappe Techonologies", "--vendorurl", "https://frappe.io", "--description", "ERPNext Evaluation VM"],
+		"shutdown_command": " echo 'packer' | sudo shutdown -P -h now",
+		"vboxmanage": [
+			[ "modifyvm", "{{.Name}}", "--memory", "512" ],
+			[ "modifyvm", "{{.Name}}", "--audio", "none" ],
+			[ "modifyvm", "{{.Name}}", "--cpus", "1" ],
+			[ "modifyvm", "{{.Name}}", "--natpf1", "vm_ssh,tcp,,3022,,22" ],
+			[ "modifyvm", "{{.Name}}", "--natpf1", "vm_http,tcp,,8080,,80" ]
+		]
+	}
+			   ],
+	"provisioners": [{
+		"type": "shell",
+		"script": "scripts/install_ansible.sh"
+	}, {
+		"type": "ansible-local",
+		"playbook_file": "ansible/vm.yml",
+		"playbook_dir": "ansible",
+		"group_vars": "ansible/vm_vars",
+		"role_paths": [
+			"ansible/roles"
+		]
+	}, {
+		"type": "shell",
+		"script": "scripts/set_message.sh"
+	}, {
+		"type": "shell",
+		"script": "scripts/zerofree.sh"
+	}]
+}

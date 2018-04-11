@@ -1,0 +1,104 @@
+---
+  - name: Apply basic roles  
+    hosts: all
+    become: yes
+    become_user: root
+    vars:
+        - mysql_secure_installation: True
+        - mysql_conf_tpl: templates/mariadb_config.cnf
+        - nginx_conf_file: templates/nginx.conf
+    roles:
+        - mariadb
+        - nginx
+        - wkhtmltopdf
+    tasks:
+        - name: Install the 'Development tools' package group (Redhat)
+          yum: name="@Development tools" state=present
+          when: ansible_os_family == 'RedHat'
+        - name: Install packages
+          yum: name={{ item }} state=present
+          with_items:
+            - git
+            - nginx
+            - zlib-devel
+            - bzip2-devel
+            - openssl-devel
+            - postfix
+            - python-devel
+            - mariadb
+            - redis
+            - libXrender
+            - libXext
+            - cronie
+            - sudo
+            - which
+            - xorg-x11-fonts-75dpi
+            - xorg-x11-fonts-Type1
+            - screen
+            - vim
+            - git
+            - nginx
+            - zlib-devel
+            - bzip2-devel
+            - openssl-devel
+            - postfix
+            - python-devel
+            - redis
+            - cronie
+            - sudo
+            - which
+            - supervisor
+            - nodejs
+            - npm
+            - libtiff-devel
+            - libjpeg-devel
+            - libzip-devel
+            - freetype-devel
+            - lcms2-devel
+            - libwebp-devel
+            - tcl-devel
+            - tk-devel
+          when: ansible_os_family == 'RedHat'
+        - name: Install packages
+          apt: pkg={{ item }} state=present
+          with_items:
+            - python-dev
+            - python-setuptools
+            - build-essential
+            - python-mysqldb
+            - git
+            - ntp
+            - vim
+            - screen
+            - htop
+            - mariadb-server
+            - mariadb-common
+            - libmariadbclient-dev
+            - libxslt1.1
+            - libxslt1-dev
+            - redis-server
+            - libssl-dev
+            - libcrypto++-dev
+            - postfix
+            - nginx
+            - supervisor
+            - python-pip
+            - fontconfig
+            - libxrender1
+            - libxext6
+            - xfonts-75dpi
+            - xfonts-base
+            - nodejs
+            - npm
+            - libtiff5-dev
+            - libjpeg8-dev
+            - zlib1g-dev
+            - libfreetype6-dev
+            - liblcms2-dev
+            - libwebp-dev
+            - tcl8.6-dev
+            - tk8.6-dev
+            - python-tk
+          when: ansible_os_family == 'Debian'
+        - user: name="{{ frappe_user }}"
+        
