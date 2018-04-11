@@ -1,8 +1,12 @@
-# Bench
+
+<div align="center">
+    <img src="https://github.com/frappe/design/blob/master/logos/bench-logo.svg" height="128">
+    <h2>Frappe Bench</h2>
+</div>
 
 [![Build Status](https://travis-ci.org/frappe/bench.svg?branch=master)](https://travis-ci.org/frappe/bench)
 
-The bench is a command-line utility that helps you to install apps, manage multiple sites and update Frappe / ERPNext apps on */nix (CentOS 6, Debian 7, Ubuntu, etc) for development and production. Bench will also create nginx and supervisor config files, setup backups and much more.
+The bench is a command-line utility that helps you to install apps, manage multiple sites and update Frappe / ERPNext apps on */nix (CentOS, Debian, Ubuntu, etc) for development and production. Bench will also create nginx and supervisor config files, setup backups and much more.
 
 If you are using on a VPS make sure it has >= 1Gb of RAM or has swap setup properly.
 
@@ -12,26 +16,40 @@ If you have questions, please ask them on the [forum](https://discuss.erpnext.co
 
 ## Installation
 
-## Manual Install
+### Installation Requirements
 
-To manually install frappe/erpnext here are the steps
+You will need a computer/server. Options include:
+
+- A Normal Computer/VPS/Baremetal Server: This is strongly recommended. Frappe/ERPNext installs properly and works well on these
+- A Raspberry Pi, SAN Appliance, Network Router, Gaming Console, etc.: Although you may be able to install Frappe/ERPNext on specialized hardware, it is unlikely to work well and will be difficult for us to support. Strongly consider using a normal computer/VPS/baremetal server instead. **We do not support specialized hardware**.
+- A Toaster, Car, Firearm, Thermostat, etc.: Yes, many modern devices now have embedded computing capability. We live in interesting times. However, you should not install Frappe/ERPNext on these devices. Instead, install it on a normal computer/VPS/baremetal server. **We do not support installing on noncomputing devices**.
+
+To install the Frappe/ERPNext server software, you will need an operating system on your normal computer which is not Windows. Note that the command line interface does work on Windows, and you can use Frappe/ERPNext from any operating system with a web browser. However, the server software does not run on Windows. It does run on other operating systems, so choose one of these instead:
+
+- Linux: Debian, Ubuntu, CentOS are the preferred distros and are well tested. [Arch Linux](https://github.com/frappe/bench/wiki/Install-ERPNext-on-ArchLinux) can also be used
+- Mac OS X
+
+### Manual Install
+
+To manually install frappe/erpnext, you can follow this [this wiki](https://github.com/frappe/frappe/wiki/The-Hitchhiker's-Guide-to-Installing-Frapp%C3%A9-on-Linux-OS) for Linux and [this wiki](https://github.com/frappe/frappe/wiki/The-Hitchhiker's-Guide-to-Installing-Frapp%C3%A9-on-Mac-OS-X) for MacOS. It gives an excellent explanation about the stack. You can also follow the steps mentioned below:
 
 #### 1. Install Pre-requisites
 
-- Python 2.7
+- Python 2.7 [Python3.5+ also supported, but not recommended for production]
 - MariaDB 10+
 - Nginx (for production)
 - Nodejs
+- yarn
 - Redis
 - cron (crontab is required)
-- wkhtmltopdf with patched Qt (for pdf generation)
+- wkhtmltopdf with patched Qt (version 0.12.3) (for pdf generation)
 
 #### 2. Install Bench
 
 Install bench as a *non root* user,
 
 	git clone https://github.com/frappe/bench bench-repo
-	sudo pip install -e bench-repo
+	pip install --user -e bench-repo
 
 Note: Please do not remove the bench directory the above commands will create
 
@@ -80,11 +98,12 @@ Note: Please do not remove the bench directory the above commands will create
 ## Easy Install
 
 - This is an opinionated setup so it is best to setup on a blank server.
-- Works on Ubuntu 14.04 to 16.04, CentOS 7+, Debian 7 to 8 and MacOS X.
+- Works on Ubuntu 16.04, CentOS 7+, Debian 8+
 - You may have to install Python 2.7 (eg on Ubuntu 16.04+) by running `apt-get install python-minimal`
 - You may also have to install build-essential and python-setuptools by running `apt-get install build-essential python-setuptools`
 - This script will install the pre-requisites, install bench and setup an ERPNext site
 - Passwords for Frappe Administrator and MariaDB (root) will be asked
+- MariaDB (root) password may be `password` on a fresh server
 - You can then login as **Administrator** with the Administrator password
 - If you find any problems, post them on the forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
 
@@ -96,16 +115,6 @@ For Linux:
 
 	wget https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py
 
-For Mac OSX:
-
-Install X Code (from App store) and HomeBrew (http://brew.sh/) first
-
-	brew install python
-	brew install git
-
-Download the Script
-
-	curl "https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py" -o install.py
 
 #### 2. Run the install script
 
@@ -126,12 +135,12 @@ For production:
 - Install all the pre-requisites
 - Install the command line `bench`
 - Create a new bench (a folder that will contain your entire frappe/erpnext setup)
-- Create a new site on the bench
+- Create a new ERPNext site on the bench 
 
 #### How do I start ERPNext
 
 1. For development: Go to your bench folder (`frappe-bench` by default) and start the bench with `bench start`
-2. For production: Your process will be setup and managed by `nginx` and `supervisor`. [Setup Production](https://frappe.github.io/frappe/user/en/bench/guides/setup-production.html)
+2. For production: Your process will be setup and managed by `nginx` and `supervisor`. [Setup Production](https://frappe.io/docs/user/en/bench/guides/setup-production.html)
 
 ---
 
@@ -169,19 +178,19 @@ You can also run the parts of the bench selectively.
 
 Guides
 =======
-- [Configuring HTTPS](https://frappe.github.io/frappe/user/en/bench/guides/configuring-https.html)
-- [Using Let's Encrypt to setup HTTPS](https://frappe.github.io/frappe/user/en/bench/guides/lets-encrypt-ssl-setup.html)
-- [Diagnosing the Scheduler](https://frappe.github.io/frappe/user/en/bench/guides/diagnosing-the-scheduler.html)
-- [Change Hostname](https://frappe.github.io/frappe/user/en/bench/guides/adding-custom-domains)
-- [Manual Setup](https://frappe.github.io/frappe/user/en/bench/guides/manual-setup.html)
-- [Setup Production](https://frappe.github.io/frappe/user/en/bench/guides/setup-production.html)
-- [Setup Multitenancy](https://frappe.github.io/frappe/user/en/bench/guides/setup-multitenancy.html)
+- [Configuring HTTPS](https://frappe.io/docs/user/en/bench/guides/configuring-https.html)
+- [Using Let's Encrypt to setup HTTPS](https://frappe.io/docs/user/en/bench/guides/lets-encrypt-ssl-setup.html)
+- [Diagnosing the Scheduler](https://frappe.io/docs/user/en/bench/guides/diagnosing-the-scheduler.html)
+- [Change Hostname](https://frappe.io/docs/user/en/bench/guides/adding-custom-domains)
+- [Manual Setup](https://frappe.io/docs/user/en/bench/guides/manual-setup.html)
+- [Setup Production](https://frappe.io/docs/user/en/bench/guides/setup-production.html)
+- [Setup Multitenancy](https://frappe.io/docs/user/en/bench/guides/setup-multitenancy.html)
 - [Stopping Production](https://github.com/frappe/bench/wiki/Stopping-Production-and-starting-Development)
 
 
 Resources
 =======
 
-- [Background Services](https://frappe.github.io/frappe/user/en/bench/resources/background-services.html)
-- [Bench Commands Cheat Sheet](https://frappe.github.io/frappe/user/en/bench/resources/bench-commands-cheatsheet.html)
-- [Bench Procfile](https://frappe.github.io/frappe/user/en/bench/resources/bench-procfile.html)
+- [Background Services](https://frappe.io/docs/user/en/bench/resources/background-services.html)
+- [Bench Commands Cheat Sheet](https://frappe.io/docs/user/en/bench/resources/bench-commands-cheatsheet.html)
+- [Bench Procfile](https://frappe.io/docs/user/en/bench/resources/bench-procfile.html)

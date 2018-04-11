@@ -58,8 +58,6 @@ def install_bench(args):
 				'pip': 'sudo pip install --upgrade pip setuptools',
 			})
 
-	# Restricting ansible version due to following bug in ansible 2.1
-	# https://github.com/ansible/ansible-modules-core/issues/3752
 	success = run_os_command({
 		'pip': "sudo pip install ansible"
 	})
@@ -84,6 +82,14 @@ def install_bench(args):
 	if args.user == 'root':
 		raise Exception('Please run this script as a non-root user with sudo privileges, but without using sudo or pass --user=USER')
 
+	# Python executable
+	if not args.production:
+		dist_name, dist_version = get_distribution_info()
+		if dist_name=='centos':
+			args.python = 'python3.6'
+		else:
+			args.python = 'python3'
+
 	# create user if not exists
 	extra_vars = vars(args)
 	extra_vars.update(frappe_user=args.user)
@@ -95,7 +101,7 @@ def install_bench(args):
 		repo_path = os.path.join(os.path.expanduser('~'), 'bench')
 
 	extra_vars.update(repo_path=repo_path)
-	run_playbook('develop/create_user.yml', extra_vars=extra_vars)
+	run_playbook('create_user.yml', extra_vars=extra_vars)
 
 	extra_vars.update(get_passwords(args))
 	if args.production:
@@ -103,18 +109,22 @@ def install_bench(args):
 
 	branch = 'master' if args.production else 'develop'
 	extra_vars.update(branch=branch)
+	
+	bench_name = 'frappe-bench' if not args.bench_name else args.bench_name
+	extra_vars.update(bench_name=bench_name)
 
-	if args.develop:
-		run_playbook('develop/install.yml', sudo=True, extra_vars=extra_vars)
+	# Will install ERPNext production setup by default
+	run_playbook('site.yml', sudo=True, extra_vars=extra_vars)
 
-	elif args.production:
-		run_playbook('production/install.yml', sudo=True, extra_vars=extra_vars)
+	# # Will do changes for production if --production flag is passed
+	# if args.production:
+	# 	run_playbook('production.yml', sudo=True, extra_vars=extra_vars)
 
 	if os.path.exists(tmp_bench_repo):
 		shutil.rmtree(tmp_bench_repo)
 
 def check_distribution_compatibility():
-	supported_dists = {'ubuntu': [14, 15, 16], 'debian': [7, 8],
+	supported_dists = {'ubuntu': [14, 15, 16], 'debian': [8, 9],
 		'centos': [7], 'macos': [10.9, 10.10, 10.11, 10.12]}
 
 	dist_name, dist_version = get_distribution_info()
@@ -146,7 +156,7 @@ def install_python27():
 
 	# install python 2.7
 	success = run_os_command({
-		'apt-get': 'sudo apt-get install -y python2.7',
+		'apt-get': 'sudo apt-get install -y python-dev',
 		'yum': 'sudo yum install -y python27',
 		'brew': 'brew install python'
 	})
@@ -261,7 +271,7 @@ def get_passwords(args):
 				mysql_root_password = getpass.unix_getpass(prompt='Please enter mysql root password: ')
 				conf_mysql_passwd = getpass.unix_getpass(prompt='Re-enter mysql root password: ')
 
-				if mysql_root_password != conf_mysql_passwd:
+				if mysql_root_password != conf_mysql_passwd or mysql_root_password == '':
 					mysql_root_password = ''
 					continue
 
@@ -270,7 +280,7 @@ def get_passwords(args):
 				admin_password = getpass.unix_getpass(prompt='Please enter the default Administrator user password: ')
 				conf_admin_passswd = getpass.unix_getpass(prompt='Re-enter Administrator password: ')
 
-				if admin_password != conf_admin_passswd:
+				if admin_password != conf_admin_passswd or admin_password == '':
 					admin_password = ''
 					continue
 
@@ -340,6 +350,9 @@ def parse_commandline_args():
 
 	parser.add_argument('--site', dest='site', action='store', default='site1.local',
 		help='Specifiy name for your first ERPNext site')
+	
+	parser.add_argument('--without-site', dest='without_site', action='store_true',
+		default=False)
 
 	parser.add_argument('--verbose', dest='verbosity', action='store_true', default=False,
 		help='Run the script in verbose mode')
@@ -364,6 +377,12 @@ def parse_commandline_args():
 	# set passwords
 	parser.add_argument('--mysql-root-password', dest='mysql_root_password', help='Set mysql root password')
 	parser.add_argument('--admin-password', dest='admin_password', help='Set admin password')
+	parser.add_argument('--bench-name', dest='bench_name', help='Create bench with specified name. Default name is frappe-bench')
+
+	# Python interpreter to be used
+	parser.add_argument('--python', dest='python', default='python',
+		help=argparse.SUPPRESS
+	)
 
 	args = parser.parse_args()
 

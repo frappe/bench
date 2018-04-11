@@ -1,0 +1,37 @@
+---
+- name: Check if packer already exists
+  stat:
+    path: /opt/packer
+  register: packer
+
+- name: Check if packer version is 1.2.1
+  command: /opt/packer --version
+  register: packer_version
+  when: packer.stat.exists
+
+- include_tasks: debian_family.yml
+  when: ansible_os_family == 'Debian' and packer.stat.exists == False 
+
+- include_tasks: redhat_family.yml
+  when: ansible_os_family == "RedHat" and packer.stat.exists == False 
+
+- name: Delete packer if < 1.2.1
+  file:
+    state: absent
+    path: /opt/packer
+  when: (packer.stat.exists) and (packer_version | version_compare('1.2.1', '<'))
+
+- name: Download packer zip file
+  command: chdir=/opt/ wget https://releases.hashicorp.com/packer/1.2.1/packer_1.2.1_linux_amd64.zip
+  when: (packer.stat.exists == False) or (packer_version | version_compare('1.2.1', '<'))
+
+- name: Unzip the packer binary in /opt
+  command: chdir=/opt/ unzip packer_1.2.1_linux_amd64.zip
+  when: (packer.stat.exists == False) or (packer_version | version_compare('1.2.1', '<'))
+
+- name: Remove the downloaded packer zip file
+  file:
+    state: absent
+    path: /opt/packer_1.2.1_linux_amd64.zip
+  when: (packer.stat.exists == False) or (packer_version | version_compare('1.2.1', '<'))
+...

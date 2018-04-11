@@ -1,3 +1,4 @@
+from bench.utils import exec_cmd
 import click, sys, json
 
 @click.group()
@@ -5,14 +6,12 @@ def setup():
 	"Setup bench"
 	pass
 
-
 @click.command('sudoers')
 @click.argument('user')
 def setup_sudoers(user):
 	"Add commands to sudoers list for execution without password"
 	from bench.utils import setup_sudoers
 	setup_sudoers(user)
-
 
 @click.command('nginx')
 @click.option('--yes', help='Yes to regeneration of nginx config file', default=False, is_flag=True)
@@ -47,13 +46,19 @@ def setup_fonts():
 	from bench.utils import setup_fonts
 	setup_fonts()
 
-
 @click.command('production')
 @click.option('--yes', is_flag=True, default=False, help='Dont prompt for confirmation')
 @click.argument('user')
+@click.option('--yes', help='Yes to regeneration config', is_flag=True, default=False)
 def setup_production(user, yes=False):
 	"setup bench for production"
 	from bench.config.production_setup import setup_production
+	from bench.utils import run_playbook
+	# Install prereqs for production
+	exec_cmd("sudo pip install ansible")
+	exec_cmd("bench setup role fail2ban")
+	exec_cmd("bench setup role nginx")
+	exec_cmd("bench setup role supervisor")
 	setup_production(user=user, yes=yes)
 
 
@@ -71,30 +76,42 @@ def setup_backups():
 	setup_backups()
 
 @click.command('env')
-def setup_env():
+@click.option('--python', type = str, default = 'python', help = 'Path to Python Executable.')
+def setup_env(python='python'):
 	"Setup virtualenv for bench"
 	from bench.utils import setup_env
-	setup_env()
+	setup_env(python=python)
 
 @click.command('firewall')
-def setup_firewall():
+@click.option('--ssh_port')
+@click.option('--force')
+def setup_firewall(ssh_port=None, force=False):
 	"Setup firewall"
 	from bench.utils import run_playbook
-	click.confirm('Setting up the firewall will block all ports except 80, 443 and 22\n'
-		'Do you want to continue?',
-		abort=True)
-	run_playbook('production/setup_firewall.yml')
+
+	if not force:
+		click.confirm('Setting up the firewall will block all ports except 80, 443 and 22\n'
+			'Do you want to continue?',
+			abort=True)
+
+	if not ssh_port:
+		ssh_port = 22
+
+	run_playbook('roles/bench/tasks/setup_firewall.yml', {"ssh_port": ssh_port})
 
 @click.command('ssh-port')
 @click.argument('port')
-def set_ssh_port(port):
+@click.option('--force')
+def set_ssh_port(port, force=False):
 	"Set SSH Port"
 	from bench.utils import run_playbook
-	click.confirm('This will change your SSH Port to {}\n'
-		'Do you want to continue?'.format(port),
-		abort=True)
-	run_playbook('production/change_ssh_port.yml', {"ssh_port": port})
 
+	if not force:
+		click.confirm('This will change your SSH Port to {}\n'
+			'Do you want to continue?'.format(port),
+			abort=True)
+
+	run_playbook('roles/bench/tasks/change_ssh_port.yml', {"ssh_port": port})
 
 @click.command('lets-encrypt')
 @click.argument('site')
@@ -118,12 +135,24 @@ def setup_socketio():
 	from bench.utils import setup_socketio
 	setup_socketio()
 
-@click.command('requirements')
-def setup_requirements():
+@click.command('requirements', help="Update Python and Node packages")
+@click.option('--node', help="Update only Node packages", default=False, is_flag=True)
+@click.option('--python', help="Update only Python packages", default=False, is_flag=True)
+def setup_requirements(node=False, python=False):
 	"Setup python and node requirements"
-	from bench.utils import update_requirements, update_npm_packages
+
+	if not node:
+		setup_python_requirements()
+	if not python:
+		setup_node_requirements()
+
+def setup_python_requirements():
+	from bench.utils import update_requirements
 	update_requirements()
-	update_npm_packages()
+
+def setup_node_requirements():
+	from bench.utils import update_node_packages
+	update_node_packages()
 
 @click.command('config')
 def setup_config():
@@ -181,6 +210,30 @@ def sync_domains(domain=None, site=None):
 	# if changed, success, else failure
 	sys.exit(0 if changed else 1)
 
+@click.command('role')
+@click.argument('role')
+@click.option('--admin_emails', default='')
+@click.option('--mysql_root_password')
+def setup_roles(role, **kwargs):
+	"Install dependancies via roles"
+	from bench.utils import run_playbook
+
+	extra_vars = {"production": True}
+	extra_vars.update(kwargs)
+
+	if role:
+		run_playbook('site.yml', extra_vars=extra_vars, tag=role)
+	else:
+		run_playbook('site.yml', extra_vars=extra_vars)
+
+@click.command('fail2ban')
+@click.option('--maxretry', default=6, help="Number of matches (i.e. value of the counter) which triggers ban action on the IP. Default is 6 seconds" )
+@click.option('--bantime', default=600, help="The counter is set to zero if no match is found within 'findtime' seconds. Default is 600 seconds")
+@click.option('--findtime', default=600, help='Duration (in seconds) for IP to be banned for. Negative number for "permanent" ban. Default is 600 seconds')
+def setup_nginx_proxy_jail(**kwargs):
+	from bench.utils import run_playbook
+	run_playbook('roles/fail2ban/tasks/configure_nginx_jail.yml', extra_vars=kwargs)
+
 setup.add_command(setup_sudoers)
 setup.add_command(setup_nginx)
 setup.add_command(reload_nginx)
@@ -201,3 +254,5 @@ setup.add_command(remove_domain)
 setup.add_command(sync_domains)
 setup.add_command(setup_firewall)
 setup.add_command(set_ssh_port)
+setup.add_command(setup_roles)
+setup.add_command(setup_nginx_proxy_jail)

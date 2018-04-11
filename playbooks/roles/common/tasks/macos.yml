@@ -1,0 +1,37 @@
+---
+
+- hosts: localhost
+  become: yes
+  become_user: root
+  vars:
+    bench_repo_path: "/Users/{{ ansible_user_id }}/.bench"
+    bench_path: "/Users/{{ ansible_user_id }}/frappe-bench"
+  tasks:
+    # install pre-requisites
+    - name: install prequisites
+      homebrew: name={{ item }} state=present
+      with_items:
+        - cmake
+        - redis
+        - mariadb
+        - nodejs
+
+    # install wkhtmltopdf
+    - name: cask installs
+      homebrew_cask: name={{ item }} state=present
+      with_items:
+        - wkhtmltopdf
+
+    - name: configure mariadb
+      include_tasks: roles/mariadb/tasks/main.yml
+      vars:
+        mysql_conf_tpl: roles/mariadb/files/mariadb_config.cnf
+
+    # setup frappe-bench
+    - include_tasks: includes/setup_bench.yml
+
+    # setup development environment
+    - include_tasks: includes/setup_dev_env.yml
+      when: not production
+
+...

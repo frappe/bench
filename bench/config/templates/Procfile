@@ -4,12 +4,14 @@ redis_queue: redis-server config/redis_queue.conf
 web: bench serve {% if webserver_port -%} --port {{ webserver_port }} {%- endif %}
 
 socketio: {{ node }} apps/frappe/socketio.js
+{% if not CI %}
 watch: bench watch
+{% endif %}
 {% if use_rq -%}
 schedule: bench schedule
-worker_short: bench worker --queue short
-worker_long: bench worker --queue long
-worker_default: bench worker --queue default
+worker_short: bench worker --queue short --quiet
+worker_long: bench worker --queue long --quiet
+worker_default: bench worker --queue default --quiet
 {% else %}
 workerbeat: sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app beat -s scheduler.schedule'
 worker: sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app worker -n jobs@%h -Ofair --soft-time-limit 360 --time-limit 390'

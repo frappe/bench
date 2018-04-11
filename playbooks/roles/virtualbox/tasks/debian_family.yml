@@ -1,0 +1,29 @@
+---
+- name: Install dependencies
+  apt: pkg={{ item }} state=present
+  with_items:
+    - apt-transport-https
+    - ca-certificates
+
+- name: Add VirtualBox to sources.list
+  apt_repository:
+    repo: deb https://download.virtualbox.org/virtualbox/debian {{ ansible_distribution_release }} contrib
+    state: present
+
+- name: Add apt signing key for VirtualBox for Debian >= 8 and Ubuntu >= 16
+  apt_key:
+    url: https://www.virtualbox.org/download/oracle_vbox_2016.asc
+    state: present
+  when: (ansible_distribution == "Debian" and ansible_distribution_major_version >= "8") or (ansible_distribution == "Ubuntu" and ansible_distribution_major_version >= "16")
+
+- name: Add apt signing key for VirtualBox for Debian < 8 and Ubuntu < 16
+  apt_key:
+    url: https://www.virtualbox.org/download/oracle_vbox.asc
+    state: present
+  when: (ansible_distribution == "Debian" and ansible_distribution_major_version < "8") or (ansible_distribution == "Ubuntu" and ansible_distribution_major_version < "16")
+
+- name: Install VirtualBox
+  apt: pkg={{ item }} update_cache=yes state=present
+  with_items:
+    - virtualbox-{{ virtualbox_version }}
+...

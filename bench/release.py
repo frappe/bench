@@ -24,6 +24,7 @@ github_password = None
 def release(bench_path, app, bump_type, from_branch='develop', to_branch='master',
 		remote='upstream', owner='frappe', repo_name=None):
 
+	confirm_testing()
 	config = get_config(bench_path)
 
 	if not config.get('release_bench'):
@@ -53,10 +54,20 @@ def validate(bench_path, config):
 	r = requests.get('https://api.github.com/user', auth=HTTPBasicAuth(github_username, github_password))
 	r.raise_for_status()
 
+def confirm_testing():
+	print('')
+	print('================ CAUTION ==================')
+	print('Never miss this, even if it is a really small release!!')
+	print('Manual Testing Checklisk: https://github.com/frappe/bench/wiki/Testing-Checklist')
+	print('')
+	print('')
+	click.confirm('Is manual testing done?', abort = True)
+
 def bump(bench_path, app, bump_type, from_branch, to_branch, remote, owner, repo_name=None):
 	assert bump_type in ['minor', 'major', 'patch', 'stable', 'prerelease']
 
 	repo_path = os.path.join(bench_path, 'apps', app)
+	push_branch_for_old_major_version(bench_path, bump_type, app, repo_path, from_branch, to_branch, remote, owner)
 	update_branches_and_check_for_changelog(repo_path, from_branch, to_branch, remote=remote)
 	message = get_release_message(repo_path, from_branch=from_branch, to_branch=to_branch, remote=remote)
 
@@ -298,4 +309,25 @@ def create_github_release(repo_path, tag_name, message, remote='upstream', owner
 				print(r.json())
 				raise
 	return r
+
+def push_branch_for_old_major_version(bench_path, bump_type, app, repo_path, from_branch, to_branch, remote, owner):
+	if bump_type != 'major':
+		return
+
+	current_version = get_current_version(repo_path)
+	old_major_version_branch = "v{major}.x.x".format(major=current_version.split('.')[0])
+
+	click.confirm('Do you want to push {branch}?'.format(branch=old_major_version_branch), abort=True)
+
+	update_branch(repo_path, to_branch, remote=remote)
+
+	g = git.Repo(repo_path).git
+	g.checkout(b=old_major_version_branch)
+
+	args = [
+		'{old_major_version_branch}:{old_major_version_branch}'.format(old_major_version_branch=old_major_version_branch),
+	]
+
+	print("Pushing {old_major_version_branch} ".format(old_major_version_branch=old_major_version_branch))
+	print(g.push(remote, *args))
 
