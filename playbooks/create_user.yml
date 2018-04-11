@@ -33,4 +33,6 @@
         recurse: yes
       when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'CentOS' or ansible_distribution == 'Debian'
 
+    - name: Change default shell to bash
+      shell: "chsh {{ frappe_user }} -s $(which bash)"
 ...

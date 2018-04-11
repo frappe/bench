@@ -1,0 +1,20 @@
+---
+- name: Add apt key for node repo
+  apt_key:
+    url: https://keyserver.ubuntu.com/pks/lookup?op=get&fingerprint=on&search=0x1655A0AB68576280
+    id: "68576280"
+    state: present
+
+- name: Add repo
+  apt_repository:
+    repo: "deb [arch=amd64,i386] https://deb.nodesource.com/node_8.x {{ ansible_distribution_release }} main"
+    state: present
+  register: node_repo
+
+- name: Install nodejs 8.x
+  apt:
+    name: nodejs
+    state: present
+    update_cache: yes
+    force: yes
+...
