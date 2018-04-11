@@ -47,7 +47,6 @@ def setup_fonts():
 	setup_fonts()
 
 @click.command('production')
-@click.option('--yes', is_flag=True, default=False, help='Dont prompt for confirmation')
 @click.argument('user')
 @click.option('--yes', help='Yes to regeneration config', is_flag=True, default=False)
 def setup_production(user, yes=False):
