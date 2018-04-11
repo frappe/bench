@@ -1,3 +1,4 @@
+
 <div align="center">
     <img src="https://github.com/frappe/design/blob/master/logos/bench-logo.svg" height="128">
     <h2>Frappe Bench</h2>
@@ -15,19 +16,33 @@ If you have questions, please ask them on the [forum](https://discuss.erpnext.co
 
 ## Installation
 
-## Manual Install
+### Installation Requirements
 
-To manually install frappe/erpnext here are the steps
+You will need a computer/server. Options include:
+
+- A Normal Computer/VPS/Baremetal Server: This is strongly recommended. Frappe/ERPNext installs properly and works well on these
+- A Raspberry Pi, SAN Appliance, Network Router, Gaming Console, etc.: Although you may be able to install Frappe/ERPNext on specialized hardware, it is unlikely to work well and will be difficult for us to support. Strongly consider using a normal computer/VPS/baremetal server instead. **We do not support specialized hardware**.
+- A Toaster, Car, Firearm, Thermostat, etc.: Yes, many modern devices now have embedded computing capability. We live in interesting times. However, you should not install Frappe/ERPNext on these devices. Instead, install it on a normal computer/VPS/baremetal server. **We do not support installing on noncomputing devices**.
+
+To install the Frappe/ERPNext server software, you will need an operating system on your normal computer which is not Windows. Note that the command line interface does work on Windows, and you can use Frappe/ERPNext from any operating system with a web browser. However, the server software does not run on Windows. It does run on other operating systems, so choose one of these instead:
+
+- Linux: Debian, Ubuntu, CentOS are the preferred distros and are well tested. [Arch Linux](https://github.com/frappe/bench/wiki/Install-ERPNext-on-ArchLinux) can also be used
+- Mac OS X
+
+### Manual Install
+
+To manually install frappe/erpnext, you can follow this [this wiki](https://github.com/frappe/frappe/wiki/The-Hitchhiker's-Guide-to-Installing-Frapp%C3%A9-on-Linux-OS) for Linux and [this wiki](https://github.com/frappe/frappe/wiki/The-Hitchhiker's-Guide-to-Installing-Frapp%C3%A9-on-Mac-OS-X) for MacOS. It gives an excellent explanation about the stack. You can also follow the steps mentioned below:
 
 #### 1. Install Pre-requisites
 
-- Python 2.7
+- Python 2.7 [Python3.5+ also supported, but not recommended for production]
 - MariaDB 10+
 - Nginx (for production)
 - Nodejs
+- yarn
 - Redis
 - cron (crontab is required)
-- wkhtmltopdf with patched Qt (for pdf generation)
+- wkhtmltopdf with patched Qt (version 0.12.3) (for pdf generation)
 
 #### 2. Install Bench
 
@@ -100,16 +115,6 @@ For Linux:
 
 	wget https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py
 
-For Mac OSX:
-
-Install X Code (from App store) and HomeBrew (http://brew.sh/) first
-
-	brew install python
-	brew install git
-
-Download the Script
-
-	curl "https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py" -o install.py
 
 #### 2. Run the install script
 
