@@ -39,9 +39,9 @@ def generate_systemd_config(bench_path, user=None, yes=False):
 
 	setup_systemd_directory(bench_path)
 	setup_main_config(bench_info, bench_path)
-	# setup_workers_config(bench_info)
-	# setup_web_config(bench_info)
-	# setup_redis_config(bench_info)
+	setup_workers_config(bench_info, bench_path)
+	setup_web_config(bench_info, bench_path)
+	setup_redis_config(bench_info, bench_path)
 
 	update_config({'restart_systemd_on_update': True}, bench_path=bench_path)
 
@@ -72,6 +72,27 @@ def setup_workers_config(bench_info, bench_path):
 	bench_long_worker_config = bench_long_worker_template.render(**bench_info)
 	bench_schedule_worker_config = bench_schedule_worker_template.render(**bench_info)
 
+	bench_workers_target_config_path = os.path.join(bench_path, 'config', 'systemd' , bench_info.get("bench_name") + '-workers.target')
+	bench_default_worker_config_path = os.path.join(bench_path, 'config', 'systemd' , bench_info.get("bench_name") + '-frappe-default-worker.service')
+	bench_short_worker_config_path = os.path.join(bench_path, 'config', 'systemd' , bench_info.get("bench_name") + '-frappe-short-worker.service')
+	bench_long_worker_config_path = os.path.join(bench_path, 'config', 'systemd' , bench_info.get("bench_name") + '-frappe-long-worker.service')
+	bench_schedule_worker_config_path = os.path.join(bench_path, 'config', 'systemd' , bench_info.get("bench_name") + '-frappe-schedule.service')
+
+	with open(bench_workers_target_config_path, 'w') as f:
+		f.write(bench_workers_target_config)
+
+	with open(bench_default_worker_config_path, 'w') as f:
+		f.write(bench_default_worker_config)
+
+	with open(bench_short_worker_config_path, 'w') as f:
+		f.write(bench_short_worker_config)
+
+	with open(bench_long_worker_config_path, 'w') as f:
+		f.write(bench_long_worker_config)
+
+	with open(bench_schedule_worker_config_path, 'w') as f:
+		f.write(bench_schedule_worker_config)
+
 def setup_web_config(bench_info, bench_path):
 	# Web Group
 	bench_web_target_template = bench.env.get_template('systemd/frappe-bench-web.target')
@@ -81,6 +102,19 @@ def setup_web_config(bench_info, bench_path):
 	bench_web_target_config = bench_web_target_template.render(**bench_info)
 	bench_web_service_config = bench_web_service_template.render(**bench_info)
 	bench_node_socketio_config = bench_node_socketio_template.render(**bench_info)
+
+	bench_web_target_config_path = os.path.join(bench_path, 'config', 'systemd' , bench_info.get("bench_name") + '-web.target')
+	bench_web_service_config_path = os.path.join(bench_path, 'config', 'systemd' , bench_info.get("bench_name") + '-frappe-web.service')
+	bench_node_socketio_config_path = os.path.join(bench_path, 'config', 'systemd' , bench_info.get("bench_name") + '-node-socketio.service')
+
+	with open(bench_web_target_config_path, 'w') as f:
+		f.write(bench_web_target_config)
+
+	with open(bench_web_service_config_path, 'w') as f:
+		f.write(bench_web_service_config)
+
+	with open(bench_node_socketio_config_path, 'w') as f:
+		f.write(bench_node_socketio_config)
 
 def setup_redis_config(bench_info, bench_path):
 	# Redis Group
@@ -93,3 +127,20 @@ def setup_redis_config(bench_info, bench_path):
 	bench_redis_cache_config = bench_redis_cache_template.render(**bench_info)
 	bench_redis_queue_config = bench_redis_queue_template.render(**bench_info)
 	bench_redis_socketio_config = bench_redis_socketio_template.render(**bench_info)
+
+	bench_redis_target_config_path = os.path.join(bench_path, 'config', 'systemd' , bench_info.get("bench_name") + '-redis.target')
+	bench_redis_cache_config_path = os.path.join(bench_path, 'config', 'systemd' , bench_info.get("bench_name") + '-redis-cache.service')
+	bench_redis_queue_config_path = os.path.join(bench_path, 'config', 'systemd' , bench_info.get("bench_name") + '-redis-queue.service')
+	bench_redis_socketio_config_path = os.path.join(bench_path, 'config', 'systemd' , bench_info.get("bench_name") + '-redis-socketio.service')
+
+	with open(bench_redis_target_config_path, 'w') as f:
+		f.write(bench_redis_target_config)
+
+	with open(bench_redis_cache_config_path, 'w') as f:
+		f.write(bench_redis_cache_config)
+
+	with open(bench_redis_queue_config_path, 'w') as f:
+		f.write(bench_redis_queue_config)
+
+	with open(bench_redis_socketio_config_path, 'w') as f:
+		f.write(bench_redis_socketio_config)
