@@ -23,6 +23,12 @@ def config_restart_supervisor_on_update(state):
 	state = True if state == 'on' else False
 	update_config({'restart_supervisor_on_update': state})
 
+@click.command('restart_systemd_on_update')
+@click.argument('state', type=click.Choice(['on', 'off']))
+def config_restart_systemd_on_update(state):
+	"Enable/Disable auto restart of systemd units"
+	state = True if state == 'on' else False
+	update_config({'restart_systemd_on_update': state})
 
 @click.command('update_bench_on_update')
 @click.argument('state', type=click.Choice(['on', 'off']))
@@ -112,6 +118,7 @@ def remove_common_config(keys):
 config.add_command(config_auto_update)
 config.add_command(config_update_bench_on_update)
 config.add_command(config_restart_supervisor_on_update)
+config.add_command(config_restart_systemd_on_update)
 config.add_command(config_dns_multitenant)
 config.add_command(config_serve_default_site)
 config.add_command(config_http_timeout)
