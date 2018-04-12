@@ -1,10 +1,13 @@
 import os, getpass, click
 import bench
+from bench.utils import exec_cmd
+from bench.app import get_current_frappe_version, use_rq
+from bench.utils import get_bench_name, find_executable
+from bench.config.common_site_config import get_config, update_config, get_gunicorn_workers
 
-def generate_systemd_config(bench_path, user=None, yes=False, stop=False):
-	from bench.app import get_current_frappe_version, use_rq
-	from bench.utils import get_bench_name, find_executable
-	from bench.config.common_site_config import get_config, update_config, get_gunicorn_workers
+def generate_systemd_config(bench_path, user=None, yes=False,
+	stop=False, create_symlinks=False,
+	delete_symlinks=False):
 
 	if not user:
 		user = getpass.getuser()
@@ -15,8 +18,15 @@ def generate_systemd_config(bench_path, user=None, yes=False, stop=False):
 	bench_name = get_bench_name(bench_path)
 
 	if stop:
-		from bench.utils import exec_cmd
 		exec_cmd('sudo systemctl stop -- $(systemctl show -p Requires {bench_name}.target | cut -d= -f2)'.format(bench_name=bench_name))
+		return
+
+	if create_symlinks:
+		_create_symlinks(bench_path)
+		return
+
+	if delete_symlinks:
+		_delete_symlinks(bench_path)
 		return
 
 	bench_info = {
@@ -149,3 +159,56 @@ def setup_redis_config(bench_info, bench_path):
 
 	with open(bench_redis_socketio_config_path, 'w') as f:
 		f.write(bench_redis_socketio_config)
+
+def _create_symlinks(bench_path):
+	bench_dir = os.path.abspath(bench_path)
+	etc_systemd_system = os.path.join('/', 'etc', 'systemd', 'system')
+	config_path = os.path.join(bench_dir, 'config', 'systemd')
+	unit_files = get_unit_files(bench_dir)
+	for unit_file in unit_files:
+		filename = "".join(unit_file)
+		# if '-worker' in unit_file[0] and unit_file[1] == '.service':
+		# 	unit_file.insert(1, '@')
+
+		exec_cmd('sudo ln -s {config_path}/{unit_file} {etc_systemd_system}/{unit_file_init}'.format(
+			config_path=config_path,
+			etc_systemd_system=etc_systemd_system,
+			unit_file=filename,
+			unit_file_init="".join(unit_file)
+		))
+	exec_cmd('sudo systemctl daemon-reload')
+
+def _delete_symlinks(bench_path):
+	bench_dir = os.path.abspath(bench_path)
+	etc_systemd_system = os.path.join('/', 'etc', 'systemd', 'system')
+	config_path = os.path.join(bench_dir, 'config', 'systemd')
+	unit_files = get_unit_files(bench_dir)
+	for unit_file in unit_files:
+		# if '-worker' in unit_file[0] and unit_file[1] == '.service':
+		# 	unit_file.insert(1, '@')
+
+		exec_cmd('sudo rm {etc_systemd_system}/{unit_file_init}'.format(
+			config_path=config_path,
+			etc_systemd_system=etc_systemd_system,
+			unit_file_init="".join(unit_file)
+		))
+	exec_cmd('sudo systemctl daemon-reload')
+
+def get_unit_files(bench_path):
+	bench_name = get_bench_name(bench_path)
+	unit_files = [
+		[bench_name, ".target"],
+		[bench_name+"-workers", ".target"],
+		[bench_name+"-web", ".target"],
+		[bench_name+"-redis", ".target"],
+		[bench_name+"-frappe-default-worker", ".service"],
+		[bench_name+"-frappe-short-worker", ".service"],
+		[bench_name+"-frappe-long-worker", ".service"],
+		[bench_name+"-frappe-schedule", ".service"],
+		[bench_name+"-frappe-web", ".service"],
+		[bench_name+"-node-socketio", ".service"],
+		[bench_name+"-redis-cache", ".service"],
+		[bench_name+"-redis-queue", ".service"],
+		[bench_name+"-redis-socketio", ".service"],
+	]
+	return unit_files
