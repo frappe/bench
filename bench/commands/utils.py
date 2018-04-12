@@ -13,13 +13,15 @@ def start(no_dev, concurrency):
 
 @click.command('restart')
 @click.option('--web', is_flag=True, default=False)
-def restart(web):
+@click.option('--supervisor', is_flag=True, default=False)
+@click.option('--systemd', is_flag=True, default=False)
+def restart(web, supervisor, systemd):
 	"Restart supervisor processes or systemd units"
 	from bench.utils import restart_supervisor_processes, restart_systemd_processes
 	from bench.config.common_site_config import get_config
-	if get_config('.').get('restart_supervisor_on_update') == True:
+	if get_config('.').get('restart_supervisor_on_update') or supervisor:
 		restart_supervisor_processes(bench_path='.', web_workers=web)
-	if get_config('.').get('restart_systemd_on_update'):
+	if get_config('.').get('restart_systemd_on_update') or systemd:
 		restart_systemd_processes(bench_path='.', web_workers=web)
 
 @click.command('set-nginx-port')

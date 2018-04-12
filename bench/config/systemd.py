@@ -1,7 +1,7 @@
 import os, getpass, click
 import bench
 
-def generate_systemd_config(bench_path, user=None, yes=False):
+def generate_systemd_config(bench_path, user=None, yes=False, stop=False):
 	from bench.app import get_current_frappe_version, use_rq
 	from bench.utils import get_bench_name, find_executable
 	from bench.config.common_site_config import get_config, update_config, get_gunicorn_workers
@@ -13,6 +13,11 @@ def generate_systemd_config(bench_path, user=None, yes=False):
 
 	bench_dir = os.path.abspath(bench_path)
 	bench_name = get_bench_name(bench_path)
+
+	if stop:
+		from bench.utils import exec_cmd
+		exec_cmd('sudo systemctl stop -- $(systemctl show -p Requires {bench_name}.target | cut -d= -f2)'.format(bench_name=bench_name))
+		return
 
 	bench_info = {
 		"bench_dir": bench_dir,

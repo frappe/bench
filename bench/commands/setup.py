@@ -258,10 +258,11 @@ def setup_nginx_proxy_jail(**kwargs):
 @click.command('systemd')
 @click.option('--user')
 @click.option('--yes', help='Yes to regeneration of systemd config files', is_flag=True, default=False)
-def setup_systemd(user=None, yes=False):
+@click.option('--stop', help='Stop bench services', is_flag=True, default=False)
+def setup_systemd(user=None, yes=False, stop=False):
 	"generate configs for systemd with an optional user argument"
 	from bench.config.systemd import generate_systemd_config
-	generate_systemd_config(bench_path=".", user=user, yes=yes)
+	generate_systemd_config(bench_path=".", user=user, yes=yes, stop=stop)
 
 setup.add_command(setup_sudoers)
 setup.add_command(setup_nginx)
