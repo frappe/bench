@@ -1,10 +1,10 @@
 [Unit]
-Description="{{ bench }}-frappe-short-worker"
-PartOf={{ bench }}-workers.target
+Description="{{ bench_name }}-frappe-short-worker"
+PartOf={{ bench_name }}-workers.target
 
 [Service]
-User=revant
-Group=revant
+User={{ user }}
+Group={{ user }}
 Restart=always
 ExecStart={{ bench_cmd }} worker --queue short
 StandardOutput=file:{{ bench_dir }}/logs/worker.log
