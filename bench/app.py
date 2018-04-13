@@ -63,6 +63,33 @@ def check_url(url, raise_err = True):
 
 	return True
 
+def get_excluded_apps(bench_path='.'):
+	try:
+		with open(os.path.join(bench_path, 'sites', 'excluded_apps.txt')) as f:
+			return f.read().strip().split('\n')
+	except IOError:
+		return []
+
+def add_to_excluded_apps_txt(app, bench_path='.'):
+	if app == 'frappe':
+		raise ValueError('Frappe app cannot be excludeed from update')
+	if app not in os.listdir('apps'):
+		raise ValueError('The app {} does not exist'.format(app)) 
+	apps = get_excluded_apps(bench_path=bench_path)
+	if app not in apps:
+		apps.append(app)
+		return write_excluded_apps_txt(apps, bench_path=bench_path)
+
+def write_excluded_apps_txt(apps, bench_path='.'):
+	with open(os.path.join(bench_path, 'sites', 'excluded_apps.txt'), 'w') as f:
+		return f.write('\n'.join(apps))
+
+def remove_from_excluded_apps_txt(app, bench_path='.'):
+	apps = get_excluded_apps(bench_path=bench_path)
+	if app in apps:
+		apps.remove(app)
+		return write_excluded_apps_txt(apps, bench_path=bench_path)
+
 def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbose=False):
 	# from bench.utils import check_url
 	try:
@@ -169,6 +196,10 @@ def pull_all_apps(bench_path='.', reset=False):
 	# chech for local changes
 	if not reset:
 		for app in get_apps(bench_path=bench_path):
+			excluded_apps = get_excluded_apps()
+			if app in excluded_apps:
+				print("Skipping reset for app {}".format(app))
+				continue
 			app_dir = get_repo_dir(app, bench_path=bench_path)
 			if os.path.exists(os.path.join(app_dir, '.git')):
 				out = subprocess.check_output(["git", "status"], cwd=app_dir)
@@ -188,6 +219,10 @@ Here are your choices:
 					sys.exit(1)
 
 	for app in get_apps(bench_path=bench_path):
+		excluded_apps = get_excluded_apps()
+		if app in excluded_apps:
+			print("Skipping pull for app {}".format(app))
+			continue
 		app_dir = get_repo_dir(app, bench_path=bench_path)
 		if os.path.exists(os.path.join(app_dir, '.git')):
 			remote = get_remote(app)
@@ -215,7 +250,7 @@ def is_version_upgrade(app='frappe', bench_path='.', branch=None):
 
 	local_version = get_major_version(get_current_version(app, bench_path=bench_path))
 	upstream_version = get_major_version(upstream_version)
-	
+
 	if upstream_version - local_version > 0:
 		return (True, local_version, upstream_version)
 
