@@ -1,4 +1,6 @@
+from bench.utils import exec_cmd
 import click, sys, json
+import os
 
 @click.group()
 def setup():
@@ -51,6 +53,12 @@ def setup_fonts():
 def setup_production(user, yes=False):
 	"setup bench for production"
 	from bench.config.production_setup import setup_production
+	from bench.utils import run_playbook
+	# Install prereqs for production
+	exec_cmd("sudo pip install ansible")
+	exec_cmd("bench setup role fail2ban")
+	exec_cmd("bench setup role nginx")
+	exec_cmd("bench setup role supervisor")
 	setup_production(user=user, yes=yes)
 
 
@@ -146,6 +154,27 @@ def setup_node_requirements():
 	from bench.utils import update_node_packages
 	update_node_packages()
 
+
+@click.command('manager')
+def setup_manager():
+	"Setup bench-manager.local site with the bench_manager app installed on it"
+	from six.moves import input
+	create_new_site = True
+	if 'bench-manager.local' in os.listdir('sites'): 
+		ans = input('Site aleady exists. Overwrite existing new site? [Y/n]: ')
+		while ans.lower() not in ['y', 'n', '']:
+			ans = input('Please type "y" or "n". Site aleady exists. Overwrite existing new site? [Y/n]: ')
+		if ans=='n': create_new_site = False
+	if create_new_site: exec_cmd("bench new-site --force bench-manager.local")
+
+	if 'bench_manager' in os.listdir('apps'):
+		print('App aleady exists. Skipping downloading the app')
+	else: 
+		exec_cmd("bench get-app bench_manager")
+
+	exec_cmd("bench --site bench-manager.local install-app bench_manager")
+
+
 @click.command('config')
 def setup_config():
 	"overwrite or make config.json"
@@ -239,6 +268,7 @@ setup.add_command(setup_env)
 setup.add_command(setup_procfile)
 setup.add_command(setup_socketio)
 setup.add_command(setup_requirements)
+setup.add_command(setup_manager)
 setup.add_command(setup_config)
 setup.add_command(setup_fonts)
 setup.add_command(add_domain)

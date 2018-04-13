@@ -68,13 +68,3 @@ def include_app_for_update(app_name):
 	"Include app from updating"
 	from bench.app import remove_from_excluded_apps_txt
 	remove_from_excluded_apps_txt(app_name)
-
-
-@click.command('new-site')
-@click.option('--mariadb-root-password', help="MariaDB root password")
-@click.option('--admin-password', help="admin password to set for site")
-@click.argument('site')
-def new_site(site, mariadb_root_password=None, admin_password=None):
-	"Create a new site in the bench"
-	from bench.utils import new_site
-	new_site(site, mariadb_root_password=mariadb_root_password, admin_password=admin_password)
