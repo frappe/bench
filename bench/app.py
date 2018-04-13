@@ -71,6 +71,10 @@ def get_excluded_apps(bench_path='.'):
 		return []
 
 def add_to_excluded_apps_txt(app, bench_path='.'):
+	if app == 'frappe':
+		raise ValueError('Frappe app cannot be excludeed from update')
+	if app not in os.listdir('apps'):
+		raise ValueError('The app {} does not exist'.format(app)) 
 	apps = get_excluded_apps(bench_path=bench_path)
 	if app not in apps:
 		apps.append(app)
@@ -185,14 +189,15 @@ def remove_app(app, bench_path='.'):
 		restart_supervisor_processes(bench_path=bench_path)
 
 
-def pull_all_apps(bench_path='.', reset=False, exclude=True):
+def pull_all_apps(bench_path='.', reset=False):
 	'''Check all apps if there no local changes, pull'''
 	rebase = '--rebase' if get_config(bench_path).get('rebase_on_pull') else ''
+
 	# chech for local changes
 	if not reset:
 		for app in get_apps(bench_path=bench_path):
 			excluded_apps = get_excluded_apps()
-			if app in excluded_apps and exclude:
+			if app in excluded_apps:
 				print("Skipping reset for app {}".format(app))
 				continue
 			app_dir = get_repo_dir(app, bench_path=bench_path)
@@ -215,7 +220,7 @@ Here are your choices:
 
 	for app in get_apps(bench_path=bench_path):
 		excluded_apps = get_excluded_apps()
-		if app in excluded_apps and exclude:
+		if app in excluded_apps:
 			print("Skipping pull for app {}".format(app))
 			continue
 		app_dir = get_repo_dir(app, bench_path=bench_path)

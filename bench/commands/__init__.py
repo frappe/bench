@@ -183,18 +183,6 @@ def migrate_env(python, no_backup = False):
 
 bench_command.add_command(migrate_env)
 
-from bench.commands.exclude_update import exclude_update
-bench_command.add_command(exclude_update)
-
-from bench.commands.exclude_update import include_update
-bench_command.add_command(include_update)
-
-from bench.commands.exclude_update import exclude_update
-bench_command.add_command(exclude_update)
-
-from bench.commands.exclude_update import include_update
-bench_command.add_command(include_update)
-
-from bench.commands.exclude_update import exclude_app_for_update, include_app_for_update
+from bench.commands.make import exclude_app_for_update, include_app_for_update
 bench_command.add_command(exclude_app_for_update)
 bench_command.add_command(include_app_for_update)

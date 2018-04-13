@@ -54,6 +54,22 @@ def remove_app(app_name):
 	remove_app(app_name)
 
 
+@click.command('exclude-app')
+@click.argument('app_name')
+def exclude_app_for_update(app_name):
+	"Exclude app from updating"
+	from bench.app import add_to_excluded_apps_txt
+	add_to_excluded_apps_txt(app_name)
+
+
+@click.command('include-app')
+@click.argument('app_name')
+def include_app_for_update(app_name):
+	"Include app from updating"
+	from bench.app import remove_from_excluded_apps_txt
+	remove_from_excluded_apps_txt(app_name)
+
+
 @click.command('new-site')
 @click.option('--mariadb-root-password', help="MariaDB root password")
 @click.option('--admin-password', help="admin password to set for site")
