@@ -36,21 +36,17 @@ def install_bench(args):
 	# secure pip installation
 	if find_executable('pip'):
 		run_os_command({
-			'yum': 'sudo pip install --upgrade setuptools pip',
-			'apt-get': 'sudo pip install --upgrade setuptools pip',
-			'brew': "sudo pip install --upgrade setuptools pip --user"
+			'pip': 'sudo pip install --upgrade setuptools pip'
 		})
 
 	else:
 		if not os.path.exists("get-pip.py"):
 			run_os_command({
-				'apt-get': 'wget https://bootstrap.pypa.io/get-pip.py',
-				'yum': 'wget https://bootstrap.pypa.io/get-pip.py'
+				'wget': 'wget https://bootstrap.pypa.io/get-pip.py'
 			})
 
 		success = run_os_command({
-			'apt-get': 'sudo python get-pip.py',
-			'yum': 'sudo python get-pip.py',
+			'python': 'sudo python get-pip.py --force-reinstall'
 		})
 
 		if success:
