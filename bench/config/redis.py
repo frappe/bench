@@ -56,8 +56,8 @@ def write_redis_config(template_name, context, bench_path):
 		f.write(template.render(**context))
 
 def get_redis_version():
-	version_string = subprocess.check_output('redis-server --version', shell=True).strip()
-
+	version_string = subprocess.check_output('redis-server --version', shell=True)
+	version_string = version_string.decode('utf-8').strip()
 	# extract version number from string
 	version = re.findall("\d+\.\d+", version_string)
 	if not version:

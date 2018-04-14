@@ -1,0 +1,51 @@
+---
+- name: Setup Firewall
+  user: root
+  hosts: localhost
+
+  tasks:
+      # For CentOS
+    - name: Enable SELinux
+      selinux: policy=targeted state=permissive
+      when: ansible_distribution == 'CentOS'
+
+    - name: Install firewalld
+      yum: name=firewalld state=present
+      when: ansible_distribution == 'CentOS'
+
+    - name: Enable Firewall
+      service: name=firewalld state=started enabled=yes
+      when: ansible_distribution == 'CentOS'
+
+    - name: Add firewall rules
+      firewalld: port={{ item }}/tcp permanent=true state=enabled
+      with_items:
+        - 80
+        - 443
+        - "{{ ssh_port }}"
+      when: ansible_distribution == 'CentOS'
+
+    - name: Restart Firewall
+      service: name=firewalld state=restarted enabled=yes
+      when: ansible_distribution == 'CentOS'
+
+      # For Ubuntu / Debian
+    - name: Install ufw
+      apt: name={{ item }} state=present force=yes
+      with_items:
+       - python-selinux
+       - ufw
+      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
+
+    - name: Enable Firewall
+      ufw: state=enabled policy=deny
+      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
+
+    - name: Add firewall rules
+      ufw: rule=allow proto=tcp port={{ item }}
+      with_items:
+        - 80
+        - 443
+        - "{{ ssh_port }}"
+      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
+...

@@ -1,0 +1,38 @@
+---
+
+  - hosts: localhost
+    tasks:
+    - name: Create user
+      user:
+        name: '{{ frappe_user }}'
+        generate_ssh_key: yes
+
+    - name: Set home folder perms
+      file:
+        path: '/home/{{ frappe_user }}'
+        mode: 'o+rx'
+        owner: '{{ frappe_user }}'
+        group: '{{ frappe_user }}'
+        recurse: yes
+      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'CentOS' or ansible_distribution == 'Debian'
+
+    - name: Set home folder perms
+      file:
+        path: '/Users/{{ frappe_user }}'
+        mode: 'o+rx'
+        owner: '{{ frappe_user }}'
+        group: '{{ frappe_user }}'
+        recurse: yes
+      when: ansible_distribution == 'MacOSX'
+
+    - name: Set /tmp/.bench folder perms
+      file:
+        path: '{{ repo_path }}'
+        owner: '{{ frappe_user }}'
+        group: '{{ frappe_user }}'
+        recurse: yes
+      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'CentOS' or ansible_distribution == 'Debian'
+
+    - name: Change default shell to bash
+      shell: "chsh {{ frappe_user }} -s $(which bash)"
+...

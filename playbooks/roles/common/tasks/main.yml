@@ -1,0 +1,9 @@
+---
+# Install's prerequisites, like fonts, image libraries, vim, screen, python-dev
+
+- include_tasks: debian_family.yml
+  when: ansible_os_family == 'Debian'
+
+- include_tasks: redhat_family.yml
+  when: ansible_os_family == "RedHat"
+...

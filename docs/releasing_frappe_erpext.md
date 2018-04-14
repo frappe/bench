@@ -37,3 +37,5 @@ Usage: bench release [OPTIONS] APP BUMP_TYPE
   * --remote git remote, default is upstream
   * --owner git owner, default is frappe
   * --repo-name git repo name if different from app name
+  
+* When updating major version, update `develop_version` in hooks.py, e.g. `9.x.x-develop`

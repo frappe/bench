@@ -1,0 +1,21 @@
+---
+  - name: Install yum packages
+    yum: name={{ item }} state=present
+    with_items:
+      - redis
+    when: ansible_os_family == 'RedHat'
+
+  # Prerequisite for Debian and Ubuntu
+  - name: Install apt packages
+    apt: pkg={{ item }} state=present force=yes
+    with_items:
+      - redis-server
+    when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+  # Prerequisite for MACOS
+  - name: install prequisites for macos
+    homebrew: name={{ item }} state=present
+    with_items:
+      - redis
+    when: ansible_distribution == 'MacOSX'
+...

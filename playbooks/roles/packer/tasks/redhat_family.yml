@@ -1,0 +1,7 @@
+---
+
+- name: Install unzip
+  yum: name={{ item }} state=present
+  with_items:
+    - unzip
+...
