@@ -29,13 +29,13 @@
     register: bench_stat
 
   - name:  python3 bench init for develop
-    command: bench init {{ bench_path }} --frappe-branch {{ branch }} --python {{ python }}
+    command: bench init {{ bench_path }} --frappe-path {{ frappe_repo_url }} --frappe-branch {{ frappe_branch }} --python {{ python }}
     args:
       creates: "{{ bench_path }}"
     when: not bench_stat.stat.exists and not production
 
   - name: python2 bench init for production
-    command: bench init {{ bench_path }} --frappe-branch {{ branch }}
+    command: bench init {{ bench_path }} --frappe-path {{ frappe_repo_url }} --frappe-branch {{ frappe_branch }}
     args:
       creates: "{{ bench_path }}"
     when: not bench_stat.stat.exists and production
