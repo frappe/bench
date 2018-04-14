@@ -7,18 +7,18 @@ from bench.utils import (update_bench, validate_upgrade, pre_upgrade, post_upgra
 	restart_supervisor_processes, restart_systemd_processes)
 from bench import patches
 
-#TODO: Not DRY
+
 @click.command('update')
 @click.option('--pull', is_flag=True, help="Pull changes in all the apps in bench")
-@click.option('--patch',is_flag=True, help="Run migrations for all sites in the bench")
-@click.option('--build',is_flag=True, help="Build JS and CSS artifacts for the bench")
-@click.option('--bench',is_flag=True, help="Update bench")
-@click.option('--requirements',is_flag=True, help="Update requirements")
-@click.option('--restart-supervisor',is_flag=True, help="restart supervisor processes after update")
-@click.option('--restart-systemd',is_flag=True, help="restart systemd units after update")
-@click.option('--auto',is_flag=True)
-@click.option('--no-backup',is_flag=True)
-@click.option('--force',is_flag=True)
+@click.option('--patch', is_flag=True, help="Run migrations for all sites in the bench")
+@click.option('--build', is_flag=True, help="Build JS and CSS artifacts for the bench")
+@click.option('--bench', is_flag=True, help="Update bench")
+@click.option('--requirements', is_flag=True, help="Update requirements")
+@click.option('--restart-supervisor', is_flag=True, help="restart supervisor processes after update")
+@click.option('--restart-systemd', is_flag=True, help="restart systemd units after update")
+@click.option('--auto', is_flag=True)
+@click.option('--no-backup', is_flag=True)
+@click.option('--force', is_flag=True)
 @click.option('--reset', is_flag=True, help="Hard resets git branch's to their new states overriding any changes and overriding rebase on pull")
 def update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, restart_systemd=False, requirements=False, no_backup=False, force=False, reset=False):
 	"Update bench"
@@ -41,7 +41,7 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 				'requirements': requirements,
 				'no-backup': no_backup,
 				'restart-supervisor': restart_supervisor,
-				'reset':reset
+				'reset': reset
 		})
 
 	if conf.get('release_bench'):
