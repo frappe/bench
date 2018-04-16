@@ -36,7 +36,7 @@ def install_bench(args):
 	# secure pip installation
 	if find_executable('pip'):
 		run_os_command({
-			'pip': 'sudo pip install --upgrade setuptools pip'
+			'pip': 'sudo pip install --upgrade setuptools pip==9.0.3'
 		})
 
 	else:
@@ -51,7 +51,7 @@ def install_bench(args):
 
 		if success:
 			run_os_command({
-				'pip': 'sudo pip install --upgrade pip setuptools',
+				'pip': 'sudo pip install --upgrade pip==9.0.3 setuptools',
 			})
 
 	success = run_os_command({
