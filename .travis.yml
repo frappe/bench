@@ -23,7 +23,7 @@ install:
 
 script:
   - cd ~
-  - sudo pip install --upgrade pip
+  - sudo pip install --upgrade pip==9.0.3
   - sudo pip install -e ~/.bench
   # - sudo python -m unittest bench.tests.test_setup_production.TestSetupProduction.test_setup_production_v6
   - sudo python -m unittest -v bench.tests.test_setup_production
