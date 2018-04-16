@@ -1,5 +1,5 @@
 [Unit]
-Description="{{ bench_name }}-frappe-default-worker"
+Description="{{ bench_name }}-frappe-default-worker %I"
 PartOf={{ bench_name }}-workers.target
 
 [Service]

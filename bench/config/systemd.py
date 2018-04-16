@@ -29,6 +29,17 @@ def generate_systemd_config(bench_path, user=None, yes=False,
 		_delete_symlinks(bench_path)
 		return
 
+	number_of_workers = config.get('background_workers') or 1
+	background_workers = []
+	for i in range(number_of_workers):
+		background_workers.append(get_bench_name(bench_path) + "-frappe-default-worker@" + str(i+1) + ".service")
+
+	for i in range(number_of_workers):
+		background_workers.append(get_bench_name(bench_path) + "-frappe-short-worker@" + str(i+1) + ".service")
+
+	for i in range(number_of_workers):
+		background_workers.append(get_bench_name(bench_path) + "-frappe-long-worker@" + str(i+1) + ".service")
+
 	bench_info = {
 		"bench_dir": bench_dir,
 		"sites_dir": os.path.join(bench_dir, 'sites'),
@@ -44,7 +55,7 @@ def generate_systemd_config(bench_path, user=None, yes=False,
 		"webserver_port": config.get('webserver_port', 8000),
 		"gunicorn_workers": config.get('gunicorn_workers', get_gunicorn_workers()["gunicorn_workers"]),
 		"bench_name": get_bench_name(bench_path),
-		"background_workers": config.get('background_workers') or 1,
+		"worker_target_wants": " ".join(background_workers),
 		"bench_cmd": find_executable('bench')
 	}
 
@@ -88,9 +99,9 @@ def setup_workers_config(bench_info, bench_path):
 	bench_schedule_worker_config = bench_schedule_worker_template.render(**bench_info)
 
 	bench_workers_target_config_path = os.path.join(bench_path, 'config', 'systemd' , bench_info.get("bench_name") + '-workers.target')
-	bench_default_worker_config_path = os.path.join(bench_path, 'config', 'systemd' , bench_info.get("bench_name") + '-frappe-default-worker.service')
-	bench_short_worker_config_path = os.path.join(bench_path, 'config', 'systemd' , bench_info.get("bench_name") + '-frappe-short-worker.service')
-	bench_long_worker_config_path = os.path.join(bench_path, 'config', 'systemd' , bench_info.get("bench_name") + '-frappe-long-worker.service')
+	bench_default_worker_config_path = os.path.join(bench_path, 'config', 'systemd' , bench_info.get("bench_name") + '-frappe-default-worker@.service')
+	bench_short_worker_config_path = os.path.join(bench_path, 'config', 'systemd' , bench_info.get("bench_name") + '-frappe-short-worker@.service')
+	bench_long_worker_config_path = os.path.join(bench_path, 'config', 'systemd' , bench_info.get("bench_name") + '-frappe-long-worker@.service')
 	bench_schedule_worker_config_path = os.path.join(bench_path, 'config', 'systemd' , bench_info.get("bench_name") + '-frappe-schedule.service')
 
 	with open(bench_workers_target_config_path, 'w') as f:
@@ -167,9 +178,6 @@ def _create_symlinks(bench_path):
 	unit_files = get_unit_files(bench_dir)
 	for unit_file in unit_files:
 		filename = "".join(unit_file)
-		# if '-worker' in unit_file[0] and unit_file[1] == '.service':
-		# 	unit_file.insert(1, '@')
-
 		exec_cmd('sudo ln -s {config_path}/{unit_file} {etc_systemd_system}/{unit_file_init}'.format(
 			config_path=config_path,
 			etc_systemd_system=etc_systemd_system,
@@ -184,9 +192,6 @@ def _delete_symlinks(bench_path):
 	config_path = os.path.join(bench_dir, 'config', 'systemd')
 	unit_files = get_unit_files(bench_dir)
 	for unit_file in unit_files:
-		# if '-worker' in unit_file[0] and unit_file[1] == '.service':
-		# 	unit_file.insert(1, '@')
-
 		exec_cmd('sudo rm {etc_systemd_system}/{unit_file_init}'.format(
 			config_path=config_path,
 			etc_systemd_system=etc_systemd_system,
@@ -201,9 +206,9 @@ def get_unit_files(bench_path):
 		[bench_name+"-workers", ".target"],
 		[bench_name+"-web", ".target"],
 		[bench_name+"-redis", ".target"],
-		[bench_name+"-frappe-default-worker", ".service"],
-		[bench_name+"-frappe-short-worker", ".service"],
-		[bench_name+"-frappe-long-worker", ".service"],
+		[bench_name+"-frappe-default-worker@", ".service"],
+		[bench_name+"-frappe-short-worker@", ".service"],
+		[bench_name+"-frappe-long-worker@", ".service"],
 		[bench_name+"-frappe-schedule", ".service"],
 		[bench_name+"-frappe-web", ".service"],
 		[bench_name+"-node-socketio", ".service"],
