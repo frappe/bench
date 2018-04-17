@@ -1,3 +1,6 @@
+nose 
+tornado
+matplotlib
 Click
 jinja2
 virtualenv
