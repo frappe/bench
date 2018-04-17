@@ -173,7 +173,7 @@ def setup_env(bench_path='.', python = 'python'):
 	python = which(python, raise_err = True)
 
 	exec_cmd('virtualenv -q {} -p {}'.format('env', python), cwd=bench_path)
-	exec_cmd('./env/bin/pip -q install --upgrade pip==9.0.3', cwd=bench_path)
+	exec_cmd('./env/bin/pip -q install --upgrade pip', cwd=bench_path)
 	exec_cmd('./env/bin/pip -q install wheel', cwd=bench_path)
 	# exec_cmd('./env/bin/pip -q install https://github.com/frappe/MySQLdb1/archive/MySQLdb-1.2.5-patched.tar.gz', cwd=bench_path)
 	exec_cmd('./env/bin/pip -q install six', cwd=bench_path)
@@ -421,8 +421,7 @@ def update_requirements(bench_path='.'):
 	print('Updating Python libraries...')
 	pip = os.path.join(bench_path, 'env', 'bin', 'pip')
 
-	# pip 10 seems to have a few problems associated with it, temporary freeze pip at 9.0.3
-	exec_cmd("{pip} install --upgrade pip==9.0.3".format(pip=pip))
+	exec_cmd("{pip} install --upgrade pip".format(pip=pip))
 
 	apps_dir = os.path.join(bench_path, 'apps')
 

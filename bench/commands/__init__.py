@@ -159,8 +159,7 @@ def migrate_env(python, no_backup = False):
 		), cwd = path)
 
 		pip = osp.join(pvenv, 'bin', 'pip')
-		# pip 10 seems to have a few problems associated with it, temporary freeze pip at 9.0.3 
-		exec_cmd('{pip} install --upgrade pip==9.0.3'.format(pip=pip))
+		exec_cmd('{pip} install --upgrade pip'.format(pip=pip))
 		exec_cmd('{pip} install --upgrade setuptools'.format(pip=pip))
 		# TODO: Options
 

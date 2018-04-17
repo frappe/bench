@@ -36,7 +36,7 @@ def install_bench(args):
 	# secure pip installation
 	if find_executable('pip'):
 		run_os_command({
-			'pip': 'sudo pip install --upgrade setuptools urllib3 requests cryptography pip==9.0.3'
+			'pip': 'sudo pip install --upgrade setuptools urllib3 requests cryptography pip'
 		})
 
 	else:
@@ -51,7 +51,7 @@ def install_bench(args):
 
 		if success:
 			run_os_command({
-				'pip': 'sudo pip install --upgrade setuptools urllib3 requests cryptography pip==9.0.3'
+				'pip': 'sudo pip install --upgrade setuptools urllib3 requests cryptography pip'
 			})
 
 	success = run_os_command({
@@ -374,7 +374,7 @@ def parse_commandline_args():
 	parser.add_argument('--frappe-branch', dest='frappe_branch', action='store',
 		help='Clone a particular branch of frappe')
 	
-	parser.add_argument('--erpnext-repo-url', dest='erpnext_repo_url', action='store', default='https://github.com/frappe/erpnext', 
+	parser.add_argument('--erpnext-repo-url', dest='erpnext_repo_url', action='store', default='https://github.com/frappe/erpnext',
 		help='Clone erpnext from the given url')
 	
 	parser.add_argument('--erpnext-branch', dest='erpnext_branch', action='store',
