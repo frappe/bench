@@ -1,3 +1,5 @@
+nose 
+tornado
 Click
 jinja2
 virtualenv
