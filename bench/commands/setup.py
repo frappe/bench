@@ -55,10 +55,15 @@ def setup_production(user, yes=False):
 	from bench.config.production_setup import setup_production
 	from bench.utils import run_playbook
 	# Install prereqs for production
-	exec_cmd("sudo pip install ansible")
-	exec_cmd("bench setup role fail2ban")
-	exec_cmd("bench setup role nginx")
-	exec_cmd("bench setup role supervisor")
+	from distutils.spawn import find_executable
+	if not find_executable('ansible'):
+		exec_cmd("sudo pip install ansible")
+	if not find_executable('fail2ban-client'):
+		exec_cmd("bench setup role fail2ban")
+	if not find_executable('nginx'):
+		exec_cmd("bench setup role nginx")
+	if not find_executable('supervisord'):
+		exec_cmd("bench setup role supervisor")
 	setup_production(user=user, yes=yes)
 
 
