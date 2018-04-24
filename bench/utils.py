@@ -1,9 +1,23 @@
-import os, sys, shutil, subprocess, logging, itertools, requests, json, platform, select, pwd, grp, multiprocessing, hashlib
+import grp
+import itertools
+import json
+import logging
+import multiprocessing
+import os
+import platform
+import pwd
+import requests
+import select
+import shutil
+import subprocess
+import sys
 from distutils.spawn import find_executable
-import bench
-import semantic_version
-from bench import env
+
 from six import iteritems
+from whichcraft import which
+
+import bench
+from bench import env
 
 
 class PatchError(Exception):
@@ -152,26 +166,26 @@ def exec_cmd(cmd, cwd='.'):
 	if return_code > 0:
 		raise CommandFailedError(cmd)
 
-def which(executable, raise_err = False):
-	from distutils.spawn import find_executable
-	exec_ = find_executable(executable)
 
-	if not exec_ and raise_err:
-		raise ValueError('{executable} not found.'.format(
-			executable = executable
-		))
+def executable_failed(python):
+	raise ValueError('No executable found for {python}.'.format(
+		python=python
+	))
 
-	return exec_
 
-def setup_env(bench_path='.', python = 'python'):
-	python = which(python, raise_err = True)
+def setup_env(bench_path='.', python='python'):
+	python = which(python)
 
-	exec_cmd('virtualenv -q {} -p {}'.format('env', python), cwd=bench_path)
-	exec_cmd('./env/bin/pip -q install --upgrade pip==9.0.3', cwd=bench_path)
-	exec_cmd('./env/bin/pip -q install wheel', cwd=bench_path)
-	# exec_cmd('./env/bin/pip -q install https://github.com/frappe/MySQLdb1/archive/MySQLdb-1.2.5-patched.tar.gz', cwd=bench_path)
-	exec_cmd('./env/bin/pip -q install six', cwd=bench_path)
-	exec_cmd('./env/bin/pip -q install -e git+https://github.com/frappe/python-pdfkit.git#egg=pdfkit', cwd=bench_path)
+	if python:
+		exec_cmd('virtualenv -q {} -p {}'.format('env', python), cwd=bench_path)
+		exec_cmd('./env/bin/pip -q install --upgrade pip==9.0.3', cwd=bench_path)
+		exec_cmd('./env/bin/pip -q install wheel', cwd=bench_path)
+		exec_cmd('./env/bin/pip -q install six', cwd=bench_path)
+		exec_cmd('./env/bin/pip -q install -e git+https://github.com/frappe/python-pdfkit.git#egg=pdfkit',
+		         cwd=bench_path)
+	else:
+		executable_failed(python)
+
 
 def setup_socketio(bench_path='.'):
 	exec_cmd("npm install socket.io redis express superagent cookie babel-core less chokidar \
