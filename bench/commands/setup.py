@@ -55,10 +55,15 @@ def setup_production(user, yes=False):
 	from bench.config.production_setup import setup_production
 	from bench.utils import run_playbook
 	# Install prereqs for production
-	exec_cmd("sudo pip install ansible")
-	exec_cmd("bench setup role fail2ban")
-	exec_cmd("bench setup role nginx")
-	exec_cmd("bench setup role supervisor")
+	from distutils.spawn import find_executable
+	if not find_executable('ansible'):
+		exec_cmd("sudo pip install ansible")
+	if not find_executable('fail2ban-client'):
+		exec_cmd("bench setup role fail2ban")
+	if not find_executable('nginx'):
+		exec_cmd("bench setup role nginx")
+	if not find_executable('supervisord'):
+		exec_cmd("bench setup role supervisor")
 	setup_production(user=user, yes=yes)
 
 
@@ -116,10 +121,11 @@ def set_ssh_port(port, force=False):
 @click.command('lets-encrypt')
 @click.argument('site')
 @click.option('--custom-domain')
-def setup_letsencrypt(site, custom_domain):
+@click.option('-n', '--non-interactive', default=False, is_flag=True, help="Run certbot non-interactively. Shouldn't be used on 1'st attempt")
+def setup_letsencrypt(site, custom_domain, non_interactive):
 	"Setup lets-encrypt for site"
 	from bench.config.lets_encrypt import setup_letsencrypt
-	setup_letsencrypt(site, custom_domain, bench_path='.')
+	setup_letsencrypt(site, custom_domain, bench_path='.', interactive=not non_interactive)
 
 
 @click.command('procfile')

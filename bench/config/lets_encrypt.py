@@ -11,7 +11,7 @@ try:
 except ImportError:
 	from urllib import urlretrieve
 
-def setup_letsencrypt(site, custom_domain, bench_path):
+def setup_letsencrypt(site, custom_domain, bench_path, interactive):
 
 	site_path = os.path.join(bench_path, "sites", site, "site_config.json")
 	if not os.path.exists(os.path.dirname(site_path)):
@@ -38,7 +38,7 @@ def setup_letsencrypt(site, custom_domain, bench_path):
 		return
 
 	create_config(site, custom_domain)
-	run_certbot_and_setup_ssl(site, custom_domain, bench_path)
+	run_certbot_and_setup_ssl(site, custom_domain, bench_path, interactive)
 	setup_crontab()
 
 
@@ -51,12 +51,13 @@ def create_config(site, custom_domain):
 		f.write(config)
 
 
-def run_certbot_and_setup_ssl(site, custom_domain, bench_path):
+def run_certbot_and_setup_ssl(site, custom_domain, bench_path, interactive=True):
 	service('nginx', 'stop')
 	get_certbot()
 
 	try:
-		exec_cmd("{path} -n --config /etc/letsencrypt/configs/{site}.cfg certonly".format(path=get_certbot_path(), site=custom_domain or site))
+		interactive = '' if interactive else '-n'
+		exec_cmd("{path} {interactive} --config /etc/letsencrypt/configs/{site}.cfg certonly".format(path=get_certbot_path(), interactive=interactive, site=custom_domain or site))
 	except CommandFailedError:
 		service('nginx', 'start')
 		print("There was a problem trying to setup SSL for your site")
