@@ -403,7 +403,7 @@ def restart_systemd_processes(bench_path='.', web_workers=False):
 	conf = get_config(bench_path=bench_path)
 	bench_name = get_bench_name(bench_path)
 	exec_cmd('sudo systemctl stop -- $(systemctl show -p Requires {bench_name}.target | cut -d= -f2)'.format(bench_name=bench_name))
-	exec_cmd('sudo systemctl start {bench_name}.target'.format(bench_name=bench_name))
+	exec_cmd('sudo systemctl start -- $(systemctl show -p Requires {bench_name}.target | cut -d= -f2)'.format(bench_name=bench_name))
 
 def set_default_site(site, bench_path='.'):
 	if not site in get_sites(bench_path=bench_path):
