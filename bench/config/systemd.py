@@ -70,6 +70,7 @@ def generate_systemd_config(bench_path, user=None, yes=False,
 	setup_redis_config(bench_info, bench_path)
 
 	update_config({'restart_systemd_on_update': True}, bench_path=bench_path)
+	update_config({'restart_supervisor_on_update': False}, bench_path=bench_path)
 
 def setup_systemd_directory(bench_path):
 	if not os.path.exists(os.path.join(bench_path, 'config', 'systemd')):
