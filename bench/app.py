@@ -1,6 +1,7 @@
 import os
 from .utils import (exec_cmd, get_frappe, check_git_for_shallow_clone, build_assets,
-	restart_supervisor_processes, get_cmd_output, run_frappe_cmd, CommandFailedError)
+	restart_supervisor_processes, get_cmd_output, run_frappe_cmd, CommandFailedError,
+	restart_systemd_processes)
 from .config.common_site_config import get_config
 
 import logging
@@ -137,6 +138,8 @@ def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbos
 	conf = get_config(bench_path=bench_path)
 	if conf.get('restart_supervisor_on_update'):
 		restart_supervisor_processes(bench_path=bench_path)
+	if conf.get('restart_systemd_on_update'):
+		restart_systemd_processes(bench_path=bench_path)
 
 def new_app(app, bench_path='.'):
 	# For backwards compatibility
@@ -187,7 +190,8 @@ def remove_app(app, bench_path='.'):
 	run_frappe_cmd("build", bench_path=bench_path)
 	if get_config(bench_path).get('restart_supervisor_on_update'):
 		restart_supervisor_processes(bench_path=bench_path)
-
+	if get_config(bench_path).get('restart_systemd_on_update'):
+		restart_systemd_processes(bench_path=bench_path)
 
 def pull_all_apps(bench_path='.', reset=False):
 	'''Check all apps if there no local changes, pull'''

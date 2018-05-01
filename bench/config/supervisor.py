@@ -42,4 +42,5 @@ def generate_supervisor_config(bench_path, user=None, yes=False):
 		f.write(config)
 
 	update_config({'restart_supervisor_on_update': True}, bench_path=bench_path)
+	update_config({'restart_systemd_on_update': False}, bench_path=bench_path)
 

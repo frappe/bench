@@ -1,0 +1,6 @@
+[Unit]
+After=network.target
+Wants={{ worker_target_wants }}
+
+[Install]
+WantedBy=multi-user.target

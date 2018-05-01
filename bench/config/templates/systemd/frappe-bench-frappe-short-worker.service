@@ -1,0 +1,12 @@
+[Unit]
+Description="{{ bench_name }}-frappe-short-worker %I"
+PartOf={{ bench_name }}-workers.target
+
+[Service]
+User={{ user }}
+Group={{ user }}
+Restart=always
+ExecStart={{ bench_cmd }} worker --queue short
+StandardOutput=file:{{ bench_dir }}/logs/worker.log
+StandardError=file:{{ bench_dir }}/logs/worker.error.log
+WorkingDirectory={{ bench_dir }}

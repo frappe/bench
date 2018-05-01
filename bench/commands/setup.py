@@ -261,6 +261,18 @@ def setup_nginx_proxy_jail(**kwargs):
 	from bench.utils import run_playbook
 	run_playbook('roles/fail2ban/tasks/configure_nginx_jail.yml', extra_vars=kwargs)
 
+@click.command('systemd')
+@click.option('--user')
+@click.option('--yes', help='Yes to regeneration of systemd config files', is_flag=True, default=False)
+@click.option('--stop', help='Stop bench services', is_flag=True, default=False)
+@click.option('--create-symlinks', help='Create Symlinks', is_flag=True, default=False)
+@click.option('--delete-symlinks', help='Delete Symlinks', is_flag=True, default=False)
+def setup_systemd(user=None, yes=False, stop=False, create_symlinks=False, delete_symlinks=False):
+	"generate configs for systemd with an optional user argument"
+	from bench.config.systemd import generate_systemd_config
+	generate_systemd_config(bench_path=".", user=user, yes=yes,
+		stop=stop, create_symlinks=create_symlinks, delete_symlinks=delete_symlinks)
+
 setup.add_command(setup_sudoers)
 setup.add_command(setup_nginx)
 setup.add_command(reload_nginx)
@@ -284,3 +296,4 @@ setup.add_command(setup_firewall)
 setup.add_command(set_ssh_port)
 setup.add_command(setup_roles)
 setup.add_command(setup_nginx_proxy_jail)
+setup.add_command(setup_systemd)

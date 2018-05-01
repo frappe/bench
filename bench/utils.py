@@ -398,6 +398,13 @@ def restart_supervisor_processes(bench_path='.', web_workers=False):
 
 		exec_cmd('sudo supervisorctl restart {group}'.format(group=group), cwd=bench_path)
 
+def restart_systemd_processes(bench_path='.', web_workers=False):
+	from .config.common_site_config import get_config
+	conf = get_config(bench_path=bench_path)
+	bench_name = get_bench_name(bench_path)
+	exec_cmd('sudo systemctl stop -- $(systemctl show -p Requires {bench_name}.target | cut -d= -f2)'.format(bench_name=bench_name))
+	exec_cmd('sudo systemctl start -- $(systemctl show -p Requires {bench_name}.target | cut -d= -f2)'.format(bench_name=bench_name))
+
 def set_default_site(site, bench_path='.'):
 	if not site in get_sites(bench_path=bench_path):
 		raise Exception("Site not in bench")
