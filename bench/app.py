@@ -222,14 +222,19 @@ Here are your choices:
 	wait for them to be merged in the core.'''.format(app))
 					sys.exit(1)
 
+	excluded_apps = get_excluded_apps()
 	for app in get_apps(bench_path=bench_path):
-		excluded_apps = get_excluded_apps()
 		if app in excluded_apps:
 			print("Skipping pull for app {}".format(app))
 			continue
 		app_dir = get_repo_dir(app, bench_path=bench_path)
 		if os.path.exists(os.path.join(app_dir, '.git')):
 			remote = get_remote(app)
+			if not remote:
+				# remote is False, i.e. remote doesn't exist, add the app to excluded_apps.txt
+				add_to_excluded_apps_txt(app, bench_path=bench_path)
+				print("Skipping pull for app {}, since remote doesn't exist, and adding it to excluded apps".format(app))
+				continue
 			logger.info('pulling {0}'.format(app))
 			if reset:
 				exec_cmd("git fetch --all", cwd=app_dir)
@@ -276,12 +281,13 @@ def get_remote(app, bench_path='.'):
 									   stderr=subprocess.STDOUT)
 	contents = contents.decode('utf-8')
 	if re.findall('upstream[\s]+', contents):
-		remote = 'upstream'
+		return 'upstream'
+	elif not contents:
+		# if contents is an empty string => remote doesn't exist
+		return False
 	else:
 		# get the first remote
-		remote = contents.splitlines()[0].split()[0]
-
-	return remote
+		return contents.splitlines()[0].split()[0]
 
 def use_rq(bench_path):
 	bench_path = os.path.abspath(bench_path)
