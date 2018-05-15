@@ -144,6 +144,18 @@ For production:
 
 ---
 
+## Bench Manager
+Bench Manager is a graphical user interface to emulate the functionalities of Frappe Bench. Like the command line utility it helps you install apps, manage multiple sites, update apps and much more, in the form of a frappe website. 
+
+```
+$ bench setup manager
+```
+
+What all it does:
+1. Create new site bench-manager.local
+2. Gets the `bench_manager` app from https://github.com/frappe/bench_manager if it doesn't exist already
+3. Installs the bench_manager app on the site bench-manager.local
+
 ## Docker Install - For Developers (beta)
 
 1. For developer setup, you can also use the official [Frappé Docker](https://github.com/frappe/frappe_docker/).
