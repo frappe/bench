@@ -8,7 +8,7 @@ def execute(bench_path):
 
 
 	if node_exec:
-		result = subprocess.check_output([node_exec, '-v'])
+		result = subprocess.check_output([node_exec, '-v']).decode()
 	else:
 		click.echo('''
 		No node executable was found on your machine.
