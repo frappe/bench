@@ -6,12 +6,6 @@
 - name: Add repo key
   apt_key: id=1BB943DB url=http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xCBCB082A1BB943DB state=present
   register: mariadb_key
-  when: ansible_distribution_version | version_compare('16.04', 'lt')
-
-- name: Add apt key for mariadb for Ubuntu >= 16.04
-  apt_key: id=C74CD1D8 url=http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xF1656F24C74CD1D8 state=present
-  register: mariadb_key
-  when: ansible_distribution_version | version_compare('16.04', 'ge')
 
 - name: Update apt cache
   apt: update_cache=yes
@@ -25,5 +19,9 @@
   apt: pkg={{ item }} state=present
   with_items:
     - mariadb-server
-    - python-mysqldb # required to set the MySQL password using ansible
-...
+    - mariadb-client
+    - libmariadbclient18
+
+- name: Install MySQLdb Python package for secure installations.
+  apt: pkg=python-mysqldb state=present
+  when: mysql_secure_installation and mysql_root_password is defined
