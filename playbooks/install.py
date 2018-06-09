@@ -51,7 +51,7 @@ def install_bench(args):
 
 		if success:
 			run_os_command({
-				'pip': 'sudo pip install --upgrade pip==9.0.3 setuptools',
+				'pip': 'sudo pip install --upgrade setuptools urllib3 requests cryptography pip==9.0.3'
 			})
 
 	success = run_os_command({
