@@ -55,7 +55,7 @@ def install_bench(args):
 			})
 
 	success = run_os_command({
-		'pip': "sudo pip install ansible"
+		'pip': "sudo pip install --upgrade urllib3 requests cryptography ansible"
 	})
 
 	if not success:
