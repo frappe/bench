@@ -75,7 +75,7 @@ def add_to_excluded_apps_txt(app, bench_path='.'):
 	if app == 'frappe':
 		raise ValueError('Frappe app cannot be excludeed from update')
 	if app not in os.listdir('apps'):
-		raise ValueError('The app {} does not exist'.format(app)) 
+		raise ValueError('The app {} does not exist'.format(app))
 	apps = get_excluded_apps(bench_path=bench_path)
 	if app not in apps:
 		apps.append(app)
@@ -129,6 +129,22 @@ def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbos
 		if repo_name != app_name:
 			apps_path = os.path.join(os.path.abspath(bench_path), 'apps')
 			os.rename(os.path.join(apps_path, repo_name), os.path.join(apps_path, app_name))
+
+	docs_app = ''
+	docs_app_url = ''
+	app_docs_map = {
+		'frappe': 'frappe/frappe_io',
+		'erpnext': 'erpnext/foundation'
+	}
+	if repo_name in app_docs_map.keys():
+		docs_app = app_docs_map[repo_name]
+		docs_app_url = 'https://github.com/{docs_app}'.format(docs_app=docs_app)
+		print('Getting docs app for ' + app_name + '' + docs_app)
+		exec_cmd("git clone {git_url} {branch} {shallow_clone} --origin upstream".format(
+				git_url=docs_app_url,
+				shallow_clone=shallow_clone,
+				branch=branch),
+			cwd=os.path.join(bench_path, 'apps'))
 
 	print('installing', app_name)
 	install_app(app=app_name, bench_path=bench_path, verbose=verbose)
