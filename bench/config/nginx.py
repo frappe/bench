@@ -44,6 +44,45 @@ def make_nginx_conf(bench_path, yes=False):
 	with open(conf_path, "w") as f:
 		f.write(nginx_conf)
 
+def make_bench_manager_nginx_conf(bench_path, yes=False, port=23624, domain=None):
+	from bench import env
+	from bench.config.site_config import get_site_config
+	from bench.config.common_site_config import get_config
+
+	template = env.get_template('bench_manager_nginx.conf')
+	bench_path = os.path.abspath(bench_path)
+	sites_path = os.path.join(bench_path, "sites")
+
+	config = get_config(bench_path)
+	site_config = get_site_config(domain, bench_path=bench_path)
+	sites = prepare_sites(config, bench_path)
+	bench_name = get_bench_name(bench_path)
+
+	template_vars = {
+		"port": port,
+		"domain": domain,
+		"bench_manager_site_name": "bench-manager.local",
+		"sites_path": sites_path,
+		"http_timeout": config.get("http_timeout"),
+		"webserver_port": config.get('webserver_port'),
+		"socketio_port": config.get('socketio_port'),
+		"bench_name": bench_name,
+		"error_pages": get_error_pages(),
+		"ssl_certificate": site_config.get('ssl_certificate'),
+		"ssl_certificate_key": site_config.get('ssl_certificate_key')
+	}
+
+	bench_manager_nginx_conf = template.render(**template_vars)
+
+	conf_path = os.path.join(bench_path, "config", "nginx.conf")
+
+	if not yes and os.path.exists(conf_path):
+		click.confirm('nginx.conf already exists and bench-manager configuration will be appended to it. Do you want to continue?',
+			abort=True)
+
+	with open(conf_path, "a") as myfile:
+		myfile.write(bench_manager_nginx_conf)
+
 def prepare_sites(config, bench_path):
 	sites = {
 		"that_use_port": [],

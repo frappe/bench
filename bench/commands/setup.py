@@ -162,7 +162,10 @@ def setup_node_requirements():
 
 
 @click.command('manager')
-def setup_manager():
+@click.option('--yes', help='Yes to regeneration of nginx config file', default=False, is_flag=True)
+@click.option('--port', help='Port on which you want to run bench manager', default=23624)
+@click.option('--domain', help='Domain on which you want to run bench manager')
+def setup_manager(yes=False, port=23624, domain=None):
 	"Setup bench-manager.local site with the bench_manager app installed on it"
 	from six.moves import input
 	create_new_site = True
@@ -179,6 +182,24 @@ def setup_manager():
 		exec_cmd("bench get-app bench_manager")
 
 	exec_cmd("bench --site bench-manager.local install-app bench_manager")
+
+	from bench.config.common_site_config import get_config
+	bench_path = '.'
+	conf = get_config(bench_path)
+	if conf.get('restart_supervisor_on_update') or conf.get('restart_systemd_on_update'):
+		# implicates a production setup or so I presume
+		if not domain:
+			print("Please specify the site name on which you want to host bench-manager using the 'domain' flag")
+			sys.exit(1)
+	
+		from bench.utils import get_sites, get_bench_name
+		bench_name = get_bench_name(bench_path)
+
+		if domain not in get_sites(bench_path):
+			raise Exception("No such site")
+
+		from bench.config.nginx import make_bench_manager_nginx_conf
+		make_bench_manager_nginx_conf(bench_path, yes=yes, port=port, domain=domain)
 
 
 @click.command('config')
