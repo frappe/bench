@@ -142,7 +142,8 @@ def exec_cmd(cmd, cwd='.'):
 
 	logger.info(cmd)
 
-	p = subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=stdout, stderr=stderr, universal_newlines=True)
+	p = subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=stdout, stderr=stderr,
+		universal_newlines=True)
 
 	if async:
 		return_code = print_output(p)
@@ -381,7 +382,7 @@ def restart_supervisor_processes(bench_path='.', web_workers=False):
 	else:
 		supervisor_status = subprocess.check_output(['sudo', 'supervisorctl', 'status'], cwd=bench_path)
 		supervisor_status = safe_decode(supervisor_status)
-		
+
 		if web_workers and '{bench_name}-web:'.format(bench_name=bench_name) in supervisor_status:
 			group = '{bench_name}-web:	'.format(bench_name=bench_name)
 
@@ -415,7 +416,7 @@ def update_requirements(bench_path='.'):
 	print('Updating Python libraries...')
 	pip = os.path.join(bench_path, 'env', 'bin', 'pip')
 
-	# pip 10 seems to have a few problems associated with it, temporary freeze pip at 9.0.3 
+	# pip 10 seems to have a few problems associated with it, temporary freeze pip at 9.0.3
 	exec_cmd("{pip} install --upgrade pip==9.0.3".format(pip=pip))
 
 	apps_dir = os.path.join(bench_path, 'apps')
