@@ -130,21 +130,12 @@ def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbos
 			apps_path = os.path.join(os.path.abspath(bench_path), 'apps')
 			os.rename(os.path.join(apps_path, repo_name), os.path.join(apps_path, app_name))
 
-	docs_app = ''
-	docs_app_url = ''
-	app_docs_map = {
-		'frappe': 'frappe/frappe_io',
-		'erpnext': 'erpnext/foundation'
-	}
-	if repo_name in app_docs_map.keys():
-		docs_app = app_docs_map[repo_name]
-		docs_app_url = 'https://github.com/{docs_app}'.format(docs_app=docs_app)
-		print('Getting docs app for ' + app_name + '' + docs_app)
-		exec_cmd("git clone {git_url} {branch} {shallow_clone} --origin upstream".format(
-				git_url=docs_app_url,
-				shallow_clone=shallow_clone,
-				branch=branch),
-			cwd=os.path.join(bench_path, 'apps'))
+	# get apps for docs
+	if repo_name=='frappe':
+		get_app('https://github.com/frappe/frappe_io')
+
+	if repo_name=='erpnext':
+		get_app('https://github.com/erpnext/foundation')
 
 	print('installing', app_name)
 	install_app(app=app_name, bench_path=bench_path, verbose=verbose)
