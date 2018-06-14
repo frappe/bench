@@ -91,7 +91,8 @@ def remove_from_excluded_apps_txt(app, bench_path='.'):
 		apps.remove(app)
 		return write_excluded_apps_txt(apps, bench_path=bench_path)
 
-def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbose=False):
+def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbose=False,
+	postprocess = True):
 	# from bench.utils import check_url
 	try:
 		from urlparse import urljoin
@@ -130,23 +131,25 @@ def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbos
 			apps_path = os.path.join(os.path.abspath(bench_path), 'apps')
 			os.rename(os.path.join(apps_path, repo_name), os.path.join(apps_path, app_name))
 
-	# get apps for docs
-	if repo_name=='frappe':
-		get_app('https://github.com/frappe/frappe_io')
-
-	if repo_name=='erpnext':
-		get_app('https://github.com/erpnext/foundation')
-
 	print('installing', app_name)
 	install_app(app=app_name, bench_path=bench_path, verbose=verbose)
 
-	if build_asset_files:
-		build_assets(bench_path=bench_path)
-	conf = get_config(bench_path=bench_path)
-	if conf.get('restart_supervisor_on_update'):
-		restart_supervisor_processes(bench_path=bench_path)
-	if conf.get('restart_systemd_on_update'):
-		restart_systemd_processes(bench_path=bench_path)
+	if postprocess:
+		# get apps for docs
+		if repo_name=='frappe':
+			get_app('https://github.com/frappe/frappe_io', postprocess = False)
+
+		if repo_name=='erpnext':
+			get_app('https://github.com/erpnext/foundation', post_process = False)
+
+		if build_asset_files:
+			build_assets(bench_path=bench_path)
+		conf = get_config(bench_path=bench_path)
+
+		if conf.get('restart_supervisor_on_update'):
+			restart_supervisor_processes(bench_path=bench_path)
+		if conf.get('restart_systemd_on_update'):
+			restart_systemd_processes(bench_path=bench_path)
 
 def new_app(app, bench_path='.'):
 	# For backwards compatibility
