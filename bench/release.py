@@ -59,6 +59,7 @@ def confirm_testing():
 	print('')
 	print('')
 	click.confirm('Is manual testing done?', abort = True)
+	click.confirm('Have you added the change log?', abort = True)
 
 def bump(bench_path, app, bump_type, from_branch, to_branch, remote, owner, repo_name=None):
 	assert bump_type in ['minor', 'major', 'patch', 'stable', 'prerelease']
