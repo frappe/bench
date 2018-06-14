@@ -142,7 +142,7 @@ def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbos
 
 		if repo_name=='erpnext':
 			get_app('https://github.com/erpnext/foundation', bench_path = bench_path,
-				branch= 'master', post_process = False)
+				branch= 'master', postprocess = False)
 
 		if build_asset_files:
 			build_assets(bench_path=bench_path)
