@@ -38,7 +38,8 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		verbose=False, clone_from=None, skip_redis_config_generation=False,
 		clone_without_update=False,
 		ignore_exist = False,
-		python		 = 'python'): # Let's change when we're ready. - <achilles@frappe.io>
+		python		 = 'python', # Let's change when we're ready. - <achilles@frappe.io>
+		in_docker    = False):
 	from .app import get_app, install_apps_from_path
 	from .config.common_site_config import make_config
 	from .config import redis
@@ -86,7 +87,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	build_assets(bench_path=path)
 
 	if not skip_redis_config_generation:
-		redis.generate_config(path)
+		redis.generate_config(path, in_docker)
 
 	if not no_procfile:
 		setup_procfile(path)

@@ -3,6 +3,7 @@ import click
 @click.command()
 @click.argument('path')
 @click.option('--python', type = str, default = 'python', help = 'Path to Python Executable.')
+@click.option('--in-docker', is_flag = True, default = False, help = 'Use if running inside docker')
 @click.option('--ignore-exist', is_flag = True, default = False, help = "Ignore if Bench instance exists.")
 @click.option('--apps_path', default=None, help="path to json files with apps to install after init")
 @click.option('--frappe-path', default=None, help="path to frappe repo")
@@ -17,7 +18,8 @@ import click
 def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups,
 		no_auto_update, clone_from, verbose, skip_redis_config_generation, clone_without_update,
 		ignore_exist = False,
-		python 		 = 'python'): # Let's change we're ready. - <achilles@frappe.io>
+		python 		 = 'python', # Let's change we're ready. - <achilles@frappe.io>
+		in_docker    = False):
 	'''
 	Create a New Bench Instance.
 	'''
@@ -27,7 +29,8 @@ def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups,
 			verbose=verbose, clone_from=clone_from, skip_redis_config_generation=skip_redis_config_generation,
 			clone_without_update=clone_without_update,
 			ignore_exist = ignore_exist,
-			python 		 = python)
+			python 		 = python,
+			in_docker    = in_docker)
 	click.echo('Bench {} initialized'.format(path))
 
 @click.command('get-app')

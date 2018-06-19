@@ -7,7 +7,7 @@ try:
 except ImportError:
 	from urlparse import urlparse
 
-def generate_config(bench_path):
+def generate_config(bench_path, in_docker = False):
 	config = get_config(bench_path)
 
 	ports = {}
@@ -36,7 +36,7 @@ def generate_config(bench_path):
 		context={
 			"maxmemory": config.get('cache_maxmemory', get_max_redis_memory()),
 			"port": ports['redis_cache'],
-			"redis_version": get_redis_version(),
+			"redis_version": get_redis_version(in_docker),
 		},
 		bench_path=bench_path
 	)
@@ -55,7 +55,9 @@ def write_redis_config(template_name, context, bench_path):
 	with open(os.path.join(bench_path, 'config', template_name), 'w') as f:
 		f.write(template.render(**context))
 
-def get_redis_version():
+def get_redis_version(in_docker = False):
+	if in_docker:
+		return
 	version_string = subprocess.check_output('redis-server --version', shell=True)
 	version_string = version_string.decode('utf-8').strip()
 	# extract version number from string
