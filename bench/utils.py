@@ -94,7 +94,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		setup_backups(bench_path=path)
 	if not no_auto_update:
 		setup_auto_update(bench_path=path)
-	copy_patches_txt(bench_path)
+	copy_patches_txt(path)
 
 def copy_patches_txt(bench_path):
 	shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'patches', 'patches.txt'),
