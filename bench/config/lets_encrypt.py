@@ -122,7 +122,7 @@ def setup_wildcard_ssl(domain, email, bench_path):
 
 	def _get_domain_name(domain):
 		if domain.split('.')[0] != '*':
-			domain = '*.{0}'.foramt(domain)
+			domain = '*.{0}'.format(domain)
 		return domain
 	
 	domain = _get_domain_name(domain)
