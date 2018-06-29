@@ -121,6 +121,10 @@ def renew_certs():
 def setup_wildcard_ssl(domain, email, bench_path):
 	get_certbot()
 
+	if not get_config(bench_path).get("dns_multitenant"):
+		print("You cannot setup SSL without DNS Multitenancy")
+		return
+
 	email_param = ''
 	if email:
 		email_param = '--email {0}'.format(email)
