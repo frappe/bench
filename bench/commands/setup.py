@@ -128,6 +128,15 @@ def setup_letsencrypt(site, custom_domain, non_interactive):
 	setup_letsencrypt(site, custom_domain, bench_path='.', interactive=not non_interactive)
 
 
+@click.command('wildcard-ssl')
+@click.argument('domain')
+@click.option('--email')
+def setup_wildcard_ssl(domain, email):
+	''' Setup wildcard ssl certificate '''
+	from bench.config.lets_encrypt import setup_wildcard_ssl
+	setup_wildcard_ssl(domain, email, bench_path='.')
+
+
 @click.command('procfile')
 def setup_procfile():
 	"Setup Procfile for bench start"
