@@ -124,16 +124,13 @@ def setup_wildcard_ssl(domain, email, bench_path):
 		if domain.split('.')[0] != '*':
 			domain = '*.{0}'.format(domain)
 		return domain
-	
-	domain = _get_domain_name(domain)
-	print("domain", domain)
-	return 
 
 	if not get_config(bench_path).get("dns_multitenant"):
 		print("You cannot setup SSL without DNS Multitenancy")
 		return
 
 	get_certbot()
+	domain = _get_domain_name(domain)
 
 	email_param = ''
 	if email:
