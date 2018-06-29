@@ -132,7 +132,7 @@ def setup_wildcard_ssl(domain, email, bench_path):
 	try:
 		exec_cmd("{path} certonly --manual --preferred-challenges=dns {email_param} \
 			 --server https://acme-v02.api.letsencrypt.org/directory \
-			 --agree-tos -d {domain}".format(path=get_certbot_path(), domain=domain,
+			 --agree-tos -d *.{domain}".format(path=get_certbot_path(), domain=domain,
 			 email_param=email_param))
 
 	except CommandFailedError:
