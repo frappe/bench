@@ -119,11 +119,21 @@ def renew_certs():
 
 
 def setup_wildcard_ssl(domain, email, bench_path):
-	get_certbot()
+
+	def _get_domain_name(domain):
+		if domain.split('.')[0] != '*':
+			domain = '*.{0}'.foramt(domain)
+		return domain
+	
+	domain = _get_domain_name(domain)
+
+	return 
 
 	if not get_config(bench_path).get("dns_multitenant"):
 		print("You cannot setup SSL without DNS Multitenancy")
 		return
+
+	get_certbot()
 
 	email_param = ''
 	if email:
@@ -132,7 +142,7 @@ def setup_wildcard_ssl(domain, email, bench_path):
 	try:
 		exec_cmd("{path} certonly --manual --preferred-challenges=dns {email_param} \
 			 --server https://acme-v02.api.letsencrypt.org/directory \
-			 --agree-tos -d *.{domain}".format(path=get_certbot_path(), domain=domain,
+			 --agree-tos -d {domain}".format(path=get_certbot_path(), domain=domain,
 			 email_param=email_param))
 
 	except CommandFailedError:
