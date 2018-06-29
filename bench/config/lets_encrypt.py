@@ -139,7 +139,7 @@ def setup_wildcard_ssl(domain, email, bench_path):
 		print("There was a problem trying to setup SSL")
 		return
 
-	ssl_path = "/etc/letsencrypt/live/{domain}/".format(site=domain)
+	ssl_path = "/etc/letsencrypt/live/{domain}/".format(domain=domain)
 	ssl_config = {
 		"wildcard": {
 			"domain": domain,
