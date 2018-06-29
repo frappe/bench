@@ -126,7 +126,7 @@ def setup_wildcard_ssl(domain, email, bench_path):
 		return domain
 	
 	domain = _get_domain_name(domain)
-
+	print("domain", domain)
 	return 
 
 	if not get_config(bench_path).get("dns_multitenant"):
