@@ -144,13 +144,6 @@ def setup_wildcard_ssl(domain, email, bench_path, exclude_base_domain):
 	if email:
 		email_param = '--email {0}'.format(email)
 
-
-	print("{path} certonly --manual --preferred-challenges=dns {email_param} \
-			 --server https://acme-v02.api.letsencrypt.org/directory \
-			 --agree-tos -d {domain}".format(path=get_certbot_path(), domain=' -d '.join(domain_list),
-			 email_param=email_param))
-	return
-	
 	try:
 		exec_cmd("{path} certonly --manual --preferred-challenges=dns {email_param} \
 			 --server https://acme-v02.api.letsencrypt.org/directory \

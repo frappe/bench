@@ -135,7 +135,7 @@ def setup_letsencrypt(site, custom_domain, non_interactive):
 def setup_wildcard_ssl(domain, email, exclude_base_domain):
 	''' Setup wildcard ssl certificate '''
 	from bench.config.lets_encrypt import setup_wildcard_ssl
-	setup_wildcard_ssl(domain, email, bench_path='.', exclude_base_domain)
+	setup_wildcard_ssl(domain, email, bench_path='.', exclude_base_domain=exclude_base_domain)
 
 
 @click.command('procfile')
