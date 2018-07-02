@@ -128,8 +128,10 @@ def setup_wildcard_ssl(domain, email, bench_path, exclude_base_domain):
 			domain_list.append('*.{0}'.format(domain))
 		else:
 			# include base domain based on flag
-			if not exclude_base_domain:
-				domain_list.append(domain.replace('*.', ''))
+			domain_list.append(domain.replace('*.', ''))
+
+		if exclude_base_domain:
+			domain_list.remove(domain.replace('*.', ''))
 
 		return domain_list
 
