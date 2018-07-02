@@ -131,10 +131,11 @@ def setup_letsencrypt(site, custom_domain, non_interactive):
 @click.command('wildcard-ssl')
 @click.argument('domain')
 @click.option('--email')
-def setup_wildcard_ssl(domain, email):
+@click.option('--exclude-base-domain', default=False, is_flag=True, help="SSL Certificate not applicable for base domain")
+def setup_wildcard_ssl(domain, email, exclude_base_domain):
 	''' Setup wildcard ssl certificate '''
 	from bench.config.lets_encrypt import setup_wildcard_ssl
-	setup_wildcard_ssl(domain, email, bench_path='.')
+	setup_wildcard_ssl(domain, email, bench_path='.', exclude_base_domain=exclude_base_domain)
 
 
 @click.command('procfile')

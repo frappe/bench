@@ -118,19 +118,29 @@ def renew_certs():
 	service('nginx', 'start')
 
 
-def setup_wildcard_ssl(domain, email, bench_path):
+def setup_wildcard_ssl(domain, email, bench_path, exclude_base_domain):
 
-	def _get_domain_name(domain):
-		if domain.split('.')[0] != '*':
-			domain = '*.{0}'.format(domain)
-		return domain
+	def _get_domains(domain):
+		domain_list = [domain]
+
+		if not domain.startswith('*.'):
+			# add wildcard caracter to domain if missing
+			domain_list.append('*.{0}'.format(domain))
+		else:
+			# include base domain based on flag
+			domain_list.append(domain.replace('*.', ''))
+
+		if exclude_base_domain:
+			domain_list.remove(domain.replace('*.', ''))
+
+		return domain_list
 
 	if not get_config(bench_path).get("dns_multitenant"):
 		print("You cannot setup SSL without DNS Multitenancy")
 		return
 
 	get_certbot()
-	domain = _get_domain_name(domain)
+	domain_list = _get_domains(domain.strip())
 
 	email_param = ''
 	if email:
@@ -139,7 +149,7 @@ def setup_wildcard_ssl(domain, email, bench_path):
 	try:
 		exec_cmd("{path} certonly --manual --preferred-challenges=dns {email_param} \
 			 --server https://acme-v02.api.letsencrypt.org/directory \
-			 --agree-tos -d {domain}".format(path=get_certbot_path(), domain=domain,
+			 --agree-tos -d {domain}".format(path=get_certbot_path(), domain=' -d '.join(domain_list),
 			 email_param=email_param))
 
 	except CommandFailedError:
@@ -156,5 +166,9 @@ def setup_wildcard_ssl(domain, email, bench_path):
 	}
 
 	update_common_site_config(ssl_config)
+	setup_crontab()
+
 	make_nginx_conf(bench_path)
+	print("Restrting Nginx service")
 	service('nginx', 'restart')
+	
