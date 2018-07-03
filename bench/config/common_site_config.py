@@ -7,6 +7,7 @@ except ImportError:
 
 default_config = {
 	'restart_supervisor_on_update': False,
+	'restart_systemd_on_update': False,
 	'auto_update': False,
 	'serve_default_site': True,
 	'rebase_on_pull': False,

@@ -94,6 +94,11 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		setup_backups(bench_path=path)
 	if not no_auto_update:
 		setup_auto_update(bench_path=path)
+	copy_patches_txt(path)
+
+def copy_patches_txt(bench_path):
+	shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'patches', 'patches.txt'),
+		os.path.join(bench_path, 'patches.txt'))
 
 def clone_apps_from(bench_path, clone_from, update_app=True):
 	from .app import install_app
@@ -142,7 +147,8 @@ def exec_cmd(cmd, cwd='.'):
 
 	logger.info(cmd)
 
-	p = subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=stdout, stderr=stderr, universal_newlines=True)
+	p = subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=stdout, stderr=stderr,
+		universal_newlines=True)
 
 	if async:
 		return_code = print_output(p)
@@ -381,7 +387,7 @@ def restart_supervisor_processes(bench_path='.', web_workers=False):
 	else:
 		supervisor_status = subprocess.check_output(['sudo', 'supervisorctl', 'status'], cwd=bench_path)
 		supervisor_status = safe_decode(supervisor_status)
-		
+
 		if web_workers and '{bench_name}-web:'.format(bench_name=bench_name) in supervisor_status:
 			group = '{bench_name}-web:	'.format(bench_name=bench_name)
 
@@ -398,6 +404,13 @@ def restart_supervisor_processes(bench_path='.', web_workers=False):
 
 		exec_cmd('sudo supervisorctl restart {group}'.format(group=group), cwd=bench_path)
 
+def restart_systemd_processes(bench_path='.', web_workers=False):
+	from .config.common_site_config import get_config
+	conf = get_config(bench_path=bench_path)
+	bench_name = get_bench_name(bench_path)
+	exec_cmd('sudo systemctl stop -- $(systemctl show -p Requires {bench_name}.target | cut -d= -f2)'.format(bench_name=bench_name))
+	exec_cmd('sudo systemctl start -- $(systemctl show -p Requires {bench_name}.target | cut -d= -f2)'.format(bench_name=bench_name))
+
 def set_default_site(site, bench_path='.'):
 	if not site in get_sites(bench_path=bench_path):
 		raise Exception("Site not in bench")
@@ -408,7 +421,7 @@ def update_requirements(bench_path='.'):
 	print('Updating Python libraries...')
 	pip = os.path.join(bench_path, 'env', 'bin', 'pip')
 
-	# pip 10 seems to have a few problems associated with it, temporary freeze pip at 9.0.3 
+	# pip 10 seems to have a few problems associated with it, temporary freeze pip at 9.0.3
 	exec_cmd("{pip} install --upgrade pip==9.0.3".format(pip=pip))
 
 	apps_dir = os.path.join(bench_path, 'apps')

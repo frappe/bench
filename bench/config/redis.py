@@ -67,9 +67,7 @@ def get_redis_version():
 	return float('{major}.{minor}'.format(major=version.major, minor=version.minor))
 
 def get_max_redis_memory():
-	import psutil
-	
-	total_virtual_mem = psutil.virtual_memory().total/(pow(1024, 2))
+	total_virtual_mem = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')/(pow(1024, 2))
 	max_memory = int(total_virtual_mem * 0.05) # Max memory for redis is 5% of virtual memory
 
 	if max_memory < 50:

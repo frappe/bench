@@ -1,0 +1,6 @@
+[Unit]
+After=network.target
+Wants={{ bench_name }}-redis-cache.service {{ bench_name }}-redis-queue.service {{ bench_name }}-redis-socketio.service
+
+[Install]
+WantedBy=multi-user.target

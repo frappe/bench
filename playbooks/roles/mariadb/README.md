@@ -7,6 +7,8 @@ Installs MariaDB
 ```
 CentOS 6 & 7
 Ubuntu 14.04
+Ubuntu 16.04
+Debain 9
 ```
 
 ## Post install
@@ -22,7 +24,7 @@ None
 MariaDB version:
 
 ```
-mariadb_version: 10.0
+mariadb_version: 10.2
 ```
 
 Configuration template:
@@ -52,13 +54,10 @@ None
 ```
 - hosts: servers
   roles:
-    - { role: pcextreme.mariadb }
+    - { role: mariadb }
 ```
 
-## License
+## Credits
 
-MIT / BSD
+- [Attila van der Velde](https://github.com/vdvm)
 
-## Author Information
-
-Created by [Attila van der Velde](https://github.com/vdvm)

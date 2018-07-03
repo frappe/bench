@@ -1,6 +1,7 @@
 import os
 from .utils import (exec_cmd, get_frappe, check_git_for_shallow_clone, build_assets,
-	restart_supervisor_processes, get_cmd_output, run_frappe_cmd, CommandFailedError)
+	restart_supervisor_processes, get_cmd_output, run_frappe_cmd, CommandFailedError,
+	restart_systemd_processes)
 from .config.common_site_config import get_config
 
 import logging
@@ -74,7 +75,7 @@ def add_to_excluded_apps_txt(app, bench_path='.'):
 	if app == 'frappe':
 		raise ValueError('Frappe app cannot be excludeed from update')
 	if app not in os.listdir('apps'):
-		raise ValueError('The app {} does not exist'.format(app)) 
+		raise ValueError('The app {} does not exist'.format(app))
 	apps = get_excluded_apps(bench_path=bench_path)
 	if app not in apps:
 		apps.append(app)
@@ -90,7 +91,8 @@ def remove_from_excluded_apps_txt(app, bench_path='.'):
 		apps.remove(app)
 		return write_excluded_apps_txt(apps, bench_path=bench_path)
 
-def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbose=False):
+def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbose=False,
+	postprocess = True):
 	# from bench.utils import check_url
 	try:
 		from urlparse import urljoin
@@ -132,11 +134,24 @@ def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbos
 	print('installing', app_name)
 	install_app(app=app_name, bench_path=bench_path, verbose=verbose)
 
-	if build_asset_files:
-		build_assets(bench_path=bench_path)
-	conf = get_config(bench_path=bench_path)
-	if conf.get('restart_supervisor_on_update'):
-		restart_supervisor_processes(bench_path=bench_path)
+	if postprocess:
+		# get apps for docs
+		if repo_name=='frappe':
+			get_app('https://github.com/frappe/frappe_io', bench_path = bench_path,
+				branch= 'master', postprocess = False)
+
+		if repo_name=='erpnext':
+			get_app('https://github.com/erpnext/foundation', bench_path = bench_path,
+				branch= 'master', postprocess = False)
+
+		if build_asset_files:
+			build_assets(bench_path=bench_path)
+		conf = get_config(bench_path=bench_path)
+
+		if conf.get('restart_supervisor_on_update'):
+			restart_supervisor_processes(bench_path=bench_path)
+		if conf.get('restart_systemd_on_update'):
+			restart_systemd_processes(bench_path=bench_path)
 
 def new_app(app, bench_path='.'):
 	# For backwards compatibility
@@ -187,7 +202,8 @@ def remove_app(app, bench_path='.'):
 	run_frappe_cmd("build", bench_path=bench_path)
 	if get_config(bench_path).get('restart_supervisor_on_update'):
 		restart_supervisor_processes(bench_path=bench_path)
-
+	if get_config(bench_path).get('restart_systemd_on_update'):
+		restart_systemd_processes(bench_path=bench_path)
 
 def pull_all_apps(bench_path='.', reset=False):
 	'''Check all apps if there no local changes, pull'''
@@ -218,14 +234,19 @@ Here are your choices:
 	wait for them to be merged in the core.'''.format(app))
 					sys.exit(1)
 
+	excluded_apps = get_excluded_apps()
 	for app in get_apps(bench_path=bench_path):
-		excluded_apps = get_excluded_apps()
 		if app in excluded_apps:
 			print("Skipping pull for app {}".format(app))
 			continue
 		app_dir = get_repo_dir(app, bench_path=bench_path)
 		if os.path.exists(os.path.join(app_dir, '.git')):
 			remote = get_remote(app)
+			if not remote:
+				# remote is False, i.e. remote doesn't exist, add the app to excluded_apps.txt
+				add_to_excluded_apps_txt(app, bench_path=bench_path)
+				print("Skipping pull for app {}, since remote doesn't exist, and adding it to excluded apps".format(app))
+				continue
 			logger.info('pulling {0}'.format(app))
 			if reset:
 				exec_cmd("git fetch --all", cwd=app_dir)
@@ -272,12 +293,13 @@ def get_remote(app, bench_path='.'):
 									   stderr=subprocess.STDOUT)
 	contents = contents.decode('utf-8')
 	if re.findall('upstream[\s]+', contents):
-		remote = 'upstream'
+		return 'upstream'
+	elif not contents:
+		# if contents is an empty string => remote doesn't exist
+		return False
 	else:
 		# get the first remote
-		remote = contents.splitlines()[0].split()[0]
-
-	return remote
+		return contents.splitlines()[0].split()[0]
 
 def use_rq(bench_path):
 	bench_path = os.path.abspath(bench_path)

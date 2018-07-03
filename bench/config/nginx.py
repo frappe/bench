@@ -215,7 +215,6 @@ def get_error_pages():
 
 def get_limit_conn_shared_memory():
 	"""Allocate 2 percent of total virtual memory as shared memory for nginx limit_conn_zone"""
-	import psutil
-	total_vm = (psutil.virtual_memory().total) / (1024 * 1024) # in MB
+	total_vm = (os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')) / (1024 * 1024) # in MB
 
 	return int(0.02 * total_vm)
