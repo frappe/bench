@@ -75,7 +75,7 @@ def add_to_excluded_apps_txt(app, bench_path='.'):
 	if app == 'frappe':
 		raise ValueError('Frappe app cannot be excludeed from update')
 	if app not in os.listdir('apps'):
-		raise ValueError('The app {} does not exist'.format(app)) 
+		raise ValueError('The app {} does not exist'.format(app))
 	apps = get_excluded_apps(bench_path=bench_path)
 	if app not in apps:
 		apps.append(app)
@@ -91,7 +91,8 @@ def remove_from_excluded_apps_txt(app, bench_path='.'):
 		apps.remove(app)
 		return write_excluded_apps_txt(apps, bench_path=bench_path)
 
-def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbose=False):
+def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbose=False,
+	postprocess = True):
 	# from bench.utils import check_url
 	try:
 		from urlparse import urljoin
@@ -133,13 +134,24 @@ def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbos
 	print('installing', app_name)
 	install_app(app=app_name, bench_path=bench_path, verbose=verbose)
 
-	if build_asset_files:
-		build_assets(bench_path=bench_path)
-	conf = get_config(bench_path=bench_path)
-	if conf.get('restart_supervisor_on_update'):
-		restart_supervisor_processes(bench_path=bench_path)
-	if conf.get('restart_systemd_on_update'):
-		restart_systemd_processes(bench_path=bench_path)
+	if postprocess:
+		# get apps for docs
+		if repo_name=='frappe':
+			get_app('https://github.com/frappe/frappe_io', bench_path = bench_path,
+				branch= 'master', postprocess = False)
+
+		if repo_name=='erpnext':
+			get_app('https://github.com/erpnext/foundation', bench_path = bench_path,
+				branch= 'master', postprocess = False)
+
+		if build_asset_files:
+			build_assets(bench_path=bench_path)
+		conf = get_config(bench_path=bench_path)
+
+		if conf.get('restart_supervisor_on_update'):
+			restart_supervisor_processes(bench_path=bench_path)
+		if conf.get('restart_systemd_on_update'):
+			restart_systemd_processes(bench_path=bench_path)
 
 def new_app(app, bench_path='.'):
 	# For backwards compatibility

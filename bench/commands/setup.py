@@ -128,6 +128,16 @@ def setup_letsencrypt(site, custom_domain, non_interactive):
 	setup_letsencrypt(site, custom_domain, bench_path='.', interactive=not non_interactive)
 
 
+@click.command('wildcard-ssl')
+@click.argument('domain')
+@click.option('--email')
+@click.option('--exclude-base-domain', default=False, is_flag=True, help="SSL Certificate not applicable for base domain")
+def setup_wildcard_ssl(domain, email, exclude_base_domain):
+	''' Setup wildcard ssl certificate '''
+	from bench.config.lets_encrypt import setup_wildcard_ssl
+	setup_wildcard_ssl(domain, email, bench_path='.', exclude_base_domain=exclude_base_domain)
+
+
 @click.command('procfile')
 def setup_procfile():
 	"Setup Procfile for bench start"
@@ -279,6 +289,7 @@ setup.add_command(reload_nginx)
 setup.add_command(setup_supervisor)
 setup.add_command(setup_redis)
 setup.add_command(setup_letsencrypt)
+setup.add_command(setup_wildcard_ssl)
 setup.add_command(setup_production)
 setup.add_command(setup_auto_update)
 setup.add_command(setup_backups)

@@ -1,7 +1,5 @@
 language: python
 dist: trusty
-group: deprecated-2017Q2
-sudo: required
 
 python:
   - "2.7"
