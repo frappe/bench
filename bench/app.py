@@ -141,8 +141,6 @@ def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbos
 				branch= 'master', postprocess = False)
 
 		if repo_name=='erpnext':
-			get_app('https://github.com/frappe/frappe_theme', bench_path = bench_path,
-				branch= 'master', postprocess = False)
 			get_app('https://github.com/erpnext/foundation', bench_path = bench_path,
 				branch= 'master', postprocess = False)
 
