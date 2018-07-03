@@ -30,6 +30,8 @@ def release(bench_path, app, bump_type, from_branch='develop', to_branch='master
 	if not config.get('release_bench'):
 		print('bench not configured to release')
 		sys.exit(1)
+	
+	branches_to_update.update(config.get('branches_to_update', branches_to_update))
 
 	validate(bench_path, config)
 
