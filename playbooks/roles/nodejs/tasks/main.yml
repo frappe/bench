@@ -1,12 +1,4 @@
 ---
-# Install's prerequisites, like fonts, image libraries, vim, screen, python-dev and gcc 
-
-- name: 'Add Node.js PPA'
-  tags: 'nodejs'
-  become: 'yes'
-  become_method: 'sudo'
-  shell: "curl --silent --location https://deb.nodesource.com/setup_{{ node_version }}.x | bash -"
-
 - include_tasks: debian_family.yml
   when: ansible_os_family == 'Debian'
 
