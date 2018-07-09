@@ -8,7 +8,7 @@
     args:
       creates: "{{ bench_path }}/apps/erpnext"
       chdir: "{{ bench_path }}"
-    when: not app.stat.exists
+    when: not app.stat.exists and not without_erpnext
 
   - name: Check whether the site already exists
     stat: path="{{ bench_path }}/sites/{{ site }}"
@@ -24,4 +24,5 @@
     command: "bench --site {{ site }} install-app erpnext"
     args:
       chdir: "{{ bench_path }}"
+    when: not without_erpnext
 ...

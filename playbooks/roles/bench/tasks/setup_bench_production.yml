@@ -13,6 +13,14 @@
   args:
     chdir: '{{ bench_path }}'
 
+- name: Set correct permissions on bench.log
+  file:
+    path: '{{ bench_path }}/logs/bench.log'
+    owner: '{{ frappe_user }}'
+    group: '{{ frappe_user }}'
+  become: yes
+  become_user: root
+
 - name: Restart the bench
   command: bench restart
   args:

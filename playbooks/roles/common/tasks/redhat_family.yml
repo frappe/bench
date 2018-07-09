@@ -46,5 +46,5 @@
     - zlib-devel
     - openssl-devel
     - openldap-devel
-
+    - libselinux-python
 ...
