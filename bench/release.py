@@ -31,7 +31,9 @@ def release(bench_path, app, bump_type, from_branch='develop', to_branch='master
 		print('bench not configured to release')
 		sys.exit(1)
 	
-	branches_to_update.update(config.get('branches_to_update', branches_to_update))
+
+	if config.get('branches_to_update'):
+		branches_to_update.update(config.get('branches_to_update'))
 
 	validate(bench_path, config)
 
@@ -82,7 +84,7 @@ def bump(bench_path, app, bump_type, from_branch, to_branch, remote, owner, repo
 	click.confirm('Do you want to continue?', abort=True)
 
 	new_version = bump_repo(repo_path, bump_type, from_branch=from_branch, to_branch=to_branch)
-	commit_changes(repo_path, new_version)
+	commit_changes(repo_path, new_version, to_branch)
 	tag_name = create_release(repo_path, new_version, from_branch=from_branch, to_branch=to_branch)
 	push_release(repo_path, from_branch=from_branch, to_branch=to_branch, remote=remote)
 	create_github_release(repo_path, tag_name, message, remote=remote, owner=owner, repo_name=repo_name)
@@ -125,22 +127,34 @@ def get_release_message(repo_path, from_branch='develop', to_branch='master', re
 		return "* " + log.replace('\n', '\n* ')
 
 def bump_repo(repo_path, bump_type, from_branch='develop', to_branch='master'):
-	current_version = get_current_version(repo_path)
+	current_version = get_current_version(repo_path, to_branch)
 	new_version = get_bumped_version(current_version, bump_type)
 
 	print('bumping version from', current_version, 'to', new_version)
 
-	set_version(repo_path, new_version)
+	set_version(repo_path, new_version, to_branch)
 	return new_version
 
-def get_current_version(repo_path):
+def get_current_version(repo_path, to_branch):
 	# TODO clean this up!
-	filename = os.path.join(repo_path, os.path.basename(repo_path), '__init__.py')
-	with open(filename) as f:
-		contents = f.read()
-		match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % '__version__',
-				contents)
-		return match.group(2)
+
+	if to_branch.lower() == 'master':
+		filename = os.path.join(repo_path, os.path.basename(repo_path), '__init__.py')
+	
+		with open(filename) as f:
+			contents = f.read()
+			match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % '__version__',
+					contents)
+			return match.group(2)
+	
+	else:
+		filename = os.path.join(repo_path, os.path.basename(repo_path), 'hooks.py')
+	
+		with open(filename) as f:
+			contents = f.read()
+			match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % 'beta_version',
+					contents)
+			return match.group(2)
 
 def get_bumped_version(version, bump_type):
 	v = semantic_version.Version(version)
@@ -175,8 +189,11 @@ def get_bumped_version(version, bump_type):
 
 	return str(v)
 
-def set_version(repo_path, version):
-	set_filename_version(os.path.join(repo_path, os.path.basename(repo_path),'__init__.py'), version, '__version__')
+def set_version(repo_path, version, to_branch):
+	if to_branch.lower() == 'master':
+		set_filename_version(os.path.join(repo_path, os.path.basename(repo_path),'__init__.py'), version, '__version__')
+	else:
+		set_filename_version(os.path.join(repo_path, os.path.basename(repo_path),'hooks.py'), version, 'beta_version')
 
 	# TODO fix this
 	# set_setuppy_version(repo_path, version)
@@ -210,12 +227,17 @@ def set_filename_version(filename, version_number, pattern):
 	with open(filename, 'w') as f:
 		f.write(contents)
 
-def commit_changes(repo_path, new_version):
+def commit_changes(repo_path, new_version, to_branch):
 	print('committing version change to', repo_path)
 
 	repo = git.Repo(repo_path)
 	app_name = os.path.basename(repo_path)
-	repo.index.add([os.path.join(app_name, '__init__.py')])
+
+	if to_branch.lower() == 'master':
+		repo.index.add([os.path.join(app_name, '__init__.py')])
+	else:
+		repo.index.add([os.path.join(app_name, 'hooks.py')])
+
 	repo.index.commit('bumped to version {}'.format(new_version))
 
 def create_release(repo_path, new_version, from_branch='develop', to_branch='master'):
@@ -238,7 +260,7 @@ def create_release(repo_path, new_version, from_branch='develop', to_branch='mas
 		handle_merge_error(e, source=to_branch, target=from_branch)
 
 	for branch in branches_to_update[from_branch]:
-		print('merging master into', branch)
+		print('merging {0} into'.format(to_branch), branch)
 		g.checkout(branch)
 		try:
 			g.merge(to_branch)

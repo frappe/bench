@@ -135,6 +135,16 @@ def release(app, bump_type, from_branch, to_branch, owner, repo_name, remote):
 	release(bench_path='.', app=app, bump_type=bump_type, from_branch=from_branch, to_branch=to_branch,
 		remote=remote, owner=owner, repo_name=repo_name)
 
+
+@click.command('prepare-beta-release')
+@click.argument('app')
+@click.option('--owner', default='frappe')
+def prepare_beta_release(app, owner):
+	"""Prepare major beta release from develop branch"""
+	from bench.prepare_beta_release import prepare_beta_release
+	prepare_beta_release(bench_path='.', app=app, owner=owner)
+
+
 @click.command('disable-production')
 def disable_production():
 	"""Disables production environment for the bench."""
