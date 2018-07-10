@@ -32,7 +32,8 @@
     - apt-transport-https
     - libsasl2-dev
     - libldap2-dev
-
+    - libcups2-dev
+    
 - include_tasks: debian.yml
   when: ansible_distribution == 'Debian'
 
