@@ -28,4 +28,5 @@
     - mariadb-common
     - libmariadbclient18
     - python-mysqldb
+    - python3-mysqldb
 ...

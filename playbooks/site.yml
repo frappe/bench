@@ -7,6 +7,7 @@
   roles:
     - { role: common,            tags: common                             }
     - { role: locale,            tags: locale                             }
+    - { role: mariadb,           tags: mariadb                            }
     - { role: nodejs,            tags: nodejs                             }
     - { role: swap,              tags: swap,             when: production }
     - { role: logwatch,          tags: logwatch,         when: production }
@@ -14,7 +15,6 @@
     - { role: frappe_selinux,    tags: frappe_selinux,   when: production }
     - { role: dns_caching,       tags: dns_caching,      when: production }
     - { role: ntpd,              tags: ntpd,             when: production }
-    - { role: mariadb,           tags: mariadb                            }
     - { role: wkhtmltopdf,       tags: wkhtmltopdf                        }
     - { role: psutil,            tags: psutil                             }
     - { role: redis,             tags: redis                              }

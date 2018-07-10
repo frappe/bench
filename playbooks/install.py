@@ -380,6 +380,9 @@ def parse_commandline_args():
 	parser.add_argument('--erpnext-branch', dest='erpnext_branch', action='store',
 		help='Clone a particular branch of erpnext')
 
+	parser.add_argument('--without-erpnext', dest='without_erpnext', action='store_true', default=False,
+		help='Prevent fetching ERPNext')
+
 	# To enable testing of script using Travis, this should skip the prompt
 	parser.add_argument('--run-travis', dest='run_travis', action='store_true', default=False,
 		help=argparse.SUPPRESS)
