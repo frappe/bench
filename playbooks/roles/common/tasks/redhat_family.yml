@@ -47,4 +47,5 @@
     - openssl-devel
     - openldap-devel
     - libselinux-python
+    - cups-libs
 ...
