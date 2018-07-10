@@ -17,9 +17,6 @@ def prepare_beta_release(bench_path, app, owner='frappe', remote='upstream'):
 	if click.confirm("Do you want to setup hotfix for beta ?"):
 		beta_hotfix = click.prompt('Branch name for beta hotfix ({}_hotifx)'.format(beta_master), type=str)
 
-
-	print(beta_master, beta_hotfix)
-
 	validate(bench_path)
 	repo_path = os.path.join(bench_path, 'apps', app)
 	version = get_bummped_version(repo_path)
@@ -92,10 +89,8 @@ def merge_beta_release_to_develop(repo_path, beta_master, remote, version):
 	g.checkout('develop')
 
 	try:
-		print(beta_master)
 		g.merge(beta_master)
 	except git.exc.GitCommandError as e:
-		print("here")
 		handle_merge_error(e, source=beta_master, target='develop')
 
 	return tag_name
@@ -114,7 +109,7 @@ def push_branches(repo_path, beta_master, beta_hotfix, remote):
 	
 	args.append('--tags')
 
-	print("Pushing new branches")
+	print("Pushing branches")
 	print(g.push(remote, *args))
 
 def create_github_release(repo_path, tag_name, message, owner, remote):

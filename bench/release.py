@@ -137,24 +137,19 @@ def bump_repo(repo_path, bump_type, from_branch='develop', to_branch='master'):
 
 def get_current_version(repo_path, to_branch):
 	# TODO clean this up!
+	version_key = '__version__'
 
 	if to_branch.lower() == 'master':
 		filename = os.path.join(repo_path, os.path.basename(repo_path), '__init__.py')
-	
-		with open(filename) as f:
-			contents = f.read()
-			match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % '__version__',
-					contents)
-			return match.group(2)
-	
 	else:
 		filename = os.path.join(repo_path, os.path.basename(repo_path), 'hooks.py')
-	
-		with open(filename) as f:
-			contents = f.read()
-			match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % 'beta_version',
-					contents)
-			return match.group(2)
+		version_key = 'beta_version'
+
+	with open(filename) as f:
+		contents = f.read()
+		match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % version_key,
+				contents)
+		return match.group(2)
 
 def get_bumped_version(version, bump_type):
 	v = semantic_version.Version(version)
