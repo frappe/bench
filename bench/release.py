@@ -143,7 +143,7 @@ def get_current_version(repo_path, to_branch):
 		filename = os.path.join(repo_path, os.path.basename(repo_path), '__init__.py')
 	else:
 		filename = os.path.join(repo_path, os.path.basename(repo_path), 'hooks.py')
-		version_key = 'beta_version'
+		version_key = 'staging_version'
 
 	with open(filename) as f:
 		contents = f.read()
@@ -188,7 +188,7 @@ def set_version(repo_path, version, to_branch):
 	if to_branch.lower() == 'master':
 		set_filename_version(os.path.join(repo_path, os.path.basename(repo_path),'__init__.py'), version, '__version__')
 	else:
-		set_filename_version(os.path.join(repo_path, os.path.basename(repo_path),'hooks.py'), version, 'beta_version')
+		set_filename_version(os.path.join(repo_path, os.path.basename(repo_path),'hooks.py'), version, 'staging_version')
 
 	# TODO fix this
 	# set_setuppy_version(repo_path, version)
