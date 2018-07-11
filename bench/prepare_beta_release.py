@@ -64,7 +64,7 @@ def prepare_beta_master(repo_path, beta_master, version, remote):
 
 def set_beta_version(repo_path, version):
 	from .release import set_filename_version
-	set_filename_version(os.path.join(repo_path, os.path.basename(repo_path),'hooks.py'), version, 'beta_version')
+	set_filename_version(os.path.join(repo_path, os.path.basename(repo_path),'hooks.py'), version, 'staging_version')
 
 	repo = git.Repo(repo_path)
 	app_name = os.path.basename(repo_path)
