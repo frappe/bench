@@ -47,10 +47,9 @@ def get_bummped_version(repo_path):
 		v.major += 1
 		v.minor = 0
 		v.patch = 0
-		v.prerelease = None
+		v.prerelease = ['staging']
 
 	return str(v)
-
 
 def update_branch(repo_path, remote):
 	from .release import update_branch
