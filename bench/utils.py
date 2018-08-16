@@ -171,7 +171,7 @@ def which(executable, raise_err = False):
 
 def setup_env(bench_path='.', python = 'python'):
 	python = which(python, raise_err = True)
-	pip    = os.path.join(bench_path, 'env', 'bin', 'pip')
+	pip    = os.path.join('env', 'bin', 'pip')
 
 	exec_cmd('virtualenv -q {} -p {}'.format('env', python), cwd=bench_path)
 	exec_cmd('{} -q install --upgrade pip'.format(pip), cwd=bench_path)
