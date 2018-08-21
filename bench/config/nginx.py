@@ -228,7 +228,8 @@ def use_wildcard_certificate(bench_path, ret):
 	ssl_certificate = wildcard['ssl_certificate']
 	ssl_certificate_key = wildcard['ssl_certificate_key']
 
-	if domain.startswith('*.'):
+	# If domain is set as "*" all domains will be included
+	if domain.startswith('*'):
 		domain = domain[1:]
 	else:
 		domain = '.' + domain
