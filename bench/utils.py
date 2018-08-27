@@ -139,8 +139,8 @@ def clone_apps_from(bench_path, clone_from, update_app=True):
 def exec_cmd(cmd, cwd='.'):
 	from .cli import from_command_line
 
-	async = False if from_command_line else True
-	if async:
+	is_async = False if from_command_line else True
+	if is_async:
 		stderr = stdout = subprocess.PIPE
 	else:
 		stderr = stdout = None
@@ -150,7 +150,7 @@ def exec_cmd(cmd, cwd='.'):
 	p = subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=stdout, stderr=stderr,
 		universal_newlines=True)
 
-	if async:
+	if is_async:
 		return_code = print_output(p)
 	else:
 		return_code = p.wait()
@@ -603,8 +603,8 @@ def run_frappe_cmd(*args, **kwargs):
 	f = get_env_cmd('python', bench_path=bench_path)
 	sites_dir = os.path.join(bench_path, 'sites')
 
-	async = False if from_command_line else True
-	if async:
+	is_async = False if from_command_line else True
+	if is_async:
 		stderr = stdout = subprocess.PIPE
 	else:
 		stderr = stdout = None
@@ -612,7 +612,7 @@ def run_frappe_cmd(*args, **kwargs):
 	p = subprocess.Popen((f, '-m', 'frappe.utils.bench_helper', 'frappe') + args,
 		cwd=sites_dir, stdout=stdout, stderr=stderr)
 
-	if async:
+	if is_async:
 		return_code = print_output(p)
 	else:
 		return_code = p.wait()
