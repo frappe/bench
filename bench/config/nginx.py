@@ -1,5 +1,12 @@
-import os, json, click, random, string, hashlib
-from bench.utils import get_sites, get_bench_name, exec_cmd
+import hashlib
+import os
+import random
+import string
+import click
+from bench.utils import exec_cmd
+from bench.utils import get_bench_name
+from bench.utils import get_sites
+
 
 def make_nginx_conf(bench_path, yes=False):
 	from bench import env
@@ -32,17 +39,19 @@ def make_nginx_conf(bench_path, yes=False):
 		template_vars.update({
 			'bench_name_hash': hashlib.sha256(bench_name).hexdigest()[:16],
 			'limit_conn_shared_memory': get_limit_conn_shared_memory()
-		})
+			})
 
 	nginx_conf = template.render(**template_vars)
 
 	conf_path = os.path.join(bench_path, "config", "nginx.conf")
 	if not yes and os.path.exists(conf_path):
-		click.confirm('nginx.conf already exists and this will overwrite it. Do you want to continue?',
-			abort=True)
+		click.confirm('nginx.conf already exists and this will overwrite it. '
+					'Do you want to continue?',
+					abort=True)
 
 	with open(conf_path, "w") as f:
 		f.write(nginx_conf)
+
 
 def make_bench_manager_nginx_conf(bench_path, yes=False, port=23624, domain=None):
 	from bench import env
@@ -77,11 +86,13 @@ def make_bench_manager_nginx_conf(bench_path, yes=False, port=23624, domain=None
 	conf_path = os.path.join(bench_path, "config", "nginx.conf")
 
 	if not yes and os.path.exists(conf_path):
-		click.confirm('nginx.conf already exists and bench-manager configuration will be appended to it. Do you want to continue?',
-			abort=True)
+		click.confirm('nginx.conf already exists and bench-manager configuration will be appended to it. '
+					'Do you want to continue?',
+					abort=True)
 
 	with open(conf_path, "a") as myfile:
 		myfile.write(bench_manager_nginx_conf)
+
 
 def prepare_sites(config, bench_path):
 	sites = {
@@ -98,7 +109,6 @@ def prepare_sites(config, bench_path):
 
 	shared_port_exception_found = False
 	sites_configs = get_sites_with_config(bench_path=bench_path)
-
 
 	# preload all preset site ports to avoid conflicts
 
@@ -152,14 +162,14 @@ def prepare_sites(config, bench_path):
 
 			sites["that_use_port"].append(site)
 
-
 	if not dns_multitenant and shared_port_exception_found:
 		message = "Port conflicts found:"
 		port_conflict_index = 0
 		for port_number in ports_in_use:
 			if len(ports_in_use[port_number]) > 1:
 				port_conflict_index += 1
-				message += "\n{0} - Port {1} is shared among sites:".format(port_conflict_index,port_number)
+				message += "\n{0} - Port {1} is shared among sites:".format(
+					port_conflict_index, port_number)
 				for site_name in ports_in_use[port_number]:
 					message += " {0}".format(site_name)
 		raise Exception(message)
@@ -169,14 +179,15 @@ def prepare_sites(config, bench_path):
 		port_config_index = 0
 		for site in sites_configs:
 			port_config_index += 1
-			message += "\n\nSite {0} assigned port: {1}".format(site["name"], site["port"])
+			message += "\n\nSite {0} assigned port: {1}".format(
+				site["name"], site["port"])
 
 		print(message)
-
 
 	sites['domain_map'] = domain_map
 
 	return sites
+
 
 def get_sites_with_config(bench_path):
 	from bench.config.common_site_config import get_config
@@ -197,9 +208,10 @@ def get_sites_with_config(bench_path):
 
 		if dns_multitenant and site_config.get('domains'):
 			for domain in site_config.get('domains'):
-				# domain can be a string or a dict with 'domain', 'ssl_certificate', 'ssl_certificate_key'
-				if isinstance(domain, str) or isinstance(domain, unicode):
-					domain = { 'domain': domain }
+				# domain can be a string or a dict 
+				# with 'domain', 'ssl_certificate', 'ssl_certificate_key'
+				if isinstance(domain, (str, unicode)):
+					domain = {'domain': domain}
 
 				domain['name'] = site
 				ret.append(domain)
@@ -208,14 +220,15 @@ def get_sites_with_config(bench_path):
 
 	return ret
 
+
 def use_wildcard_certificate(bench_path, ret):
 	'''
-		stored in common_site_config.json as:
-	    "wildcard": {
-			"domain": "*.erpnext.com",
-			"ssl_certificate": "/path/to/erpnext.com.cert",
-			"ssl_certificate_key": "/path/to/erpnext.com.key"
-		}
+			stored in common_site_config.json as:
+		"wildcard": {
+					"domain": "*.erpnext.com",
+					"ssl_certificate": "/path/to/erpnext.com.cert",
+					"ssl_certificate_key": "/path/to/erpnext.com.key"
+			}
 	'''
 	from bench.config.common_site_config import get_config
 	config = get_config(bench_path=bench_path)
@@ -243,6 +256,7 @@ def use_wildcard_certificate(bench_path, ret):
 			site['ssl_certificate_key'] = ssl_certificate_key
 			site['wildcard'] = 1
 
+
 def get_error_pages():
 	import bench
 	bench_app_path = os.path.abspath(bench.__path__[0])
@@ -252,8 +266,10 @@ def get_error_pages():
 		502: os.path.join(templates, '502.html')
 	}
 
+
 def get_limit_conn_shared_memory():
 	"""Allocate 2 percent of total virtual memory as shared memory for nginx limit_conn_zone"""
-	total_vm = (os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')) / (1024 * 1024) # in MB
+	total_vm = (os.sysconf('SC_PAGE_SIZE') *
+				os.sysconf('SC_PHYS_PAGES')) / (1024 * 1024)  # in MB
 
 	return int(0.02 * total_vm)

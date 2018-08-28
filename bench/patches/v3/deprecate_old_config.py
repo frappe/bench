@@ -1,5 +1,7 @@
-import os, json
+import os
+import json
 from bench.config.common_site_config import get_config, put_config, get_common_site_config
+
 
 def execute(bench_path):
 	# deprecate bench config
@@ -22,9 +24,9 @@ def execute(bench_path):
 	changed = False
 	for from_key, to_key, default in (
 			("celery_broker", "redis_queue", "redis://localhost:6379"),
-			("async_redis_server", "redis_socketio", "redis://localhost:12311"),
-			("cache_redis_server", "redis_cache", "redis://localhost:11311")
-		):
+			("async_redis_server", "redis_socketio",
+			"redis://localhost:12311"),
+			("cache_redis_server", "redis_cache", "redis://localhost:11311")):
 		if from_key in config:
 			config[to_key] = config[from_key]
 			del config[from_key]

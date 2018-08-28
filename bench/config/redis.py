@@ -1,11 +1,15 @@
-from .common_site_config import get_config
-import re, os, subprocess, semantic_version
+import re
+import os
+import subprocess
+import semantic_version
 import bench
+from .common_site_config import get_config
 
 try:
 	from urllib.parse import urlparse
 except ImportError:
 	from urlparse import urlparse
+
 
 def generate_config(bench_path):
 	config = get_config(bench_path)
@@ -46,31 +50,37 @@ def generate_config(bench_path):
 	if not os.path.exists(pid_path):
 		os.makedirs(pid_path)
 
+
 def write_redis_config(template_name, context, bench_path):
 	template = bench.env.get_template(template_name)
 
 	if "pid_path" not in context:
-		context["pid_path"] = os.path.abspath(os.path.join(bench_path, "config", "pids"))
+		context["pid_path"] = os.path.abspath(
+			os.path.join(bench_path, "config", "pids"))
 
 	with open(os.path.join(bench_path, 'config', template_name), 'w') as f:
 		f.write(template.render(**context))
 
+
 def get_redis_version():
-	version_string = subprocess.check_output('redis-server --version', shell=True)
+	version_string = subprocess.check_output(
+		'redis-server --version', shell=True)
 	version_string = version_string.decode('utf-8').strip()
 	# extract version number from string
-	version = re.findall("\d+\.\d+", version_string)
+	version = re.findall(r"\d+\.\d+", version_string)
 	if not version:
 		return None
 
 	version = semantic_version.Version(version[0], partial=True)
 	return float('{major}.{minor}'.format(major=version.major, minor=version.minor))
 
+
 def get_max_redis_memory():
-	total_virtual_mem = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')/(pow(1024, 2))
-	max_memory = int(total_virtual_mem * 0.05) # Max memory for redis is 5% of virtual memory
+	total_virtual_mem = os.sysconf(
+		'SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')/(pow(1024, 2))
+	# Max memory for redis is 5% of virtual memory
+	max_memory = int(total_virtual_mem * 0.05)
 
 	if max_memory < 50:
 		return 50
-	else:
-		return max_memory
+	return max_memory

@@ -1,5 +1,8 @@
-import os, getpass, click
+import os
+import getpass
+import click
 import bench
+
 
 def generate_supervisor_config(bench_path, user=None, yes=False):
 	from bench.app import get_current_frappe_version, use_rq
@@ -27,7 +30,8 @@ def generate_supervisor_config(bench_path, user=None, yes=False):
 		"redis_socketio_config": os.path.join(bench_dir, 'config', 'redis_socketio.conf'),
 		"redis_queue_config": os.path.join(bench_dir, 'config', 'redis_queue.conf'),
 		"webserver_port": config.get('webserver_port', 8000),
-		"gunicorn_workers": config.get('gunicorn_workers', get_gunicorn_workers()["gunicorn_workers"]),
+		"gunicorn_workers": config.get('gunicorn_workers',
+									get_gunicorn_workers()["gunicorn_workers"]),
 		"bench_name": get_bench_name(bench_path),
 		"background_workers": config.get('background_workers') or 1,
 		"bench_cmd": find_executable('bench')
@@ -35,12 +39,13 @@ def generate_supervisor_config(bench_path, user=None, yes=False):
 
 	conf_path = os.path.join(bench_path, 'config', 'supervisor.conf')
 	if not yes and os.path.exists(conf_path):
-		click.confirm('supervisor.conf already exists and this will overwrite it. Do you want to continue?',
-			abort=True)
+		click.confirm('supervisor.conf already exists and this will overwrite it. '
+					'Do you want to continue?',
+					abort=True)
 
 	with open(conf_path, 'w') as f:
 		f.write(config)
 
-	update_config({'restart_supervisor_on_update': True}, bench_path=bench_path)
+	update_config({'restart_supervisor_on_update': True},
+				bench_path=bench_path)
 	update_config({'restart_systemd_on_update': False}, bench_path=bench_path)
-

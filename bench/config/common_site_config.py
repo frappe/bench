@@ -1,4 +1,7 @@
-import os, multiprocessing, getpass, json
+import os
+import multiprocessing
+import getpass
+import json
 
 try:
 	from urllib.parse import urlparse
@@ -6,16 +9,17 @@ except ImportError:
 	from urlparse import urlparse
 
 default_config = {
-	'restart_supervisor_on_update': False,
-	'restart_systemd_on_update': False,
-	'auto_update': False,
-	'serve_default_site': True,
-	'rebase_on_pull': False,
-	'update_bench_on_update': True,
-	'frappe_user': getpass.getuser(),
-	'shallow_clone': True,
-	'background_workers': 1
+		'restart_supervisor_on_update': False,
+		'restart_systemd_on_update': False,
+		'auto_update': False,
+		'serve_default_site': True,
+		'rebase_on_pull': False,
+		'update_bench_on_update': True,
+		'frappe_user': getpass.getuser(),
+		'shallow_clone': True,
+		'background_workers': 1
 }
+
 
 def make_config(bench_path):
 	make_pid_folder(bench_path)
@@ -26,8 +30,10 @@ def make_config(bench_path):
 
 	put_config(bench_config, bench_path)
 
+
 def get_config(bench_path):
 	return get_common_site_config(bench_path)
+
 
 def get_common_site_config(bench_path):
 	config_path = get_config_path(bench_path)
@@ -36,18 +42,22 @@ def get_common_site_config(bench_path):
 	with open(config_path, 'r') as f:
 		return json.load(f)
 
+
 def put_config(config, bench_path='.'):
 	config_path = get_config_path(bench_path)
 	with open(config_path, 'w') as f:
 		return json.dump(config, f, indent=1, sort_keys=True)
+
 
 def update_config(new_config, bench_path='.'):
 	config = get_config(bench_path=bench_path)
 	config.update(new_config)
 	put_config(config, bench_path=bench_path)
 
+
 def get_config_path(bench_path):
 	return os.path.join(bench_path, 'sites', 'common_site_config.json')
+
 
 def get_gunicorn_workers():
 	'''This function will return the maximum workers that can be started depending upon
@@ -55,6 +65,7 @@ def get_gunicorn_workers():
 	return {
 		"gunicorn_workers": multiprocessing.cpu_count()
 	}
+
 
 def update_config_for_frappe(config, bench_path):
 	ports = make_ports(bench_path)
@@ -67,8 +78,8 @@ def update_config_for_frappe(config, bench_path):
 		if key not in config:
 			config[key] = ports[key]
 
-
 	# TODO Optionally we need to add the host or domain name in case dns_multitenant is false
+
 
 def make_ports(bench_path):
 	benches_path = os.path.dirname(os.path.abspath(bench_path))
@@ -108,6 +119,7 @@ def make_ports(bench_path):
 		ports[key] = value
 
 	return ports
+
 
 def make_pid_folder(bench_path):
 	pids_path = os.path.join(bench_path, 'config', 'pids')

@@ -1,11 +1,13 @@
-import click, subprocess, sys
+import subprocess
+import sys
+import click
 from semantic_version import Version
 from distutils.spawn import find_executable
 
-def execute(bench_path):
+
+def execute():
 	expected_node_ver = Version('5.0.0')
 	node_exec = find_executable('node') or find_executable('nodejs')
-
 
 	if node_exec:
 		result = subprocess.check_output([node_exec, '-v']).decode()

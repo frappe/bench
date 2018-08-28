@@ -1,16 +1,22 @@
-import os, sys, json, click
+import os
+import sys
+import json
+import click
 from bench.utils import run_playbook, setup_sudoers, is_root
 
 extra_vars = {"production": True}
+
 
 @click.group()
 def install():
 	"Install system dependancies"
 	pass
 
+
 @click.command('prerequisites')
 def install_prerequisites():
 	run_playbook('site.yml', tag='common, redis')
+
 
 @click.command('mariadb')
 @click.option('--mysql_root_password')
@@ -20,17 +26,21 @@ def install_maridb(mysql_root_password=''):
 
 	run_playbook('site.yml', extra_vars=extra_vars, tag='mariadb')
 
+
 @click.command('wkhtmltopdf')
 def install_wkhtmltopdf():
 	run_playbook('site.yml', extra_vars=extra_vars, tag='wkhtmltopdf')
+
 
 @click.command('nodejs')
 def install_nodejs():
 	run_playbook('site.yml', extra_vars=extra_vars, tag='nodejs')
 
+
 @click.command('psutil')
 def install_psutil():
 	run_playbook('site.yml', extra_vars=extra_vars, tag='psutil')
+
 
 @click.command('supervisor')
 @click.option('--user')
@@ -39,6 +49,7 @@ def install_supervisor(user=None):
 	if user:
 		setup_sudoers(user)
 
+
 @click.command('nginx')
 @click.option('--user')
 def install_nginx(user=None):
@@ -46,13 +57,16 @@ def install_nginx(user=None):
 	if user:
 		setup_sudoers(user)
 
+
 @click.command('virtualbox')
 def install_virtualbox():
 	run_playbook('vm_build.yml', tag='virtualbox')
 
+
 @click.command('packer')
 def install_packer():
 	run_playbook('vm_build.yml', tag='packer')
+
 
 @click.command('fail2ban')
 @click.option('--maxretry', default=6, help="Number of matches (i.e. value of the counter) which triggers ban action on the IP.")
@@ -61,6 +75,7 @@ def install_packer():
 def install_failtoban(**kwargs):
 	extra_vars.update(kwargs)
 	run_playbook('site.yml', extra_vars=extra_vars, tag='fail2ban')
+
 
 install.add_command(install_prerequisites)
 install.add_command(install_maridb)
