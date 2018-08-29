@@ -179,15 +179,18 @@ def setup_manager(yes=False, port=23624, domain=None):
 	"Setup bench-manager.local site with the bench_manager app installed on it"
 	from six.moves import input
 	create_new_site = True
-	if 'bench-manager.local' in os.listdir('sites'): 
-		ans = input('Site aleady exists. Overwrite existing new site? [Y/n]: ')
-		while ans.lower() not in ['y', 'n', '']:
-			ans = input('Please type "y" or "n". Site aleady exists. Overwrite existing new site? [Y/n]: ')
-		if ans=='n': create_new_site = False
-	if create_new_site: exec_cmd("bench new-site --force bench-manager.local")
+	if 'bench-manager.local' in os.listdir('sites'):
+		ans = input('Site already exists. Overwrite existing site? [Y/n]: ').lower()
+		while ans not in ('y', 'n', ''):
+			ans = input(
+				'Please enter "y" or "n". Site already exists. Overwrite existing site? [Y/n]: ').lower()
+		if ans == 'n':
+			create_new_site = False
+	if create_new_site:
+		exec_cmd("bench new-site --force bench-manager.local")
 
 	if 'bench_manager' in os.listdir('apps'):
-		print('App aleady exists. Skipping downloading the app')
+		print('App already exists. Skipping app download.')
 	else: 
 		exec_cmd("bench get-app bench_manager")
 
@@ -201,7 +204,7 @@ def setup_manager(yes=False, port=23624, domain=None):
 		if not domain:
 			print("Please specify the site name on which you want to host bench-manager using the 'domain' flag")
 			sys.exit(1)
-	
+
 		from bench.utils import get_sites, get_bench_name
 		bench_name = get_bench_name(bench_path)
 
