@@ -128,7 +128,7 @@ For developer setup:
 
 For production:
 
-	sudo python install.py --production
+	sudo python install.py --production --user frappe
 
 #### What will this script do?
 
