@@ -1,12 +1,16 @@
-import os, importlib
+import os
+import importlib
+
 
 def run(bench_path):
-	source_patch_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'patches.txt')
-	target_patch_file = os.path.join(os.path.abspath(bench_path), 'patches.txt')
+	source_patch_file = os.path.join(os.path.dirname(
+		os.path.abspath(__file__)), 'patches.txt')
+	target_patch_file = os.path.join(
+		os.path.abspath(bench_path), 'patches.txt')
 
 	with open(source_patch_file, 'r') as f:
 		patches = [p.strip() for p in f.read().splitlines()
-			if p.strip() and not p.strip().startswith("#")]
+				if p.strip() and not p.strip().startswith("#")]
 
 	executed_patches = []
 	if os.path.exists(target_patch_file):
@@ -30,9 +34,12 @@ def run(bench_path):
 			# end with an empty line
 			f.write('\n')
 
+
 def set_all_patches_executed(bench_path):
-	source_patch_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'patches.txt')
-	target_patch_file = os.path.join(os.path.abspath(bench_path), 'patches.txt')
+	source_patch_file = os.path.join(os.path.dirname(
+		os.path.abspath(__file__)), 'patches.txt')
+	target_patch_file = os.path.join(
+		os.path.abspath(bench_path), 'patches.txt')
 
 	with open(target_patch_file, 'w') as tf:
 		with open(source_patch_file, 'r') as sf:

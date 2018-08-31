@@ -1,12 +1,16 @@
-import click, json
+import json
+import click
 from bench.config.common_site_config import update_config
 
-## Config
-## Not DRY
+# Config
+# Not DRY
+
+
 @click.group()
 def config():
 	"change bench configuration"
 	pass
+
 
 @click.command('auto_update')
 @click.argument('state', type=click.Choice(['on', 'off']))
@@ -23,12 +27,14 @@ def config_restart_supervisor_on_update(state):
 	state = True if state == 'on' else False
 	update_config({'restart_supervisor_on_update': state})
 
+
 @click.command('restart_systemd_on_update')
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_restart_systemd_on_update(state):
 	"Enable/Disable auto restart of systemd units"
 	state = True if state == 'on' else False
 	update_config({'restart_systemd_on_update': state})
+
 
 @click.command('update_bench_on_update')
 @click.argument('state', type=click.Choice(['on', 'off']))
@@ -73,7 +79,6 @@ def config_http_timeout(seconds):
 @click.option('configs', '-c', '--config', multiple=True, type=(str, str))
 def set_common_config(configs):
 	import ast
-	from bench.config.common_site_config import update_config
 
 	common_site_config = {}
 	for key, value in configs:
