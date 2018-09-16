@@ -5,8 +5,8 @@
 - include: ubuntu-trusty.yml
   when: ansible_distribution == 'Ubuntu' and ansible_distribution_version == '14.04'
 
-- include: ubuntu-xenial.yml
-  when: ansible_distribution == 'Ubuntu' and ansible_distribution_version == '16.04'
+- include: ubuntu-xenial_bionic.yml
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int >= 16
 
 - name: Add configuration
   template: src={{ mysql_conf_tpl }} dest={{ mysql_conf_dir[ansible_distribution] }}/{{ mysql_conf_file }} owner=root group=root mode=0644

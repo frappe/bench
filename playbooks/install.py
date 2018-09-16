@@ -36,7 +36,7 @@ def install_bench(args):
 	# secure pip installation
 	if find_executable('pip'):
 		run_os_command({
-			'pip': 'sudo pip install --upgrade setuptools urllib3 requests cryptography pip'
+			'pip': 'sudo pip install --upgrade setuptools urllib3 cryptography pip'
 		})
 
 	else:
@@ -55,7 +55,7 @@ def install_bench(args):
 			})
 
 	success = run_os_command({
-		'pip': "sudo pip install --upgrade urllib3 requests cryptography ansible"
+		'pip': "sudo pip install --upgrade urllib3 cryptography ansible"
 	})
 
 	if not success:
@@ -129,7 +129,7 @@ def install_bench(args):
 		shutil.rmtree(tmp_bench_repo)
 
 def check_distribution_compatibility():
-	supported_dists = {'ubuntu': [14, 15, 16], 'debian': [8, 9],
+	supported_dists = {'ubuntu': [14, 15, 16, 18], 'debian': [8, 9],
 		'centos': [7], 'macos': [10.9, 10.10, 10.11, 10.12]}
 
 	dist_name, dist_version = get_distribution_info()
