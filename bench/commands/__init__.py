@@ -161,6 +161,7 @@ def migrate_env(python, no_backup = False):
 		pip = osp.join(pvenv, 'bin', 'pip')
 		exec_cmd('{pip} install --upgrade pip'.format(pip=pip))
 		exec_cmd('{pip} install --upgrade setuptools'.format(pip=pip))
+		exec_cmd('{pip} install --editable git+https://github.com/frappe/python-pdfkit.git#egg=pdfkit'.format(pip=pip))
 		# TODO: Options
 
 		papps  = osp.join(path, 'apps')
