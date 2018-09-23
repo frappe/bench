@@ -33,6 +33,7 @@
     - libsasl2-dev
     - libldap2-dev
     - libcups2-dev
+    - pv                      # Show progress during database restore
     
 - include_tasks: debian.yml
   when: ansible_distribution == 'Debian'
