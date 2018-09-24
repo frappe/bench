@@ -87,7 +87,8 @@ def bump(bench_path, app, bump_type, from_branch, to_branch, remote, owner, repo
 	commit_changes(repo_path, new_version, to_branch)
 	tag_name = create_release(repo_path, new_version, from_branch=from_branch, to_branch=to_branch)
 	push_release(repo_path, from_branch=from_branch, to_branch=to_branch, remote=remote)
-	create_github_release(repo_path, tag_name, message, remote=remote, owner=owner, repo_name=repo_name)
+	prerelease = True if 'beta' in new_version else False
+	create_github_release(repo_path, tag_name, message, remote=remote, owner=owner, repo_name=repo_name, prerelease=prerelease)
 	print('Released {tag} for {repo_path}'.format(tag=tag_name, repo_path=repo_path))
 
 def update_branches_and_check_for_changelog(repo_path, from_branch='develop', to_branch='master', remote='upstream'):
@@ -173,14 +174,13 @@ def get_bumped_version(version, bump_type):
 		v.prerelease = None
 
 	elif bump_type == 'prerelease':
-		if v.prerelease == None:
+		if v.prerelease == ():
 			v.prerelease = ('beta',)
 
-		elif len(v.prerelease)==1:
-			v.prerelease[1] = '1'
-
+		if len(v.prerelease)==1:
+			v.prerelease = ('beta', '1')
 		else:
-			v.prerelease[1] = str(int(v.prerelease[1]) + 1)
+			v.prerelease = ('beta', str(int(v.prerelease[1]) + 1))
 
 	return str(v)
 
@@ -290,7 +290,7 @@ def push_release(repo_path, from_branch='develop', to_branch='master', remote='u
 	print(g.push(remote, *args))
 
 def create_github_release(repo_path, tag_name, message, remote='upstream', owner='frappe', repo_name=None,
-		gh_username=None, gh_password=None):
+		gh_username=None, gh_password=None, prerelease=False):
 
 	print('creating release on github')
 
@@ -308,7 +308,7 @@ def create_github_release(repo_path, tag_name, message, remote='upstream', owner
 		'name': 'Release ' + tag_name,
 		'body': message,
 		'draft': False,
-		'prerelease': False
+		'prerelease': prerelease
 	}
 	for i in range(3):
 		try:
