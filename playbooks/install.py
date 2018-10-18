@@ -36,7 +36,7 @@ def install_bench(args):
 	# secure pip installation
 	if find_executable('pip'):
 		run_os_command({
-			'pip': 'sudo pip install --upgrade setuptools urllib3 cryptography pip'
+			'pip': 'sudo pip install --upgrade setuptools cryptography pip'
 		})
 
 	else:
@@ -51,11 +51,11 @@ def install_bench(args):
 
 		if success:
 			run_os_command({
-				'pip': 'sudo pip install --upgrade setuptools urllib3 requests cryptography pip'
+				'pip': 'sudo pip install --upgrade setuptools requests cryptography pip'
 			})
 
 	success = run_os_command({
-		'pip': "sudo pip install --upgrade urllib3 cryptography ansible"
+		'pip': "sudo pip install --upgrade cryptography ansible"
 	})
 
 	if not success:
