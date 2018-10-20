@@ -145,7 +145,7 @@ For production:
 ---
 
 
-## Bench Manger (GUI for Bench)
+## Bench Manager (GUI for Bench)
 
 Bench Manager is a graphical user interface to emulate the functionalities of Frappé Bench. Like the command line utility it helps you install apps, manage multiple sites, update apps and much more.
 
