@@ -22,6 +22,7 @@ def make_config(bench_path):
 	bench_config = get_config(bench_path)
 	bench_config.update(default_config)
 	bench_config.update(get_gunicorn_workers())
+	bench_config.update(get_queues())
 	update_config_for_frappe(bench_config, bench_path)
 
 	put_config(bench_config, bench_path)
@@ -69,6 +70,24 @@ def update_config_for_frappe(config, bench_path):
 
 
 	# TODO Optionally we need to add the host or domain name in case dns_multitenant is false
+
+def get_queues():
+	return {
+		"queues": {
+			"default": {
+				"timeout": 300, 
+				"workers": 1
+			}, 
+			"long": {
+				"timeout": 1500, 
+				"workers": 1
+			}, 
+			"short": {
+				"timeout": 300, 
+				"workers": 1
+			}
+		}
+	}
 
 def make_ports(bench_path):
 	benches_path = os.path.dirname(os.path.abspath(bench_path))
