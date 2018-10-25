@@ -30,6 +30,7 @@ def generate_supervisor_config(bench_path, user=None, yes=False):
 		"gunicorn_workers": config.get('gunicorn_workers', get_gunicorn_workers()["gunicorn_workers"]),
 		"bench_name": get_bench_name(bench_path),
 		"background_workers": config.get('background_workers') or 1,
+		"queues": config.get("queues", {}),
 		"bench_cmd": find_executable('bench')
 	})
 
