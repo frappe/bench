@@ -85,6 +85,10 @@ def get_queues():
 			"short": {
 				"timeout": 300, 
 				"workers": 1
+			},
+			"background": {
+				"timeout": 2500, 
+				"workers": 1
 			}
 		}
 	}
