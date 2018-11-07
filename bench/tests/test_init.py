@@ -6,6 +6,7 @@ import bench.utils
 import bench.app
 import bench.config.common_site_config
 import bench.cli
+from bench.release import get_bumped_version
 
 bench.cli.from_command_line = True
 
@@ -19,6 +20,18 @@ class TestBenchInit(unittest.TestCase):
 			bench_path = os.path.join(self.benches_path, bench_name)
 			if os.path.exists(bench_path):
 				shutil.rmtree(bench_path, ignore_errors=True)
+
+	def test_semantic_version(self):
+		self.assertEqual( get_bumped_version('11.0.4', 'major'), '12.0.0' )
+		self.assertEqual( get_bumped_version('11.0.4', 'minor'), '11.1.0' )
+		self.assertEqual( get_bumped_version('11.0.4', 'patch'), '11.0.5' )
+		self.assertEqual( get_bumped_version('11.0.4', 'prerelease'), '11.0.5-beta.1' )
+
+		self.assertEqual( get_bumped_version('11.0.5-beta.22', 'major'), '12.0.0' )
+		self.assertEqual( get_bumped_version('11.0.5-beta.22', 'minor'), '11.1.0' )
+		self.assertEqual( get_bumped_version('11.0.5-beta.22', 'patch'), '11.0.5' )
+		self.assertEqual( get_bumped_version('11.0.5-beta.22', 'prerelease'), '11.0.5-beta.23' )
+
 
 	def test_init(self, bench_name="test-bench", **kwargs):
 		self.init_bench(bench_name, **kwargs)

@@ -154,20 +154,24 @@ def get_current_version(repo_path, to_branch):
 
 def get_bumped_version(version, bump_type):
 	v = semantic_version.Version(version)
-	if bump_type == 'minor':
-		v.minor += 1
-		v.patch = 0
-		v.prerelease = None
-
-	elif bump_type == 'major':
+	if bump_type == 'major':
 		v.major += 1
 		v.minor = 0
 		v.patch = 0
 		v.prerelease = None
 
-	elif bump_type == 'patch':
-		v.patch += 1
+	elif bump_type == 'minor':
+		v.minor += 1
+		v.patch = 0
 		v.prerelease = None
+
+	elif bump_type == 'patch':
+		if v.prerelease == ():
+			v.patch += 1
+			v.prerelease = None
+
+		elif len(v.prerelease) == 2:
+			v.prerelease = ()
 
 	elif bump_type == 'stable':
 		# remove pre-release tag
@@ -175,12 +179,17 @@ def get_bumped_version(version, bump_type):
 
 	elif bump_type == 'prerelease':
 		if v.prerelease == ():
-			v.prerelease = ('beta',)
-
-		if len(v.prerelease)==1:
+			v.patch += 1
 			v.prerelease = ('beta', '1')
-		else:
+
+		elif len(v.prerelease) == 2:
 			v.prerelease = ('beta', str(int(v.prerelease[1]) + 1))
+
+		else:
+			raise ("Something wen't wrong while doing a prerelease")
+
+	else:
+		raise ("bump_type not amongst [major, minor, patch, prerelease]")
 
 	return str(v)
 
