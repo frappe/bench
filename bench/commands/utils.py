@@ -122,13 +122,13 @@ def backup_all_sites():
 
 
 @click.command('release')
-@click.argument('app')
-@click.argument('bump-type', type=click.Choice(['major', 'minor', 'patch', 'stable', 'prerelease']))
-@click.option('--from-branch', default='develop')
-@click.option('--to-branch', default='master')
-@click.option('--remote', default='upstream')
-@click.option('--owner', default='frappe')
-@click.option('--repo-name')
+@click.option('--app', prompt=True)
+@click.option('--bump-type', type=click.Choice(['major', 'minor', 'patch', 'stable', 'prerelease']), prompt=True)
+@click.option('--from-branch', default='develop', prompt=True)
+@click.option('--to-branch', default='master', prompt=True)
+@click.option('--remote', default='upstream', prompt=True)
+@click.option('--owner', default='frappe', prompt=True)
+@click.option('--repo-name', prompt=True)
 def release(app, bump_type, from_branch, to_branch, owner, repo_name, remote):
 	"Release app (internal to the Frappe team)"
 	from bench.release import release
