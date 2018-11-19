@@ -22,7 +22,7 @@ github_username = None
 github_password = None
 
 def release(bench_path, app, bump_type, from_branch='develop', to_branch='master',
-		remote='upstream', owner='frappe', repo_name=None):
+		remote='upstream', owner='frappe', repo_name=None, frontport=True):
 
 	confirm_testing()
 	config = get_config(bench_path)
@@ -38,7 +38,7 @@ def release(bench_path, app, bump_type, from_branch='develop', to_branch='master
 	validate(bench_path, config)
 
 	bump(bench_path, app, bump_type, from_branch=from_branch, to_branch=to_branch, owner=owner,
-		repo_name=repo_name, remote=remote)
+		repo_name=repo_name, remote=remote, frontport=frontport)
 
 def validate(bench_path, config):
 	global github_username, github_password
@@ -65,7 +65,7 @@ def confirm_testing():
 	click.confirm('Is manual testing done?', abort = True)
 	click.confirm('Have you added the change log?', abort = True)
 
-def bump(bench_path, app, bump_type, from_branch, to_branch, remote, owner, repo_name=None):
+def bump(bench_path, app, bump_type, from_branch, to_branch, remote, owner, repo_name=None, frontport=True):
 	assert bump_type in ['minor', 'major', 'patch', 'stable', 'prerelease']
 
 	repo_path = os.path.join(bench_path, 'apps', app)
@@ -85,7 +85,7 @@ def bump(bench_path, app, bump_type, from_branch, to_branch, remote, owner, repo
 
 	new_version = bump_repo(repo_path, bump_type, from_branch=from_branch, to_branch=to_branch)
 	commit_changes(repo_path, new_version, to_branch)
-	tag_name = create_release(repo_path, new_version, from_branch=from_branch, to_branch=to_branch)
+	tag_name = create_release(repo_path, new_version, from_branch=from_branch, to_branch=to_branch, frontport=frontport)
 	push_release(repo_path, from_branch=from_branch, to_branch=to_branch, remote=remote)
 	prerelease = True if 'beta' in new_version else False
 	create_github_release(repo_path, tag_name, message, remote=remote, owner=owner, repo_name=repo_name, prerelease=prerelease)
@@ -244,13 +244,13 @@ def commit_changes(repo_path, new_version, to_branch):
 
 	repo.index.commit('bumped to version {}'.format(new_version))
 
-def create_release(repo_path, new_version, from_branch='develop', to_branch='master'):
+def create_release(repo_path, new_version, from_branch='develop', to_branch='master', frontport=True):
 	print('creating release for version', new_version)
 	repo = git.Repo(repo_path)
 	g = repo.git
 	g.checkout(to_branch)
 	try:
-		g.merge(from_branch, '--no-ff')
+		g.merge(from_branch)
 	except git.exc.GitCommandError as e:
 		handle_merge_error(e, source=from_branch, target=to_branch)
 
@@ -263,13 +263,15 @@ def create_release(repo_path, new_version, from_branch='develop', to_branch='mas
 	except git.exc.GitCommandError as e:
 		handle_merge_error(e, source=to_branch, target=from_branch)
 
-	for branch in branches_to_update[from_branch]:
-		print('merging {0} into'.format(to_branch), branch)
-		g.checkout(branch)
-		try:
-			g.merge(to_branch)
-		except git.exc.GitCommandError as e:
-			handle_merge_error(e, source=to_branch, target=branch)
+	if frontport:
+		for branch in branches_to_update[from_branch]:
+			print ("Front porting changes to {}".format(branch))
+			print('merging {0} into'.format(to_branch), branch)
+			g.checkout(branch)
+			try:
+				g.merge(to_branch)
+			except git.exc.GitCommandError as e:
+				handle_merge_error(e, source=to_branch, target=branch)
 
 	return tag_name
 
