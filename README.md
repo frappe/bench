@@ -42,7 +42,7 @@ To manually install frappe/erpnext, you can follow this [this wiki](https://gith
 - yarn
 - Redis
 - cron (crontab is required)
-- wkhtmltopdf with patched Qt (version 0.12.3) (for pdf generation)
+- wkhtmltopdf (version 0.12.5) (for pdf generation)
 
 #### 2. Install Bench
 
