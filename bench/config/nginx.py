@@ -187,7 +187,23 @@ def get_sites_with_config(bench_path):
 
 	ret = []
 	for site in sites:
-		site_config = get_site_config(site, bench_path=bench_path)
+		try:
+			site_config = get_site_config(site, bench_path=bench_path)
+		except Exception as e:
+			strict_nginx = get_config(bench_path).get('strict_nginx')
+			if strict_nginx:
+				print("\n\nERROR: The site config for the site {} is broken.".format(site),
+					"If you want this command to pass, instead of just throwing an error,",
+					"You may remove the 'strict_nginx' flag from common_site_config.json or set it to 0",
+					"\n\n")
+				raise (e)
+			else:
+				print("\n\nWARNING: The site config for the site {} is broken.".format(site),
+					"If you want this command to fail, instead of just showing a warning,",
+					"You may add the 'strict_nginx' flag to common_site_config.json and set it to 1",
+					"\n\n")
+				continue
+
 		ret.append({
 			"name": site,
 			"port": site_config.get('nginx_port'),
