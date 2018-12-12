@@ -4,7 +4,7 @@
     <h2>Frappe Bench</h2>
 </div>
 
-[![Build Status](https://travis-ci.org/frappe/bench.svg?branch=master)](https://travis-ci.org/frappe/bench)
+[![Build Status](https://circleci.com/gh/frappe/bench.svg?style=svg)](https://circleci.com/gh/frappe/bench)
 
 The bench is a command-line utility that helps you to install apps, manage multiple sites and update Frappe / ERPNext apps on */nix (CentOS, Debian, Ubuntu, etc) for development and production. Bench will also create nginx and supervisor config files, setup backups and much more.
 
