@@ -98,7 +98,7 @@ Note: Please do not remove the bench directory the above commands will create
 ## Easy Install
 
 - This is an opinionated setup so it is best to setup on a blank server.
-- Works on Ubuntu 16.04, CentOS 7+, Debian 8+
+- Works on Ubuntu 16.04+, CentOS 7+, Debian 8+
 - You may have to install Python 2.7 (eg on Ubuntu 16.04+) by running `apt-get install python-minimal`
 - You may also have to install build-essential and python-setuptools by running `apt-get install build-essential python-setuptools`
 - This script will install the pre-requisites, install bench and setup an ERPNext site
