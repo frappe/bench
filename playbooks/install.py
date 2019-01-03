@@ -404,6 +404,11 @@ def parse_commandline_args():
 		help=argparse.SUPPRESS
 	)
 
+	# LXC Support
+	parser.add_argument('--container', dest='container', default=False, action='store_true',
+		help='Use if you\'re creating inside LXC'
+	)
+
 	args = parser.parse_args()
 
 	return args
