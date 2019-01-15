@@ -250,7 +250,7 @@ def create_release(repo_path, new_version, from_branch='develop', to_branch='mas
 	g = repo.git
 	g.checkout(to_branch)
 	try:
-		g.merge(from_branch)
+		g.merge(from_branch, '--no-ff')
 	except git.exc.GitCommandError as e:
 		handle_merge_error(e, source=from_branch, target=to_branch)
 
@@ -358,4 +358,3 @@ def push_branch_for_old_major_version(bench_path, bump_type, app, repo_path, fro
 
 	print("Pushing {old_major_version_branch} ".format(old_major_version_branch=old_major_version_branch))
 	print(g.push(remote, *args))
-
