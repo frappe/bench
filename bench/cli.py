@@ -98,7 +98,9 @@ def get_frappe_commands(bench_path='.'):
 		output = get_cmd_output("{python} -m frappe.utils.bench_helper get-frappe-commands".format(python=python), cwd=sites_path)
 		# output = output.decode('utf-8')
 		return json.loads(output)
-	except subprocess.CalledProcessError:
+	except subprocess.CalledProcessError as e:
+		if e.stderr:
+			print(e.stderr.decode('utf-8'))
 		return []
 
 def get_frappe_help(bench_path='.'):
