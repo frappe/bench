@@ -429,8 +429,16 @@ def update_requirements(bench_path='.'):
 	bench_req_file = os.path.join(os.path.dirname(bench.__path__[0]), 'requirements.txt')
 	install_requirements(pip, bench_req_file)
 
+	apps = []
 	from .app import install_app
-	for app in os.listdir(apps_dir):
+
+	try:
+		with open(os.path.join(bench_path, 'sites', 'apps.txt')) as f:
+			apps =  f.read().strip().split('\n')
+	except IOError:
+		apps = []
+
+	for app in apps:
 		install_app(app, bench_path=bench_path)
 
 def update_node_packages(bench_path='.'):
