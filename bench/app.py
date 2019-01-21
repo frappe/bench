@@ -174,7 +174,7 @@ def install_app(app, bench_path='.', verbose=False, no_cache=False):
 	exec_cmd("{pip} install {quiet} {find_links} -e {app} {no_cache}".format(
 				pip=os.path.join(bench_path, 'env', 'bin', 'pip'),
 				quiet="-q" if not verbose else "",
-				no_cache='--no-cache-dir' if not no_cache else '',
+				no_cache='--no-cache-dir' if no_cache else '',
 				app=os.path.join(bench_path, 'apps', app),
 				find_links=find_links))
 	add_to_appstxt(app, bench_path=bench_path)
@@ -191,7 +191,7 @@ def remove_app(app, bench_path='.'):
 	for site in os.listdir(site_path):
 		req_file = os.path.join(site_path, site, 'site_config.json')
 		if os.path.exists(req_file):
-			out = subprocess.check_output(["bench", "--site", site, "list-apps"], cwd=bench_path)
+			out = subprocess.check_output(["bench", "--site", site, "list-apps"], cwd=bench_path).decode('utf-8')
 			if re.search(r'\b' + app + r'\b', out):
 				print("Cannot remove, app is installed on site: {0}".format(site))
 				sys.exit(1)

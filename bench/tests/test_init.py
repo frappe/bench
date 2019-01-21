@@ -78,8 +78,8 @@ class TestBenchInit(unittest.TestCase):
 	def new_site(self, site_name):
 		new_site_cmd = ["bench", "new-site", site_name, "--admin-password", "admin"]
 
-		# set in travis
-		if os.environ.get("TRAVIS"):
+		# set in CI
+		if os.environ.get('CI'):
 			new_site_cmd.extend(["--mariadb-root-password", "travis"])
 
 		subprocess.check_output(new_site_cmd, cwd=os.path.join(self.benches_path, "test-bench"))
@@ -186,7 +186,7 @@ class TestBenchInit(unittest.TestCase):
 		if archived_sites_path:
 			drop_site_cmd.extend(['--archived-sites-path', archived_sites_path])
 
-		if os.environ.get('TRAVIS'):
+		if os.environ.get('CI'):
 			drop_site_cmd.extend(['--root-password', 'travis'])
 
 		bench_path = os.path.join(self.benches_path, 'test-bench')

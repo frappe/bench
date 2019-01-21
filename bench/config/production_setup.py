@@ -52,8 +52,7 @@ def disable_production(bench_path='.'):
 		os.unlink(supervisor_conf)
 
 	if get_config(bench_path).get('restart_supervisor_on_update'):
-		exec_cmd('sudo supervisorctl reread')
-		exec_cmd('sudo supervisorctl update')
+		reload_supervisor()
 
 	# nginx
 	nginx_conf = '/etc/nginx/conf.d/{bench_name}.conf'.format(bench_name=bench_name)

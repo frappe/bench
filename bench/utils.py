@@ -176,7 +176,6 @@ def setup_env(bench_path='.', python = 'python'):
 	exec_cmd('virtualenv -q {} -p {}'.format('env', python), cwd=bench_path)
 	exec_cmd('{} -q install --upgrade pip'.format(pip), cwd=bench_path)
 	exec_cmd('{} -q install wheel'.format(pip), cwd=bench_path)
-	# exec_cmd('{pip} -q install https://github.com/frappe/MySQLdb1/archive/MySQLdb-1.2.5-patched.tar.gz'.format(pip), cwd=bench_path)
 	exec_cmd('{} -q install six'.format(pip), cwd=bench_path)
 	exec_cmd('{} -q install -e git+https://github.com/frappe/python-pdfkit.git#egg=pdfkit'.format(pip), cwd=bench_path)
 
@@ -360,7 +359,7 @@ def check_git_for_shallow_clone():
 
 def get_cmd_output(cmd, cwd='.'):
 	try:
-		output = subprocess.check_output(cmd, cwd=cwd, shell=True, stderr=open(os.devnull, 'wb')).strip()
+		output = subprocess.check_output(cmd, cwd=cwd, shell=True, stderr=subprocess.PIPE).strip()
 		output = output.decode('utf-8')
 		return output
 	except subprocess.CalledProcessError as e:
@@ -430,9 +429,10 @@ def update_requirements(bench_path='.'):
 	bench_req_file = os.path.join(os.path.dirname(bench.__path__[0]), 'requirements.txt')
 	install_requirements(pip, bench_req_file)
 
-	for app in os.listdir(apps_dir):
-		req_file = os.path.join(apps_dir, app, 'requirements.txt')
-		install_requirements(pip, req_file)
+	from bench.app import get_apps, install_app
+
+	for app in get_apps():
+		install_app(app, bench_path=bench_path)
 
 def update_node_packages(bench_path='.'):
 	print('Updating node packages...')
