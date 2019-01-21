@@ -429,8 +429,9 @@ def update_requirements(bench_path='.'):
 	bench_req_file = os.path.join(os.path.dirname(bench.__path__[0]), 'requirements.txt')
 	install_requirements(pip, bench_req_file)
 
-	from .app import install_app
-	for app in os.listdir(apps_dir):
+	from bench.app import get_apps, install_app
+
+	for app in get_apps():
 		install_app(app, bench_path=bench_path)
 
 def update_node_packages(bench_path='.'):
