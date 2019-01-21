@@ -99,7 +99,7 @@ def get_frappe_commands(bench_path='.'):
 		# output = output.decode('utf-8')
 		return json.loads(output)
 	except subprocess.CalledProcessError as e:
-		if e.stderr:
+		if hasattr(e, "stderr"):
 			print(e.stderr.decode('utf-8'))
 		return []
 
