@@ -135,14 +135,6 @@ def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbos
 	install_app(app=app_name, bench_path=bench_path, verbose=verbose)
 
 	if postprocess:
-		# get apps for docs
-		if repo_name=='frappe':
-			get_app('https://github.com/frappe/frappe_io', bench_path = bench_path,
-				branch= 'master', postprocess = False)
-
-		if repo_name=='erpnext':
-			get_app('https://github.com/erpnext/foundation', bench_path = bench_path,
-				branch= 'master', postprocess = False)
 
 		if build_asset_files:
 			build_assets(bench_path=bench_path)
