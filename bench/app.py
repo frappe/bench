@@ -379,12 +379,14 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 		print("Successfully switched branches for:\n" + "\n".join(switched_apps))
 
 	if version_upgrade[0] and upgrade:
-		if sys.version_info >= (3, 4):
-			from importlib import reload
-			reload(utils)
 		update_requirements()
 		update_node_packages()
 		pre_upgrade(version_upgrade[1], version_upgrade[2])
+		if sys.version_info >= (3, 4):
++			import importlib
+			importlib.reload(utils)
+		else:
+			reload(utils)
 		backup_all_sites()
 		patch_sites()
 		build_assets()

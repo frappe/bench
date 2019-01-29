@@ -77,13 +77,16 @@ def _update(pull=False, patch=False, build=False, update_bench=False, auto=False
 		update_node_packages(bench_path=bench_path)
 
 	if version_upgrade[0] or (not version_upgrade[0] and force):
-		if sys.version_info >= (3, 4):
-			from importlib import reload
 		pre_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
 		import bench.utils, bench.app
 		print('Reloading bench...')
-		reload(bench.utils)
-		reload(bench.app)
+		if sys.version_info >= (3, 4):
++			import importlib
+			importlib.reload(bench.utils)
+			importlib.reload(bench.app)
+		else:
+			reload(bench.utils)
+			reload(bench.app)
 
 	if patch:
 		if not no_backup:
