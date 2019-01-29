@@ -383,7 +383,7 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 		update_node_packages()
 		pre_upgrade(version_upgrade[1], version_upgrade[2])
 		if sys.version_info >= (3, 4):
-+			import importlib
+			import importlib
 			importlib.reload(utils)
 		else:
 			reload(utils)
