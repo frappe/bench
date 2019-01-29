@@ -81,7 +81,7 @@ def _update(pull=False, patch=False, build=False, update_bench=False, auto=False
 		import bench.utils, bench.app
 		print('Reloading bench...')
 		if sys.version_info >= (3, 4):
-+			import importlib
+			import importlib
 			importlib.reload(bench.utils)
 			importlib.reload(bench.app)
 		else:
