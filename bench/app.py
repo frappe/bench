@@ -145,13 +145,13 @@ def pull_all_apps(bench_path='.', reset=False):
 				if not re.search(r'nothing to commit, working (directory|tree) clean', out):
 					print('''
 
-Cannot proceed with update: You have local changes in app "{0}" that are not committed.
+Cannot proceed with the update: You have local changes in the app "{0}" that are not committed.
 
 Here are your choices:
 
 1. Merge the {0} app manually with "git pull" / "git pull --rebase" and fix conflicts.
 1. Temporarily remove your changes with "git stash" or discard them completely
-	with "bench update --reset" or for individual repositries "git reset --hard"
+	with "bench update --reset" or for individual repositories "git reset --hard"
 2. If your changes are helpful for others, send in a pull request via GitHub and
 	wait for them to be merged in the core.'''.format(app))
 					sys.exit(1)
