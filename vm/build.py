@@ -33,14 +33,14 @@ def install_virtualbox():
 		check_output(['bench', 'install', 'virtualbox'])
 
 def install_packer():
-	if not os.path.exists(os.path.join('/', 'opt', 'packer')):
+	if not spawn.find_executable("packer") or not os.path.exists(os.path.join('/', 'opt', 'packer')):
 		check_output(['bench', 'install', 'packer'])
 
 def silent_remove(name, is_dir=False):
 	'''
 	Method to safely remove a file or directory,
 	without throwing error if file doesn't exist
-	
+
 	By default takes in file as input, for directory:
 	is_dir = True
 	'''
@@ -59,8 +59,8 @@ def cleanup():
 	silent_remove("packer_virtualbox-iso_virtualbox-iso_md5.checksum")
 
 def build_vm():
-	check_output(["/opt/packer", "build", "vm-production.json"])
-	check_output(["/opt/packer", "build", "vm-develop.json"])
+	check_output(["packer", "build", "vm-production.json"])
+	check_output(["packer", "build", "vm-develop.json"])
 
 def md5(build, file):
 	return check_output("md5sum '{} Builds/{}'".format(build, file), shell=True).split()[0]
@@ -116,7 +116,7 @@ def delete_old_vms():
 	silent_remove(os.path.join(PUBLIC_DIR, 'BACKUPS'), is_dir=True)
 
 def move_current_vms():
-	os.mkdir(os.path.join(PUBLIC_DIR, 'BACKUPS')) 
+	os.mkdir(os.path.join(PUBLIC_DIR, 'BACKUPS'))
 	for file in os.listdir(PUBLIC_DIR):
 		if file in NEW_FILES or file in SYMLINKS or file == 'BACKUPS':
 			continue
