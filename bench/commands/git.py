@@ -16,9 +16,7 @@ def remote_set_url(git_url):
 @click.argument('app')
 def remote_reset_url(app):
 	"Reset app remote url to frappe official"
-	git_url = "https://github.com/frappe/{}.git".format(app)
-	set_git_remote_url(git_url)
-
+	set_git_remote_url(bench.get_git_configs()["apps"][app]["git_http"])
 
 @click.command('remote-urls')
 def remote_urls():
@@ -28,6 +26,6 @@ def remote_urls():
 
 		if os.path.exists(os.path.join(repo_dir, '.git')):
 			remote = get_remote(app)
-			remote_url = subprocess.check_output(['git', 'config', '--get', 'remote.{}.url'.format(remote)], cwd=repo_dir).decode().strip()
+			remote_url = subprocess.check_output(['git', 'config', '--get', 'remote.{}.url'.format(remote)], cwd=repo_dir).strip()
 			print("{app}	{remote_url}".format(app=app, remote_url=remote_url))
 

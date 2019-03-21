@@ -1,0 +1,17 @@
+# 
+# Requirements File for Bench LTS 4.10.
+#
+# https://pip.pypa.io/en/latest/user_guide/#requirements-files
+#
+# Requirements files are ideal when you need to make a repeatable installation.
+# sudo -H pip3.7 install -e bench-repo -r bench_repo/requirements_LTS_v10.txt
+#
+
+Click == 7.0
+GitPython == 0.3.2.rc1
+honcho == 1.0.1
+jinja2 == 2.10
+psutil == 5.6.1
+python-crontab == 2.3.6
+semantic_version == 2.6.0
+requests == 2.21.0

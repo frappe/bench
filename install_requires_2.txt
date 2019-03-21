@@ -1,9 +1,9 @@
 Click
-jinja2
-virtualenv
-requests
+GitPython==0.3.2.rc1
 honcho
+jinja2
 psutil
 python-crontab
 semantic_version
-GitPython==0.3.2.rc1
+requests
+virtualenv

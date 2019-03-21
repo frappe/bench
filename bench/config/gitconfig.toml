@@ -1,0 +1,29 @@
+# This is a TOML document.  It's used for configuration, like an INI or JSON.
+# https://github.com/toml-lang/toml
+
+# Do Not put slashes on the end of the paths
+# Python syntax example:  bench.get_git_configs()["apps"]["frappe"]["git_http"]
+
+title = "Configuration for Git Repositories"
+
+[remoterepository]
+url_base = "https://github.com"
+url_api_repos = "https://api.github.com/repos"
+url_user = "https://github.com/PMojito"
+
+[apps]
+  [apps.frappe]
+  #http = "https://github.com/frappe/frappe.git"
+  #git = "git@github.com:frappe/frappe.git"
+
+  git_http = "https://github.com/PMojito/frappe.git"
+  git_git = "git@github.com:PMojito/frappe.git"
+
+[fonts]
+git_http = "https://github.com/frappe/fonts.git"
+
+[bench_manager]
+http = "https://github.com/frappe/bench_manager"
+
+[python-pdfkit]
+git_http = https://github.com/frappe/python-pdfkit.git
