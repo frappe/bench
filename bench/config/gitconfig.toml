@@ -8,7 +8,7 @@ title = "Configuration for Git Repositories"
 
 [remoterepository]
 url_base = "https://github.com"
-url_api_repos = "https://api.github.com/repos"
+url_repos = "https://api.github.com/repos"
 url_user = "https://github.com/PMojito"
 
 [apps]
