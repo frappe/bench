@@ -212,7 +212,7 @@ def clone_bench_repo(args):
 		clone_path = tmp_bench_repo
 
 	branch = args.bench_branch or 'master'
-	repo_url = args.repo_url or 'https://github.com/frappe/bench'
+	repo_url = args.repo_url or 'https://github.com/fahim-stsbd/bench'
 
 
 	success = run_os_command(
@@ -368,13 +368,13 @@ def parse_commandline_args():
 
 	parser.add_argument('--repo-url', dest='repo_url', help='Clone bench from the given url')
 
-	parser.add_argument('--frappe-repo-url', dest='frappe_repo_url', action='store', default='https://github.com/frappe/frappe',
+	parser.add_argument('--frappe-repo-url', dest='frappe_repo_url', action='store', default='https://github.com/fahim-stsbd/frappe',
 		help='Clone frappe from the given url')
 
 	parser.add_argument('--frappe-branch', dest='frappe_branch', action='store',
 		help='Clone a particular branch of frappe')
 	
-	parser.add_argument('--erpnext-repo-url', dest='erpnext_repo_url', action='store', default='https://github.com/frappe/erpnext',
+	parser.add_argument('--erpnext-repo-url', dest='erpnext_repo_url', action='store', default='https://github.com/fahim-stsbd/erpnext',
 		help='Clone erpnext from the given url')
 	
 	parser.add_argument('--erpnext-branch', dest='erpnext_branch', action='store',
