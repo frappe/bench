@@ -16,7 +16,7 @@ def remote_set_url(git_url):
 @click.argument('app')
 def remote_reset_url(app):
 	"Reset app remote url to frappe official"
-	git_url = "https://github.com/frappe/{}.git".format(app)
+	git_url = "https://github.com/fahim-stsbd/{}.git".format(app)
 	set_git_remote_url(git_url)
 
 
