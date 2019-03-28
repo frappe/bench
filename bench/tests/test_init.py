@@ -138,7 +138,7 @@ class TestBenchInit(unittest.TestCase):
 		bench_path = os.path.join(self.benches_path, "test-bench")
 
 		# get app
-		bench.app.get_app("https://github.com/frappe/erpnext", "develop", bench_path=bench_path)
+		bench.app.get_app("https://github.com/fahim-stsbd/erpnext", "develop", bench_path=bench_path)
 
 		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", "erpnext")))
 
