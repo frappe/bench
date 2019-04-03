@@ -16,5 +16,5 @@
     state=present
   when: result.stat.exists
   notify:
-  - restart network manager
+  - restart networkmanager
 ...
