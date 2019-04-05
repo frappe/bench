@@ -1,0 +1,13 @@
+---
+- name: Add repo file
+  template: src=mariadb_centos.repo.j2 dest=/etc/yum.repos.d/mariadb.repo owner=root group=root mode=0644
+
+- name: Install MariaDB
+  yum: name={{ item }} enablerepo=mariadb state=present
+  with_items:
+    - MariaDB-server
+    - MariaDB-client
+
+- name: Install MySQLdb Python package for secure installations.
+  yum: name=MySQL-python state=present
+  when: mysql_secure_installation and mysql_root_password is defined

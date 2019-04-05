@@ -1,0 +1,8 @@
+---
+mysql_conf_dir:
+  "CentOS": /etc/my.cnf.d
+  "Ubuntu": /etc/mysql/conf.d
+  "Debian": /etc/mysql/conf.d
+mysql_conf_tpl: files/mariadb_config.cnf
+mysql_secure_installation: True
+...

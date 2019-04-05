@@ -1,0 +1,13 @@
+[Unit]
+After={{ bench_name }}-frappe-web.service
+Description="{{ bench_name }}-node-socketio"
+PartOf={{ bench_name }}-web.target
+
+[Service]
+User={{ user }}
+Group={{ user }}
+Restart=always
+ExecStart={{ node }} {{ bench_dir }}/apps/frappe/socketio.js
+StandardOutput=file:{{ bench_dir }}/logs/node-socketio.log
+StandardError=file:{{ bench_dir }}/logs/node-socketio.error.log
+WorkingDirectory={{ bench_dir }}

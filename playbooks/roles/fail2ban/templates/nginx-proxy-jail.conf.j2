@@ -1,0 +1,9 @@
+## block hosts trying to abuse our server as a forward proxy
+[nginx-proxy]
+enabled = true
+filter = nginx-proxy
+logpath = {{ fail2ban_nginx_access_log }}
+action = iptables-multiport[name=NoNginxProxy, port="http,https"]
+maxretry = {{ maxretry }}
+bantime  = {{ bantime }}
+findtime = {{ findtime }}

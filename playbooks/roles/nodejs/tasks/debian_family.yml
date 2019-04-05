@@ -1,0 +1,14 @@
+---
+- name: 'Add Node.js PPA'
+  tags: 'nodejs'
+  become: 'yes'
+  become_method: 'sudo'
+  shell: "curl --silent --location https://deb.nodesource.com/setup_{{ node_version }}.x | bash -"
+
+- name: Install nodejs {{ node_version }}
+  apt:
+    name: nodejs
+    state: present
+    update_cache: yes
+    force: yes
+...

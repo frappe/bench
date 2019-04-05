@@ -1,0 +1,51 @@
+---
+# Variable setup.
+- name: Include OS-specific variables.
+  include_vars: "{{ ansible_os_family }}.yml"
+
+- name: Define nginx_user.
+  set_fact:
+    nginx_user: "{{ __nginx_user }}"
+  when: nginx_user is not defined
+
+# Setup/install tasks.
+- include_tasks: setup-RedHat.yml
+  when: ansible_os_family == 'RedHat'
+
+- include_tasks: setup-Debian.yml
+  when: ansible_os_family == 'Debian'
+
+# Replace default nginx config with nginx template
+- name: Rename default nginx.conf to nginx.conf.old
+  command: mv /etc/nginx/nginx.conf /etc/nginx/nginx.conf.old
+  when: ansible_os_family == 'Debian'
+
+# Nginx setup.
+- name: Copy nginx configuration in place.
+  template:
+    src: "{{ nginx_conf_file }}"
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart nginx
+
+- name: Setup www redirect
+  template:
+   src: ../files/www_redirect.conf
+   dest: /etc/nginx/conf.d/
+   owner: root
+   group: root
+   mode: 0644
+  notify: restart nginx
+  when: setup_www_redirect
+
+- name: Enable SELinux
+  selinux: policy=targeted state=permissive
+  when: ansible_distribution == 'CentOS'
+
+- name: Ensure nginx is started and enabled to start at boot.
+  service: name=nginx state=started enabled=yes
+
+- include_tasks: vhosts.yml
+...

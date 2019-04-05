@@ -1,0 +1,4 @@
+---
+- name: Setup bash screen wall
+  copy: src=screen_wall.sh dest=/etc/profile.d/screen_wall.sh
+...

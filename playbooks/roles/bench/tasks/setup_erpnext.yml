@@ -1,0 +1,28 @@
+---
+  - name: Check if ERPNext App exists
+    stat: path="{{ bench_path }}/apps/erpnext"
+    register: app
+
+  - name: Get the ERPNext app
+    command: bench get-app erpnext {{ erpnext_repo_url }} --branch {{ erpnext_branch }}
+    args:
+      creates: "{{ bench_path }}/apps/erpnext"
+      chdir: "{{ bench_path }}"
+    when: not app.stat.exists and not without_erpnext
+
+  - name: Check whether the site already exists
+    stat: path="{{ bench_path }}/sites/{{ site }}"
+    register: site_folder
+
+  - name: Create a new site
+    command: "bench new-site {{ site }} --admin-password '{{ admin_password }}' --mariadb-root-password '{{ mysql_root_password }}'"
+    args:
+      chdir: "{{ bench_path }}"
+    when: not site_folder.stat.exists
+
+  - name: Install ERPNext to default site
+    command: "bench --site {{ site }} install-app erpnext"
+    args:
+      chdir: "{{ bench_path }}"
+    when: not without_erpnext
+...

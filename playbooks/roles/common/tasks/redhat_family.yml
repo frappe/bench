@@ -1,0 +1,51 @@
+---
+
+- name: Install IUS repo for python 3.6
+  become: yes
+  become_user: root
+  yum:
+    name: https://centos7.iuscommunity.org/ius-release.rpm
+    state: present
+
+- name: "Setup prerequisites using yum"
+  become: yes
+  become_user: root
+  yum: name={{ item }} state=present
+  with_items:
+    - bzip2-devel
+    - cronie
+    - dnsmasq
+    - freetype-devel
+    - git
+    - htop
+    - lcms2-devel
+    - libjpeg-devel
+    - libtiff-devel
+    - libffi-devel
+    - libwebp-devel
+    - libXext
+    - libXrender
+    - libzip-devel
+    - libffi-devel
+    - ntp
+    - openssl-devel
+    - postfix
+    - python36u
+    - python-devel
+    - python-setuptools
+    - python-pip
+    - redis
+    - screen
+    - sudo
+    - tcl-devel
+    - tk-devel
+    - vim
+    - which
+    - xorg-x11-fonts-75dpi
+    - xorg-x11-fonts-Type1
+    - zlib-devel
+    - openssl-devel
+    - openldap-devel
+    - libselinux-python
+    - cups-libs
+...

@@ -1,0 +1,40 @@
+---
+- name: install base fonts
+  yum: name={{ item }} state=present
+  with_items:
+    - libXrender
+    - libXext
+    - xorg-x11-fonts-75dpi
+    - xorg-x11-fonts-Type1
+  when: ansible_os_family == 'RedHat'
+
+- name: install base fonts
+  apt: name={{ item }} state=present force=yes
+  with_items:
+    - libxrender1
+    - libxext6
+    - xfonts-75dpi
+    - xfonts-base
+  when: ansible_os_family == 'Debian'
+
+# wkhtmltopdf has been locked down to 0.12.3 intentionally since 0.12.4 has problems.
+# I you want to upgrade try it on multiple platforms and then decide
+- name: download wkthmltox linux
+  get_url: url=https://github.com/frappe/wkhtmltopdf/raw/master/wkhtmltox-0.12.3_linux-generic-{{ "amd64" if ansible_architecture == "x86_64" else "i386"}}.tar.xz dest=/tmp/wkhtmltox.tar.xz
+
+- name: Creates directory
+  file: path=/tmp/wkhtmltox state=directory
+
+- name: unarchive wkhtmltopdf
+  unarchive: src=/tmp/wkhtmltox.tar.xz dest=/tmp
+
+- name: copy to /usr/local/bin
+  copy: src="/tmp/wkhtmltox/bin/wkhtmltopdf" dest="/usr/local/bin/wkhtmltopdf"
+  become: true
+  become_user: root
+
+- name: make wkhtmltopdf executable
+  file: path=/usr/local/bin/wkhtmltopdf mode="o+x"
+  become: true
+  become_user: root
+...

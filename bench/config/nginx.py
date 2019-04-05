@@ -44,6 +44,45 @@ def make_nginx_conf(bench_path, yes=False):
 	with open(conf_path, "w") as f:
 		f.write(nginx_conf)
 
+def make_bench_manager_nginx_conf(bench_path, yes=False, port=23624, domain=None):
+	from bench import env
+	from bench.config.site_config import get_site_config
+	from bench.config.common_site_config import get_config
+
+	template = env.get_template('bench_manager_nginx.conf')
+	bench_path = os.path.abspath(bench_path)
+	sites_path = os.path.join(bench_path, "sites")
+
+	config = get_config(bench_path)
+	site_config = get_site_config(domain, bench_path=bench_path)
+	sites = prepare_sites(config, bench_path)
+	bench_name = get_bench_name(bench_path)
+
+	template_vars = {
+		"port": port,
+		"domain": domain,
+		"bench_manager_site_name": "bench-manager.local",
+		"sites_path": sites_path,
+		"http_timeout": config.get("http_timeout"),
+		"webserver_port": config.get('webserver_port'),
+		"socketio_port": config.get('socketio_port'),
+		"bench_name": bench_name,
+		"error_pages": get_error_pages(),
+		"ssl_certificate": site_config.get('ssl_certificate'),
+		"ssl_certificate_key": site_config.get('ssl_certificate_key')
+	}
+
+	bench_manager_nginx_conf = template.render(**template_vars)
+
+	conf_path = os.path.join(bench_path, "config", "nginx.conf")
+
+	if not yes and os.path.exists(conf_path):
+		click.confirm('nginx.conf already exists and bench-manager configuration will be appended to it. Do you want to continue?',
+			abort=True)
+
+	with open(conf_path, "a") as myfile:
+		myfile.write(bench_manager_nginx_conf)
+
 def prepare_sites(config, bench_path):
 	sites = {
 		"that_use_port": [],
@@ -148,7 +187,23 @@ def get_sites_with_config(bench_path):
 
 	ret = []
 	for site in sites:
-		site_config = get_site_config(site, bench_path=bench_path)
+		try:
+			site_config = get_site_config(site, bench_path=bench_path)
+		except Exception as e:
+			strict_nginx = get_config(bench_path).get('strict_nginx')
+			if strict_nginx:
+				print("\n\nERROR: The site config for the site {} is broken.".format(site),
+					"If you want this command to pass, instead of just throwing an error,",
+					"You may remove the 'strict_nginx' flag from common_site_config.json or set it to 0",
+					"\n\n")
+				raise (e)
+			else:
+				print("\n\nWARNING: The site config for the site {} is broken.".format(site),
+					"If you want this command to fail, instead of just showing a warning,",
+					"You may add the 'strict_nginx' flag to common_site_config.json and set it to 1",
+					"\n\n")
+				continue
+
 		ret.append({
 			"name": site,
 			"port": site_config.get('nginx_port'),
@@ -189,7 +244,8 @@ def use_wildcard_certificate(bench_path, ret):
 	ssl_certificate = wildcard['ssl_certificate']
 	ssl_certificate_key = wildcard['ssl_certificate_key']
 
-	if domain.startswith('*.'):
+	# If domain is set as "*" all domains will be included
+	if domain.startswith('*'):
 		domain = domain[1:]
 	else:
 		domain = '.' + domain
@@ -215,7 +271,6 @@ def get_error_pages():
 
 def get_limit_conn_shared_memory():
 	"""Allocate 2 percent of total virtual memory as shared memory for nginx limit_conn_zone"""
-	import psutil
-	total_vm = (psutil.virtual_memory().total) / (1024 * 1024) # in MB
+	total_vm = (os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')) / (1024 * 1024) # in MB
 
 	return int(0.02 * total_vm)

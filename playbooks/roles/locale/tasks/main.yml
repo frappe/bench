@@ -1,0 +1,21 @@
+---
+- name: Check current locale
+  shell: localectl
+  register: locale_test
+  when: ansible_distribution == 'Centos' or ansible_distribution == 'Ubuntu'
+
+- name: Set Locale
+  command: "localectl set-locale LANG={{ locale_lang }}"
+  when: (ansible_distribution == 'Centos' or ansible_distribution == 'Ubuntu') and locale_test.stdout.find('LANG=locale_lang') == -1
+
+- name: Set keymap
+  command: "localectl set-keymap {{ locale_keymap }}"
+  when: "(ansible_distribution == 'Centos' or ansible_distribution == 'Ubuntu') and locale_test.stdout.find('Keymap:locale_keymap') == -1"
+
+- name: Set Locale as en_US
+  lineinfile: dest=/etc/environment backup=yes line="{{ item }}"
+  with_items:
+    - "LC_ALL=en_US.UTF-8"
+    - "LC_CTYPE=en_US.UTF-8"
+    - "LANG=en_US.UTF-8"
+...

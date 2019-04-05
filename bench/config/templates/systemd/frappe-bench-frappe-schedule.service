@@ -1,0 +1,12 @@
+[Unit]
+Description="{{ bench_name }}-frappe-schedule"
+PartOf={{ bench_name }}-workers.target
+
+[Service]
+User={{ user }}
+Group={{ user }}
+Restart=always
+ExecStart={{ bench_cmd }} schedule
+StandardOutput=file:{{ bench_dir }}/logs/schedule.log
+StandardError=file:{{ bench_dir }}/logs/schedule.error.log
+WorkingDirectory={{ bench_dir }}

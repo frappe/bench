@@ -1,0 +1,12 @@
+[Unit]
+Description="{{ bench_name }}-redis-cache"
+PartOf={{ bench_name }}-redis.target
+
+[Service]
+User={{ user }}
+Group={{ user }}
+Restart=always
+ExecStart={{ redis_server }} {{ redis_cache_config }}
+StandardOutput=file:{{ bench_dir }}/logs/redis-cache.log
+StandardError=file:{{ bench_dir }}/logs/redis-cache.error.log
+WorkingDirectory={{ sites_dir }}

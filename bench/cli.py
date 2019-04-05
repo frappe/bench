@@ -47,10 +47,12 @@ def check_uid():
 		sys.exit(1)
 
 def cmd_requires_root():
-	if len(sys.argv) > 2 and sys.argv[2] in ('production', 'sudoers', 'lets-encrypt', 'fonts', 'reload-nginx', 'firewall', 'ssh-port'):
-	    return True
-	if len(sys.argv) >= 2 and sys.argv[1] in ('patch', 'renew-lets-encrypt', 'disable-production'):
-	    return True
+	if len(sys.argv) > 2 and sys.argv[2] in ('production', 'sudoers', 'lets-encrypt', 'fonts',
+		'print', 'firewall', 'ssh-port', 'role', 'fail2ban', 'wildcard-ssl'):
+		return True
+	if len(sys.argv) >= 2 and sys.argv[1] in ('patch', 'renew-lets-encrypt', 'disable-production',
+		'install'):
+		return True
 
 def change_dir():
 	if os.path.exists('config.json') or "init" in sys.argv:
@@ -93,8 +95,12 @@ def get_frappe_commands(bench_path='.'):
 	if not os.path.exists(sites_path):
 		return []
 	try:
-		return json.loads(get_cmd_output("{python} -m frappe.utils.bench_helper get-frappe-commands".format(python=python), cwd=sites_path))
-	except subprocess.CalledProcessError:
+		output = get_cmd_output("{python} -m frappe.utils.bench_helper get-frappe-commands".format(python=python), cwd=sites_path)
+		# output = output.decode('utf-8')
+		return json.loads(output)
+	except subprocess.CalledProcessError as e:
+		if hasattr(e, "stderr"):
+			print(e.stderr.decode('utf-8'))
 		return []
 
 def get_frappe_help(bench_path='.'):

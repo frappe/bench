@@ -1,0 +1,12 @@
+---
+- include_tasks: debian_family.yml
+  when: ansible_os_family == 'Debian'
+
+- include_tasks: redhat_family.yml
+  when: ansible_os_family == "RedHat"
+
+- name: Install yarn
+  command: npm install -g yarn
+  become: yes
+  become_user: root
+...

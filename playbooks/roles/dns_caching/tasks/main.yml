@@ -1,0 +1,20 @@
+---
+- name: Check NetworkManager.conf exists
+  stat:
+    path: /etc/NetworkManager/NetworkManager.conf
+  register: result
+
+- name: Unmask NetworkManager service
+  command: systemctl unmask NetworkManager
+  when: result.stat.exists
+
+- name: Add dnsmasq to network config
+  lineinfile: >
+    dest=/etc/NetworkManager/NetworkManager.conf
+    regexp="dns="
+    line="dns=dnsmasq"
+    state=present
+  when: result.stat.exists
+  notify:
+  - restart network manager
+...

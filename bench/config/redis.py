@@ -56,8 +56,8 @@ def write_redis_config(template_name, context, bench_path):
 		f.write(template.render(**context))
 
 def get_redis_version():
-	version_string = subprocess.check_output('redis-server --version', shell=True).decode().strip()
-
+	version_string = subprocess.check_output('redis-server --version', shell=True)
+	version_string = version_string.decode('utf-8').strip()
 	# extract version number from string
 	version = re.findall("\d+\.\d+", version_string)
 	if not version:
@@ -67,12 +67,8 @@ def get_redis_version():
 	return float('{major}.{minor}'.format(major=version.major, minor=version.minor))
 
 def get_max_redis_memory():
-	import psutil
-	
-	total_virtual_mem = psutil.virtual_memory().total/(pow(1024, 2))
-	max_memory = int(total_virtual_mem * 0.05) # Max memory for redis is 5% of virtual memory
-
-	if max_memory < 50:
-		return 50
-	else:
-		return max_memory
+	try:
+		max_mem = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
+	except ValueError:
+		max_mem = int(subprocess.check_output(['sysctl', '-n', 'hw.memsize']).strip())
+	return max(50, int((max_mem / (1024. ** 2)) * 0.05))

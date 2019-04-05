@@ -1,0 +1,11 @@
+---
+- name: 'Add Node.js PPA'
+  tags: 'nodejs'
+  become: 'yes'
+  become_method: 'sudo'
+  shell: "curl --silent --location https://rpm.nodesource.com/setup_{{ node_version }}.x | sudo bash -"
+
+- name: Install node v{{ node_version }}
+  yum: name=nodejs state=present
+  when: ansible_os_family == 'RedHat'
+...

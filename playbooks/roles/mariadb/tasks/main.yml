@@ -1,0 +1,58 @@
+---
+- include: centos.yml
+  when: ansible_distribution == 'CentOS' and ansible_distribution_major_version|int >= 6
+
+- include: ubuntu-trusty.yml
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_version == '14.04'
+
+- include: ubuntu-xenial_bionic.yml
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int >= 16
+
+- name: Add configuration
+  template: src={{ mysql_conf_tpl }} dest={{ mysql_conf_dir[ansible_distribution] }}/{{ mysql_conf_file }} owner=root group=root mode=0644
+  when: mysql_conf_tpl != 'change_me' and ansible_distribution != 'Debian'
+  notify: restart mysql
+
+- include_tasks: debian.yml
+  when: ansible_distribution == 'Debian'
+
+- name: Add configuration
+  template: src={{ mysql_conf_tpl }} dest={{ mysql_conf_dir[ansible_distribution] }}/{{ mysql_conf_file }} owner=root group=root mode=0644
+  when: mysql_conf_tpl != 'change_me' and ansible_distribution == 'Debian'
+  notify: restart mysql
+
+- name: Add additional conf for MariaDB 10.2 in mariadb.conf.d
+  blockinfile:
+    path: /etc/mysql/conf.d/settings.cnf
+    block: |
+      # Import all .cnf files from configuration directory
+      !includedir /etc/mysql/mariadb.conf.d/
+  become: yes
+  become_user: root
+  when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
+
+- name: Add additional conf for MariaDB 10.2 in mariadb.conf.d
+  blockinfile:
+    path: /etc/mysql/mariadb.conf.d/erpnext.cnf
+    block: |
+      [mysqld]
+      pid-file        = /var/run/mysqld/mysqld.pid
+      socket          = /var/run/mysqld/mysqld.sock
+    create: yes
+  become: yes
+  become_user: root
+  when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
+
+- name: Start and enable service
+  service: name=mysql state=started enabled=yes
+
+- debug:
+    msg: "{{ mysql_root_password }}"
+
+- include_tasks: mysql_secure_installation.yml
+  when: mysql_root_password is defined
+
+- debug: var=mysql_secure_installation
+  when: mysql_secure_installation and mysql_root_password is defined
+
+...
