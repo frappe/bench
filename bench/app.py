@@ -49,10 +49,68 @@ def write_appstxt(apps, bench_path='.'):
 	with open(os.path.join(bench_path, 'sites', 'apps.txt'), 'w') as f:
 		return f.write('\n'.join(apps))
 
-def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbose=False):
-	#less verbose app install
-	if '/' not in git_url:
-		git_url = 'https://github.com/frappe/' + git_url
+def check_url(url, raise_err = True):
+	try:
+		from urlparse import urlparse
+	except ImportError:
+		from urllib.parse import urlparse
+
+	parsed = urlparse(url)
+	if not parsed.scheme:
+		if raise_err:
+			raise TypeError('{url} Not a valid URL'.format(url = url))
+		else:
+			return False
+
+	return True
+
+def get_excluded_apps(bench_path='.'):
+	try:
+		with open(os.path.join(bench_path, 'sites', 'excluded_apps.txt')) as f:
+			return f.read().strip().split('\n')
+	except IOError:
+		return []
+
+def add_to_excluded_apps_txt(app, bench_path='.'):
+	if app == 'frappe':
+		raise ValueError('Frappe app cannot be excludeed from update')
+	if app not in os.listdir('apps'):
+		raise ValueError('The app {} does not exist'.format(app))
+	apps = get_excluded_apps(bench_path=bench_path)
+	if app not in apps:
+		apps.append(app)
+		return write_excluded_apps_txt(apps, bench_path=bench_path)
+
+def write_excluded_apps_txt(apps, bench_path='.'):
+	with open(os.path.join(bench_path, 'sites', 'excluded_apps.txt'), 'w') as f:
+		return f.write('\n'.join(apps))
+
+def remove_from_excluded_apps_txt(app, bench_path='.'):
+	apps = get_excluded_apps(bench_path=bench_path)
+	if app in apps:
+		apps.remove(app)
+		return write_excluded_apps_txt(apps, bench_path=bench_path)
+
+def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbose=False,
+	postprocess = True):
+	# from bench.utils import check_url
+	try:
+		from urlparse import urljoin
+	except ImportError:
+		from urllib.parse import urljoin
+
+	if not check_url(git_url, raise_err = False):
+		orgs = ['frappe', 'erpnext']
+		for org in orgs:
+			url = 'https://api.github.com/repos/{org}/{app}'.format(org = org, app = git_url)
+			res = requests.get(url)
+			if res.ok:
+				data    = res.json()
+				if 'name' in data:
+					if git_url == data['name']:
+						git_url = 'https://github.com/{org}/{app}'.format(org = org, app = git_url)
+						break
+
 	#Gets repo name from URL
 	repo_name = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
 	logger.info('getting app {}'.format(repo_name))
@@ -76,11 +134,16 @@ def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbos
 	print('installing', app_name)
 	install_app(app=app_name, bench_path=bench_path, verbose=verbose)
 
-	if build_asset_files:
-		build_assets(bench_path=bench_path)
-	conf = get_config(bench_path=bench_path)
-	if conf.get('restart_supervisor_on_update'):
-		restart_supervisor_processes(bench_path=bench_path)
+	if postprocess:
+
+		if build_asset_files:
+			build_assets(bench_path=bench_path)
+		conf = get_config(bench_path=bench_path)
+
+		if conf.get('restart_supervisor_on_update'):
+			restart_supervisor_processes(bench_path=bench_path)
+		if conf.get('restart_systemd_on_update'):
+			restart_systemd_processes(bench_path=bench_path)
 
 def new_app(app, bench_path='.'):
 	# For backwards compatibility
@@ -103,7 +166,7 @@ def install_app(app, bench_path='.', verbose=False, no_cache=False):
 	exec_cmd("{pip} install {quiet} {find_links} -e {app} {no_cache}".format(
 				pip=os.path.join(bench_path, 'env', 'bin', 'pip'),
 				quiet="-q" if not verbose else "",
-				no_cache='--no-cache-dir' if not no_cache else '',
+				no_cache='--no-cache-dir' if no_cache else '',
 				app=os.path.join(bench_path, 'apps', app),
 				find_links=find_links))
 	add_to_appstxt(app, bench_path=bench_path)
@@ -120,29 +183,35 @@ def remove_app(app, bench_path='.'):
 	for site in os.listdir(site_path):
 		req_file = os.path.join(site_path, site, 'site_config.json')
 		if os.path.exists(req_file):
-			out = subprocess.check_output(["bench", "--site", site, "list-apps"], cwd=bench_path)
+			out = subprocess.check_output(["bench", "--site", site, "list-apps"], cwd=bench_path).decode('utf-8')
 			if re.search(r'\b' + app + r'\b', out):
 				print("Cannot remove, app is installed on site: {0}".format(site))
 				sys.exit(1)
 
-	exec_cmd(["{0} uninstall -y {1}".format(pip, app_path)])
+	exec_cmd(["{0} uninstall -y {1}".format(pip, app)])
 	remove_from_appstxt(app, bench_path)
 	shutil.rmtree(app_path)
 	run_frappe_cmd("build", bench_path=bench_path)
 	if get_config(bench_path).get('restart_supervisor_on_update'):
 		restart_supervisor_processes(bench_path=bench_path)
-
+	if get_config(bench_path).get('restart_systemd_on_update'):
+		restart_systemd_processes(bench_path=bench_path)
 
 def pull_all_apps(bench_path='.', reset=False):
 	'''Check all apps if there no local changes, pull'''
 	rebase = '--rebase' if get_config(bench_path).get('rebase_on_pull') else ''
-	
+
 	# chech for local changes
 	if not reset:
 		for app in get_apps(bench_path=bench_path):
+			excluded_apps = get_excluded_apps()
+			if app in excluded_apps:
+				print("Skipping reset for app {}".format(app))
+				continue
 			app_dir = get_repo_dir(app, bench_path=bench_path)
 			if os.path.exists(os.path.join(app_dir, '.git')):
 				out = subprocess.check_output(["git", "status"], cwd=app_dir)
+				out = out.decode('utf-8')
 				if not re.search(r'nothing to commit, working (directory|tree) clean', out):
 					print('''
 
@@ -157,10 +226,19 @@ Here are your choices:
 	wait for them to be merged in the core.'''.format(app))
 					sys.exit(1)
 
+	excluded_apps = get_excluded_apps()
 	for app in get_apps(bench_path=bench_path):
+		if app in excluded_apps:
+			print("Skipping pull for app {}".format(app))
+			continue
 		app_dir = get_repo_dir(app, bench_path=bench_path)
 		if os.path.exists(os.path.join(app_dir, '.git')):
 			remote = get_remote(app)
+			if not remote:
+				# remote is False, i.e. remote doesn't exist, add the app to excluded_apps.txt
+				add_to_excluded_apps_txt(app, bench_path=bench_path)
+				print("Skipping pull for app {}, since remote doesn't exist, and adding it to excluded apps".format(app))
+				continue
 			logger.info('pulling {0}'.format(app))
 			if reset:
 				exec_cmd("git fetch --all", cwd=app_dir)
@@ -205,13 +283,15 @@ def get_remote(app, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	contents = subprocess.check_output(['git', 'remote', '-v'], cwd=repo_dir,
 									   stderr=subprocess.STDOUT)
+	contents = contents.decode('utf-8')
 	if re.findall('upstream[\s]+', contents):
-		remote = 'upstream'
+		return 'upstream'
+	elif not contents:
+		# if contents is an empty string => remote doesn't exist
+		return False
 	else:
 		# get the first remote
-		remote = contents.splitlines()[0].split()[0]
-
-	return remote
+		return contents.splitlines()[0].split()[0]
 
 def use_rq(bench_path):
 	bench_path = os.path.abspath(bench_path)
@@ -233,14 +313,20 @@ def get_current_version(app, bench_path='.'):
 		with open(os.path.join(repo_dir, 'setup.py')) as f:
 			return get_version_from_string(f.read(), field='version')
 
+def get_develop_version(app, bench_path='.'):
+	repo_dir = get_repo_dir(app, bench_path=bench_path)
+	with open(os.path.join(repo_dir, os.path.basename(repo_dir), 'hooks.py')) as f:
+		return get_version_from_string(f.read(), field='develop_version')
+
 def get_upstream_version(app, branch=None, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	if not branch:
 		branch = get_current_branch(app, bench_path=bench_path)
 	try:
 		contents = subprocess.check_output(['git', 'show', 'upstream/{branch}:{app}/__init__.py'.format(branch=branch, app=app)], cwd=repo_dir, stderr=subprocess.STDOUT)
+		contents = contents.decode('utf-8')
 	except subprocess.CalledProcessError as e:
-		if "Invalid object" in e.output:
+		if b"Invalid object" in e.output:
 			return None
 		else:
 			raise
@@ -254,7 +340,7 @@ def get_repo_dir(app, bench_path='.'):
 	return os.path.join(bench_path, 'apps', app)
 
 def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrade=True):
-	from .utils import update_requirements, update_npm_packages, backup_all_sites, patch_sites, build_assets, pre_upgrade, post_upgrade
+	from .utils import update_requirements, update_node_packages, backup_all_sites, patch_sites, build_assets, pre_upgrade, post_upgrade
 	from . import utils
 	apps_dir = os.path.join(bench_path, 'apps')
 	version_upgrade = (False,)
@@ -294,9 +380,13 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 
 	if version_upgrade[0] and upgrade:
 		update_requirements()
-		update_npm_packages()
+		update_node_packages()
 		pre_upgrade(version_upgrade[1], version_upgrade[2])
-		reload(utils)
+		if sys.version_info >= (3, 4):
+			import importlib
+			importlib.reload(utils)
+		else:
+			reload(utils)
 		backup_all_sites()
 		patch_sites()
 		build_assets()
@@ -305,10 +395,10 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 def switch_to_branch(branch=None, apps=None, bench_path='.', upgrade=False):
 	switch_branch(branch, apps=apps, bench_path=bench_path, upgrade=upgrade)
 
-def switch_to_master(apps=None, bench_path='.', upgrade=False):
+def switch_to_master(apps=None, bench_path='.', upgrade=True):
 	switch_branch('master', apps=apps, bench_path=bench_path, upgrade=upgrade)
 
-def switch_to_develop(apps=None, bench_path='.', upgrade=False):
+def switch_to_develop(apps=None, bench_path='.', upgrade=True):
 	switch_branch('develop', apps=apps, bench_path=bench_path, upgrade=upgrade)
 
 def get_version_from_string(contents, field='__version__'):
