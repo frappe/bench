@@ -25,4 +25,4 @@ git_http = "https://github.com/frappe/fonts.git"
 http = "https://github.com/frappe/bench_manager"
 
 [python-pdfkit]
-git_http = https://github.com/frappe/python-pdfkit.git
+git_http = "https://github.com/frappe/python-pdfkit.git"

@@ -13,7 +13,6 @@ def set_frappe_version(bench_path='.'):
 	if not FRAPPE_VERSION:
 		FRAPPE_VERSION = get_current_frappe_version(bench_path=bench_path)
 
-
 def get_git_configs(bench_path='.'):
 	return toml.load(os.path.join(bench_path, 'config', 'gitconfig.toml'))
 

@@ -11,7 +11,6 @@ def remote_set_url(git_url):
 	"Set app remote url"
 	set_git_remote_url(git_url)
 
-
 @click.command('remote-reset-url')
 @click.argument('app')
 def remote_reset_url(app):
