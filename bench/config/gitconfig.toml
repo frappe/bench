@@ -9,14 +9,12 @@ title = "Configuration for Git Repositories"
 [remoterepository]
 url_base = "https://github.com"
 url_repos = "https://api.github.com/repos"
-url_user = "https://github.com/PMojito"
+url_user = "https://github.com/frappe"
 
 [apps]
   [apps.frappe]
-  #git_http = "https://github.com/frappe/frappe.git"
-  #git_git = "git@github.com:frappe/frappe.git"
-  git_http = "https://github.com/PMojito/frappe.git"
-  git_git = "git@github.com:PMojito/frappe.git"
+  git_http = "https://github.com/frappe/frappe.git"
+  git_git = "git@github.com:frappe/frappe.git"
 
 [fonts]
 git_http = "https://github.com/frappe/fonts.git"
