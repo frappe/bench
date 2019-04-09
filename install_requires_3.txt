@@ -5,4 +5,5 @@ jinja2
 python-crontab
 semantic_version
 requests
+toml
 virtualenv
