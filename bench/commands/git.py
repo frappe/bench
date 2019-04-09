@@ -4,7 +4,6 @@ import os, subprocess, re
 from bench.app import get_repo_dir, get_apps, get_remote
 from bench.utils import set_git_remote_url
 
-
 @click.command('remote-set-url')
 @click.argument('git-url')
 def remote_set_url(git_url):
@@ -27,4 +26,3 @@ def remote_urls():
 			remote = get_remote(app)
 			remote_url = subprocess.check_output(['git', 'config', '--get', 'remote.{}.url'.format(remote)], cwd=repo_dir).strip()
 			print("{app}	{remote_url}".format(app=app, remote_url=remote_url))
-
