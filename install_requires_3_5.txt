@@ -1,5 +1,5 @@
 Click
-GitPython==0.3.2.rc1
+GitPython==2.1.11
 honcho
 jinja2
 python-crontab
