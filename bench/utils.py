@@ -4,6 +4,7 @@ import bench
 import semantic_version
 from bench import env
 from six import iteritems
+import toml
 
 
 class PatchError(Exception):
@@ -27,7 +28,7 @@ def get_frappe(bench_path='.'):
 	frappe = get_env_cmd('frappe', bench_path=bench_path)
 	if not os.path.exists(frappe):
 		print('The Frappe app is not installed. Run the following command to install frappe')
-		print('bench get-app {}'.format(bench.get_git_configs()["apps"]["frappe"]["git_http"]))
+		print('bench get-app {}'.format(get_git_configs()["apps"]["frappe"]["git_http"]))
 	return frappe
 
 def get_env_cmd(cmd, bench_path='.'):
@@ -70,7 +71,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		clone_apps_from(bench_path=path, clone_from=clone_from, update_app=not clone_without_update)
 	else:
 		if not frappe_path:
-			frappe_path = bench.get_git_configs()["apps"]["frappe"]["git_http"]
+			frappe_path = get_git_configs()["apps"]["frappe"]["git_http"]
 
 		get_app(frappe_path, branch=frappe_branch, bench_path=path, build_asset_files=False, verbose=verbose)
 
@@ -827,3 +828,12 @@ def run_playbook(playbook_name, extra_vars=None, tag=None):
 		args.extend(['-t', tag])
 
 	subprocess.check_call(args, cwd=os.path.join(os.path.dirname(bench.__path__[0]), 'playbooks'))
+
+def get_git_configs():
+	try:
+		repo_path = os.path.dirname(bench.__path__[0])
+		config_file = os.path.join(repo_path, 'bench/config', 'gitconfig.toml')
+		return toml.load(config_file)
+	except:
+		print("--> Error: Cannot load 'gitconfig.toml'. Expected at {}".format(config_file))
+		sys.exit(1)
