@@ -19,7 +19,7 @@ def cli():
 	if len(sys.argv) > 2 and sys.argv[1] == "frappe":
 		return old_frappe_cli()
 
-	elif len(sys.argv) > 1:
+	elif len(sys.argv) > 1 and sys.argv[1] in get_frappe_commands():
 		return frappe_cmd()
 
 	elif len(sys.argv) > 1 and sys.argv[1] in ("--site", "--verbose", "--force", "--profile"):
