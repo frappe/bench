@@ -191,7 +191,7 @@ def setup_manager(yes=False, port=23624, domain=None):
 
 	if 'bench_manager' in os.listdir('apps'):
 		print('App already exists. Skipping app download.')
-	else: 
+	else:
 		exec_cmd("bench get-app bench_manager")
 
 	exec_cmd("bench --site bench-manager.local install-app bench_manager")
@@ -275,6 +275,7 @@ def sync_domains(domain=None, site=None):
 @click.argument('role')
 @click.option('--admin_emails', default='')
 @click.option('--mysql_root_password')
+@click.option('--container', is_flag=True, default=False)
 def setup_roles(role, **kwargs):
 	"Install dependancies via roles"
 	from bench.utils import run_playbook
