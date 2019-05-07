@@ -14,9 +14,16 @@ def install_prerequisites():
 
 @click.command('mariadb')
 @click.option('--mysql_root_password')
-def install_maridb(mysql_root_password=''):
+@click.option('--version', default="10.2")
+def install_maridb(mysql_root_password='', version=''):
 	if mysql_root_password:
-		extra_vars.update({"mysql_root_password": mysql_root_password})
+		extra_vars.update({
+			"mysql_root_password": mysql_root_password,
+		})
+
+	extra_vars.update({
+		"mariadb_version": version
+	})
 
 	run_playbook('site.yml', extra_vars=extra_vars, tag='mariadb')
 
