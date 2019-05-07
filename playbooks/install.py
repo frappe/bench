@@ -114,7 +114,7 @@ def install_bench(args):
 	else:
 		erpnext_branch = 'master' if args.production else 'develop'
 	extra_vars.update(erpnext_branch=erpnext_branch)
-	
+
 	bench_name = 'frappe-bench' if not args.bench_name else args.bench_name
 	extra_vars.update(bench_name=bench_name)
 
@@ -355,7 +355,7 @@ def parse_commandline_args():
 
 	parser.add_argument('--site', dest='site', action='store', default='site1.local',
 		help='Specifiy name for your first ERPNext site')
-	
+
 	parser.add_argument('--without-site', dest='without_site', action='store_true',
 		default=False)
 
@@ -373,10 +373,10 @@ def parse_commandline_args():
 
 	parser.add_argument('--frappe-branch', dest='frappe_branch', action='store',
 		help='Clone a particular branch of frappe')
-	
+
 	parser.add_argument('--erpnext-repo-url', dest='erpnext_repo_url', action='store', default='https://github.com/frappe/erpnext',
 		help='Clone erpnext from the given url')
-	
+
 	parser.add_argument('--erpnext-branch', dest='erpnext_branch', action='store',
 		help='Clone a particular branch of erpnext')
 
@@ -389,13 +389,14 @@ def parse_commandline_args():
 
 	parser.add_argument('--without-bench-setup', dest='without_bench_setup', action='store_true', default=False,
 		help=argparse.SUPPRESS)
-	
+
 	# whether to overwrite an existing bench
 	parser.add_argument('--overwrite', dest='overwrite', action='store_true', default=False,
 		help='Whether to overwrite an existing bench')
 
 	# set passwords
 	parser.add_argument('--mysql-root-password', dest='mysql_root_password', help='Set mysql root password')
+	parser.add_argument('--mariadb-version', dest='mariadb_version', default='10.2', help='Specify mariadb version')
 	parser.add_argument('--admin-password', dest='admin_password', help='Set admin password')
 	parser.add_argument('--bench-name', dest='bench_name', help='Create bench with specified name. Default name is frappe-bench')
 
