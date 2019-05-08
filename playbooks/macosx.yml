@@ -8,12 +8,13 @@
   tasks:
     # install pre-requisites
     - name: install prequisites
-      homebrew: name={{ item }} state=present
-      with_items:
-        - cmake
-        - redis
-        - mariadb
-        - nodejs
+      homebrew:
+        state: present
+        name:
+          - cmake
+          - redis
+          - mariadb
+          - nodejs
 
     # install wkhtmltopdf
     - name: cask installs

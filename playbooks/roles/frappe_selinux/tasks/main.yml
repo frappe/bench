@@ -1,9 +1,10 @@
 ---
 - name: Install deps
-  yum: name="{{item}}" state=present
-  with_items:
-    - policycoreutils-python
-    - selinux-policy-devel
+  yum:
+    state: present
+    name:
+      - policycoreutils-python
+      - selinux-policy-devel
   when: ansible_distribution == 'CentOS'
 
 - name: Check enabled SELinux modules

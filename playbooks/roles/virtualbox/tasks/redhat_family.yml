@@ -5,10 +5,11 @@
     state: present
 
 - name: Install dependencies
-  yum: name={{ item }} state=present
-  with_items:
-    - kernel-devel
-    - deltarpm
+  yum: 
+    state: present
+    name:
+      - kernel-devel
+      - deltarpm
 
 - copy: src=virtualbox_centos.repo dest=/etc/yum.repos.d/virtualbox.repo owner=root group=root mode=0644 force=no
 

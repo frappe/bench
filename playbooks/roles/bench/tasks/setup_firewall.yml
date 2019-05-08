@@ -10,7 +10,9 @@
       when: ansible_distribution == 'CentOS'
 
     - name: Install firewalld
-      yum: name=firewalld state=present
+      yum:
+        name: firewalld 
+        state: present
       when: ansible_distribution == 'CentOS'
 
     - name: Enable Firewall
@@ -31,10 +33,12 @@
 
       # For Ubuntu / Debian
     - name: Install ufw
-      apt: name={{ item }} state=present force=yes
-      with_items:
-       - python-selinux
-       - ufw
+      apt:
+        state: present 
+        force: yes
+        name:
+        - python-selinux
+        - ufw
       when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
 
     - name: Enable Firewall
