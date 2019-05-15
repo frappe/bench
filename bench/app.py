@@ -137,7 +137,7 @@ def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbos
 	if postprocess:
 
 		if build_asset_files:
-			build_assets(bench_path=bench_path)
+			build_assets(bench_path=bench_path, app=app_name)
 		conf = get_config(bench_path=bench_path)
 
 		if conf.get('restart_supervisor_on_update'):
