@@ -194,13 +194,16 @@ def patch_sites(bench_path='.'):
 	except subprocess.CalledProcessError:
 		raise PatchError
 
-def build_assets(bench_path='.'):
+def build_assets(bench_path='.', app=None):
 	bench.set_frappe_version(bench_path=bench_path)
 
 	if bench.FRAPPE_VERSION == 4:
 		exec_cmd("{frappe} --build".format(frappe=get_frappe(bench_path=bench_path)), cwd=os.path.join(bench_path, 'sites'))
 	else:
-		run_frappe_cmd('build', bench_path=bench_path)
+		command = 'bench build'
+		if app:
+			command += ' --app {}'.format(app)
+		exec_cmd(command, cwd=bench_path)
 
 def get_sites(bench_path='.'):
 	sites_dir = os.path.join(bench_path, "sites")
