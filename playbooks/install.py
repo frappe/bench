@@ -50,12 +50,18 @@ def install_bench(args):
 		})
 
 		if success:
-			run_os_command({
-				'pip': 'sudo pip install --upgrade setuptools requests cryptography pip'
-			})
+			dist_name, dist_version = get_distribution_info()
+			if dist_name == 'centos':
+				run_os_command({
+					'pip': 'sudo pip install --upgrade --ignore-installed requests'
+				})
+			else:
+				run_os_command({
+					'pip': 'sudo pip install --upgrade requests'
+				})
 
 	success = run_os_command({
-		'pip': "sudo pip install --upgrade cryptography ansible"
+		'pip': "sudo pip install --upgrade setuptools cryptography ansible pip"
 	})
 
 	if not success:
