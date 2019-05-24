@@ -1,6 +1,6 @@
 
 <div align="center">
-    <img src="https://github.com/frappe/design/blob/master/logos/bench-logo.svg" height="128">
+    <img src="https://github.com/frappe/design/raw/master/logos/png/bench-logo.png" height="128">
     <h2>Frappe Bench</h2>
 </div>
 
