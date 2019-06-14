@@ -69,9 +69,12 @@
 		"type": "shell",
 		"execute_command": "echo 'frappe' | {{.Vars}} sudo -S -E bash '{{.Path}}'",
 		"script": "scripts/debian_family/setup.sh"
-	}, {
+	},{
 		"type": "shell",
 		"execute_command": "echo 'frappe' | {{.Vars}} sudo -S -E bash '{{.Path}}'",
+		"script": "scripts/debian_family/install_prerequisites.sh"
+	}, {
+		"type": "shell",
 		"script": "scripts/debian_family/install_erpnext_production.sh"
 	}, {
 		"type": "shell",
