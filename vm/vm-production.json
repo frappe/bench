@@ -38,7 +38,7 @@
 		"iso_checksum_type": "md5",
 		"ssh_username": "frappe",
 		"ssh_password": "frappe",
-        "ssh_port": 22,
+		"ssh_port": 22,
 		"ssh_wait_timeout": "10000s",
 		"http_directory": "http",
 		"guest_additions_mode": "disable",

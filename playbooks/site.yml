@@ -39,6 +39,9 @@
 
 - name: setup bench and dev environment
   hosts: localhost
+  become: '{{ use_sudo }}'
+  become_user: '{{ frappe_user }}'
+  become_method: sudo
   vars:
     bench_repo_path: "/home/{{ frappe_user }}/.bench"
     bench_path: "/home/{{ frappe_user }}/{{ bench_name }}"
