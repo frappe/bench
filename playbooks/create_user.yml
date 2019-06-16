@@ -1,6 +1,8 @@
 ---
 
   - hosts: localhost
+    become: yes
+    become_user: root
     tasks:
     - name: Create user
       user:

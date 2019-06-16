@@ -33,7 +33,7 @@ def install_virtualbox():
 		check_output(['bench', 'install', 'virtualbox'])
 
 def install_packer():
-	if not spawn.find_executable("packer") or not os.path.exists(os.path.join('/', 'opt', 'packer')):
+	if not spawn.find_executable("packer") and not os.path.exists(os.path.join('/', 'opt', 'packer')):
 		check_output(['bench', 'install', 'packer'])
 
 def silent_remove(name, is_dir=False):
