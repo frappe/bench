@@ -69,8 +69,8 @@ def _update(pull=False, patch=False, build=False, update_bench=False, auto=False
 
 	before_update(bench_path=bench_path, requirements=requirements)
 
-	config.update({ "maintenance_mode": 1, "pause_scheduler": 1 })
-	update_config(config, bench_path=bench_path)
+	conf.update({ "maintenance_mode": 1, "pause_scheduler": 1 })
+	update_config(conf, bench_path=bench_path)
 
 	if not no_backup:
 		print('Backing up sites...')
@@ -107,8 +107,8 @@ def _update(pull=False, patch=False, build=False, update_bench=False, auto=False
 	if restart_systemd or conf.get('restart_systemd_on_update'):
 		restart_systemd_processes(bench_path=bench_path)
 
-	config.update({ "maintenance_mode": 0, "pause_scheduler": 0 })
-	update_config(config, bench_path=bench_path)
+	conf.update({ "maintenance_mode": 0, "pause_scheduler": 0 })
+	update_config(conf, bench_path=bench_path)
 
 	print("_"*80)
 	print("Bench: Deployment tool for Frappe and ERPNext (https://erpnext.org).")
