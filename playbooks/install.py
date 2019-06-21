@@ -1,4 +1,4 @@
-# wget setup_frappe.py | python
+# wget setup_frappe.py | python3
 import os, sys, subprocess, getpass, json, multiprocessing, shutil, platform
 from distutils.spawn import find_executable
 
@@ -14,7 +14,7 @@ def install_bench(args):
 	success = run_os_command({
 		'apt-get': [
 			'sudo apt-get update',
-			'sudo apt-get install -y git build-essential python-setuptools python-dev libffi-dev libssl-dev'
+			'sudo apt-get install -y git build-essential python3-setuptools python3-dev libffi-dev libssl-dev'
 		],
 		'yum': [
 			'sudo yum groupinstall -y "Development tools"',
@@ -46,7 +46,7 @@ def install_bench(args):
 			})
 
 		success = run_os_command({
-			'python': 'sudo python get-pip.py --force-reinstall'
+			'python3': 'sudo python3 get-pip.py --force-reinstall'
 		})
 
 		if success:
@@ -85,12 +85,11 @@ def install_bench(args):
 		raise Exception('Please run this script as a non-root user with sudo privileges, but without using sudo or pass --user=USER')
 
 	# Python executable
-	if not args.production:
-		dist_name, dist_version = get_distribution_info()
-		if dist_name=='centos':
-			args.python = 'python3.6'
-		else:
-			args.python = 'python3'
+	dist_name, dist_version = get_distribution_info()
+	if dist_name=='centos':
+		args.python = 'python3.6'
+	else:
+		args.python = 'python3'
 
 	# create user if not exists
 	extra_vars = vars(args)
@@ -156,27 +155,6 @@ def get_distribution_info():
 	elif platform.system() == "Darwin":
 		current_dist = platform.mac_ver()
 		return "macos", current_dist[0].rsplit('.', 1)[0]
-
-def install_python27():
-	version = (sys.version_info[0], sys.version_info[1])
-
-	if version == (2, 7):
-		return
-
-	print('Installing Python 2.7')
-
-	# install python 2.7
-	success = run_os_command({
-		'apt-get': 'sudo apt-get install -y python-dev',
-		'yum': 'sudo yum install -y python27',
-		'brew': 'brew install python'
-	})
-
-	if not success:
-		could_not_install('Python 2.7')
-
-	# replace current python with python2.7
-	os.execvp('python2.7', ([] if is_sudo_user() else ['sudo']) + ['python2.7', __file__] + sys.argv[1:])
 
 def install_package(package):
 	package_exec = find_executable(package)
@@ -407,7 +385,7 @@ def parse_commandline_args():
 	parser.add_argument('--bench-name', dest='bench_name', help='Create bench with specified name. Default name is frappe-bench')
 
 	# Python interpreter to be used
-	parser.add_argument('--python', dest='python', default='python',
+	parser.add_argument('--python', dest='python', default='python3',
 		help=argparse.SUPPRESS
 	)
 
@@ -421,12 +399,6 @@ def parse_commandline_args():
 	return args
 
 if __name__ == '__main__':
-	try:
-		import argparse
-	except ImportError:
-		# install python2.7
-		install_python27()
-
 	args = parse_commandline_args()
 
 	install_bench(args)

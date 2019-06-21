@@ -38,7 +38,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		verbose=False, clone_from=None, skip_redis_config_generation=False,
 		clone_without_update=False,
 		ignore_exist = False,
-		python		 = 'python'): # Let's change when we're ready. - <achilles@frappe.io>
+		python		 = 'python3'): # Let's change when we're ready. - <achilles@frappe.io>
 	from .app import get_app, install_apps_from_path
 	from .config.common_site_config import make_config
 	from .config import redis
@@ -169,7 +169,7 @@ def which(executable, raise_err = False):
 
 	return exec_
 
-def setup_env(bench_path='.', python = 'python'):
+def setup_env(bench_path='.', python = 'python3'):
 	python = which(python, raise_err = True)
 	pip    = os.path.join('env', 'bin', 'pip')
 

@@ -23,5 +23,5 @@
     - libmariadbclient18
 
 - name: Install MySQLdb Python package for secure installations.
-  apt: pkg=python-mysqldb state=present
+  apt: pkg=python3-mysqldb state=present
   when: mysql_secure_installation and mysql_root_password is defined
