@@ -19,6 +19,8 @@ branches_to_update = {
 	'version-12-hotfix': [],
 }
 
+releasable_branches = ['master']
+
 github_username = None
 github_password = None
 
@@ -35,6 +37,9 @@ def release(bench_path, app, bump_type, from_branch, to_branch,
 
 	if config.get('branches_to_update'):
 		branches_to_update.update(config.get('branches_to_update'))
+
+	if config.get('releasable_branches'):
+		releasable_branches.extend(config.get('releasable_branches'),[])
 
 	validate(bench_path, config)
 
@@ -141,7 +146,7 @@ def get_current_version(repo_path, to_branch):
 	# TODO clean this up!
 	version_key = '__version__'
 
-	if to_branch.lower() in ['version-11', 'version-12']:
+	if to_branch.lower() in releasable_branches:
 		filename = os.path.join(repo_path, os.path.basename(repo_path), '__init__.py')
 	else:
 		filename = os.path.join(repo_path, os.path.basename(repo_path), 'hooks.py')
@@ -195,7 +200,7 @@ def get_bumped_version(version, bump_type):
 	return str(v)
 
 def set_version(repo_path, version, to_branch):
-	if to_branch.lower() in ['version-11', 'version-12']:
+	if to_branch.lower() in releasable_branches:
 		set_filename_version(os.path.join(repo_path, os.path.basename(repo_path),'__init__.py'), version, '__version__')
 	else:
 		set_filename_version(os.path.join(repo_path, os.path.basename(repo_path),'hooks.py'), version, 'staging_version')
@@ -238,7 +243,7 @@ def commit_changes(repo_path, new_version, to_branch):
 	repo = git.Repo(repo_path)
 	app_name = os.path.basename(repo_path)
 
-	if to_branch.lower() in ['version-11', 'version-12']:
+	if to_branch.lower() in releasable_branches:
 		repo.index.add([os.path.join(app_name, '__init__.py')])
 	else:
 		repo.index.add([os.path.join(app_name, 'hooks.py')])
