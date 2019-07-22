@@ -421,3 +421,13 @@ def get_apps_json(path):
 	else:
 		with open(path) as f:
 			return json.load(f)
+
+def validate_branch():
+	for app in ['frappe', 'erpnext']:
+		branch = get_current_branch(app)
+
+		if branch == "master":
+			print(''' master branch is renamed to version-11 and develop to version-12. Please switch to new branches to get future updates.
+
+To switch to version 11, run the following commands: bench switch-to-branch version-11''')
+			sys.exit(1)
