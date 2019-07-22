@@ -1,7 +1,7 @@
 import click
 import sys, os
 from bench.config.common_site_config import get_config, update_config
-from bench.app import pull_all_apps, is_version_upgrade
+from bench.app import pull_all_apps, is_version_upgrade, validate_branch
 from bench.utils import (update_bench, validate_upgrade, pre_upgrade, post_upgrade, before_update,
 	update_requirements, update_node_packages, backup_all_sites, patch_sites, build_assets,
 	restart_supervisor_processes, restart_systemd_processes)
@@ -48,8 +48,9 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 		print('Release bench, cannot update')
 		sys.exit(1)
 
-	version_upgrade = is_version_upgrade()
+	validate_branch()
 
+	version_upgrade = is_version_upgrade()
 	if version_upgrade[0]:
 		print()
 		print()
