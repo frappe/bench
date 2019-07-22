@@ -108,17 +108,25 @@ def install_bench(args):
 	if args.production:
 		extra_vars.update(max_worker_connections=multiprocessing.cpu_count() * 1024)
 
-	if args.frappe_branch:
-		frappe_branch = args.frappe_branch
+	if args.version:
+		if args.version <= 10:
+			frappe_branch = "{0}.x.x".format(args.version)
+			erpnext_branch = "{0}.x.x".format(args.version)
+		else:
+			frappe_branch = "version-{0}".format(args.version)
+			erpnext_branch = "version-{0}".format(args.version)
 	else:
-		frappe_branch = 'master' if args.production else 'develop'
-	extra_vars.update(frappe_branch=frappe_branch)
+		if args.frappe_branch:
+			frappe_branch = args.frappe_branch
+		else:
+			frappe_branch = 'version-12'
+		extra_vars.update(frappe_branch=frappe_branch)
 
-	if args.erpnext_branch:
-		erpnext_branch = args.erpnext_branch
-	else:
-		erpnext_branch = 'master' if args.production else 'develop'
-	extra_vars.update(erpnext_branch=erpnext_branch)
+		if args.erpnext_branch:
+			erpnext_branch = args.erpnext_branch
+		else:
+			erpnext_branch = 'version-12'
+		extra_vars.update(erpnext_branch=erpnext_branch)
 
 	bench_name = 'frappe-bench' if not args.bench_name else args.bench_name
 	extra_vars.update(bench_name=bench_name)
@@ -366,6 +374,10 @@ def parse_commandline_args():
 
 	parser.add_argument('--without-erpnext', dest='without_erpnext', action='store_true', default=False,
 		help='Prevent fetching ERPNext')
+
+	# direct provision to install versions
+	parser.add_argument('--version', dest='version', action='store', default='12', type=int,
+		help='Clone particular version of frappe and erpnext')
 
 	# To enable testing of script using Travis, this should skip the prompt
 	parser.add_argument('--run-travis', dest='run_travis', action='store_true', default=False,
