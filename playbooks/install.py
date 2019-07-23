@@ -310,13 +310,10 @@ def get_extra_vars_json(extra_args):
 	return ('@' + json_path)
 
 def run_playbook(playbook_name, sudo=False, extra_vars=None):
-	args = ['ansible-playbook', '-c', 'local',  playbook_name]
+	args = ['ansible-playbook', '-c', 'local',  playbook_name , '-vvvv']
 
 	if extra_vars:
 		args.extend(['-e', get_extra_vars_json(extra_vars)])
-
-		if extra_vars.get('verbosity'):
-			args.append('-vvvv')
 
 	if sudo:
 		user = extra_vars.get('user') or getpass.getuser()
