@@ -108,6 +108,9 @@ def install_bench(args):
 	if args.production:
 		extra_vars.update(max_worker_connections=multiprocessing.cpu_count() * 1024)
 
+	frappe_branch = 'version-12'
+	erpnext_branch = 'version-12'
+
 	if args.version:
 		if args.version <= 10:
 			frappe_branch = "{0}.x.x".format(args.version)
@@ -118,15 +121,12 @@ def install_bench(args):
 	else:
 		if args.frappe_branch:
 			frappe_branch = args.frappe_branch
-		else:
-			frappe_branch = 'version-12'
-		extra_vars.update(frappe_branch=frappe_branch)
 
 		if args.erpnext_branch:
 			erpnext_branch = args.erpnext_branch
-		else:
-			erpnext_branch = 'version-12'
-		extra_vars.update(erpnext_branch=erpnext_branch)
+
+	extra_vars.update(frappe_branch=frappe_branch)
+	extra_vars.update(erpnext_branch=erpnext_branch)
 
 	bench_name = 'frappe-bench' if not args.bench_name else args.bench_name
 	extra_vars.update(bench_name=bench_name)
