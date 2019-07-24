@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 from .utils import (exec_cmd, get_frappe, check_git_for_shallow_clone, build_assets,
 	restart_supervisor_processes, get_cmd_output, run_frappe_cmd, CommandFailedError,

@@ -37,7 +37,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None,
 		verbose=False, clone_from=None, skip_redis_config_generation=False,
 		clone_without_update=False,
-		ignore_exist = False,
+		ignore_exist = False, skip_assets=False,
 		python		 = 'python3'): # Let's change when we're ready. - <achilles@frappe.io>
 	from .app import get_app, install_apps_from_path
 	from .config.common_site_config import make_config
@@ -80,10 +80,12 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	bench.set_frappe_version(bench_path=path)
 	if bench.FRAPPE_VERSION > 5:
-		update_node_packages(bench_path=path)
+		if not skip_assets:
+			update_node_packages(bench_path=path)
 
 	set_all_patches_executed(bench_path=path)
-	build_assets(bench_path=path)
+	if not skip_assets:
+		build_assets(bench_path=path)
 
 	if not skip_redis_config_generation:
 		redis.generate_config(path)
@@ -812,7 +814,7 @@ def run_playbook(playbook_name, extra_vars=None, tag=None):
 	if not find_executable('ansible'):
 		print("Ansible is needed to run this command, please install it using 'pip install ansible'")
 		sys.exit(1)
-	args = ['ansible-playbook', '-c', 'local', playbook_name]
+	args = ['ansible-playbook', '-c', 'local', playbook_name, '-vvvv']
 
 	if extra_vars:
 		args.extend(['-e', json.dumps(extra_vars)])
