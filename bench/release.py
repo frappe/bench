@@ -39,7 +39,7 @@ def release(bench_path, app, bump_type, from_branch, to_branch,
 		branches_to_update.update(config.get('branches_to_update'))
 
 	if config.get('releasable_branches'):
-		releasable_branches.extend(config.get('releasable_branches'),[])
+		releasable_branches.extend(config.get('releasable_branches',[]))
 
 	validate(bench_path, config)
 
