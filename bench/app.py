@@ -277,12 +277,12 @@ def get_current_frappe_version(bench_path='.'):
 		return 0
 
 def get_current_branch(app, bench_path='.'):
-    try:
-        repo_dir = get_repo_dir(app, bench_path=bench_path)
-        return get_cmd_output("basename $(git symbolic-ref -q HEAD)", cwd=repo_dir)
-    except OSError as err:
-        print("Error trying to get branch of app: {}.\n {}\nMaybe it is not installed".format(app, err))
-        return None
+	try:
+		repo_dir = get_repo_dir(app, bench_path=bench_path)
+		return get_cmd_output("basename $(git symbolic-ref -q HEAD)", cwd=repo_dir)
+	except OSError as err:
+		print("Error trying to get branch of app: {}.\n {}\nMaybe it is not installed".format(app, err))
+		return None
 
 def get_remote(app, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
