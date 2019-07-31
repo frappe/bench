@@ -35,7 +35,7 @@ To manually install frappe/erpnext, you can follow this [this wiki](https://gith
 
 #### 1. Install Pre-requisites
 
-- Python 2.7 [Python3.5+ also supported, but not recommended for production]
+- Python 3.6+
 - MariaDB 10+
 - Nginx (for production)
 - Nodejs
