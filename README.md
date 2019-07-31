@@ -35,7 +35,7 @@ To manually install frappe/erpnext, you can follow this [this wiki](https://gith
 
 #### 1. Install Pre-requisites
 
-- Python 2.7 [Python3.5+ also supported, but not recommended for production]
+- Python 2.7 or Python 3.5+
 - MariaDB 10+
 - Nginx (for production)
 - Nodejs
@@ -126,13 +126,9 @@ If you are on a fresh server and logged in as root, at first create a dedicated 
   usermod -aG sudo frappe
 ```
 
-_(it is very common to name this user `frappe`, but this comes with the disadvantage of being 
+_(it is very common to name this user `frappe`, but this comes with the disadvantage of being
 ranked very high in hackers circles for attempts to entering servers. So production sites it
 is highly recommended to use a custom username harder to guess for)_
-
-use --user flag to create a user and install using that user
-
-	python install.py --develop --user [frappe-user]
 
 For developer setup:
 
@@ -141,6 +137,18 @@ For developer setup:
 For production:
 
 	sudo python install.py --production --user [frappe-user]
+
+use --user flag to create a user and install using that user
+
+	python install.py --develop --user [frappe-user]
+
+use --veresion flag to install specific version
+
+	python install.py --develop --version 11 --user [frappe-user]
+
+use --python flag to specify virtual environments python version, by default script setup python 3
+
+	python install.py --develop --version 11 --python python2.7 --user [frappe-user]
 
 #### What will this script do?
 
