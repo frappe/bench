@@ -142,7 +142,7 @@ use --user flag to create a user and install using that user
 
 	python install.py --develop --user [frappe-user]
 
-use --veresion flag to install specific version
+use --version flag to install specific version
 
 	python install.py --develop --version 11 --user [frappe-user]
 
