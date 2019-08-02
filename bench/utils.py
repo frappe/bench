@@ -175,7 +175,11 @@ def setup_env(bench_path='.', python = 'python3'):
 	python = which(python, raise_err = True)
 	pip    = os.path.join('env', 'bin', 'pip')
 
-	exec_cmd('virtualenv -q {} -p {}'.format('env', python), cwd=bench_path)
+	# Check Python version for which virtual environment command to use.
+	if sys.version_info[0] == 3 and sys.version_info[1] >= 4:
+		exec_cmd('{} -m venv {}'.format(python, 'env'), cwd=bench_path)
+	else:
+		exec_cmd('virtualenv -q {} -p {}'.format('env', python), cwd=bench_path)
 	exec_cmd('{} -q install --upgrade pip'.format(pip), cwd=bench_path)
 	exec_cmd('{} -q install wheel'.format(pip), cwd=bench_path)
 	exec_cmd('{} -q install six'.format(pip), cwd=bench_path)
