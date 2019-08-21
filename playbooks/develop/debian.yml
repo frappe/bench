@@ -31,6 +31,7 @@
       # basic installs
       - build-essential
       - redis-server
+      - dirmngr
 
       # for mariadb
       - software-properties-common
