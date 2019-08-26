@@ -25,9 +25,9 @@ github_username = None
 github_password = None
 
 def release(bench_path, app, bump_type, from_branch, to_branch,
-		remote='upstream', owner='frappe', repo_name=None, frontport=True):
+		remote='upstream', owner='frappe', repo_name=None, frontport=True, auto=False):
 
-	confirm_testing()
+	if not auto: confirm_testing()
 	config = get_config(bench_path)
 
 	if not config.get('release_bench'):
@@ -44,7 +44,7 @@ def release(bench_path, app, bump_type, from_branch, to_branch,
 	validate(bench_path, config)
 
 	bump(bench_path, app, bump_type, from_branch=from_branch, to_branch=to_branch, owner=owner,
-		repo_name=repo_name, remote=remote, frontport=frontport)
+		repo_name=repo_name, remote=remote, frontport=frontport, auto=auto)
 
 def validate(bench_path, config):
 	global github_username, github_password
@@ -71,7 +71,7 @@ def confirm_testing():
 	click.confirm('Is manual testing done?', abort = True)
 	click.confirm('Have you added the change log?', abort = True)
 
-def bump(bench_path, app, bump_type, from_branch, to_branch, remote, owner, repo_name=None, frontport=True):
+def bump(bench_path, app, bump_type, from_branch, to_branch, remote, owner, repo_name=None, frontport=True, auto=False):
 	assert bump_type in ['minor', 'major', 'patch', 'stable', 'prerelease']
 
 	repo_path = os.path.join(bench_path, 'apps', app)
@@ -79,15 +79,16 @@ def bump(bench_path, app, bump_type, from_branch, to_branch, remote, owner, repo
 	update_branches_and_check_for_changelog(repo_path, from_branch, to_branch, remote=remote)
 	message = get_release_message(repo_path, from_branch=from_branch, to_branch=to_branch, remote=remote)
 
-	if not message:
-		print('No commits to release')
-		return
+	if not auto:
+		if not message:
+			print('No commits to release')
+			return
 
-	print()
-	print(message)
-	print()
+		print()
+		print(message)
+		print()
 
-	click.confirm('Do you want to continue?', abort=True)
+		click.confirm('Do you want to continue?', default=auto, abort=True)
 
 	new_version = bump_repo(repo_path, bump_type, from_branch=from_branch, to_branch=to_branch)
 	commit_changes(repo_path, new_version, to_branch)
