@@ -6,6 +6,7 @@ import semantic_version
 import git
 import requests
 import getpass
+import subprocess
 import re
 from requests.auth import HTTPBasicAuth
 import requests.exceptions
@@ -29,6 +30,9 @@ def release(bench_path, app, bump_type, from_branch, to_branch,
 
 	if not auto: confirm_testing()
 	config = get_config(bench_path)
+
+	if frontport:
+		auto = not frontport
 
 	if not config.get('release_bench'):
 		print('bench not configured to release')
@@ -92,7 +96,12 @@ def bump(bench_path, app, bump_type, from_branch, to_branch, remote, owner, repo
 
 	new_version = bump_repo(repo_path, bump_type, from_branch=from_branch, to_branch=to_branch)
 	commit_changes(repo_path, new_version, to_branch)
-	tag_name = create_release(repo_path, new_version, from_branch=from_branch, to_branch=to_branch, frontport=frontport)
+	tag_name = create_release(repo_path, new_version, from_branch=from_branch, to_branch=to_branch, frontport=frontport, auto=auto)
+
+	if not tag_name:
+		print('Broken')
+		return ''
+
 	push_release(repo_path, from_branch=from_branch, to_branch=to_branch, remote=remote)
 	prerelease = True if 'beta' in new_version else False
 	create_github_release(repo_path, tag_name, message, remote=remote, owner=owner, repo_name=repo_name, prerelease=prerelease)
@@ -251,7 +260,7 @@ def commit_changes(repo_path, new_version, to_branch):
 
 	repo.index.commit('bumped to version {}'.format(new_version))
 
-def create_release(repo_path, new_version, from_branch, to_branch, frontport=True):
+def create_release(repo_path, new_version, from_branch, to_branch, frontport=True, auto=False):
 	print('creating release for version', new_version)
 	repo = git.Repo(repo_path)
 	g = repo.git
@@ -259,7 +268,11 @@ def create_release(repo_path, new_version, from_branch, to_branch, frontport=Tru
 	try:
 		g.merge(from_branch, '--no-ff')
 	except git.exc.GitCommandError as e:
-		handle_merge_error(e, source=from_branch, target=to_branch)
+		if auto:
+			repo.git.reset('--hard')
+			return ''
+
+		handle_merge_error(e, source=to_branch, target=from_branch)
 
 	tag_name = 'v' + new_version
 	repo.create_tag(tag_name, message='Release {}'.format(new_version))
