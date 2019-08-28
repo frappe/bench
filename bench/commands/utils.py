@@ -131,12 +131,12 @@ def backup_all_sites():
 @click.option('--repo-name')
 @click.option('--dont-frontport', is_flag=True, default=False, help='Front port fixes to new branches, example merging hotfix(v10) into staging-fixes(v11)')
 @click.option('--auto', is_flag=True, default=False)
-def release(app, bump_type, from_branch, to_branch, owner, repo_name, remote, dont_frontport):
+def release(app, bump_type, from_branch, to_branch, owner, repo_name, remote, dont_frontport, auto):
 	"Release app (internal to the Frappe team)"
 	from bench.release import release
 	frontport = not dont_frontport
 	release(bench_path='.', app=app, bump_type=bump_type, from_branch=from_branch, to_branch=to_branch,
-		remote=remote, owner=owner, repo_name=repo_name, frontport=frontport)
+		remote=remote, owner=owner, repo_name=repo_name, frontport=frontport, auto=auto)
 
 
 @click.command('prepare-beta-release')
