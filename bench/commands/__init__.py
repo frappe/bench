@@ -89,7 +89,7 @@ except ImportError:
 
 @click.command('migrate-env')
 @click.argument('python', type = str)
-@click.option('--no-backup', default = False, help = 'Do not backup the existing Virtual Environment')
+@click.option('--no-backup', is_flag = True)
 def migrate_env(python, no_backup = False):
 	"""
 	Migrate Virtual Environment to desired Python Version.
