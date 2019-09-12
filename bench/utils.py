@@ -317,7 +317,7 @@ def get_program(programs):
 def get_process_manager():
 	return get_program(['foreman', 'forego', 'honcho'])
 
-def start(no_dev=False, concurrency=None):
+def start(no_dev=False, concurrency=None, procfile=None):
 	program = get_process_manager()
 	if not program:
 		raise Exception("No process manager found")
@@ -328,6 +328,9 @@ def start(no_dev=False, concurrency=None):
 	command = [program, 'start']
 	if concurrency:
 		command.extend(['-c', concurrency])
+
+	if procfile:
+		command.extend(['-f', procfile])
 
 	os.execv(program, command)
 
