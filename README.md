@@ -142,6 +142,10 @@ use --user flag to create a user and install using that user
 
 	python install.py --develop --user [frappe-user]
 
+use --container flag to install inside a container (this will prevent the `/proc/sys/vm/swappiness: Read-only` file system error)
+
+	sudo python install.py --production --user [frappe-user] --container
+
 use --version flag to install specific version
 
 	python install.py --develop --version 11 --user [frappe-user]
