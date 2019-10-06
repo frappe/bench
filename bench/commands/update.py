@@ -1,7 +1,7 @@
 import click
 import sys, os
-from bench.config.common_site_config import get_config
-from bench.app import pull_all_apps, is_version_upgrade
+from bench.config.common_site_config import get_config, update_config
+from bench.app import pull_all_apps, is_version_upgrade, validate_branch
 from bench.utils import (update_bench, validate_upgrade, pre_upgrade, post_upgrade, before_update,
 	update_requirements, update_node_packages, backup_all_sites, patch_sites, build_assets,
 	restart_supervisor_processes, restart_systemd_processes)
@@ -48,8 +48,9 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 		print('Release bench, cannot update')
 		sys.exit(1)
 
-	version_upgrade = is_version_upgrade()
+	validate_branch()
 
+	version_upgrade = is_version_upgrade()
 	if version_upgrade[0]:
 		print()
 		print()
@@ -68,6 +69,13 @@ def _update(pull=False, patch=False, build=False, update_bench=False, auto=False
 		validate_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
 
 	before_update(bench_path=bench_path, requirements=requirements)
+
+	conf.update({ "maintenance_mode": 1, "pause_scheduler": 1 })
+	update_config(conf, bench_path=bench_path)
+
+	if not no_backup:
+		print('Backing up sites...')
+		backup_all_sites(bench_path=bench_path)
 
 	if pull:
 		pull_all_apps(bench_path=bench_path, reset=reset)
@@ -89,10 +97,6 @@ def _update(pull=False, patch=False, build=False, update_bench=False, auto=False
 			reload(bench.app)
 
 	if patch:
-		if not no_backup:
-			print('Backing up sites...')
-			backup_all_sites(bench_path=bench_path)
-
 		print('Patching sites...')
 		patch_sites(bench_path=bench_path)
 	if build:
@@ -103,6 +107,9 @@ def _update(pull=False, patch=False, build=False, update_bench=False, auto=False
 		restart_supervisor_processes(bench_path=bench_path)
 	if restart_systemd or conf.get('restart_systemd_on_update'):
 		restart_systemd_processes(bench_path=bench_path)
+
+	conf.update({ "maintenance_mode": 0, "pause_scheduler": 0 })
+	update_config(conf, bench_path=bench_path)
 
 	print("_"*80)
 	print("Bench: Deployment tool for Frappe and ERPNext (https://erpnext.org).")

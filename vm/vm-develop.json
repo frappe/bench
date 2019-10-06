@@ -38,7 +38,7 @@
 		"iso_checksum_type": "md5",
 		"ssh_username": "frappe",
 		"ssh_password": "frappe",
-        "ssh_port": 22,
+		"ssh_port": 22,
 		"ssh_wait_timeout": "10000s",
 		"http_directory": "http",
 		"guest_additions_mode": "disable",
@@ -70,9 +70,12 @@
 		"type": "shell",
 		"execute_command": "echo 'frappe' | {{.Vars}} sudo -S -E bash '{{.Path}}'",
 		"script": "scripts/debian_family/setup.sh"
-	}, {
+	},{
 		"type": "shell",
 		"execute_command": "echo 'frappe' | {{.Vars}} sudo -S -E bash '{{.Path}}'",
+		"script": "scripts/debian_family/install_prerequisites.sh"
+	}, {
+		"type": "shell",
 		"script": "scripts/debian_family/install_erpnext_develop.sh"
 	}, {
 		"type": "shell",

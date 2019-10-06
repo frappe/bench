@@ -31,11 +31,11 @@ To install the Frappe/ERPNext server software, you will need an operating system
 
 ### Manual Install
 
-To manually install frappe/erpnext, you can follow this [this wiki](https://github.com/frappe/frappe/wiki/The-Hitchhiker%27s-Guide-to-Installing-Frapp%C3%A9-on-Linux) for Linux and [this wiki](https://github.com/frappe/frappe/wiki/The-Hitchhiker's-Guide-to-Installing-Frapp%C3%A9-on-Mac-OS-X) for MacOS. It gives an excellent explanation about the stack. You can also follow the steps mentioned below:
+To manually install frappe/erpnext, you can follow this [this wiki](https://github.com/frappe/frappe/wiki/The-Hitchhiker%27s-Guide-to-Installing-Frappe-on-Linux) for Linux and [this wiki](https://github.com/frappe/frappe/wiki/The-Hitchhiker's-Guide-to-Installing-Frappe-on-Mac-OS-X) for MacOS. It gives an excellent explanation about the stack. You can also follow the steps mentioned below:
 
 #### 1. Install Pre-requisites
 
-- Python 2.7 [Python3.5+ also supported, but not recommended for production]
+- Python 2.7 or Python 3.5+
 - MariaDB 10+
 - Nginx (for production)
 - Nodejs
@@ -128,10 +128,6 @@ If you are on a fresh server and logged in as root, at first create a dedicated 
 
 *(it is very common to use "frappe" as frappe-username, but this comes with the security flaw of ["frappe" ranking very high](https://www.reddit.com/r/dataisbeautiful/comments/b3sirt/i_deployed_over_a_dozen_cyber_honeypots_all_over/?st=JTJ0SC0Q&sh=76e05240) in as a username challenged in hacking attempts. So, for production sites it is highly recommended to use a custom username harder to guess)*
 
-use --user flag to create a user and install using that user
-
-	python install.py --develop --user [frappe-user]
-
 For developer setup:
 
 	sudo python install.py --develop
@@ -139,6 +135,22 @@ For developer setup:
 For production:
 
 	sudo python install.py --production --user [frappe-user]
+
+use --user flag to create a user and install using that user
+
+	python install.py --develop --user [frappe-user]
+
+use --container flag to install inside a container (this will prevent the `/proc/sys/vm/swappiness: Read-only` file system error)
+
+	sudo python install.py --production --user [frappe-user] --container
+
+use --version flag to install specific version
+
+	python install.py --develop --version 11 --user [frappe-user]
+
+use --python flag to specify virtual environments python version, by default script setup python 3
+
+	python install.py --develop --version 11 --python python2.7 --user [frappe-user]
 
 #### What will this script do?
 
