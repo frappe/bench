@@ -138,7 +138,7 @@ For production:
 
 	sudo python install.py --production --user [frappe-user]
 
-use --user flag to create a user and install using that user
+use --user flag to create a user and install using that user (By default, the script will create a user with the username frappe if the --user flag is not used.)
 
 	python install.py --develop --user [frappe-user]
 
