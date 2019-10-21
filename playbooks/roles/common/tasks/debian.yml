@@ -21,4 +21,9 @@
     - tk8.5-dev
   when: ansible_distribution_version | version_compare('8', 'ge')
 
+- name: install pdf prerequisites debian
+  apt: pkg={{ item }} state=present force=yes
+  with_items:
+    - libssl-dev
+
 ...
