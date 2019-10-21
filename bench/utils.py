@@ -354,16 +354,16 @@ def check_git_for_shallow_clone():
 	from .config.common_site_config import get_config
 	config = get_config('.')
 
-	if config.get('release_bench'):
-		return False
+	if config:
+		if config.get('release_bench'):
+			return False
 
-	if not config.get('shallow_clone'):
-		return False
+		if not config.get('shallow_clone'):
+			return False
 
 	git_version = get_git_version()
 	if git_version > 1.9:
 		return True
-	return False
 
 def get_cmd_output(cmd, cwd='.'):
 	try:
@@ -540,7 +540,7 @@ def update_json_file(filename, ddict):
 
 	content.update(ddict)
 	with open(filename, 'w') as f:
-		content = json.dump(content, f, indent=1, sort_keys=True)
+		json.dump(content, f, indent=1, sort_keys=True)
 
 def drop_privileges(uid_name='nobody', gid_name='nogroup'):
 	# from http://stackoverflow.com/a/2699996
