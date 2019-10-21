@@ -12,7 +12,6 @@
     - libcrypto++-dev
     - libfreetype6-dev
     - liblcms2-dev
-    - libssl-dev
     - libwebp-dev
     - libxext6
     - libxrender1
