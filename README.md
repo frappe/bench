@@ -126,13 +126,9 @@ If you are on a fresh server and logged in as root, at first create a dedicated 
   usermod -aG sudo frappe
 ```
 
-_(it is very common to name this user `frappe`, but this comes with the disadvantage of being 
+_(it is very common to name this user `frappe`, but this comes with the disadvantage of being
 ranked very high in hackers circles for attempts to entering servers. So production sites it
 is highly recommended to use a custom username harder to guess for)_
-
-use --user flag to create a user and install using that user
-
-	python install.py --develop --user [frappe-user]
 
 For developer setup:
 
@@ -141,6 +137,22 @@ For developer setup:
 For production:
 
 	sudo python install.py --production --user [frappe-user]
+
+use --user flag to create a user and install using that user (By default, the script will create a user with the username `frappe` if the --user flag is not used)
+
+	python install.py --develop --user [frappe-user]
+
+use --container flag to install inside a container (this will prevent the `/proc/sys/vm/swappiness: Read-only` file system error)
+
+	sudo python install.py --production --user [frappe-user] --container
+
+use --version flag to install specific version
+
+	python install.py --develop --version 11 --user [frappe-user]
+
+use --python flag to specify virtual environments python version, by default script setup python 3
+
+	python install.py --develop --version 11 --python python2.7 --user [frappe-user]
 
 #### What will this script do?
 

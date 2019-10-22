@@ -1,3 +1,4 @@
+six
 Click
 jinja2
 virtualenv

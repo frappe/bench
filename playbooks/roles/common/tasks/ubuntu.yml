@@ -18,4 +18,17 @@
    - tk8.6-dev
   when: ansible_distribution_version | version_compare('14.04', 'ge')
 
+
+- name: install pdf prerequisites for Ubuntu < 18.04
+  apt: pkg={{ item }} state=present force=yes
+  with_items:
+    - libssl-dev
+  when: ansible_distribution_version | version_compare('18.04', 'lt')
+
+- name: install pdf prerequisites for Ubuntu >= 18.04
+  apt: pkg={{ item }} state=present force=yes
+  with_items:
+    - libssl1.0-dev
+  when: ansible_distribution_version | version_compare('18.04', 'ge')
+
 ...
