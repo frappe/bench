@@ -123,12 +123,10 @@ If you are on a fresh server and logged in as root, at first create a dedicated 
 
 ```
   adduser [frappe-user]
-  usermod -aG sudo frappe
+  usermod -aG sudo [frappe-user]
 ```
 
-_(it is very common to name this user `frappe`, but this comes with the disadvantage of being
-ranked very high in hackers circles for attempts to entering servers. So production sites it
-is highly recommended to use a custom username harder to guess for)_
+*(it is very common to use "frappe" as frappe-username, but this comes with the security flaw of ["frappe" ranking very high](https://www.reddit.com/r/dataisbeautiful/comments/b3sirt/i_deployed_over_a_dozen_cyber_honeypots_all_over/?st=JTJ0SC0Q&sh=76e05240) in as a username challenged in hacking attempts. So, for production sites it is highly recommended to use a custom username harder to guess)*
 
 For developer setup:
 
