@@ -524,6 +524,15 @@ def is_root():
 def set_mariadb_host(host, bench_path='.'):
 	update_common_site_config({'db_host': host}, bench_path=bench_path)
 
+def set_redis_cache_host(host, bench_path='.'):
+	update_common_site_config({'redis_cache': "redis://{}".format(host)}, bench_path=bench_path)
+
+def set_redis_queue_host(host, bench_path='.'):
+	update_common_site_config({'redis_queue': "redis://{}".format(host)}, bench_path=bench_path)
+
+def set_redis_socketio_host(host, bench_path='.'):
+	update_common_site_config({'redis_socketio': "redis://{}".format(host)}, bench_path=bench_path)
+
 def update_common_site_config(ddict, bench_path='.'):
 	update_json_file(os.path.join(bench_path, 'sites', 'common_site_config.json'), ddict)
 
