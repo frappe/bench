@@ -10,7 +10,7 @@
     - libtiff4-dev
     - tcl8.5-dev
     - tk8.5-dev
-  when: ansible_distribution_version | version_compare('8', 'lt')
+  when: ansible_distribution_version | version('8', 'lt')
 
 - name: install pillow prerequisites for Debian >= 8
   apt: pkg={{ item }} state=present
@@ -19,7 +19,7 @@
     - libtiff5-dev
     - tcl8.5-dev
     - tk8.5-dev
-  when: ansible_distribution_version | version_compare('8', 'ge')
+  when: ansible_distribution_version | version('8', 'ge')
 
 - name: install pdf prerequisites debian
   apt: pkg={{ item }} state=present force=yes
