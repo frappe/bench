@@ -19,19 +19,19 @@
   file:
     state: absent
     path: /opt/packer
-  when: (packer.stat.exists) and (packer_version | version_compare('1.2.1', '<'))
+  when: (packer.stat.exists) and (packer_version | version('1.2.1', '<'))
 
 - name: Download packer zip file
   command: chdir=/opt/ wget https://releases.hashicorp.com/packer/1.2.1/packer_1.2.1_linux_amd64.zip
-  when: (packer.stat.exists == False) or (packer_version | version_compare('1.2.1', '<'))
+  when: (packer.stat.exists == False) or (packer_version | version('1.2.1', '<'))
 
 - name: Unzip the packer binary in /opt
   command: chdir=/opt/ unzip packer_1.2.1_linux_amd64.zip
-  when: (packer.stat.exists == False) or (packer_version | version_compare('1.2.1', '<'))
+  when: (packer.stat.exists == False) or (packer_version | version('1.2.1', '<'))
 
 - name: Remove the downloaded packer zip file
   file:
     state: absent
     path: /opt/packer_1.2.1_linux_amd64.zip
-  when: (packer.stat.exists == False) or (packer_version | version_compare('1.2.1', '<'))
+  when: (packer.stat.exists == False) or (packer_version | version('1.2.1', '<'))
 ...
