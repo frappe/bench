@@ -61,7 +61,7 @@ def install_bench(args):
 				})
 
 	success = run_os_command({
-		'pip': "sudo pip install --upgrade setuptools cryptography ansible pip"
+		'pip': "sudo pip install --upgrade setuptools cryptography ansible==2.8.5 pip"
 	})
 
 	if not success:
