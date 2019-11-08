@@ -13,6 +13,7 @@ install:
   - sudo apt-get install hhvm && rm -rf /home/travis/.kiex/
   - mkdir -p ~/.bench
   - mkdir -p /tmp/.bench
+  - flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
   - cp -r $TRAVIS_BUILD_DIR/* ~/.bench
   - cp -r $TRAVIS_BUILD_DIR/* /tmp/.bench
 
@@ -22,8 +23,6 @@ install:
 
 script:
   - cd ~
-  - flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
   - sudo pip install -e ~/.bench
-  - flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
   # - sudo python -m unittest bench.tests.test_setup_production.TestSetupProduction.test_setup_production_v6
   - sudo python -m unittest -v bench.tests.test_setup_production
