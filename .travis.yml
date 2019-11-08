@@ -5,6 +5,9 @@ python:
   - "2.7"
   - "3.8"
 
+services:
+  - mysql
+
 install:
   - pip install --upgrade pip setuptools
   - pip install cffi cryptography flake8 ndg-httpsclient pyasn1 pycparser pyOpenSSL urllib3
