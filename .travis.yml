@@ -6,8 +6,8 @@ python:
   - "3.8"
 
 install:
-  - sudo pip install --upgrade pip setuptools
-  - sudo pip install cffi cryptography flake8 ndg-httpsclient pyasn1 pycparser pyOpenSSL urllib3
+  - pip install --upgrade pip setuptools
+  - pip install cffi cryptography flake8 ndg-httpsclient pyasn1 pycparser pyOpenSSL urllib3
   - sudo apt-get purge -y mysql-common mysql-server mysql-client
   - sudo apt-get install --only-upgrade -y git
   - sudo apt-get install hhvm && rm -rf /home/travis/.kiex/
@@ -16,7 +16,7 @@ install:
   - cp -r $TRAVIS_BUILD_DIR/* ~/.bench
   - cp -r $TRAVIS_BUILD_DIR/* /tmp/.bench
 
-  - sudo python $TRAVIS_BUILD_DIR/playbooks/install.py --user travis --run-travis --production --verbose
+  #- sudo python $TRAVIS_BUILD_DIR/playbooks/install.py --user travis --run-travis --production --verbose
   # - sudo bash $TRAVIS_BUILD_DIR/install_scripts/setup_frappe.sh --skip-install-bench --mysql-root-password travis
   # - cd ~ && sudo python bench-repo/installer/install.py --only-dependencies
 
