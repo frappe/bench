@@ -208,10 +208,15 @@ def build_assets(bench_path='.', app=None):
 		exec_cmd(command, cwd=bench_path)
 
 def get_sites(bench_path='.'):
-	sites_dir = os.path.join(bench_path, "sites")
-	sites = [site for site in os.listdir(sites_dir)
-		if os.path.isdir(os.path.join(sites_dir, site)) and site not in ('assets',)]
-	return sites
+	sites_path = os.path.join(bench_path, 'sites')
+	sites = []
+	for site in os.listdir(sites_path):
+		path = os.path.join(sites_path, site)
+		if (os.path.isdir(path)
+			and not os.path.islink(path)
+			and os.path.exists(os.path.join(path, 'site_config.json'))):
+			sites.append(site)
+	return sorted(sites)
 
 def get_sites_dir(bench_path='.'):
 	return os.path.abspath(os.path.join(bench_path, 'sites'))
