@@ -34,16 +34,17 @@ To install the Frappe/ERPNext server software, you will need an operating system
 To manually install frappe/erpnext, you can follow this [this wiki](https://github.com/frappe/frappe/wiki/The-Hitchhiker%27s-Guide-to-Installing-Frappe-on-Linux) for Linux and [this wiki](https://github.com/frappe/frappe/wiki/The-Hitchhiker's-Guide-to-Installing-Frappe-on-Mac-OS-X) for MacOS. It gives an excellent explanation about the stack. You can also follow the steps mentioned below:
 
 #### 1. Install Pre-requisites
-
-- Python 3.6+
-- MariaDB 10+
-- Nginx (for production)
-- Nodejs
-- yarn
-- Redis
-- cron (crontab is required)
-- wkhtmltopdf (version 0.12.5) (for pdf generation)
-
+<pre>
+• Python 3.6+
+• Node.js 12
+• Redis 5					(caching and realtime updates)
+• MariaDB 10.3 / Postgres 9.5			(to run database driven apps)
+• yarn 1.12+					(js dependency manager)
+• pip 15+					(py dependency manager)
+• cron 						(scheduled jobs)
+• wkhtmltopdf (version 0.12.5 with patched qt) 	(for pdf generation)
+• Nginx 					(for production)						
+</pre>
 #### 2. Install Bench
 
 Install bench as a *non root* user,
