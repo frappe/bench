@@ -164,7 +164,7 @@ def install_app(app, bench_path='.', verbose=False, no_cache=False):
 	logger.info('installing {}'.format(app))
 	# find_links = '--find-links={}'.format(conf.get('wheel_cache_dir')) if conf.get('wheel_cache_dir') else ''
 	find_links = ''
-	exec_cmd("{pip} install {quiet} {find_links} -e {app} {no_cache}".format(
+	exec_cmd("{pip} install {quiet} {find_links} -U -e {app} {no_cache}".format(
 				pip=os.path.join(bench_path, 'env', 'bin', 'pip'),
 				quiet="-q" if not verbose else "",
 				no_cache='--no-cache-dir' if no_cache else '',
