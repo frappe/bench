@@ -160,16 +160,15 @@ def new_app(app, bench_path='.'):
 		run_frappe_cmd('make-app', apps, app, bench_path=bench_path)
 	install_app(app, bench_path=bench_path)
 
-def install_app(app, bench_path='.', verbose=False, no_cache=False):
-	logger.info('installing {}'.format(app))
-	# find_links = '--find-links={}'.format(conf.get('wheel_cache_dir')) if conf.get('wheel_cache_dir') else ''
-	find_links = ''
-	exec_cmd("{pip} install {quiet} {find_links} -e {app} {no_cache}".format(
-				pip=os.path.join(bench_path, 'env', 'bin', 'pip'),
-				quiet="-q" if not verbose else "",
-				no_cache='--no-cache-dir' if no_cache else '',
-				app=os.path.join(bench_path, 'apps', app),
-				find_links=find_links))
+def install_app(app, bench_path=".", verbose=False, no_cache=False):
+	logger.info("installing {}".format(app))
+
+	pip_path = os.path.join(bench_path, "env", "bin", "pip")
+	quiet_flag = "-q" if not verbose else ""
+	app_path = os.path.join(bench_path, "apps", app)
+	cache_flag = "--no-cache-dir" if no_cache else ""
+
+	exec_cmd("{pip} install {quiet} -U -e {app} {no_cache}".format(pip=pip_path, quiet=quiet_flag, app=app_path, no_cache=cache_flag))
 	add_to_appstxt(app, bench_path=bench_path)
 
 def remove_app(app, bench_path='.'):
