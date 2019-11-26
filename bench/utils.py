@@ -427,7 +427,12 @@ def set_default_site(site, bench_path='.'):
 
 def update_requirements(bench_path='.'):
 	print('Updating Python libraries...')
-	pip = os.path.join(bench_path, 'env', 'bin', 'pip')
+	# pip = os.path.join(bench_path, 'env', 'bin', 'pip')
+	from six import PY2
+	if PY2:
+		pip = which("pip")
+	else:
+		pip = which("pip3")
 
 	exec_cmd("{pip} install --upgrade pip".format(pip=pip))
 
