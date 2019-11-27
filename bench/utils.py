@@ -3,7 +3,7 @@ from distutils.spawn import find_executable
 import bench
 import semantic_version
 from bench import env
-from six import iteritems
+from six import iteritems, PY2
 
 
 class PatchError(Exception):
@@ -414,7 +414,6 @@ def restart_supervisor_processes(bench_path='.', web_workers=False):
 
 def restart_systemd_processes(bench_path='.', web_workers=False):
 	from .config.common_site_config import get_config
-	conf = get_config(bench_path=bench_path)
 	bench_name = get_bench_name(bench_path)
 	exec_cmd('sudo systemctl stop -- $(systemctl show -p Requires {bench_name}.target | cut -d= -f2)'.format(bench_name=bench_name))
 	exec_cmd('sudo systemctl start -- $(systemctl show -p Requires {bench_name}.target | cut -d= -f2)'.format(bench_name=bench_name))
@@ -427,13 +426,15 @@ def set_default_site(site, bench_path='.'):
 
 def update_requirements(bench_path='.'):
 	print('Updating Python libraries...')
-	pip = os.path.join(bench_path, 'env', 'bin', 'pip')
 
-	exec_cmd("{pip} install --upgrade pip".format(pip=pip))
+	# update env pip
+	env_pip = os.path.join(bench_path, 'env', 'bin', 'pip')
+	exec_cmd("{pip} install -q -U pip".format(pip=env_pip))
 
-	# Update bench requirements
+	# Update bench requirements (at user level)
 	bench_req_file = os.path.join(os.path.dirname(bench.__path__[0]), 'requirements.txt')
-	install_requirements(pip, bench_req_file)
+	user_pip = which("pip" if PY2 else "pip3")
+	install_requirements(user_pip, bench_req_file, user=True)
 
 	from bench.app import get_apps, install_app
 
@@ -500,9 +501,10 @@ def update_npm_packages(bench_path='.'):
 	exec_cmd('npm install', cwd=bench_path)
 
 
-def install_requirements(pip, req_file):
+def install_requirements(pip, req_file, user=False):
 	if os.path.exists(req_file):
-		exec_cmd("{pip} install -q -U -r {req_file}".format(pip=pip, req_file=req_file))
+		user_flag = "--user" if user else ""
+		exec_cmd("{pip} install {user_flag} -q -U -r {req_file}".format(pip=pip, user_flag=user_flag, req_file=req_file))
 
 def backup_site(site, bench_path='.'):
 	bench.set_frappe_version(bench_path=bench_path)
