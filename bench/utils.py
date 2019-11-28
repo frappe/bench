@@ -503,6 +503,10 @@ def update_npm_packages(bench_path='.'):
 
 def install_requirements(pip, req_file, user=False):
 	if os.path.exists(req_file):
+		# sys.real_prefix exists only in a virtualenv
+		if hasattr(sys, 'real_prefix'):
+			user = False
+
 		user_flag = "--user" if user else ""
 		exec_cmd("{pip} install {user_flag} -q -U -r {req_file}".format(pip=pip, user_flag=user_flag, req_file=req_file))
 
