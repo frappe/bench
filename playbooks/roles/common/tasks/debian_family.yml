@@ -3,35 +3,37 @@
 - name: Install prerequisites using apt-get
   become: yes
   become_user: root
-  apt: pkg={{ item }} state=present force=yes
-  with_items:
-    - dnsmasq
-    - fontconfig
-    - git                     # Version control
-    - htop                    # Server stats
-    - libcrypto++-dev
-    - libfreetype6-dev
-    - liblcms2-dev
-    - libwebp-dev
-    - libxext6
-    - libxrender1
-    - libxslt1-dev
-    - libxslt1.1
-    - libffi-dev
-    - ntp                     # Clock synchronization
-    - postfix                 # Mail Server
-    - python3-dev             # Installing python developer suite
-    - python-tk
-    - screen                  # To aid ssh sessions with connectivity problems
-    - vim                     # Is that supposed to be a question!?
-    - xfonts-75dpi
-    - xfonts-base
-    - zlib1g-dev
-    - apt-transport-https
-    - libsasl2-dev
-    - libldap2-dev
-    - libcups2-dev
-    - pv                      # Show progress during database restore
+  apt:
+    pkg:
+      - dnsmasq
+      - fontconfig
+      - git                     # Version control
+      - htop                    # Server stats
+      - libcrypto++-dev
+      - libfreetype6-dev
+      - liblcms2-dev
+      - libwebp-dev
+      - libxext6
+      - libxrender1
+      - libxslt1-dev
+      - libxslt1.1
+      - libffi-dev
+      - ntp                     # Clock synchronization
+      - postfix                 # Mail Server
+      - python3-dev             # Installing python developer suite
+      - python-tk
+      - screen                  # To aid ssh sessions with connectivity problems
+      - vim                     # Is that supposed to be a question!?
+      - xfonts-75dpi
+      - xfonts-base
+      - zlib1g-dev
+      - apt-transport-https
+      - libsasl2-dev
+      - libldap2-dev
+      - libcups2-dev
+      - pv                      # Show progress during database restore
+    state: present
+    force: yes
 
 - include_tasks: debian.yml
   when: ansible_distribution == 'Debian'
