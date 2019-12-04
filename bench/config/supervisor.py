@@ -22,6 +22,7 @@ def generate_supervisor_config(bench_path, user=None, yes=False):
 		"use_rq": use_rq(bench_path),
 		"http_timeout": config.get("http_timeout", 120),
 		"redis_server": find_executable('redis-server'),
+		"monitor": config.get('monitor'),
 		"node": find_executable('node') or find_executable('nodejs'),
 		"redis_cache_config": os.path.join(bench_dir, 'config', 'redis_cache.conf'),
 		"redis_socketio_config": os.path.join(bench_dir, 'config', 'redis_socketio.conf'),
