@@ -9,18 +9,20 @@
   tasks:
     # install pre-requisites
     - name: install prequisites
-      homebrew: name={{ item }} state=present
-      with_items:
-        - cmake
-        - redis
-        - mariadb
-        - nodejs
+      homebrew:
+        name:
+          - cmake
+          - redis
+          - mariadb
+          - nodejs
+        state: present
 
     # install wkhtmltopdf
     - name: cask installs
-      homebrew_cask: name={{ item }} state=present
-      with_items:
-        - wkhtmltopdf
+      homebrew_cask:
+        name:
+          - wkhtmltopdf
+        state: present
 
     - name: configure mariadb
       include_tasks: roles/mariadb/tasks/main.yml

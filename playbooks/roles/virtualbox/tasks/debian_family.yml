@@ -1,9 +1,10 @@
 ---
 - name: Install dependencies
-  apt: pkg={{ item }} state=present
-  with_items:
-    - apt-transport-https
-    - ca-certificates
+  apt:
+    pkg:
+      - apt-transport-https
+      - ca-certificates
+    state: present
 
 - name: Add VirtualBox to sources.list
   apt_repository:
@@ -23,7 +24,9 @@
   when: (ansible_distribution == "Debian" and ansible_distribution_major_version < "8") or (ansible_distribution == "Ubuntu" and ansible_distribution_major_version < "16")
 
 - name: Install VirtualBox
-  apt: pkg={{ item }} update_cache=yes state=present
-  with_items:
-    - virtualbox-{{ virtualbox_version }}
+  apt:
+    pkg:
+      - virtualbox-{{ virtualbox_version }}
+    update_cache: yes
+    state: present
 ...
