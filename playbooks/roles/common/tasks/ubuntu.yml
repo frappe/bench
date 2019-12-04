@@ -9,7 +9,7 @@
     - tk8.5-dev
     state: present
     force: yes
-  when: ansible_distribution_version | version_compare('14.04', 'lt')
+  when: ansible_distribution_version is version_compare('14.04', 'lt')
 
 - name: install pillow prerequisites for Ubuntu >= 14.04
   apt:
@@ -20,7 +20,7 @@
     - tk8.6-dev
     state: present
     force: yes
-  when: ansible_distribution_version | version_compare('14.04', 'ge')
+  when: ansible_distribution_version is version_compare('14.04', 'ge')
 
 - name: install pdf prerequisites for Ubuntu < 18.04
   apt:
@@ -28,7 +28,7 @@
       - libssl-dev
     state: present
     force: yes
-  when: ansible_distribution_version | version_compare('18.04', 'lt')
+  when: ansible_distribution_version is version_compare('18.04', 'lt')
 
 - name: install pdf prerequisites for Ubuntu >= 18.04
   apt:
@@ -36,6 +36,6 @@
       - libssl1.0-dev
     state: present
     force: yes
-  when: ansible_distribution_version | version_compare('18.04', 'ge')
+  when: ansible_distribution_version is version_compare('18.04', 'ge')
 
 ...

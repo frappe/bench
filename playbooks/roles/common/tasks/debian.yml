@@ -11,7 +11,7 @@
       - tcl8.5-dev
       - tk8.5-dev
     state: present
-  when: ansible_distribution_version | version_compare('8', 'lt')
+  when: ansible_distribution_version is version_compare('8', 'lt')
 
 - name: install pillow prerequisites for Debian >= 8
   apt:
@@ -21,7 +21,7 @@
       - tcl8.5-dev
       - tk8.5-dev
     state: present
-  when: ansible_distribution_version | version_compare('8', 'ge')
+  when: ansible_distribution_version is version_compare('8', 'ge')
 
 - name: install pdf prerequisites debian
   apt:
