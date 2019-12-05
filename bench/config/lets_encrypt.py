@@ -81,7 +81,7 @@ def run_certbot_and_setup_ssl(site, custom_domain, bench_path, interactive=True)
 
 
 def setup_crontab():
-	job_command = 'sudo service nginx stop && /opt/certbot-auto renew && sudo service nginx start'
+	job_command = '/opt/certbot-auto renew -a nginx --post-hook "systemctl reload nginx"'
 	system_crontab = CronTab(tabfile='/etc/crontab', user=True)
 	if job_command not in str(system_crontab):
 		job  = system_crontab.new(command=job_command, comment="Renew lets-encrypt every month")
@@ -148,9 +148,9 @@ def setup_wildcard_ssl(domain, email, bench_path, exclude_base_domain):
 
 	try:
 		exec_cmd("{path} certonly --manual --preferred-challenges=dns {email_param} \
-			 --server https://acme-v02.api.letsencrypt.org/directory \
-			 --agree-tos -d {domain}".format(path=get_certbot_path(), domain=' -d '.join(domain_list),
-			 email_param=email_param))
+			--server https://acme-v02.api.letsencrypt.org/directory \
+			--agree-tos -d {domain}".format(path=get_certbot_path(), domain=' -d '.join(domain_list),
+			email_param=email_param))
 
 	except CommandFailedError:
 		print("There was a problem trying to setup SSL")
@@ -161,7 +161,7 @@ def setup_wildcard_ssl(domain, email, bench_path, exclude_base_domain):
 		"wildcard": {
 			"domain": domain,
 			"ssl_certificate": os.path.join(ssl_path, "fullchain.pem"),
-			"ssl_certificate_key": os.path.join(ssl_path, "privkey.pem") 
+			"ssl_certificate_key": os.path.join(ssl_path, "privkey.pem")
 		}
 	}
 
@@ -171,4 +171,4 @@ def setup_wildcard_ssl(domain, email, bench_path, exclude_base_domain):
 	make_nginx_conf(bench_path)
 	print("Restrting Nginx service")
 	service('nginx', 'restart')
-	
+
