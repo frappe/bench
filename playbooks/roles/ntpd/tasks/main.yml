@@ -4,7 +4,7 @@
     name:
       - ntp
       - ntpdate
-    state: installed
+    state: present
   when: ansible_distribution == 'CentOS'
 
 - name: Enable ntpd
@@ -16,7 +16,7 @@
     pkg:
       - ntp
       - ntpdate
-    state: installed
+    state: present
   when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
 - name: Enable ntpd
