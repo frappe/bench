@@ -52,9 +52,9 @@ Note: Please do not remove the bench directory the above commands will create
 
 		bench new-site site1.local
 		
-    If the database for the site does not reside on localhost or listens on a custom port, you can use the flags `--db-host` to set a custom host and `--db-port` to set a custom port
+	**Optional**: If the database for the site does not reside on localhost or listens on a custom port, you can use the flags `--db-host` to set a custom host and/or `--db-port` to set a custom port.
     
-        bench new-site site1.local --db-host 192.168.1.1 --db-port 3307
+		bench new-site site1.local --db-host 192.168.1.1 --db-port 3307
 
 * Add apps
 
