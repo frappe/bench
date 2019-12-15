@@ -4,7 +4,7 @@ from .utils import (exec_cmd, get_frappe, check_git_for_shallow_clone, build_ass
 	restart_supervisor_processes, get_cmd_output, run_frappe_cmd, CommandFailedError,
 	restart_systemd_processes)
 from .config.common_site_config import get_config
-from six import reload_module
+from six.moves import reload_module
 
 import logging
 import requests
