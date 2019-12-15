@@ -1,5 +1,6 @@
 import os, json, click, random, string, hashlib
 from bench.utils import get_sites, get_bench_name, exec_cmd
+from six import string_types
 
 def make_nginx_conf(bench_path, yes=False):
 	from bench import env
@@ -214,7 +215,7 @@ def get_sites_with_config(bench_path):
 		if dns_multitenant and site_config.get('domains'):
 			for domain in site_config.get('domains'):
 				# domain can be a string or a dict with 'domain', 'ssl_certificate', 'ssl_certificate_key'
-				if isinstance(domain, str) or isinstance(domain, unicode):
+				if isinstance(domain, string_types):
 					domain = { 'domain': domain }
 
 				domain['name'] = site
@@ -227,7 +228,7 @@ def get_sites_with_config(bench_path):
 def use_wildcard_certificate(bench_path, ret):
 	'''
 		stored in common_site_config.json as:
-	    "wildcard": {
+		"wildcard": {
 			"domain": "*.erpnext.com",
 			"ssl_certificate": "/path/to/erpnext.com.cert",
 			"ssl_certificate_key": "/path/to/erpnext.com.key"
