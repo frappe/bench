@@ -1,11 +1,13 @@
 import click
-import sys, os
+import sys
+import os
 from bench.config.common_site_config import get_config, update_config
 from bench.app import pull_all_apps, is_version_upgrade, validate_branch
 from bench.utils import (update_bench, validate_upgrade, pre_upgrade, post_upgrade, before_update,
 	update_requirements, update_node_packages, backup_all_sites, patch_sites, build_assets,
 	restart_supervisor_processes, restart_systemd_processes)
 from bench import patches
+from six import reload_module
 
 
 @click.command('update')
@@ -88,13 +90,8 @@ def _update(pull=False, patch=False, build=False, update_bench=False, auto=False
 		pre_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
 		import bench.utils, bench.app
 		print('Reloading bench...')
-		if sys.version_info >= (3, 4):
-			import importlib
-			importlib.reload(bench.utils)
-			importlib.reload(bench.app)
-		else:
-			reload(bench.utils)
-			reload(bench.app)
+		reload_module(bench.utils)
+		reload_module(bench.app)
 
 	if patch:
 		print('Patching sites...')
