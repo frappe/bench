@@ -7,7 +7,7 @@ from bench.utils import (update_bench, validate_upgrade, pre_upgrade, post_upgra
 	update_requirements, update_node_packages, backup_all_sites, patch_sites, build_assets,
 	restart_supervisor_processes, restart_systemd_processes)
 from bench import patches
-from six import reload_module
+from six.moves import reload_module
 
 
 @click.command('update')
