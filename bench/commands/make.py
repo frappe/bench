@@ -35,10 +35,11 @@ def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups,
 @click.argument('name', nargs=-1) # Dummy argument for backward compatibility
 @click.argument('git-url')
 @click.option('--branch', default=None, help="branch to checkout")
+@click.option('--overwrite' is_flag=True)
 def get_app(git_url, branch, name=None):
 	"clone an app from the internet and set it up in your bench"
 	from bench.app import get_app
-	get_app(git_url, branch=branch)
+	get_app(git_url, branch=branch, overwrite=overwrite)
 
 
 @click.command('new-app')
