@@ -374,7 +374,7 @@ def check_git_for_shallow_clone():
 			return False
 
 	git_version = get_git_version()
-	if git_version(git_version) > LooseVersion("1.9"):
+	if LooseVersion(git_version) > LooseVersion("1.9"):
 		return True
 
 def get_cmd_output(cmd, cwd='.'):
