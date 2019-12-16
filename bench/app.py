@@ -214,7 +214,7 @@ def pull_all_apps(bench_path='.', reset=False):
 			app_dir = get_repo_dir(app, bench_path=bench_path)
 			try:
 				repo = git.Repo(app_dir)
-				repo.git.status()
+				out = repo.git.status()
 				if not re.search(r'nothing to commit, working (directory|tree) clean', out):
 					print('''
 

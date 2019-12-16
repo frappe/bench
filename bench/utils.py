@@ -454,7 +454,6 @@ def update_requirements(bench_path='.'):
 def update_node_packages(bench_path='.'):
 	print('Updating node packages...')
 	from bench.app import get_develop_version
-	from distutils.version import LooseVersion
 	v = LooseVersion(get_develop_version('frappe', bench_path=bench_path))
 
 	# After rollup was merged, frappe_version = 10.1
