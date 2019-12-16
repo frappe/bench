@@ -1,9 +1,10 @@
 from __future__ import print_function
 import os
 from .utils import (exec_cmd, get_frappe, check_git_for_shallow_clone, build_assets,
-	restart_supervisor_processes, get_cmd_output, run_frappe_cmd, CommandFailedError,
+	restart_supervisor_processes, run_frappe_cmd, CommandFailedError,
 	restart_systemd_processes)
 from .config.common_site_config import get_config
+from six.moves import reload_module
 
 import logging
 import requests
@@ -14,6 +15,7 @@ import subprocess
 import bench
 import sys
 import shutil
+import git
 
 logging.basicConfig(level="DEBUG")
 logger = logging.getLogger(__name__)
@@ -114,15 +116,14 @@ def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbos
 
 	#Gets repo name from URL
 	repo_name = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
-	logger.info('getting app {}'.format(repo_name))
-	shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
-	branch = '--branch {branch}'.format(branch=branch) if branch else ''
+	logger.info('Getting app {}'.format(repo_name))
+	kwargs = {"origin": "upstream"}
+	if check_git_for_shallow_clone():
+		kwargs["depth"] = 1
+	if branch:
+		kwargs["branch"] = branch
 
-	exec_cmd("git clone {git_url} {branch} {shallow_clone} --origin upstream".format(
-				git_url=git_url,
-				shallow_clone=shallow_clone,
-				branch=branch),
-			cwd=os.path.join(bench_path, 'apps'))
+	git.Repo.clone_from(git_url, os.path.join(bench_path, "apps/{0}".format(repo_name)), **kwargs)
 
 	#Retrieves app name from setup.py
 	app_path = os.path.join(bench_path, 'apps', repo_name, 'setup.py')
@@ -132,7 +133,7 @@ def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbos
 			apps_path = os.path.join(os.path.abspath(bench_path), 'apps')
 			os.rename(os.path.join(apps_path, repo_name), os.path.join(apps_path, app_name))
 
-	print('installing', app_name)
+	print('Installing', app_name)
 	install_app(app=app_name, bench_path=bench_path, verbose=verbose)
 
 	if postprocess:
@@ -199,7 +200,9 @@ def remove_app(app, bench_path='.'):
 
 def pull_all_apps(bench_path='.', reset=False):
 	'''Check all apps if there no local changes, pull'''
-	rebase = '--rebase' if get_config(bench_path).get('rebase_on_pull') else ''
+	kwargs = {}
+	if get_config(bench_path).get("rebase_on_pull"):
+		kwargs["rebase"] = True
 
 	# chech for local changes
 	if not reset:
@@ -209,9 +212,9 @@ def pull_all_apps(bench_path='.', reset=False):
 				print("Skipping reset for app {}".format(app))
 				continue
 			app_dir = get_repo_dir(app, bench_path=bench_path)
-			if os.path.exists(os.path.join(app_dir, '.git')):
-				out = subprocess.check_output(["git", "status"], cwd=app_dir)
-				out = out.decode('utf-8')
+			try:
+				repo = git.Repo(app_dir)
+				repo.git.status()
 				if not re.search(r'nothing to commit, working (directory|tree) clean', out):
 					print('''
 
@@ -225,6 +228,8 @@ Here are your choices:
 2. If your changes are helpful for others, send in a pull request via GitHub and
 	wait for them to be merged in the core.'''.format(app))
 					sys.exit(1)
+			except git.exc.InvalidGitRepositoryError:
+				continue
 
 	excluded_apps = get_excluded_apps()
 	for app in get_apps(bench_path=bench_path):
@@ -232,22 +237,24 @@ Here are your choices:
 			print("Skipping pull for app {}".format(app))
 			continue
 		app_dir = get_repo_dir(app, bench_path=bench_path)
-		if os.path.exists(os.path.join(app_dir, '.git')):
-			remote = get_remote(app)
-			if not remote:
+		try:
+			repo = git.Repo(app_dir)
+			if not repo.remotes:
 				# remote is False, i.e. remote doesn't exist, add the app to excluded_apps.txt
 				add_to_excluded_apps_txt(app, bench_path=bench_path)
 				print("Skipping pull for app {}, since remote doesn't exist, and adding it to excluded apps".format(app))
 				continue
-			logger.info('pulling {0}'.format(app))
+			logger.info('Pulling {0}'.format(app))
+			branch = get_current_branch(app, bench_path=bench_path)
 			if reset:
-				exec_cmd("git fetch --all", cwd=app_dir)
-				exec_cmd("git reset --hard {remote}/{branch}".format(
-					remote=remote, branch=get_current_branch(app,bench_path=bench_path)), cwd=app_dir)
+				for remote in repo.remotes:
+					remote.fetch()
+				repo.git.reset("--hard", "{0}/{1}".format(remote, branch))
 			else:
-				exec_cmd("git pull {rebase} {remote} {branch}".format(rebase=rebase,
-					remote=remote, branch=get_current_branch(app, bench_path=bench_path)), cwd=app_dir)
+				repo.remotes[remote].pull(branch, **kwargs)
 			exec_cmd('find . -name "*.pyc" -delete', cwd=app_dir)
+		except git.exc.InvalidGitRepositoryError:
+			continue
 
 
 def is_version_upgrade(app='frappe', bench_path='.', branch=None):
@@ -277,21 +284,22 @@ def get_current_frappe_version(bench_path='.'):
 
 def get_current_branch(app, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
-	return get_cmd_output("basename $(git symbolic-ref -q HEAD)", cwd=repo_dir)
+	repo = git.Repo(repo_dir)
+	return repo.active_branch.name
 
 def get_remote(app, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
-	contents = subprocess.check_output(['git', 'remote', '-v'], cwd=repo_dir,
-									   stderr=subprocess.STDOUT)
-	contents = contents.decode('utf-8')
-	if re.findall('upstream[\s]+', contents):
-		return 'upstream'
-	elif not contents:
-		# if contents is an empty string => remote doesn't exist
-		return False
-	else:
-		# get the first remote
-		return contents.splitlines()[0].split()[0]
+	try:
+		repo = git.Repo(repo_dir)
+		remotes = [remote.name for remote in repo.remotes]
+		if not remotes:
+			return False
+		elif "upstream" in remotes:
+			return "upstream"
+		else:
+			return remotes[0]
+	except git.exc.InvalidGitRepositoryError:
+		pass
 
 def use_rq(bench_path):
 	bench_path = os.path.abspath(bench_path)
@@ -300,7 +308,8 @@ def use_rq(bench_path):
 
 def fetch_upstream(app, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
-	return subprocess.call(["git", "fetch", "upstream"], cwd=repo_dir)
+	repo = git.Repo(repo_dir)
+	return repo.remotes["upstream"].fetch()
 
 def get_current_version(app, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
@@ -323,18 +332,20 @@ def get_upstream_version(app, branch=None, bench_path='.'):
 	if not branch:
 		branch = get_current_branch(app, bench_path=bench_path)
 	try:
-		contents = subprocess.check_output(['git', 'show', 'upstream/{branch}:{app}/__init__.py'.format(branch=branch, app=app)], cwd=repo_dir, stderr=subprocess.STDOUT)
-		contents = contents.decode('utf-8')
-	except subprocess.CalledProcessError as e:
-		if b"Invalid object" in e.output:
-			return None
-		else:
-			raise
-	return get_version_from_string(contents)
+		repo = git.Repo(repo_dir)
+		contents = repo.git.show("upstream/{0}:{1}/__init__.py")
+		return get_version_from_string(contents)
+	except (git.exc.InvalidGitRepositoryError, git.exc.GitCommandError):
+		return None
 
 def get_upstream_url(app, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
-	return subprocess.check_output(['git', 'config', '--get', 'remote.upstream.url'], cwd=repo_dir).strip()
+	try:
+		repo = git.Repo(repo_dir)
+		return repo.remotes.upstream.url
+	except (git.exc.InvalidGitRepositoryError, AttributeError, IndexError):
+		# no upstream url found
+		return None
 
 def get_repo_dir(app, bench_path='.'):
 	return os.path.join(bench_path, 'apps', app)
@@ -360,33 +371,33 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 					version_upgrade = is_version_upgrade(app=app, bench_path=bench_path, branch=branch)
 					if version_upgrade[0] and not upgrade:
 						raise MajorVersionUpgradeException("Switching to {0} will cause upgrade from {1} to {2}. Pass --upgrade to confirm".format(branch, version_upgrade[1], version_upgrade[2]), version_upgrade[1], version_upgrade[2])
-				print("Switching for "+app)
-				unshallow = "--unshallow" if os.path.exists(os.path.join(app_dir, ".git", "shallow")) else ""
-				exec_cmd("git config --unset-all remote.upstream.fetch", cwd=app_dir)
-				exec_cmd("git config --add remote.upstream.fetch '+refs/heads/*:refs/remotes/upstream/*'", cwd=app_dir)
-				exec_cmd("git fetch upstream {unshallow}".format(unshallow=unshallow), cwd=app_dir)
-				exec_cmd("git checkout {branch}".format(branch=branch), cwd=app_dir)
-				exec_cmd("git merge upstream/{branch}".format(branch=branch), cwd=app_dir)
+				print("Switching for " + app)
+				repo = git.Repo(app_dir)
+				kwargs = {}
+				if repo.git.rev_parse("--is-shallow-repository") == "false":
+					kwargs["unshallow"] = True
+				repo.git.config("--unset-all remotes.upstream.fetch")
+				repo.git.config("--add remote.upstream.fetch '+refs/heads/*:refs/remotes/upstream/*'")
+				repo.remotes.upstream.fetch(**kwargs)
+				repo.git.checkout(branch)
+				repo.git.merge("upstream/{0}".format(branch))
 				switched_apps.append(app)
-			except CommandFailedError:
-				print("Error switching to branch {0} for {1}".format(branch, app))
-			except InvalidRemoteException:
-				print("Remote does not exist for app "+app)
-			except InvalidBranchException:
-				print("Branch {0} does not exist in Upstream for {1}".format(branch, app))
+			except git.exc.InvalidGitRepositoryError:
+				print("{0} does not seem to be a valid git repository".format(app))
+			except AttributeError:
+				print("upstream is not a valid remote for app: {0}".format(app))
+			except git.exc.GitCommandError:
+				print("branch {0} does not exist in upstream for app: {1}".format(branch, app))
 
 	if switched_apps:
-		print("Successfully switched branches for:\n" + "\n".join(switched_apps))
+		print("Successfully switched branches for:")
+		print("\n".join(switched_apps))
 
 	if version_upgrade[0] and upgrade:
 		update_requirements()
 		update_node_packages()
 		pre_upgrade(version_upgrade[1], version_upgrade[2])
-		if sys.version_info >= (3, 4):
-			import importlib
-			importlib.reload(utils)
-		else:
-			reload(utils)
+		reload_module(utils)
 		backup_all_sites()
 		patch_sites()
 		build_assets()

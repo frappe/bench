@@ -1,5 +1,5 @@
 import click
-import os, subprocess, re
+import git
 
 from bench.app import get_repo_dir, get_apps, get_remote
 from bench.utils import set_git_remote_url
@@ -25,9 +25,10 @@ def remote_urls():
 	"Show apps remote url"
 	for app in get_apps():
 		repo_dir = get_repo_dir(app)
-
-		if os.path.exists(os.path.join(repo_dir, '.git')):
+		try:
+			repo = git.Repo(repo_dir)
 			remote = get_remote(app)
-			remote_url = subprocess.check_output(['git', 'config', '--get', 'remote.{}.url'.format(remote)], cwd=repo_dir).strip()
-			print("{app}	{remote_url}".format(app=app, remote_url=remote_url))
-
+			remote_url = repo.remotes[remote].url or "No Remote URL Set"
+			print("{0}\t{1}".format(app, remote_url))
+		except git.exc.InvalidGitRepositoryError:
+			continue

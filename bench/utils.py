@@ -1,9 +1,25 @@
-import os, sys, shutil, subprocess, logging, itertools, requests, json, platform, select, pwd, grp, multiprocessing, hashlib, glob
-from distutils.spawn import find_executable
 import bench
-import semantic_version
+import git
+import glob
+import grp
+import itertools
+import json
+import logging
+import multiprocessing
+import os
+import platform
+import pwd
+import requests
+import select
+import shutil
+import subprocess
+import sys
+
+from distutils.spawn import find_executable
+from distutils.version import LooseVersion
 from bench import env
 from six import iteritems, PY2
+from bench.app import get_remote
 
 
 class PatchError(Exception):
@@ -16,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 
-def safe_decode(string, encoding = 'utf-8'):
+def safe_decode(string, encoding='utf-8'):
 	try:
 		string = string.decode(encoding)
 	except Exception:
@@ -37,8 +53,8 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None,
 		verbose=False, clone_from=None, skip_redis_config_generation=False,
 		clone_without_update=False,
-		ignore_exist = False, skip_assets=False,
-		python		 = 'python3'): # Let's change when we're ready. - <achilles@frappe.io>
+		ignore_exist=False, skip_assets=False,
+		python='python3'): # Let's change when we're ready. - <achilles@frappe.io>
 	from .app import get_app, install_apps_from_path
 	from .config.common_site_config import make_config
 	from .config import redis
@@ -49,7 +65,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	if osp.exists(path):
 		if not ignore_exist:
-			raise ValueError('Bench Instance {path} already exists.'.format(path = path))
+			raise ValueError('Bench Instance {path} already exists.'.format(path=path))
 	else:
 		os.makedirs(path)
 
@@ -62,7 +78,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	setup_logging()
 
-	setup_env(bench_path=path, python = python)
+	setup_env(bench_path=path, python=python)
 
 	make_config(path)
 
@@ -76,7 +92,6 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 		if apps_path:
 			install_apps_from_path(apps_path, bench_path=path)
-
 
 	bench.set_frappe_version(bench_path=path)
 	if bench.FRAPPE_VERSION > 5:
@@ -119,16 +134,17 @@ def clone_apps_from(bench_path, clone_from, update_app=True):
 		# remove .egg-ino
 		subprocess.check_output(['rm', '-rf', app + '.egg-info'], cwd=app_path)
 
-		if update_app and os.path.exists(os.path.join(app_path, '.git')):
-			remotes = subprocess.check_output(['git', 'remote'], cwd=app_path).strip().split()
-			if 'upstream' in remotes:
-				remote = 'upstream'
-			else:
-				remote = remotes[0]
-			print('Cleaning up {0}'.format(app))
-			branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=app_path).strip()
-			subprocess.check_output(['git', 'reset', '--hard'], cwd=app_path)
-			subprocess.check_output(['git', 'pull', '--rebase', remote, branch], cwd=app_path)
+		if update_app:
+			try:
+				repo = git.Repo(app_path)
+				remote = get_remote(app)
+				print('Cleaning up {0}'.format(app))
+				branch = repo.active_branch.name
+				repo.git.reset("--hard")
+				repo.remotes[remote].pull(branch, rebase=True)
+
+			except git.exc.InvalidGitRepositoryError:
+				pass
 
 		install_app(app, bench_path)
 
@@ -160,26 +176,25 @@ def exec_cmd(cmd, cwd='.'):
 	if return_code > 0:
 		raise CommandFailedError(cmd)
 
-def which(executable, raise_err = False):
+def which(executable, raise_err=False):
 	from distutils.spawn import find_executable
 	exec_ = find_executable(executable)
 
 	if not exec_ and raise_err:
 		raise ValueError('{executable} not found.'.format(
-			executable = executable
+			executable=executable
 		))
 
 	return exec_
 
-def setup_env(bench_path='.', python = 'python3'):
-	python = which(python, raise_err = True)
-	pip    = os.path.join('env', 'bin', 'pip')
+def setup_env(bench_path='.', python='python3'):
+	python = which(python, raise_err=True)
 
 	exec_cmd('virtualenv -q {} -p {}'.format('env', python), cwd=bench_path)
-	exec_cmd('{} -q install --upgrade pip'.format(pip), cwd=bench_path)
-	exec_cmd('{} -q install wheel'.format(pip), cwd=bench_path)
-	exec_cmd('{} -q install six'.format(pip), cwd=bench_path)
-	exec_cmd('{} -q install -e git+https://github.com/frappe/python-pdfkit.git#egg=pdfkit'.format(pip), cwd=bench_path)
+	subprocess.check_call([sys.executable, "-m", "pip", "-q", "install", "--upgrade", "pip"])
+	subprocess.check_call([sys.executable, "-m", "pip", "-q", "install", "wheel"])
+	subprocess.check_call([sys.executable, "-m", "pip", "-q", "install", "six"])
+	subprocess.check_call([sys.executable, "-m", "pip", "-q", "install", "-e", "git+https://github.com/frappe/python-pdfkit.git#egg=pdfkit"])
 
 def setup_socketio(bench_path='.'):
 	exec_cmd("npm install socket.io redis express superagent cookie babel-core less chokidar \
@@ -243,7 +258,7 @@ def add_to_crontab(line):
 	line = str.encode(line)
 	if not line in current_crontab:
 		cmd = ["crontab"]
-		if platform.system() == 'FreeBSD' or platform.linux_distribution()[0]=="arch":
+		if platform.system() == 'FreeBSD' or platform.linux_distribution()[0] == "arch":
 			cmd = ["crontab", "-"]
 		s = subprocess.Popen(cmd, stdin=subprocess.PIPE)
 		s.stdin.write(current_crontab)
@@ -261,8 +276,8 @@ def update_bench():
 
 	# bench-repo folder
 	cwd = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-	exec_cmd("git pull", cwd=cwd)
+	repo = git.Repo(cwd)
+	repo.git.pull()
 
 def setup_sudoers(user):
 	if not os.path.exists('/etc/sudoers.d'):
@@ -343,12 +358,9 @@ def check_cmd(cmd, cwd='.'):
 
 def get_git_version():
 	'''returns git version from `git --version`
-	extracts version number from string `get version 1.9.1` etc'''
-	version = get_cmd_output("git --version")
-	version = safe_decode(version)
-	version = version.strip().split()[2]
-	version = '.'.join(version.split('.')[0:2])
-	return float(version)
+	extracts version number from string `git version 1.9.1` etc'''
+	version = git.cmd.Git().version
+	return version[-1]
 
 def check_git_for_shallow_clone():
 	from .config.common_site_config import get_config
@@ -362,7 +374,7 @@ def check_git_for_shallow_clone():
 			return False
 
 	git_version = get_git_version()
-	if git_version > 1.9:
+	if git_version(git_version) > LooseVersion("1.9"):
 		return True
 
 def get_cmd_output(cmd, cwd='.'):
@@ -375,7 +387,7 @@ def get_cmd_output(cmd, cwd='.'):
 			print(e.output)
 		raise
 
-def safe_encode(what, encoding = 'utf-8'):
+def safe_encode(what, encoding='utf-8'):
 	try:
 		what = what.encode(encoding)
 	except Exception:
@@ -427,9 +439,7 @@ def set_default_site(site, bench_path='.'):
 def update_requirements(bench_path='.'):
 	print('Updating Python libraries...')
 
-	# update env pip
-	env_pip = os.path.join(bench_path, 'env', 'bin', 'pip')
-	exec_cmd("{pip} install -q -U pip".format(pip=env_pip))
+	subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "-U", "pip"])
 
 	# Update bench requirements (at user level)
 	bench_req_file = os.path.join(os.path.dirname(bench.__path__[0]), 'requirements.txt')
@@ -445,8 +455,7 @@ def update_node_packages(bench_path='.'):
 	print('Updating node packages...')
 	from bench.app import get_develop_version
 	from distutils.version import LooseVersion
-	v = LooseVersion(get_develop_version('frappe', bench_path = bench_path))
-
+	v = LooseVersion(get_develop_version('frappe', bench_path=bench_path))
 
 	# After rollup was merged, frappe_version = 10.1
 	# if develop_verion is 11 and up, only then install yarn
@@ -481,7 +490,7 @@ def update_npm_packages(bench_path='.'):
 				app_package_json = json.loads(f.read())
 				# package.json is usually a dict in a dict
 				for key, value in iteritems(app_package_json):
-					if not key in package_json:
+					if key not in package_json:
 						package_json[key] = value
 					else:
 						if isinstance(value, dict):
@@ -508,7 +517,7 @@ def install_requirements(pip, req_file, user=False):
 			user = False
 
 		user_flag = "--user" if user else ""
-		exec_cmd("{pip} install {user_flag} -q -U -r {req_file}".format(pip=pip, user_flag=user_flag, req_file=req_file))
+		subprocess.check_call([sys.executable, "-m", pip, "install", user_flag, "-q", "-U", "-r", req_file])
 
 def backup_site(site, bench_path='.'):
 	bench.set_frappe_version(bench_path=bench_path)
@@ -645,7 +654,6 @@ def validate_upgrade(from_ver, to_ver, bench_path='.'):
 			raise Exception("Please install nodejs and npm")
 
 def pre_upgrade(from_ver, to_ver, bench_path='.'):
-	pip = os.path.join(bench_path, 'env', 'bin', 'pip')
 
 	if from_ver <= 4 and to_ver >= 5:
 		from .migrate_to_v5 import remove_shopping_cart
@@ -655,8 +663,9 @@ def pre_upgrade(from_ver, to_ver, bench_path='.'):
 		for app in apps:
 			cwd = os.path.abspath(os.path.join(bench_path, 'apps', app))
 			if os.path.exists(cwd):
-				exec_cmd("git clean -dxf", cwd=cwd)
-				exec_cmd("{pip} install --upgrade -e {app}".format(pip=pip, app=cwd))
+				repo = git.Repo(cwd)
+				repo.git.clean("-dxf")
+				subprocess.check_call([sys.executable, "-m", "pip", "install", "-U", "-e", cwd])
 
 def post_upgrade(from_ver, to_ver, bench_path='.'):
 	from .config.common_site_config import get_config
@@ -664,7 +673,7 @@ def post_upgrade(from_ver, to_ver, bench_path='.'):
 	from .config.supervisor import generate_supervisor_config
 	from .config.nginx import make_nginx_conf
 	conf = get_config(bench_path=bench_path)
-	print("-"*80)
+	print("-" * 80)
 	print("Your bench was upgraded to version {0}".format(to_ver))
 
 	if conf.get('restart_supervisor_on_update'):
@@ -769,8 +778,7 @@ def validate_pillow_dependencies(bench_path, requirements):
 		return
 
 	try:
-		pip = os.path.join(bench_path, 'env', 'bin', 'pip')
-		exec_cmd("{pip} install Pillow".format(pip=pip))
+		subprocess.check_call([sys.executable, "-m", "pip", "install", "Pillow"])
 
 	except CommandFailedError:
 		distro = platform.linux_distribution()
@@ -784,7 +792,7 @@ def validate_pillow_dependencies(bench_path, requirements):
 		elif "ubuntu" in distro_name or "elementary os" in distro_name or "debian" in distro_name:
 			print("Please install these dependencies using the command:")
 
-			if "ubuntu" in distro_name and distro[1]=="12.04":
+			if "ubuntu" in distro_name and distro[1] == "12.04":
 				print("sudo apt-get install -y libtiff4-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.5-dev tk8.5-dev python-tk")
 			else:
 				print("sudo apt-get install -y libtiff5-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python-tk")
@@ -795,12 +803,13 @@ def get_bench_name(bench_path):
 	return os.path.basename(os.path.abspath(bench_path))
 
 def setup_fonts():
+	# TODO: remove this method
 	fonts_path = os.path.join('/tmp', 'fonts')
 
 	if os.path.exists('/etc/fonts_backup'):
 		return
 
-	exec_cmd("git clone https://github.com/frappe/fonts.git", cwd='/tmp')
+	git.Repo.clone_from("https://github.com/frappe/fonts.git", fonts_path)
 	os.rename('/etc/fonts', '/etc/fonts_backup')
 	os.rename('/usr/share/fonts', '/usr/share/fonts_backup')
 	os.rename(os.path.join(fonts_path, 'etc_fonts'), '/etc/fonts')
@@ -817,8 +826,14 @@ def set_git_remote_url(git_url, bench_path='.'):
 		sys.exit(1)
 
 	app_dir = bench.app.get_repo_dir(app, bench_path=bench_path)
-	if os.path.exists(os.path.join(app_dir, '.git')):
-		exec_cmd("git remote set-url upstream {}".format(git_url), cwd=app_dir)
+	try:
+		repo = git.Repo(app_dir)
+		repo.remotes["upstream"].set_url(git_url)
+	except git.exc.InvalidGitRepositoryError:
+		print("Application {0} is not a valid git repository".format(app))
+	except (AttributeError, IndexError):
+		# remote "upstream" does not exist
+		print("Application {0} has no remote 'upstream'")
 
 def run_playbook(playbook_name, extra_vars=None, tag=None):
 	if not find_executable('ansible'):
