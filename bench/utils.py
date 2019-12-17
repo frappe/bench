@@ -801,21 +801,6 @@ def validate_pillow_dependencies(bench_path, requirements):
 def get_bench_name(bench_path):
 	return os.path.basename(os.path.abspath(bench_path))
 
-def setup_fonts():
-	# TODO: remove this method
-	fonts_path = os.path.join('/tmp', 'fonts')
-
-	if os.path.exists('/etc/fonts_backup'):
-		return
-
-	git.Repo.clone_from("https://github.com/frappe/fonts.git", fonts_path)
-	os.rename('/etc/fonts', '/etc/fonts_backup')
-	os.rename('/usr/share/fonts', '/usr/share/fonts_backup')
-	os.rename(os.path.join(fonts_path, 'etc_fonts'), '/etc/fonts')
-	os.rename(os.path.join(fonts_path, 'usr_share_fonts'), '/usr/share/fonts')
-	shutil.rmtree(fonts_path)
-	exec_cmd("fc-cache -fv")
-
 def set_git_remote_url(git_url, bench_path='.'):
 	"Set app remote git url"
 	app = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
