@@ -503,6 +503,10 @@ def update_npm_packages(bench_path='.'):
 
 def install_requirements(pip, req_file, user=False):
 	if os.path.exists(req_file):
+		# sys.real_prefix exists only in a virtualenv
+		if hasattr(sys, 'real_prefix'):
+			user = False
+
 		user_flag = "--user" if user else ""
 		exec_cmd("{pip} install {user_flag} -q -U -r {req_file}".format(pip=pip, user_flag=user_flag, req_file=req_file))
 
@@ -723,12 +727,6 @@ def update_translations(app, lang):
 
 	print('downloaded for', app, lang)
 
-def download_chart_of_accounts():
-	charts_dir = os.path.join('apps', "erpnext", "erpnext", 'accounts', 'chart_of_accounts', "submitted")
-	csv_file = os.path.join(translations_dir, lang + '.csv')
-	url = "https://translate.erpnext.com/files/{}-{}.csv".format(app, lang)
-	r = requests.get(url, stream=True)
-	r.raise_for_status()
 
 def print_output(p):
 	while p.poll() is None:

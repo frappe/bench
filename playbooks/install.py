@@ -142,7 +142,7 @@ def install_bench(args):
 		shutil.rmtree(tmp_bench_repo)
 
 def check_distribution_compatibility():
-	supported_dists = {'ubuntu': [14, 15, 16, 18, 19], 'debian': [8, 9],
+	supported_dists = {'ubuntu': [14, 15, 16, 18, 19], 'debian': [8, 9, 10],
 		'centos': [7], 'macos': [10.9, 10.10, 10.11, 10.12]}
 
 	dist_name, dist_version = get_distribution_info()
@@ -389,7 +389,7 @@ def parse_commandline_args():
 
 	# set passwords
 	parser.add_argument('--mysql-root-password', dest='mysql_root_password', help='Set mysql root password')
-	parser.add_argument('--mariadb-version', dest='mariadb_version', default='10.2', help='Specify mariadb version')
+	parser.add_argument('--mariadb-version', dest='mariadb_version', default='10.4', help='Specify mariadb version')
 	parser.add_argument('--admin-password', dest='admin_password', help='Set admin password')
 	parser.add_argument('--bench-name', dest='bench_name', help='Create bench with specified name. Default name is frappe-bench')
 
