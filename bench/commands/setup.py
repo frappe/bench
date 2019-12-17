@@ -41,6 +41,12 @@ def setup_redis():
 	generate_config('.')
 
 
+@click.command('fonts')
+def setup_fonts():
+	"Add frappe fonts to system"
+	from bench.utils import setup_fonts
+	setup_fonts()
+
 @click.command('production')
 @click.argument('user')
 @click.option('--yes', help='Yes to regeneration config', is_flag=True, default=False)
@@ -318,6 +324,7 @@ setup.add_command(setup_socketio)
 setup.add_command(setup_requirements)
 setup.add_command(setup_manager)
 setup.add_command(setup_config)
+setup.add_command(setup_fonts)
 setup.add_command(add_domain)
 setup.add_command(remove_domain)
 setup.add_command(sync_domains)
