@@ -32,7 +32,7 @@
     register: bench_stat
 
   - name: Fix permissions
-    become_method: sudo
+    become_user: root
     command: chown {{ frappe_user }} -R ~
 
   - name:  python3 bench init for develop
