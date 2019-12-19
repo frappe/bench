@@ -2,6 +2,7 @@
 import os, sys, subprocess, getpass, json, multiprocessing, shutil, platform, warnings
 from builtins import print as _
 
+
 tmp_bench_repo = '/tmp/.bench'
 tmp_log_folder = '/tmp/logs/'
 log_path = os.path.join(tmp_log_folder, 'install_bench.log')
@@ -56,6 +57,20 @@ def find_executable(executable, path=None):
 			# the file exists, we have a shot at spawn working
 			return f
 	return None
+
+
+def check_environment():
+	needed_environ_vars = ['LANG', 'LC_ALL']
+	message = ''
+
+	for var in needed_environ_vars:
+		if var not in os.environ:
+			message += "\nexport {}=C.UTF-8".format(var)
+
+	if message:
+		print("Bench's CLI needs these to be defined!", level=3)
+		print("Run the following commands in shell: {}".format(message), level=2)
+		sys.exit()
 
 
 def run_os_command(command_map):
@@ -435,8 +450,14 @@ def parse_commandline_args():
 	return args
 
 if __name__ == '__main__':
+	if not is_sudo_user():
+		print("Please run this script as a non-root user with sudo privileges", level=3)
+		sys.exit()
+
 	args = parse_commandline_args()
 	with warnings.catch_warnings():
 		warnings.simplefilter("ignore")
+		check_environment()
 		install_bench(args)
-	print("Frappe/ERPNext has been successfully installed!")
+
+	print("Bench + Frappe + ERPNext has been successfully installed!")
