@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import os, sys, subprocess, getpass, json, multiprocessing, shutil, platform, warnings
-from builtins import print as _
 
 
 tmp_bench_repo = '/tmp/.bench'
@@ -9,7 +8,7 @@ log_path = os.path.join(tmp_log_folder, 'install_bench.log')
 log_stream = sys.stdout
 
 
-def print(message, level=0):
+def log(message, level=0):
 	levels = {
 		0: '\033[94m',	# normal
 		1: '\033[92m',	# success
@@ -18,7 +17,7 @@ def print(message, level=0):
 	}
 	start = levels.get(level) or ''
 	end = '\033[0m'
-	_(start + message + end)
+	print(start + message + end)
 
 
 def find_executable(executable, path=None):
@@ -68,8 +67,8 @@ def check_environment():
 			message += "\nexport {}=C.UTF-8".format(var)
 
 	if message:
-		print("Bench's CLI needs these to be defined!", level=3)
-		print("Run the following commands in shell: {}".format(message), level=2)
+		log("Bench's CLI needs these to be defined!", level=3)
+		log("Run the following commands in shell: {}".format(message), level=2)
 		sys.exit()
 
 
@@ -99,15 +98,15 @@ def is_sudo_user():
 
 def install_package(package):
 	if find_executable(package):
-		print("{} already installed!".format(package), level=1)
+		log("{} already installed!".format(package), level=1)
 	else:
-		print("Installing {}...".format(package))
+		log("Installing {}...".format(package))
 		success = run_os_command({
 			'apt-get': ['sudo apt-get install -y {0}'.format(package)],
 			'yum': ['sudo yum install -y {0}'.format(package)]
 		})
 		if success:
-			print("{} Installed!".format(package), level=1)
+			log("{} Installed!".format(package), level=1)
 		else:
 			could_not_install(package)
 
@@ -120,7 +119,7 @@ def install_bench(args):
 		if not os.path.exists(tmp_log_folder):
 			os.makedirs(tmp_log_folder)
 		log_stream = open(log_path, 'w')
-		print("Logs are saved under {}".format(log_path), level=3)
+		log("Logs are saved under {}".format(log_path), level=3)
 
 	check_distribution_compatibility()
 	check_brew_installed()
@@ -145,7 +144,7 @@ def install_bench(args):
 		})
 
 	if not success:
-		print('Could not install pre-requisites. Please check for errors or install them manually.')
+		log('Could not install pre-requisites. Please check for errors or install them manually.')
 		return
 
 	# secure pip installation
@@ -262,14 +261,14 @@ def check_distribution_compatibility():
 		'centos': [7]
 	}
 
-	print("Checking System Compatibility...")
+	log("Checking System Compatibility...")
 	if dist_name in supported_dists:
 		if float(dist_version) in supported_dists[dist_name]:
-			print("{0} {1} is compatible!".format(dist_name, dist_version), level=1)
+			log("{0} {1} is compatible!".format(dist_name, dist_version), level=1)
 		else:
-			print("Install on {0} {1} instead".format(dist_name, supported_dists[dist_name][-1]), level=3)
+			log("Install on {0} {1} instead".format(dist_name, supported_dists[dist_name][-1]), level=3)
 	else:
-		print("Sorry, the installer doesn't support {0}. Aborting installation!".format(dist_name), level=2)
+		log("Sorry, the installer doesn't support {0}. Aborting installation!".format(dist_name), level=2)
 
 
 def get_distribution_info():
@@ -374,7 +373,7 @@ def get_passwords(args):
 		with open(passwords_file_path, 'w') as f:
 			json.dump(passwords, f, indent=1)
 
-		print('Passwords saved at ~/passwords.txt')
+		log('Passwords saved at ~/passwords.txt')
 
 	return passwords
 
@@ -451,7 +450,7 @@ def parse_commandline_args():
 
 if __name__ == '__main__':
 	if not is_sudo_user():
-		print("Please run this script as a non-root user with sudo privileges", level=3)
+		log("Please run this script as a non-root user with sudo privileges", level=3)
 		sys.exit()
 
 	args = parse_commandline_args()
@@ -460,4 +459,4 @@ if __name__ == '__main__':
 		check_environment()
 		install_bench(args)
 
-	print("Bench + Frappe + ERPNext has been successfully installed!")
+	log("Bench + Frappe + ERPNext has been successfully installed!")
