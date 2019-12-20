@@ -20,44 +20,6 @@ def log(message, level=0):
 	print(start + message + end)
 
 
-def find_executable(executable, path=None):
-	"""Tries to find 'executable' in the directories listed in 'path'.
-	A string listing directories separated by 'os.pathsep'; defaults to
-	os.environ['PATH'].  Returns the complete filename or None if not found.
-
-	source: https://github.com/python/cpython/blob/master/Lib/distutils/spawn.py
-	"""
-	_, ext = os.path.splitext(executable)
-	if (sys.platform == 'win32') and (ext != '.exe'):
-		executable = executable + '.exe'
-
-	if os.path.isfile(executable):
-		return executable
-
-	if path is None:
-		path = os.environ.get('PATH', None)
-		if path is None:
-			try:
-				path = os.confstr("CS_PATH")
-			except (AttributeError, ValueError):
-				# os.confstr() or CS_PATH is not available
-				path = os.defpath
-		# bpo-35755: Don't use os.defpath if the PATH environment variable is
-		# set to an empty string
-
-	# PATH='' doesn't match, whereas PATH=':' looks in the current directory
-	if not path:
-		return None
-
-	paths = path.split(os.pathsep)
-	for p in paths:
-		f = os.path.join(p, executable)
-		if os.path.isfile(f):
-			# the file exists, we have a shot at spawn working
-			return f
-	return None
-
-
 def check_environment():
 	needed_environ_vars = ['LANG', 'LC_ALL']
 	message = ''
@@ -77,7 +39,7 @@ def run_os_command(command_map):
 	success = True
 
 	for executable, commands in command_map.items():
-		if find_executable(executable):
+		if shutil.which(executable):
 			if isinstance(commands, str):
 				commands = [commands]
 
@@ -97,7 +59,7 @@ def is_sudo_user():
 
 
 def install_package(package):
-	if find_executable(package):
+	if shutil.which(package):
 		log("{} already installed!".format(package), level=1)
 	else:
 		log("Installing {}...".format(package))
@@ -138,7 +100,7 @@ def install_bench(args):
 		]
 	})
 
-	if not find_executable("git"):
+	if not shutil.which("git"):
 		success = run_os_command({
 			'brew': 'brew install git'
 		})
@@ -148,7 +110,7 @@ def install_bench(args):
 		return
 
 	# secure pip installation
-	if find_executable('pip'):
+	if shutil.which('pip'):
 		run_os_command({
 			'pip': 'sudo -H pip install --upgrade setuptools cryptography pip'
 		})
@@ -284,7 +246,7 @@ def get_distribution_info():
 
 def check_brew_installed():
 	if 'Darwin' in os.uname():
-		if not find_executable('brew'):
+		if not shutil.which('brew'):
 			raise Exception('''
 			Please install brew package manager before proceeding with bench setup. Please run following
 			to install brew package manager on your machine,
