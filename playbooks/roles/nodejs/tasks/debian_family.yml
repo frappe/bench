@@ -7,9 +7,8 @@
 
 - name: Install nodejs {{ node_version }}
   apt:
-    name: 
+    name:
       - nodejs
-      - npm
     state: present
     update_cache: yes
     force: yes
