@@ -92,7 +92,7 @@ def remove_from_excluded_apps_txt(app, bench_path='.'):
 		apps.remove(app)
 		return write_excluded_apps_txt(apps, bench_path=bench_path)
 
-def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbose=False,
+def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=False,
 	postprocess = True):
 	# from bench.utils import check_url
 	try:
@@ -137,7 +137,7 @@ def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbos
 
 	if postprocess:
 
-		if build_asset_files:
+		if not skip_assets:
 			build_assets(bench_path=bench_path, app=app_name)
 		conf = get_config(bench_path=bench_path)
 
@@ -412,7 +412,7 @@ def get_major_version(version):
 def install_apps_from_path(path, bench_path='.'):
 	apps = get_apps_json(path)
 	for app in apps:
-		get_app(app['url'], branch=app.get('branch'), bench_path=bench_path, build_asset_files=False)
+		get_app(app['url'], branch=app.get('branch'), bench_path=bench_path, skip_assets=True)
 
 def get_apps_json(path):
 	if path.startswith('http'):
