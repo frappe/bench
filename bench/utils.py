@@ -278,7 +278,7 @@ def update_bench(bench_repo=True, requirements=True):
 		try:
 			exec_cmd("git pull", cwd=cwd)
 		except bench.utils.CommandFailedError:
-			exec_cmd("git stash", cwd=cwd)
+			exec_cmd("git -c user.name=bench -c user.email=developers@frappe.io stash", cwd=cwd)
 			logger.info("Stashing changes made at {}\nUse git stash apply to recover changes after the successful update!".format(cwd))
 
 	if requirements:
