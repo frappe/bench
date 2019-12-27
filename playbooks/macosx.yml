@@ -2,24 +2,26 @@
 - hosts: localhost
   become: yes
   become_user: root
+
   vars:
     bench_repo_path: "/Users/{{ ansible_user_id }}/.bench"
     bench_path: "/Users/{{ ansible_user_id }}/frappe-bench"
-  tasks:
-    # install pre-requisites
-    - name: install prequisites
-      homebrew: name={{ item }} state=present
-      with_items:
-        - cmake
-        - redis
-        - mariadb
-        - nodejs
 
-    # install wkhtmltopdf
-    - name: cask installs
-      homebrew_cask: name={{ item }} state=present
-      with_items:
-        - wkhtmltopdf
+  tasks:
+    - name: install prequisites
+      homebrew:
+        name:
+          - cmake
+          - redis
+          - mariadb
+          - nodejs
+        state: present
+
+    - name: install wkhtmltopdf
+      homebrew_cask:
+        name:
+          - wkhtmltopdf
+        state: present
 
     - name: configure mariadb
       include: roles/mariadb/tasks/main.yml

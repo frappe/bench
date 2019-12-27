@@ -1,10 +1,88 @@
-# wget setup_frappe.py | python3
-import os, sys, subprocess, getpass, json, multiprocessing, shutil, platform
-from distutils.spawn import find_executable
+#!/usr/bin/env python3
+import os, sys, subprocess, getpass, json, multiprocessing, shutil, platform, warnings
+
 
 tmp_bench_repo = '/tmp/.bench'
+tmp_log_folder = '/tmp/logs/'
+log_path = os.path.join(tmp_log_folder, 'install_bench.log')
+log_stream = sys.stdout
+
+
+def log(message, level=0):
+	levels = {
+		0: '\033[94m',	# normal
+		1: '\033[92m',	# success
+		2: '\033[91m',	# fail
+		3: '\033[93m'	# warn/suggest
+	}
+	start = levels.get(level) or ''
+	end = '\033[0m'
+	print(start + message + end)
+
+
+def check_environment():
+	needed_environ_vars = ['LANG', 'LC_ALL']
+	message = ''
+
+	for var in needed_environ_vars:
+		if var not in os.environ:
+			message += "\nexport {}=C.UTF-8".format(var)
+
+	if message:
+		log("Bench's CLI needs these to be defined!", level=3)
+		log("Run the following commands in shell: {}".format(message), level=2)
+		sys.exit()
+
+
+def run_os_command(command_map):
+	'''command_map is a dictionary of {'executable': command}. For ex. {'apt-get': 'sudo apt-get install -y python2.7'}'''
+	success = True
+
+	for executable, commands in command_map.items():
+		if shutil.which(executable):
+			if isinstance(commands, str):
+				commands = [commands]
+
+			for command in commands:
+				returncode = subprocess.check_call(command, shell=True, stdout=log_stream, stderr=sys.stderr)
+				success = success and (returncode == 0)
+
+	return success
+
+
+def could_not_install(package):
+	raise Exception('Could not install {0}. Please install it manually.'.format(package))
+
+
+def is_sudo_user():
+	return os.geteuid() == 0
+
+
+def install_package(package):
+	if shutil.which(package):
+		log("{} already installed!".format(package), level=1)
+	else:
+		log("Installing {}...".format(package))
+		success = run_os_command({
+			'apt-get': ['sudo apt-get install -y {0}'.format(package)],
+			'yum': ['sudo yum install -y {0}'.format(package)]
+		})
+		if success:
+			log("{} Installed!".format(package), level=1)
+		else:
+			could_not_install(package)
+
 
 def install_bench(args):
+	global log_stream
+	sys.stderr = sys.stdout
+
+	if not args.verbose:
+		if not os.path.exists(tmp_log_folder):
+			os.makedirs(tmp_log_folder)
+		log_stream = open(log_path, 'w')
+		log("Logs are saved under {}".format(log_path), level=3)
+
 	check_distribution_compatibility()
 	check_brew_installed()
 	# pre-requisites for bench repo cloning
@@ -19,30 +97,28 @@ def install_bench(args):
 		'yum': [
 			'sudo yum groupinstall -y "Development tools"',
 			'sudo yum install -y epel-release redhat-lsb-core git python-setuptools python-devel openssl-devel libffi-devel'
-		],
-		# epel-release is required to install redis, so installing it before the playbook-run.
-		# redhat-lsb-core is required, so that ansible can set ansible_lsb variable
+		]
 	})
 
-	if not find_executable("git"):
+	if not shutil.which("git"):
 		success = run_os_command({
 			'brew': 'brew install git'
 		})
 
 	if not success:
-		print('Could not install pre-requisites. Please check for errors or install them manually.')
+		log('Could not install pre-requisites. Please check for errors or install them manually.')
 		return
 
 	# secure pip installation
-	if find_executable('pip'):
+	if shutil.which('pip'):
 		run_os_command({
-			'pip': 'sudo pip install --upgrade setuptools cryptography pip'
+			'pip': 'sudo -H pip install --upgrade setuptools cryptography pip'
 		})
 
 	else:
 		if not os.path.exists("get-pip.py"):
 			run_os_command({
-				'wget': 'wget https://bootstrap.pypa.io/get-pip.py'
+				'wget': 'wget -q https://bootstrap.pypa.io/get-pip.py'
 			})
 
 		success = run_os_command({
@@ -53,15 +129,15 @@ def install_bench(args):
 			dist_name, dist_version = get_distribution_info()
 			if dist_name == 'centos':
 				run_os_command({
-					'pip': 'sudo pip install --upgrade --ignore-installed requests'
+					'pip': 'sudo -H pip install --upgrade --ignore-installed requests'
 				})
 			else:
 				run_os_command({
-					'pip': 'sudo pip install --upgrade requests'
+					'pip': 'sudo -H pip install --upgrade requests'
 				})
 
 	success = run_os_command({
-		'pip': "sudo pip install --upgrade setuptools cryptography ansible==2.8.5 pip"
+		'pip': "sudo -H pip install --upgrade setuptools cryptography ansible==2.8.5 pip"
 	})
 
 	if not success:
@@ -134,107 +210,72 @@ def install_bench(args):
 	# Will install ERPNext production setup by default
 	run_playbook('site.yml', sudo=True, extra_vars=extra_vars)
 
-	# # Will do changes for production if --production flag is passed
-	# if args.production:
-	# 	run_playbook('production.yml', sudo=True, extra_vars=extra_vars)
-
 	if os.path.exists(tmp_bench_repo):
 		shutil.rmtree(tmp_bench_repo)
 
-def check_distribution_compatibility():
-	supported_dists = {'ubuntu': [14, 15, 16, 18, 19], 'debian': [8, 9, 10],
-		'centos': [7], 'macos': [10.9, 10.10, 10.11, 10.12]}
 
+def check_distribution_compatibility():
 	dist_name, dist_version = get_distribution_info()
+	supported_dists = {
+		'macos': [10.9, 10.10, 10.11, 10.12],
+		'ubuntu': [14, 15, 16, 18, 19],
+		'debian': [8, 9],
+		'centos': [7]
+	}
+
+	log("Checking System Compatibility...")
 	if dist_name in supported_dists:
 		if float(dist_version) in supported_dists[dist_name]:
-			return
+			log("{0} {1} is compatible!".format(dist_name, dist_version), level=1)
+		else:
+			log("Install on {0} {1} instead".format(dist_name, supported_dists[dist_name][-1]), level=3)
+	else:
+		log("Sorry, the installer doesn't support {0}. Aborting installation!".format(dist_name), level=2)
 
-	print("Sorry, the installer doesn't support {0} {1}. Aborting installation!".format(dist_name, dist_version))
-	if dist_name in supported_dists:
-		print("Install on {0} {1} instead".format(dist_name, supported_dists[dist_name][-1]))
-	sys.exit(1)
 
 def get_distribution_info():
 	# return distribution name and major version
 	if platform.system() == "Linux":
 		current_dist = platform.dist()
 		return current_dist[0].lower(), current_dist[1].rsplit('.')[0]
+
 	elif platform.system() == "Darwin":
 		current_dist = platform.mac_ver()
 		return "macos", current_dist[0].rsplit('.', 1)[0]
 
-def install_package(package):
-	package_exec = find_executable(package)
-
-	if not package_exec:
-		success = run_os_command({
-			'apt-get': ['sudo apt-get install -y {0}'.format(package)],
-			'yum': ['sudo yum install -y {0}'.format(package)]
-		})
-	else:
-		return
-
-	if not success:
-		could_not_install(package)
 
 def check_brew_installed():
-	if 'Darwin' not in os.uname():
-		return
+	if 'Darwin' in os.uname():
+		if not shutil.which('brew'):
+			raise Exception('''
+			Please install brew package manager before proceeding with bench setup. Please run following
+			to install brew package manager on your machine,
 
-	brew_exec = find_executable('brew')
+			/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+			''')
 
-	if not brew_exec:
-		raise Exception('''
-		Please install brew package manager before proceeding with bench setup. Please run following
-		to install brew package manager on your machine,
-
-		/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-		''')
 
 def clone_bench_repo(args):
 	'''Clones the bench repository in the user folder'''
-	if os.path.exists(tmp_bench_repo):
-		return 0
-
-	elif args.without_bench_setup:
-		clone_path = os.path.join(os.path.expanduser('~'), 'bench')
-
-	else:
-		clone_path = tmp_bench_repo
-
 	branch = args.bench_branch or 'master'
 	repo_url = args.repo_url or 'https://github.com/frappe/bench'
 
+	if os.path.exists(tmp_bench_repo):
+		return 0
+	elif args.without_bench_setup:
+		clone_path = os.path.join(os.path.expanduser('~'), 'bench')
+	else:
+		clone_path = tmp_bench_repo
 
 	success = run_os_command(
-		{'git': 'git clone {repo_url} {bench_repo} --depth 1 --branch {branch}'.format(
+		{'git': 'git clone --quiet {repo_url} {bench_repo} --depth 1 --branch {branch}'.format(
 			repo_url=repo_url, bench_repo=clone_path, branch=branch)}
 	)
 
 	return success
 
-def run_os_command(command_map):
-	'''command_map is a dictionary of {'executable': command}. For ex. {'apt-get': 'sudo apt-get install -y python2.7'} '''
-	success = True
-	for executable, commands in list(command_map.items()):
-		if find_executable(executable):
-			if isinstance(commands, str):
-				commands = [commands]
 
-			for command in commands:
-				returncode = subprocess.check_call(command, shell=True)
-				success = success and ( returncode == 0 )
 
-			break
-
-	return success
-
-def could_not_install(package):
-	raise Exception('Could not install {0}. Please install it manually.'.format(package))
-
-def is_sudo_user():
-	return os.geteuid() == 0
 
 
 def get_passwords(args):
@@ -294,7 +335,7 @@ def get_passwords(args):
 		with open(passwords_file_path, 'w') as f:
 			json.dump(passwords, f, indent=1)
 
-		print('Passwords saved at ~/passwords.txt')
+		log('Passwords saved at ~/passwords.txt')
 
 	return passwords
 
@@ -324,92 +365,60 @@ def run_playbook(playbook_name, sudo=False, extra_vars=None):
 	else:
 		cwd = os.path.join(os.path.expanduser('~'), 'bench')
 
-	success = subprocess.check_call(args, cwd=os.path.join(cwd, 'playbooks'))
+	success = subprocess.check_call(args, cwd=os.path.join(cwd, 'playbooks'), stdout=log_stream, stderr=sys.stderr)
 	return success
+
 
 def parse_commandline_args():
 	import argparse
 
 	parser = argparse.ArgumentParser(description='Frappe Installer')
-
 	# Arguments develop and production are mutually exclusive both can't be specified together.
 	# Hence, we need to create a group for discouraging use of both options at the same time.
 	args_group = parser.add_mutually_exclusive_group()
 
-	args_group.add_argument('--develop', dest='develop', action='store_true', default=False,
-		help='Install developer setup')
-
-	args_group.add_argument('--production', dest='production', action='store_true',
-		default=False, help='Setup Production environment for bench')
-
-	parser.add_argument('--site', dest='site', action='store', default='site1.local',
-		help='Specifiy name for your first ERPNext site')
-
-	parser.add_argument('--without-site', dest='without_site', action='store_true',
-		default=False)
-
-	parser.add_argument('--verbose', dest='verbosity', action='store_true', default=False,
-		help='Run the script in verbose mode')
-
+	args_group.add_argument('--develop', dest='develop', action='store_true', default=False, help='Install developer setup')
+	args_group.add_argument('--production', dest='production', action='store_true', default=False, help='Setup Production environment for bench')
+	parser.add_argument('--site', dest='site', action='store', default='site1.local', help='Specifiy name for your first ERPNext site')
+	parser.add_argument('--without-site', dest='without_site', action='store_true', default=False)
+	parser.add_argument('--verbose', dest='verbose', action='store_true', default=False, help='Run the script in verbose mode')
 	parser.add_argument('--user', dest='user', help='Install frappe-bench for this user')
-
 	parser.add_argument('--bench-branch', dest='bench_branch', help='Clone a particular branch of bench repository')
-
 	parser.add_argument('--repo-url', dest='repo_url', help='Clone bench from the given url')
-
-	parser.add_argument('--frappe-repo-url', dest='frappe_repo_url', action='store', default='https://github.com/frappe/frappe',
-		help='Clone frappe from the given url')
-
-	parser.add_argument('--frappe-branch', dest='frappe_branch', action='store',
-		help='Clone a particular branch of frappe')
-
-	parser.add_argument('--erpnext-repo-url', dest='erpnext_repo_url', action='store', default='https://github.com/frappe/erpnext',
-		help='Clone erpnext from the given url')
-
-	parser.add_argument('--erpnext-branch', dest='erpnext_branch', action='store',
-		help='Clone a particular branch of erpnext')
-
-	parser.add_argument('--without-erpnext', dest='without_erpnext', action='store_true', default=False,
-		help='Prevent fetching ERPNext')
-
+	parser.add_argument('--frappe-repo-url', dest='frappe_repo_url', action='store', default='https://github.com/frappe/frappe', help='Clone frappe from the given url')
+	parser.add_argument('--frappe-branch', dest='frappe_branch', action='store', help='Clone a particular branch of frappe')
+	parser.add_argument('--erpnext-repo-url', dest='erpnext_repo_url', action='store', default='https://github.com/frappe/erpnext', help='Clone erpnext from the given url')
+	parser.add_argument('--erpnext-branch', dest='erpnext_branch', action='store', help='Clone a particular branch of erpnext')
+	parser.add_argument('--without-erpnext', dest='without_erpnext', action='store_true', default=False, help='Prevent fetching ERPNext')
 	# direct provision to install versions
-	parser.add_argument('--version', dest='version', action='store', default='12', type=int,
-		help='Clone particular version of frappe and erpnext')
-
+	parser.add_argument('--version', dest='version', action='store', default='12', type=int, help='Clone particular version of frappe and erpnext')
 	# To enable testing of script using Travis, this should skip the prompt
-	parser.add_argument('--run-travis', dest='run_travis', action='store_true', default=False,
-		help=argparse.SUPPRESS)
-
-	parser.add_argument('--without-bench-setup', dest='without_bench_setup', action='store_true', default=False,
-		help=argparse.SUPPRESS)
-
+	parser.add_argument('--run-travis', dest='run_travis', action='store_true', default=False, help=argparse.SUPPRESS)
+	parser.add_argument('--without-bench-setup', dest='without_bench_setup', action='store_true', default=False, help=argparse.SUPPRESS)
 	# whether to overwrite an existing bench
-	parser.add_argument('--overwrite', dest='overwrite', action='store_true', default=False,
-		help='Whether to overwrite an existing bench')
-
+	parser.add_argument('--overwrite', dest='overwrite', action='store_true', default=False, help='Whether to overwrite an existing bench')
 	# set passwords
 	parser.add_argument('--mysql-root-password', dest='mysql_root_password', help='Set mysql root password')
-	parser.add_argument('--mariadb-version', dest='mariadb_version', default='10.4', help='Specify mariadb version')
+	parser.add_argument('--mariadb-version', dest='mariadb_version', default='10.2', help='Specify mariadb version')
 	parser.add_argument('--admin-password', dest='admin_password', help='Set admin password')
 	parser.add_argument('--bench-name', dest='bench_name', help='Create bench with specified name. Default name is frappe-bench')
-
 	# Python interpreter to be used
-	parser.add_argument('--python', dest='python', default='python3',
-		help=argparse.SUPPRESS
-	)
-
+	parser.add_argument('--python', dest='python', default='python3', help=argparse.SUPPRESS)
 	# LXC Support
-	parser.add_argument('--container', dest='container', default=False, action='store_true',
-		help='Use if you\'re creating inside LXC'
-	)
-
+	parser.add_argument('--container', dest='container', default=False, action='store_true', help='Use if you\'re creating inside LXC')
 	args = parser.parse_args()
 
 	return args
 
 if __name__ == '__main__':
+	if not is_sudo_user():
+		log("Please run this script as a non-root user with sudo privileges", level=3)
+		sys.exit()
+
 	args = parse_commandline_args()
+	with warnings.catch_warnings():
+		warnings.simplefilter("ignore")
+		check_environment()
+		install_bench(args)
 
-	install_bench(args)
-
-	print('''Frappe/ERPNext has been successfully installed!''')
+	log("Bench + Frappe + ERPNext has been successfully installed!")

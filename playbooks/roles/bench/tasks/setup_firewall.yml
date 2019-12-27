@@ -31,10 +31,12 @@
 
       # For Ubuntu / Debian
     - name: Install ufw
-      apt: name={{ item }} state=present force=yes
-      with_items:
-       - python-selinux
-       - ufw
+      apt:
+        state: present
+        force: yes
+        pkg:
+        - python-selinux
+        - ufw
       when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
 
     - name: Enable Firewall
