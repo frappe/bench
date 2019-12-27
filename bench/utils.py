@@ -16,6 +16,18 @@ logger = logging.getLogger(__name__)
 
 folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 
+
+def is_bench_directory():
+	cur_dir = os.path.curdir
+	is_bench = True
+
+	for folder in folders_in_bench:
+		path = os.path.join(cur_dir, folder)
+		is_bench = is_bench and os.path.exists(path)
+
+	return is_bench
+
+
 def safe_decode(string, encoding = 'utf-8'):
 	try:
 		string = string.decode(encoding)
@@ -256,13 +268,23 @@ def read_crontab():
 	s.stdout.close()
 	return out
 
-def update_bench():
-	logger.info('updating bench')
+def update_bench(bench_repo=True, requirements=True):
+	logger.info("Updating bench")
 
 	# bench-repo folder
 	cwd = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-	exec_cmd("git pull", cwd=cwd)
+	if bench_repo:
+		try:
+			exec_cmd("git pull", cwd=cwd)
+		except bench.utils.CommandFailedError:
+			exec_cmd("git stash", cwd=cwd)
+			logger.info("Stashing changes made at {}\nUse git stash apply to recover changes after the successful update!".format(cwd))
+
+	if requirements:
+		update_bench_requirements()
+
+	logger.info("Bench Updated!")
 
 def setup_sudoers(user):
 	if not os.path.exists('/etc/sudoers.d'):
@@ -424,19 +446,24 @@ def set_default_site(site, bench_path='.'):
 	exec_cmd("{frappe} --use {site}".format(frappe=get_frappe(bench_path=bench_path), site=site),
 			cwd=os.path.join(bench_path, 'sites'))
 
-def update_requirements(bench_path='.'):
-	print('Updating Python libraries...')
-
-	# update env pip
-	env_pip = os.path.join(bench_path, 'env', 'bin', 'pip')
-	exec_cmd("{pip} install -q -U pip".format(pip=env_pip))
-
-	# Update bench requirements (at user level)
+def update_bench_requirements():
 	bench_req_file = os.path.join(os.path.dirname(bench.__path__[0]), 'requirements.txt')
 	user_pip = which("pip" if PY2 else "pip3")
 	install_requirements(user_pip, bench_req_file, user=True)
 
+def update_env_pip(bench_path):
+	env_pip = os.path.join(bench_path, 'env', 'bin', 'pip')
+	exec_cmd("{pip} install -q -U pip".format(pip=env_pip))
+
+def update_requirements(bench_path='.'):
 	from bench.app import get_apps, install_app
+	print('Updating Python libraries...')
+
+	# update env pip
+	update_env_pip(bench_path)
+
+	# Update bench requirements (at user level)
+	update_bench_requirements()
 
 	for app in get_apps():
 		install_app(app, bench_path=bench_path)
