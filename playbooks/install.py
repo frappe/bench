@@ -2,8 +2,8 @@
 import os, sys, subprocess, getpass, json, multiprocessing, shutil, platform, warnings
 
 
-tmp_bench_repo = '/tmp/.bench'
-tmp_log_folder = '/tmp/logs/'
+tmp_bench_repo = os.path.join('/', 'tmp', '.bench')
+tmp_log_folder = os.path.join('/', 'tmp', 'logs')
 log_path = os.path.join(tmp_log_folder, 'install_bench.log')
 log_stream = sys.stdout
 
@@ -20,18 +20,73 @@ def log(message, level=0):
 	print(start + message + end)
 
 
+def setup_log_stream(args):
+	global log_stream
+	sys.stderr = sys.stdout
+
+	if not args.verbose:
+		if not os.path.exists(tmp_log_folder):
+			os.makedirs(tmp_log_folder)
+		log_stream = open(log_path, 'w')
+		log("Logs are saved under {0}".format(log_path), level=3)
+
+
 def check_environment():
 	needed_environ_vars = ['LANG', 'LC_ALL']
 	message = ''
 
 	for var in needed_environ_vars:
 		if var not in os.environ:
-			message += "\nexport {}=C.UTF-8".format(var)
+			message += "\nexport {0}=C.UTF-8".format(var)
 
 	if message:
 		log("Bench's CLI needs these to be defined!", level=3)
-		log("Run the following commands in shell: {}".format(message), level=2)
+		log("Run the following commands in shell: {0}".format(message), level=2)
 		sys.exit()
+
+
+def check_system_package_managers():
+	if 'Darwin' in os.uname():
+		if not shutil.which('brew'):
+			raise Exception('''
+			Please install brew package manager before proceeding with bench setup. Please run following
+			to install brew package manager on your machine,
+
+			/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+			''')
+	if 'Linux' in os.uname():
+		if not any([shutil.which(x) for x in ['apt-get', 'yum']]):
+			raise Exception('Cannot find any compatible package manager!')
+
+
+def check_distribution_compatibility():
+	dist_name, dist_version = get_distribution_info()
+	supported_dists = {
+		'macos': [10.9, 10.10, 10.11, 10.12],
+		'ubuntu': [14, 15, 16, 18, 19],
+		'debian': [8, 9],
+		'centos': [7]
+	}
+
+	log("Checking System Compatibility...")
+	if dist_name in supported_dists:
+		if float(dist_version) in supported_dists[dist_name]:
+			log("{0} {1} is compatible!".format(dist_name, dist_version), level=1)
+		else:
+			log("Install on {0} {1} instead".format(dist_name, supported_dists[dist_name][-1]), level=3)
+	else:
+		log("Sorry, the installer doesn't support {0}. Aborting installation!".format(dist_name), level=2)
+
+
+def get_distribution_info():
+	# return distribution name and major version
+	if platform.system() == "Linux":
+		current_dist = platform.dist()
+		return current_dist[0].lower(), current_dist[1].rsplit('.')[0]
+
+	elif platform.system() == "Darwin":
+		current_dist = platform.mac_ver()
+		return "macos", current_dist[0].rsplit('.', 1)[0]
 
 
 def run_os_command(command_map):
@@ -50,66 +105,7 @@ def run_os_command(command_map):
 	return success
 
 
-def could_not_install(package):
-	raise Exception('Could not install {0}. Please install it manually.'.format(package))
-
-
-def is_sudo_user():
-	return os.geteuid() == 0
-
-
-def install_package(package):
-	if shutil.which(package):
-		log("{} already installed!".format(package), level=1)
-	else:
-		log("Installing {}...".format(package))
-		success = run_os_command({
-			'apt-get': ['sudo apt-get install -y {0}'.format(package)],
-			'yum': ['sudo yum install -y {0}'.format(package)]
-		})
-		if success:
-			log("{} Installed!".format(package), level=1)
-		else:
-			could_not_install(package)
-
-
-def install_bench(args):
-	global log_stream
-	sys.stderr = sys.stdout
-
-	if not args.verbose:
-		if not os.path.exists(tmp_log_folder):
-			os.makedirs(tmp_log_folder)
-		log_stream = open(log_path, 'w')
-		log("Logs are saved under {}".format(log_path), level=3)
-
-	check_distribution_compatibility()
-	check_brew_installed()
-	# pre-requisites for bench repo cloning
-	install_package('curl')
-	install_package('wget')
-
-	success = run_os_command({
-		'apt-get': [
-			'sudo apt-get update',
-			'sudo apt-get install -y git build-essential python3-setuptools python3-dev libffi-dev'
-		],
-		'yum': [
-			'sudo yum groupinstall -y "Development tools"',
-			'sudo yum install -y epel-release redhat-lsb-core git python-setuptools python-devel openssl-devel libffi-devel'
-		]
-	})
-
-	if not shutil.which("git"):
-		success = run_os_command({
-			'brew': 'brew install git'
-		})
-
-	if not success:
-		log('Could not install pre-requisites. Please check for errors or install them manually.')
-		return
-
-	# secure pip installation
+def install_pip():
 	if shutil.which('pip'):
 		run_os_command({
 			'pip': 'sudo -H pip install --upgrade setuptools cryptography pip'
@@ -136,6 +132,27 @@ def install_bench(args):
 					'pip': 'sudo -H pip install --upgrade requests'
 				})
 
+	log("pip installed!", level=1)
+
+
+def install_prerequisites():
+	# pre-requisites for bench repo cloning
+	run_os_command({
+		'apt-get': [
+			'sudo apt-get update',
+			'sudo apt-get install -y git build-essential python3-setuptools python3-dev libffi-dev'
+		],
+		'yum': [
+			'sudo yum groupinstall -y "Development tools"',
+			'sudo yum install -y epel-release redhat-lsb-core git python-setuptools python-devel openssl-devel libffi-devel'
+		]
+	})
+
+	install_package('curl')
+	install_package('wget')
+	install_package('git')
+	install_pip()
+
 	success = run_os_command({
 		'pip': "sudo -H pip install --upgrade setuptools cryptography ansible==2.8.5 pip"
 	})
@@ -143,6 +160,32 @@ def install_bench(args):
 	if not success:
 		could_not_install('Ansible')
 
+
+def could_not_install(package):
+	raise Exception('Could not install {0}. Please install it manually.'.format(package))
+
+
+def is_sudo_user():
+	return os.geteuid() == 0
+
+
+def install_package(package):
+	if shutil.which(package):
+		log("{0} already installed!".format(package), level=1)
+	else:
+		log("Installing {0}...".format(package))
+		success = run_os_command({
+			'apt-get': ['sudo apt-get install -y {0}'.format(package)],
+			'yum': ['sudo yum install -y {0}'.format(package)],
+			'brew': ['brew install {0}'.format(package)]
+		})
+		if success:
+			log("{0} installed!".format(package), level=1)
+			return success
+		could_not_install(package)
+
+
+def install_bench(args):
 	# clone bench repo
 	if not args.run_travis:
 		clone_bench_repo(args)
@@ -214,47 +257,6 @@ def install_bench(args):
 		shutil.rmtree(tmp_bench_repo)
 
 
-def check_distribution_compatibility():
-	dist_name, dist_version = get_distribution_info()
-	supported_dists = {
-		'macos': [10.9, 10.10, 10.11, 10.12],
-		'ubuntu': [14, 15, 16, 18, 19],
-		'debian': [8, 9],
-		'centos': [7]
-	}
-
-	log("Checking System Compatibility...")
-	if dist_name in supported_dists:
-		if float(dist_version) in supported_dists[dist_name]:
-			log("{0} {1} is compatible!".format(dist_name, dist_version), level=1)
-		else:
-			log("Install on {0} {1} instead".format(dist_name, supported_dists[dist_name][-1]), level=3)
-	else:
-		log("Sorry, the installer doesn't support {0}. Aborting installation!".format(dist_name), level=2)
-
-
-def get_distribution_info():
-	# return distribution name and major version
-	if platform.system() == "Linux":
-		current_dist = platform.dist()
-		return current_dist[0].lower(), current_dist[1].rsplit('.')[0]
-
-	elif platform.system() == "Darwin":
-		current_dist = platform.mac_ver()
-		return "macos", current_dist[0].rsplit('.', 1)[0]
-
-
-def check_brew_installed():
-	if 'Darwin' in os.uname():
-		if not shutil.which('brew'):
-			raise Exception('''
-			Please install brew package manager before proceeding with bench setup. Please run following
-			to install brew package manager on your machine,
-
-			/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-			''')
-
-
 def clone_bench_repo(args):
 	'''Clones the bench repository in the user folder'''
 	branch = args.bench_branch or 'master'
@@ -275,15 +277,12 @@ def clone_bench_repo(args):
 	return success
 
 
-
-
-
 def get_passwords(args):
 	"""
 	Returns a dict of passwords for further use
 	and creates passwords.txt in the bench user's home directory
 	"""
-
+	log("Input mySQL and Frappe Administrator passwords:")
 	ignore_prompt = args.run_travis or args.without_bench_setup
 	mysql_root_password, admin_password = '', ''
 	passwords_file_path = os.path.join(os.path.expanduser('~' + args.user), 'passwords.txt')
@@ -343,12 +342,14 @@ def get_passwords(args):
 def get_extra_vars_json(extra_args):
 	# We need to pass production as extra_vars to the playbook to execute conditionals in the
 	# playbook. Extra variables can passed as json or key=value pair. Here, we will use JSON.
-	json_path = os.path.join('/tmp', 'extra_vars.json')
+	json_path = os.path.join('/', 'tmp', 'extra_vars.json')
 	extra_vars = dict(list(extra_args.items()))
+
 	with open(json_path, mode='w') as j:
 		json.dump(extra_vars, j, indent=1, sort_keys=True)
 
 	return ('@' + json_path)
+
 
 def run_playbook(playbook_name, sudo=False, extra_vars=None):
 	args = ['ansible-playbook', '-c', 'local',  playbook_name , '-vvvv']
@@ -416,9 +417,14 @@ if __name__ == '__main__':
 		sys.exit()
 
 	args = parse_commandline_args()
+
 	with warnings.catch_warnings():
 		warnings.simplefilter("ignore")
+		setup_log_stream(args)
+		check_distribution_compatibility()
+		check_system_package_managers()
 		check_environment()
+		install_prerequisites()
 		install_bench(args)
 
 	log("Bench + Frappe + ERPNext has been successfully installed!")
