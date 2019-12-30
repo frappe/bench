@@ -4,9 +4,8 @@
     <h2>Frappe Bench</h2>
 </div>
 
-[![Build Status](https://circleci.com/gh/frappe/bench.svg?style=svg)](https://circleci.com/gh/frappe/bench)
 
-The bench is a command-line utility that helps you to install apps, manage multiple sites and update Frappe / ERPNext apps on */nix (CentOS, Debian, Ubuntu, etc) for development and production. Bench will also create nginx and supervisor config files, setup backups and much more.
+The bench is a command-line utility that helps you to install apps, manage multiple sites and update Frappe / ERPNext apps on */nix (Ubuntu, Debian, CentOS, etc) for development and production. Bench will also create nginx and supervisor config files, setup backups and much more.
 
 If you are using on a VPS make sure it has >= 1Gb of RAM or has swap setup properly.
 
@@ -26,7 +25,7 @@ You will need a computer/server. Options include:
 
 To install the Frappe/ERPNext server software, you will need an operating system on your normal computer which is not Windows. Note that the command line interface does work on Windows, and you can use Frappe/ERPNext from any operating system with a web browser. However, the server software does not run on Windows. It does run on other operating systems, so choose one of these instead:
 
-- Linux: Debian, Ubuntu, CentOS are the preferred distros and are well tested. [Arch Linux](https://github.com/frappe/bench/wiki/Install-ERPNext-on-ArchLinux) can also be used
+- Linux: Ubuntu, Debian, CentOS are the preferred distros and are tested. [Arch Linux](https://github.com/frappe/bench/wiki/Install-ERPNext-on-ArchLinux) can also be used
 - Mac OS X
 
 ### Manual Install
@@ -43,14 +42,15 @@ To manually install frappe/erpnext, you can follow this [this wiki](https://gith
 • pip 15+					(py dependency manager)
 • cron 						(scheduled jobs)
 • wkhtmltopdf (version 0.12.5 with patched qt) 	(for pdf generation)
-• Nginx 					(for production)						
+• Nginx 					(for production)
 </pre>
+
 #### 2. Install Bench
 
 Install bench as a *non root* user,
 
-	git clone https://github.com/frappe/bench bench-repo
-	pip install --user -e bench-repo
+	git clone https://github.com/frappe/bench ~/.bench
+	pip install --user -e ~/.bench
 
 Note: Please do not remove the bench directory the above commands will create
 
@@ -100,24 +100,17 @@ Note: Please do not remove the bench directory the above commands will create
 
 - This is an opinionated setup so it is best to setup on a blank server.
 - Works on Ubuntu 16.04+, CentOS 7+, Debian 8+
-- You may have to install Python 2.7 (eg on Ubuntu 16.04+) by running `apt-get install python-minimal`
-- You may also have to install build-essential and python-setuptools by running `apt-get install build-essential python-setuptools`
-- This script will install the pre-requisites, install bench and setup an ERPNext site
-- Passwords for Frappe Administrator and MariaDB (root) will be asked
+- You may have to install Python 3 and other essentials by running `apt-get install python3-minimal build-essential python3-setuptools`
+- This script will install the pre-requisites, install bench and setup an ERPNext site `(site1.local under frappe-bench)`
+- Passwords for Frappe Administrator and MariaDB (root) will be asked and saved under `~/passwoords.txt`
 - MariaDB (root) password may be `password` on a fresh server
 - You can then login as **Administrator** with the Administrator password
+- The log file is saved under `/tmp/logs/install_bench.log` in case you run into any issues during the install.
 - If you find any problems, post them on the forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
 
 Open your Terminal and enter:
 
-#### 1. Download the install script
-
-For Linux:
-
-	wget https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py
-
-
-#### 2. Run the install script
+#### 0. Setup user & Download the install script
 
 If you are on a fresh server and logged in as root, at first create a dedicated user for frappe
 & equip this user with sudo privileges
@@ -129,36 +122,47 @@ If you are on a fresh server and logged in as root, at first create a dedicated 
 
 *(it is very common to use "frappe" as frappe-username, but this comes with the security flaw of ["frappe" ranking very high](https://www.reddit.com/r/dataisbeautiful/comments/b3sirt/i_deployed_over_a_dozen_cyber_honeypots_all_over/?st=JTJ0SC0Q&sh=76e05240) in as a username challenged in hacking attempts. So, for production sites it is highly recommended to use a custom username harder to guess)*
 
-For developer setup:
+Switch to `[frappe-user]` (using `su [frappe-user]`) and start the setup
 
-	sudo python install.py --develop
+	wget https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py
 
-For production:
 
-	sudo python install.py --production --user [frappe-user]
+#### 1. Run the install script
 
-use --user flag to create a user and install using that user (By default, the script will create a user with the username `frappe` if the --user flag is not used)
+	sudo python3 install.py
 
-	python install.py --develop --user [frappe-user]
+*Note: `user` flag to create a user and install using that user (By default, the script will create a user with the username `frappe` if the --user flag is not used)*
 
-use --container flag to install inside a container (this will prevent the `/proc/sys/vm/swappiness: Read-only` file system error)
+For production or development, append teh `--production` or `--develop` flag to the command respectively.
 
-	sudo python install.py --production --user [frappe-user] --container
+	sudo python3 install.py --production --user [frappe-user]
+
+or
+
+	sudo python3 install.py --develop
+	sudo python3 install.py --develop --user [frappe-user]
+
+	sudo python3 install.py --production --user [frappe-user] --container
+
+*Note: `container` flag to install inside a container (this will prevent the `/proc/sys/vm/swappiness: Read-only` file system error)*
+
+
+	python3 install.py --production --version 11 --user [frappe-user]
 
 use --version flag to install specific version
 
-	python install.py --develop --version 11 --user [frappe-user]
+	python3 install.py --production --version 11 --python python2.7 --user [frappe-user]
 
-use --python flag to specify virtual environments python version, by default script setup python 3
+use --python flag to specify virtual environments python version, by default script setup python3
 
-	python install.py --develop --version 11 --python python2.7 --user [frappe-user]
 
 #### What will this script do?
 
 - Install all the pre-requisites
-- Install the command line `bench`
-- Create a new bench (a folder that will contain your entire frappe/erpnext setup)
-- Create a new ERPNext site on the bench
+- Install the command line `bench` (under ~/.bench)
+- Create a new bench (a folder that will contain your entire frappe/erpnext setup at ~/frappe-bench)
+- Create a new ERPNext site on the bench (site1.local)
+
 
 #### How do I start ERPNext
 
@@ -170,7 +174,7 @@ use --python flag to specify virtual environments python version, by default scr
 
 ## Bench Manager (GUI for Bench)
 
-Bench Manager is a graphical user interface to emulate the functionalities of Frappé Bench. Like the command line utility it helps you install apps, manage multiple sites, update apps and much more.
+Bench Manager is a graphical user interface to emulate the functionalities of Frappe Bench. Like the command line utility it helps you install apps, manage multiple sites, update apps and much more.
 
 ### Installation
 
@@ -185,10 +189,11 @@ What all it does:
 
 ## Docker Install - For Developers (beta)
 
-1. For developer setup, you can also use the official [Frappé Docker](https://github.com/frappe/frappe_docker/).
+1. For developer setup, you can also use the official [Frappe Docker](https://github.com/frappe/frappe_docker/).
 2. The app, mariadb and redis run on individual containers
 3. This setup supports multi-tenancy and exposes the frappe-bench volume as a external storage.
-4. For more details, [read the instructions on the Frappé Docker README](https://github.com/frappe/frappe_docker/)
+4. For more details, [read the instructions on the Frappe Docker README](https://github.com/frappe/frappe_docker/)
+
 
 Help
 ====
@@ -196,6 +201,7 @@ Help
 For bench help, you can type
 
 	bench --help
+
 
 Updating
 ========
@@ -213,7 +219,8 @@ You can also run the parts of the bench selectively.
 
 `bench update --bench` will only update the bench utility (this project)
 
-`bench update --requirements` will only update dependencies (python packages) for the apps installed
+`bench update --requirements` will only update all dependencies (Python + Node) for the apps available in current bench
+
 
 Guides
 =======
