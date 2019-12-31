@@ -69,7 +69,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		try:
 			os.makedirs(os.path.join(path, dirname))
 		except OSError as e:
-			if e.errno == os.errno.EEXIST:
+			if e.errno == errno.EEXIST:
 				pass
 
 	setup_logging()
@@ -716,7 +716,7 @@ def update_translations_p(args):
 		print('Download failed for', args[0], args[1])
 
 def download_translations_p():
-	pool = multiprocessing.Pool(4)
+	pool = multiprocessing.Pool(multiprocessing.cpu_count())
 
 	langs = get_langs()
 	apps = ('frappe', 'erpnext')
