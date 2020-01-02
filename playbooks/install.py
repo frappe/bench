@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os, sys, subprocess, getpass, json, multiprocessing, shutil, platform, warnings
 
-
 tmp_bench_repo = os.path.join('/', 'tmp', '.bench')
 tmp_log_folder = os.path.join('/', 'tmp', 'logs')
 log_path = os.path.join(tmp_log_folder, 'install_bench.log')
@@ -105,36 +104,6 @@ def run_os_command(command_map):
 	return success
 
 
-def install_pip():
-	if shutil.which('pip'):
-		run_os_command({
-			'pip': 'sudo -H pip install --upgrade setuptools cryptography pip'
-		})
-
-	else:
-		if not os.path.exists("get-pip.py"):
-			run_os_command({
-				'wget': 'wget -q https://bootstrap.pypa.io/get-pip.py'
-			})
-
-		success = run_os_command({
-			'python3': 'sudo python3 get-pip.py --force-reinstall'
-		})
-
-		if success:
-			dist_name, dist_version = get_distribution_info()
-			if dist_name == 'centos':
-				run_os_command({
-					'pip': 'sudo -H pip install --upgrade --ignore-installed requests'
-				})
-			else:
-				run_os_command({
-					'pip': 'sudo -H pip install --upgrade requests'
-				})
-
-	log("pip installed!", level=1)
-
-
 def install_prerequisites():
 	# pre-requisites for bench repo cloning
 	run_os_command({
@@ -151,13 +120,13 @@ def install_prerequisites():
 	install_package('curl')
 	install_package('wget')
 	install_package('git')
-	install_pip()
+	install_package('pip3', 'python3-pip')
 
 	success = run_os_command({
-		'pip': "sudo -H pip install --upgrade setuptools cryptography ansible==2.8.5 pip"
+		'python3': "sudo -H python3 -m pip install --upgrade setuptools cryptography ansible==2.8.5 pip"
 	})
 
-	if not success:
+	if not (success or shutil.which('ansible')):
 		could_not_install('Ansible')
 
 
@@ -169,15 +138,16 @@ def is_sudo_user():
 	return os.geteuid() == 0
 
 
-def install_package(package):
+def install_package(package, package_name=None):
 	if shutil.which(package):
 		log("{0} already installed!".format(package), level=1)
 	else:
 		log("Installing {0}...".format(package))
+		package_name = package_name or package
 		success = run_os_command({
-			'apt-get': ['sudo apt-get install -y {0}'.format(package)],
-			'yum': ['sudo yum install -y {0}'.format(package)],
-			'brew': ['brew install {0}'.format(package)]
+			'apt-get': ['sudo apt-get install -y {0}'.format(package_name)],
+			'yum': ['sudo yum install -y {0}'.format(package_name)],
+			'brew': ['brew install {0}'.format(package_name)]
 		})
 		if success:
 			log("{0} installed!".format(package), level=1)
@@ -412,6 +382,10 @@ def parse_commandline_args():
 	return args
 
 if __name__ == '__main__':
+	if sys.version[0] == '2':
+		if not raw_input("It is recommended to run this script with Python 3\nDo you still wish to continue? [Y/n]: ").lower() == "y":
+			sys.exit()
+
 	if not is_sudo_user():
 		log("Please run this script as a non-root user with sudo privileges", level=3)
 		sys.exit()
