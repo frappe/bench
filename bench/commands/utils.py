@@ -139,7 +139,7 @@ def shell(bench_path='.'):
 def backup_site(site):
 	"backup site"
 	from bench.utils import get_sites, backup_site
-	if not site in get_sites(bench_path='.'):
+	if site not in get_sites(bench_path='.'):
 		print('site not found')
 		sys.exit(1)
 	backup_site(site, bench_path='.')
