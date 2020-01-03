@@ -220,13 +220,9 @@ def build_assets(bench_path='.', app=None):
 		exec_cmd(command, cwd=bench_path)
 
 def get_sites(bench_path='.'):
-	sites_dir = os.path.join(bench_path, "sites")
-	sites = [site for site in os.listdir(sites_dir)
-		if os.path.isdir(os.path.join(sites_dir, site)) and site not in ('assets',)]
+	sites_path = os.path.join(bench_path, 'sites')
+	sites = (site for site in os.listdir(sites_path) if os.path.exists(os.path.join(sites_path, site, 'site_config.json')))
 	return sites
-
-def get_sites_dir(bench_path='.'):
-	return os.path.abspath(os.path.join(bench_path, 'sites'))
 
 def get_bench_dir(bench_path='.'):
 	return os.path.abspath(bench_path)
@@ -441,7 +437,7 @@ def restart_systemd_processes(bench_path='.', web_workers=False):
 	exec_cmd('sudo systemctl start -- $(systemctl show -p Requires {bench_name}.target | cut -d= -f2)'.format(bench_name=bench_name))
 
 def set_default_site(site, bench_path='.'):
-	if not site in get_sites(bench_path=bench_path):
+	if site not in get_sites(bench_path=bench_path):
 		raise Exception("Site not in bench")
 	exec_cmd("{frappe} --use {site}".format(frappe=get_frappe(bench_path=bench_path), site=site),
 			cwd=os.path.join(bench_path, 'sites'))
