@@ -2,7 +2,7 @@
 - name: Setup production
   become: yes
   become_user: root
-  command: bench setup production {{ frappe_user }}
+  command: bench setup production {{ frappe_user }} --yes
   args:
     chdir: '{{ bench_path }}'
 
