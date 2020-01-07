@@ -1,12 +1,23 @@
+import json
+import logging
+import os
+import pwd
+import subprocess
+import sys
+
 import click
-import os, sys, logging, json, pwd, subprocess
-from bench.utils import is_root, PatchError, drop_privileges, get_env_cmd, get_cmd_output, get_frappe
+
 from bench.app import get_apps
-from bench.config.common_site_config import get_config
 from bench.commands import bench_command
+from bench.config.common_site_config import get_config
+from bench.utils import (PatchError, clear_command_cache, drop_privileges,
+						 frappe_commands_file, generate_command_cache,
+						 get_cmd_output, get_env_cmd, get_frappe, is_root)
+
 
 logger = logging.getLogger('bench')
 from_command_line = False
+
 
 def cli():
 	global from_command_line
@@ -90,18 +101,19 @@ def frappe_cmd(bench_path='.'):
 	os.execv(f, [f] + ['-m', 'frappe.utils.bench_helper', 'frappe'] + sys.argv[1:])
 
 def get_frappe_commands(bench_path='.'):
-	python = get_env_cmd('python', bench_path=bench_path)
 	sites_path = os.path.join(bench_path, 'sites')
+
 	if not os.path.exists(sites_path):
 		return []
-	try:
-		output = get_cmd_output("{python} -m frappe.utils.bench_helper get-frappe-commands".format(python=python), cwd=sites_path)
-		# output = output.decode('utf-8')
-		return json.loads(output)
-	except subprocess.CalledProcessError as e:
-		if hasattr(e, "stderr"):
-			print(e.stderr.decode('utf-8'))
-		return []
+
+	if os.path.exists(frappe_commands_file):
+		command_dump = open(frappe_commands_file, 'r').read()
+		output = json.loads(command_dump) if command_dump else []
+
+	else:
+		output = generate_command_cache()
+
+	return output or []
 
 def get_frappe_help(bench_path='.'):
 	python = get_env_cmd('python', bench_path=bench_path)
