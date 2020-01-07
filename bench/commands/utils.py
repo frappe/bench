@@ -190,23 +190,3 @@ def bench_src():
 	"""Prints bench source folder path, which can be used as: cd `bench src` """
 	import bench
 	print(os.path.dirname(bench.__path__[0]))
-
-
-@click.command('generate-command-cache')
-def generate_command_cache(bench_path='.'):
-	"""
-	Caches Frappe commands (speeds up bench commands execution)
-	Default caching behaviour: generated the first time any command is run
-	"""
-	from bench.utils import generate_command_cache
-	return generate_command_cache(bench_path=bench_path)
-
-
-@click.command('clear-command-cache')
-def clear_command_cache(bench_path='.'):
-	"""
-	Clears commands cached
-	Default invalidation behaviour: destroyed on each run of `bench update`
-	"""
-	from bench.utils import clear_command_cache
-	return clear_command_cache(bench_path=bench_path)

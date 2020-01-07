@@ -5,7 +5,7 @@ from bench.config.common_site_config import get_config, update_config
 from bench.app import pull_all_apps, is_version_upgrade, validate_branch
 from bench.utils import (update_bench, validate_upgrade, pre_upgrade, post_upgrade, before_update,
 	update_requirements, update_node_packages, backup_all_sites, patch_sites, build_assets,
-	restart_supervisor_processes, restart_systemd_processes, is_bench_directory, clear_command_cache)
+	restart_supervisor_processes, restart_systemd_processes, is_bench_directory)
 from bench import patches
 from six.moves import reload_module
 
@@ -29,8 +29,6 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 		"""Update only bench if bench update called from outside a bench"""
 		update_bench(bench_repo=True, requirements=True)
 		sys.exit()
-
-	clear_command_cache(bench_path='.')
 
 	if not (pull or patch or build or bench or requirements):
 		pull, patch, build, bench, requirements = True, True, True, True, True
