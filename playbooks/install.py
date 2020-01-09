@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
-import os, sys, subprocess, getpass, json, multiprocessing, shutil, platform, warnings
+import os, sys, subprocess, getpass, json, multiprocessing, shutil, platform, warnings, datetime
 
 tmp_bench_repo = os.path.join('/', 'tmp', '.bench')
 tmp_log_folder = os.path.join('/', 'tmp', 'logs')
-log_path = os.path.join(tmp_log_folder, 'install_bench.log')
+execution_timestamp = datetime.datetime.utcnow()
+execution_day = "{:%Y-%m-%d}".format(execution_timestamp)
+execution_time = "{:%H:%M}".format(execution_timestamp)
+log_file_name = "easy-install__{0}__{1}.log".format(execution_day, execution_time.replace(':', '-'))
+log_path = os.path.join(tmp_log_folder, log_file_name)
 log_stream = sys.stdout
 
 
@@ -28,6 +32,7 @@ def setup_log_stream(args):
 			os.makedirs(tmp_log_folder)
 		log_stream = open(log_path, 'w')
 		log("Logs are saved under {0}".format(log_path), level=3)
+		print("Install script run at {0} on {1}\n\n".format(execution_time, execution_day), file=log_stream)
 
 
 def check_environment():
@@ -72,6 +77,7 @@ def check_distribution_compatibility():
 		if float(dist_version) in supported_dists[dist_name]:
 			log("{0} {1} is compatible!".format(dist_name, dist_version), level=1)
 		else:
+			log("{0} {1} is detected".format(dist_name, dist_version), level=1)
 			log("Install on {0} {1} instead".format(dist_name, supported_dists[dist_name][-1]), level=3)
 	else:
 		log("Sorry, the installer doesn't support {0}. Aborting installation!".format(dist_name), level=2)
@@ -247,12 +253,16 @@ def clone_bench_repo(args):
 	return success
 
 
+def passwords_didnt_match(context=''):
+	log("{} passwords did not match!".format(context), level=3)
+
+
 def get_passwords(args):
 	"""
 	Returns a dict of passwords for further use
 	and creates passwords.txt in the bench user's home directory
 	"""
-	log("Input mySQL and Frappe Administrator passwords:")
+	log("Input MySQL and Frappe Administrator passwords:")
 	ignore_prompt = args.run_travis or args.without_bench_setup
 	mysql_root_password, admin_password = '', ''
 	passwords_file_path = os.path.join(os.path.expanduser('~' + args.user), 'passwords.txt')
@@ -279,6 +289,7 @@ def get_passwords(args):
 				conf_mysql_passwd = getpass.unix_getpass(prompt='Re-enter mysql root password: ')
 
 				if mysql_root_password != conf_mysql_passwd or mysql_root_password == '':
+					passwords_didnt_match("MySQL")
 					mysql_root_password = ''
 					continue
 
@@ -288,6 +299,7 @@ def get_passwords(args):
 				conf_admin_passswd = getpass.unix_getpass(prompt='Re-enter Administrator password: ')
 
 				if admin_password != conf_admin_passswd or admin_password == '':
+					passwords_didnt_match("Administrator")
 					admin_password = ''
 					continue
 
