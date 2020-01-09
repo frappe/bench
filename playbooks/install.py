@@ -4,12 +4,10 @@ import os, sys, subprocess, getpass, json, multiprocessing, shutil, platform, wa
 
 tmp_bench_repo = os.path.join('/', 'tmp', '.bench')
 tmp_log_folder = os.path.join('/', 'tmp', 'logs')
-
-execution_day = "{:%Y-%m-%d}".format(datetime.datetime.utcnow())
-execution_time = "{:%H-%M}".format(datetime.datetime.utcnow())
-execution_ts = "{0}__{1}".format(execution_day, execution_time)
-
-log_file_name = "easy-install__{}.log".format(execution_ts)
+execution_timestamp = datetime.datetime.utcnow()
+execution_day = "{:%Y-%m-%d}".format(execution_timestamp)
+execution_time = "{:%H:%M}".format(execution_timestamp)
+log_file_name = "easy-install__{0}__{1}.log".format(execution_day, execution_time.replace(':', '-'))
 log_path = os.path.join(tmp_log_folder, log_file_name)
 log_stream = sys.stdout
 
@@ -35,7 +33,7 @@ def setup_log_stream(args):
 			os.makedirs(tmp_log_folder)
 		log_stream = open(log_path, 'w')
 		log("Logs are saved under {0}".format(log_path), level=3)
-		print("Install script run at {}\n\n".format(execution_ts), file=log_stream)
+		print("Install script run at {0} on {1}\n\n".format(execution_time, execution_day), file=log_stream)
 
 
 def check_environment():
