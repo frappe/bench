@@ -17,15 +17,27 @@ logger = logging.getLogger(__name__)
 folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 
 
-def is_bench_directory():
-	cur_dir = os.path.curdir
+def is_bench_directory(directory=os.path.curdir):
 	is_bench = True
 
 	for folder in folders_in_bench:
-		path = os.path.join(cur_dir, folder)
+		path = os.path.abspath(os.path.join(directory, folder))
 		is_bench = is_bench and os.path.exists(path)
 
 	return is_bench
+
+
+def log(message, level=0):
+	levels = {
+		0: '\033[94m',	# normal
+		1: '\033[92m',	# success
+		2: '\033[91m',	# fail
+		3: '\033[93m'	# warn/suggest
+	}
+	start = levels.get(level) or ''
+	end = '\033[0m'
+
+	print(start + message + end)
 
 
 def safe_decode(string, encoding = 'utf-8'):
