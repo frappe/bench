@@ -93,7 +93,7 @@ def get_frappe_commands(bench_path='.'):
 	python = get_env_cmd('python', bench_path=bench_path)
 	sites_path = os.path.join(bench_path, 'sites')
 	if not os.path.exists(sites_path):
-		log("WARN: Command not being executed in bench directory", level=3)
+		log("Command not being executed in bench directory", level=3)
 		return []
 	try:
 		output = get_cmd_output("{python} -m frappe.utils.bench_helper get-frappe-commands".format(python=python), cwd=sites_path)
