@@ -17,6 +17,14 @@ logger = logging.getLogger(__name__)
 folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 
 
+class color:
+	nc = '\033[0m'
+	blue = '\033[94m'
+	green = '\033[92m'
+	yellow = '\033[93m'
+	red = '\033[91m'
+
+
 def is_bench_directory(directory=os.path.curdir):
 	is_bench = True
 
@@ -29,12 +37,12 @@ def is_bench_directory(directory=os.path.curdir):
 
 def log(message, level=0):
 	levels = {
-		0: '\033[94m',	# normal
-		1: '\033[92m',	# success
-		2: '\033[91mERROR: ',	# fail
-		3: '\033[93mWARN: '	# warn/suggest
+		0: color.blue + 'LOG',			# normal
+		1: color.green + 'SUCCESS',		# success
+		2: color.red + 'ERROR',			# fail
+		3: color.yellow + 'WARN'		# warn/suggest
 	}
-	start = levels.get(level) or ''
+	start = levels.get(level) + ': ' if level in levels else ''
 	end = '\033[0m'
 
 	print(start + message + end)
@@ -57,23 +65,19 @@ def get_frappe(bench_path='.'):
 def get_env_cmd(cmd, bench_path='.'):
 	return os.path.abspath(os.path.join(bench_path, 'env', 'bin', cmd))
 
-def init(path, apps_path=None, no_procfile=False, no_backups=False,
-		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None,
-		verbose=False, clone_from=None, skip_redis_config_generation=False,
-		clone_without_update=False,
-		ignore_exist = False, skip_assets=False,
-		python		 = 'python3'): # Let's change when we're ready. - <achilles@frappe.io>
-	from .app import get_app, install_apps_from_path
-	from .config.common_site_config import make_config
-	from .config import redis
-	from .config.procfile import setup_procfile
+def init(path, apps_path=None, no_procfile=False, no_backups=False, no_auto_update=False,
+		frappe_path=None, frappe_branch=None, wheel_cache_dir=None, verbose=False, clone_from=None,
+		skip_redis_config_generation=False, clone_without_update=False, ignore_exist = False, skip_assets=False, python='python3'):
+	import os, errno
+	from bench.app import get_app, install_apps_from_path
+	from bench.config import redis
+	from bench.config.common_site_config import make_config
+	from bench.config.procfile import setup_procfile
 	from bench.patches import set_all_patches_executed
 
-	import os.path as osp
-
-	if osp.exists(path):
-		if not ignore_exist:
-			raise ValueError('Bench Instance {path} already exists.'.format(path = path))
+	if os.path.exists(path) and not ignore_exist:
+		log('Path {path} already exists!'.format(path=path))
+		sys.exit(0)
 	else:
 		os.makedirs(path)
 
@@ -81,12 +85,12 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		try:
 			os.makedirs(os.path.join(path, dirname))
 		except OSError as e:
-			if e.errno == os.errno.EEXIST:
+			if e.errno == errno.EEXIST:
 				pass
 
 	setup_logging()
 
-	setup_env(bench_path=path, python = python)
+	setup_env(bench_path=path, python=python)
 
 	make_config(path)
 
