@@ -190,3 +190,11 @@ def bench_src():
 	"""Prints bench source folder path, which can be used as: cd `bench src` """
 	import bench
 	print(os.path.dirname(bench.__path__[0]))
+
+
+@click.command('find')
+@click.argument('location', default='')
+def find_benches(location):
+	"""Finds benches recursively from location"""
+	from bench.utils import find_benches
+	find_benches(directory=location)

@@ -17,15 +17,27 @@ logger = logging.getLogger(__name__)
 folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 
 
-def is_bench_directory():
-	cur_dir = os.path.curdir
+def is_bench_directory(directory=os.path.curdir):
 	is_bench = True
 
 	for folder in folders_in_bench:
-		path = os.path.join(cur_dir, folder)
+		path = os.path.abspath(os.path.join(directory, folder))
 		is_bench = is_bench and os.path.exists(path)
 
 	return is_bench
+
+
+def log(message, level=0):
+	levels = {
+		0: '\033[94m',	# normal
+		1: '\033[92m',	# success
+		2: '\033[91mERROR: ',	# fail
+		3: '\033[93mWARN: '	# warn/suggest
+	}
+	start = levels.get(level) or ''
+	end = '\033[0m'
+
+	print(start + message + end)
 
 
 def safe_decode(string, encoding = 'utf-8'):
@@ -856,3 +868,31 @@ def run_playbook(playbook_name, extra_vars=None, tag=None):
 		args.extend(['-t', tag])
 
 	subprocess.check_call(args, cwd=os.path.join(os.path.dirname(bench.__path__[0]), 'playbooks'))
+
+def find_benches(directory=None):
+	if not directory:
+		directory = os.path.expanduser("~")
+	elif os.path.exists(directory):
+		directory = os.path.abspath(directory)
+	else:
+		log("Directory doesn't exist", level=2)
+		sys.exit(1)
+
+	if is_bench_directory(directory):
+		if os.path.curdir == directory:
+			print("You are in a bench directory!")
+		else:
+			print("{0} is a bench directory!".format(directory))
+		return
+
+	benches = []
+	for sub in os.listdir(directory):
+		sub = os.path.join(directory, sub)
+		if os.path.isdir(sub) and not os.path.islink(sub):
+			if is_bench_directory(sub):
+				print("{} found!".format(sub))
+				benches.append(sub)
+			else:
+				benches.extend(find_benches(sub))
+
+	return benches
