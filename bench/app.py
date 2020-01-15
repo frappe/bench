@@ -118,7 +118,7 @@ def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=Fal
 	shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
 	branch = '--branch {branch}'.format(branch=branch) if branch else ''
 
-	exec_cmd("git clone {git_url} {branch} {shallow_clone} --origin upstream".format(
+	exec_cmd("git clone -q {git_url} {branch} {shallow_clone} --origin upstream".format(
 				git_url=git_url,
 				shallow_clone=shallow_clone,
 				branch=branch),
