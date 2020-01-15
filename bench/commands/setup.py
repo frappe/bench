@@ -1,4 +1,5 @@
 from bench.utils import exec_cmd
+from six import PY3
 import click, sys, json
 import os
 
@@ -57,7 +58,7 @@ def setup_production(user, yes=False):
 	# Install prereqs for production
 	from distutils.spawn import find_executable
 	if not find_executable('ansible'):
-		exec_cmd("sudo pip install ansible")
+		exec_cmd("sudo {0} install ansible".format("pip3" if PY3 else "pip2"))
 	if not find_executable('fail2ban-client'):
 		exec_cmd("bench setup role fail2ban")
 	if not find_executable('nginx'):
