@@ -1,4 +1,4 @@
-import os, sys, shutil, subprocess, logging, itertools, requests, json, platform, select, pwd, grp, multiprocessing, hashlib, glob
+import os, sys, shutil, subprocess, logging, itertools, requests, json, platform, select, pwd, grp, multiprocessing, hashlib, glob, errno
 from distutils.spawn import find_executable
 import bench
 import semantic_version
@@ -42,7 +42,7 @@ def log(message, level=0):
 		2: color.red + 'ERROR',			# fail
 		3: color.yellow + 'WARN'		# warn/suggest
 	}
-	start = levels.get(level) + ': ' if level in levels else ''
+	start = (levels.get(level) + ': ') if level in levels else ''
 	end = '\033[0m'
 
 	print(start + message + end)
@@ -68,7 +68,6 @@ def get_env_cmd(cmd, bench_path='.'):
 def init(path, apps_path=None, no_procfile=False, no_backups=False, no_auto_update=False,
 		frappe_path=None, frappe_branch=None, wheel_cache_dir=None, verbose=False, clone_from=None,
 		skip_redis_config_generation=False, clone_without_update=False, ignore_exist = False, skip_assets=False, python='python3'):
-	import os, errno
 	from bench.app import get_app, install_apps_from_path
 	from bench.config import redis
 	from bench.config.common_site_config import make_config
