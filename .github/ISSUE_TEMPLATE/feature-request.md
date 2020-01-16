@@ -1,7 +1,7 @@
 ---
 name: Feature request
 about: Suggest an idea for this project
-
+label: feature-request
 ---
 
 Issue: Feature Request
