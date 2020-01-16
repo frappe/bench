@@ -5,7 +5,7 @@
 - MariaDB (root) password may be `password` on a fresh server
 - You can then login as **Administrator** with the Administrator password
 - The log file is saved under `/tmp/logs/install_bench.log` in case you run into any issues during the install.
-- If you find any problems, post them on the forum: [https://discuss.erpnext.com](https://discuss.erpnext.com/tags/installation_problem) with the 
+- If you find any problems, post them on the forum: [https://discuss.erpnext.com](https://discuss.erpnext.com/tags/installation_problem) under the "Install / Update" category.
 
 ---
 

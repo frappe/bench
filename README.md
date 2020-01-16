@@ -69,7 +69,7 @@ To do this install, you must have basic information on how Linux works and shoul
 
 As bench is a python application, its installation really depends on `python` + `pip` + `git`. The Frappe Framework, however has various other system dependencies like `nodejs`, `yarn`, `redis` and a database system like `mariadb` or `postgres`. Go through the [installation requirements](https://github.com/frappe/bench/blob/master/docs/installation.md) for an updated list.
 
-If you have questions, please ask them on the [forum](https://discuss.erpnext.com/c/bench).
+If you have questions, please ask them on the [forum](https://discuss.erpnext.com/c/bench) under the "Install / Update" category.
 
 ---
 
@@ -83,7 +83,7 @@ If you have questions, please ask them on the [forum](https://discuss.erpnext.co
 - MariaDB (root) password may be `password` on a fresh server
 - You can then login as **Administrator** with the Administrator password
 - The log file is saved under `/tmp/logs/install_bench.log` in case you run into any issues during the install.
-- If you find any problems, post them on the forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
+- If you find any problems, post them on the forum: [https://discuss.erpnext.com](https://discuss.erpnext.com/c/bench) with the `installation_problem` under "Install / Update" category.
 
 		wget https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py
 		python3 install.py --production
