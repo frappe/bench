@@ -6,7 +6,7 @@
 bench is a command-line utility that helps you to install apps, manage multiple sites and update Frappe / ERPNext apps on */nix (macOS, Ubuntu, Debian, CentOS, etc) for development and production.
 
 
-_Note:_ If you are looking easier ways to get started and evaluate ERPNext, [download the Virtual Machine](https://erpnext.com/download) or take [a free trial on erpnext.com](https://erpnext.com/pricing).
+> **Note**: If you are looking for easier ways to get started and evaluate ERPNext, [download the Virtual Machine](https://erpnext.com/download) or take [a free trial on erpnext.com](https://erpnext.com/pricing).
 
 ---
 
@@ -19,7 +19,7 @@ _Note:_ If you are looking easier ways to get started and evaluate ERPNext, [dow
  - [Release Bench](#release-bench)
  - [Guides](#guides)
  - [Resources](#resources)
-
+ - [License](#license)
 ---
 
 # bench CLI
@@ -133,3 +133,9 @@ Releases can be made for [Frappe](https://github.com/frappe/frappe) apps using b
 - [Background Services](https://frappe.io/docs/user/en/bench/resources/background-services.html)
 - [Bench Commands Cheat Sheet](https://frappe.io/docs/user/en/bench/resources/bench-commands-cheatsheet.html)
 - [Bench Procfile](https://frappe.io/docs/user/en/bench/resources/bench-procfile.html)
+
+---
+
+# License
+
+bench is licensed under [GNU GPLv3](LICENSE)
