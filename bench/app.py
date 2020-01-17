@@ -423,7 +423,10 @@ def get_apps_json(path):
 		return json.load(f)
 
 def validate_branch():
-	for app in ['frappe', 'erpnext']:
+	installed_apps = get_apps()
+	check_apps = ['frappe', 'erpnext'] #this is a dirty work-around. bench update should not assume that erpnext is installed
+	intersection_apps = list(set(installed_apps) & set(check_apps))
+	for app in intersection_apps:
 		branch = get_current_branch(app)
 
 		if branch == "master":
