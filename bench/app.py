@@ -423,11 +423,22 @@ def get_apps_json(path):
 		return json.load(f)
 
 def validate_branch():
-	for app in ['frappe', 'erpnext']:
+	installed_apps = set(get_apps())
+	check_apps = set(['frappe', 'erpnext'])
+	intersection_apps = installed_apps and check_apps
+
+	for app in intersection_apps:
 		branch = get_current_branch(app)
 
 		if branch == "master":
-			print(''' master branch is renamed to version-11 and develop to version-12. Please switch to new branches to get future updates.
+			print("""'master' branch is renamed to 'version-11' since 'version-12' release.
+As of January 2020, the following branches are
+version		Frappe			ERPNext
+11		version-11		version-11
+12		version-12		version-12
+13		develop			develop
 
-To switch to version 11, run the following commands: bench switch-to-branch version-11''')
+Please switch to new branches to get future updates.
+To switch to your required branch, run the following commands: bench switch-to-branch [branch-name]""")
+
 			sys.exit(1)
