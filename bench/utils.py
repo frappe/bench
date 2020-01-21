@@ -1,4 +1,4 @@
-import os, sys, shutil, subprocess, logging, itertools, requests, json, platform, select, pwd, grp, multiprocessing, hashlib, glob
+import os, sys, shutil, subprocess, logging, itertools, requests, json, platform, select, pwd, grp, multiprocessing, hashlib, glob, errno
 from distutils.spawn import find_executable
 import bench
 import semantic_version
@@ -17,15 +17,35 @@ logger = logging.getLogger(__name__)
 folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 
 
-def is_bench_directory():
-	cur_dir = os.path.curdir
+class color:
+	nc = '\033[0m'
+	blue = '\033[94m'
+	green = '\033[92m'
+	yellow = '\033[93m'
+	red = '\033[91m'
+
+
+def is_bench_directory(directory=os.path.curdir):
 	is_bench = True
 
 	for folder in folders_in_bench:
-		path = os.path.join(cur_dir, folder)
+		path = os.path.abspath(os.path.join(directory, folder))
 		is_bench = is_bench and os.path.exists(path)
 
 	return is_bench
+
+
+def log(message, level=0):
+	levels = {
+		0: color.blue + 'LOG',			# normal
+		1: color.green + 'SUCCESS',		# success
+		2: color.red + 'ERROR',			# fail
+		3: color.yellow + 'WARN'		# warn/suggest
+	}
+	start = (levels.get(level) + ': ') if level in levels else ''
+	end = '\033[0m'
+
+	print(start + message + end)
 
 
 def safe_decode(string, encoding = 'utf-8'):
@@ -45,23 +65,18 @@ def get_frappe(bench_path='.'):
 def get_env_cmd(cmd, bench_path='.'):
 	return os.path.abspath(os.path.join(bench_path, 'env', 'bin', cmd))
 
-def init(path, apps_path=None, no_procfile=False, no_backups=False,
-		no_auto_update=False, frappe_path=None, frappe_branch=None, wheel_cache_dir=None,
-		verbose=False, clone_from=None, skip_redis_config_generation=False,
-		clone_without_update=False,
-		ignore_exist = False, skip_assets=False,
-		python		 = 'python3'): # Let's change when we're ready. - <achilles@frappe.io>
-	from .app import get_app, install_apps_from_path
-	from .config.common_site_config import make_config
-	from .config import redis
-	from .config.procfile import setup_procfile
+def init(path, apps_path=None, no_procfile=False, no_backups=False, no_auto_update=False,
+		frappe_path=None, frappe_branch=None, wheel_cache_dir=None, verbose=False, clone_from=None,
+		skip_redis_config_generation=False, clone_without_update=False, ignore_exist = False, skip_assets=False, python='python3'):
+	from bench.app import get_app, install_apps_from_path
+	from bench.config import redis
+	from bench.config.common_site_config import make_config
+	from bench.config.procfile import setup_procfile
 	from bench.patches import set_all_patches_executed
 
-	import os.path as osp
-
-	if osp.exists(path):
-		if not ignore_exist:
-			raise ValueError('Bench Instance {path} already exists.'.format(path = path))
+	if os.path.exists(path) and not ignore_exist:
+		log('Path {path} already exists!'.format(path=path))
+		sys.exit(0)
 	else:
 		os.makedirs(path)
 
@@ -69,12 +84,12 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		try:
 			os.makedirs(os.path.join(path, dirname))
 		except OSError as e:
-			if e.errno == os.errno.EEXIST:
+			if e.errno == errno.EEXIST:
 				pass
 
 	setup_logging()
 
-	setup_env(bench_path=path, python = python)
+	setup_env(bench_path=path, python=python)
 
 	make_config(path)
 
@@ -188,9 +203,7 @@ def setup_env(bench_path='.', python = 'python3'):
 	pip    = os.path.join('env', 'bin', 'pip')
 
 	exec_cmd('virtualenv -q {} -p {}'.format('env', python), cwd=bench_path)
-	exec_cmd('{} -q install --upgrade pip'.format(pip), cwd=bench_path)
-	exec_cmd('{} -q install wheel'.format(pip), cwd=bench_path)
-	exec_cmd('{} -q install six'.format(pip), cwd=bench_path)
+	exec_cmd('{} -q install -U pip wheel six'.format(pip), cwd=bench_path)
 	exec_cmd('{} -q install -e git+https://github.com/frappe/python-pdfkit.git#egg=pdfkit'.format(pip), cwd=bench_path)
 
 def setup_socketio(bench_path='.'):
@@ -220,13 +233,9 @@ def build_assets(bench_path='.', app=None):
 		exec_cmd(command, cwd=bench_path)
 
 def get_sites(bench_path='.'):
-	sites_dir = os.path.join(bench_path, "sites")
-	sites = [site for site in os.listdir(sites_dir)
-		if os.path.isdir(os.path.join(sites_dir, site)) and site not in ('assets',)]
+	sites_path = os.path.join(bench_path, 'sites')
+	sites = (site for site in os.listdir(sites_path) if os.path.exists(os.path.join(sites_path, site, 'site_config.json')))
 	return sites
-
-def get_sites_dir(bench_path='.'):
-	return os.path.abspath(os.path.join(bench_path, 'sites'))
 
 def get_bench_dir(bench_path='.'):
 	return os.path.abspath(bench_path)
@@ -441,7 +450,7 @@ def restart_systemd_processes(bench_path='.', web_workers=False):
 	exec_cmd('sudo systemctl start -- $(systemctl show -p Requires {bench_name}.target | cut -d= -f2)'.format(bench_name=bench_name))
 
 def set_default_site(site, bench_path='.'):
-	if not site in get_sites(bench_path=bench_path):
+	if site not in get_sites(bench_path=bench_path):
 		raise Exception("Site not in bench")
 	exec_cmd("{frappe} --use {site}".format(frappe=get_frappe(bench_path=bench_path), site=site),
 			cwd=os.path.join(bench_path, 'sites'))
@@ -860,3 +869,31 @@ def run_playbook(playbook_name, extra_vars=None, tag=None):
 		args.extend(['-t', tag])
 
 	subprocess.check_call(args, cwd=os.path.join(os.path.dirname(bench.__path__[0]), 'playbooks'))
+
+def find_benches(directory=None):
+	if not directory:
+		directory = os.path.expanduser("~")
+	elif os.path.exists(directory):
+		directory = os.path.abspath(directory)
+	else:
+		log("Directory doesn't exist", level=2)
+		sys.exit(1)
+
+	if is_bench_directory(directory):
+		if os.path.curdir == directory:
+			print("You are in a bench directory!")
+		else:
+			print("{0} is a bench directory!".format(directory))
+		return
+
+	benches = []
+	for sub in os.listdir(directory):
+		sub = os.path.join(directory, sub)
+		if os.path.isdir(sub) and not os.path.islink(sub):
+			if is_bench_directory(sub):
+				print("{} found!".format(sub))
+				benches.append(sub)
+			else:
+				benches.extend(find_benches(sub))
+
+	return benches

@@ -139,7 +139,7 @@ def shell(bench_path='.'):
 def backup_site(site):
 	"backup site"
 	from bench.utils import get_sites, backup_site
-	if not site in get_sites(bench_path='.'):
+	if site not in get_sites(bench_path='.'):
 		print('site not found')
 		sys.exit(1)
 	backup_site(site, bench_path='.')
@@ -190,3 +190,11 @@ def bench_src():
 	"""Prints bench source folder path, which can be used as: cd `bench src` """
 	import bench
 	print(os.path.dirname(bench.__path__[0]))
+
+
+@click.command('find')
+@click.argument('location', default='')
+def find_benches(location):
+	"""Finds benches recursively from location"""
+	from bench.utils import find_benches
+	find_benches(directory=location)

@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-import os, sys, subprocess, getpass, json, multiprocessing, shutil, platform, warnings
-
+import os, sys, subprocess, getpass, json, multiprocessing, shutil, platform, warnings, datetime
 
 tmp_bench_repo = os.path.join('/', 'tmp', '.bench')
 tmp_log_folder = os.path.join('/', 'tmp', 'logs')
-log_path = os.path.join(tmp_log_folder, 'install_bench.log')
+execution_timestamp = datetime.datetime.utcnow()
+execution_day = "{:%Y-%m-%d}".format(execution_timestamp)
+execution_time = "{:%H:%M}".format(execution_timestamp)
+log_file_name = "easy-install__{0}__{1}.log".format(execution_day, execution_time.replace(':', '-'))
+log_path = os.path.join(tmp_log_folder, log_file_name)
 log_stream = sys.stdout
 
 
@@ -29,6 +32,7 @@ def setup_log_stream(args):
 			os.makedirs(tmp_log_folder)
 		log_stream = open(log_path, 'w')
 		log("Logs are saved under {0}".format(log_path), level=3)
+		print("Install script run at {0} on {1}\n\n".format(execution_time, execution_day), file=log_stream)
 
 
 def check_environment():
@@ -73,6 +77,7 @@ def check_distribution_compatibility():
 		if float(dist_version) in supported_dists[dist_name]:
 			log("{0} {1} is compatible!".format(dist_name, dist_version), level=1)
 		else:
+			log("{0} {1} is detected".format(dist_name, dist_version), level=1)
 			log("Install on {0} {1} instead".format(dist_name, supported_dists[dist_name][-1]), level=3)
 	else:
 		log("Sorry, the installer doesn't support {0}. Aborting installation!".format(dist_name), level=2)
@@ -105,36 +110,6 @@ def run_os_command(command_map):
 	return success
 
 
-def install_pip():
-	if shutil.which('pip'):
-		run_os_command({
-			'pip': 'sudo -H pip install --upgrade setuptools cryptography pip'
-		})
-
-	else:
-		if not os.path.exists("get-pip.py"):
-			run_os_command({
-				'wget': 'wget -q https://bootstrap.pypa.io/get-pip.py'
-			})
-
-		success = run_os_command({
-			'python3': 'sudo python3 get-pip.py --force-reinstall'
-		})
-
-		if success:
-			dist_name, dist_version = get_distribution_info()
-			if dist_name == 'centos':
-				run_os_command({
-					'pip': 'sudo -H pip install --upgrade --ignore-installed requests'
-				})
-			else:
-				run_os_command({
-					'pip': 'sudo -H pip install --upgrade requests'
-				})
-
-	log("pip installed!", level=1)
-
-
 def install_prerequisites():
 	# pre-requisites for bench repo cloning
 	run_os_command({
@@ -151,13 +126,13 @@ def install_prerequisites():
 	install_package('curl')
 	install_package('wget')
 	install_package('git')
-	install_pip()
+	install_package('pip3', 'python3-pip')
 
 	success = run_os_command({
-		'pip': "sudo -H pip install --upgrade setuptools cryptography ansible==2.8.5 pip"
+		'python3': "sudo -H python3 -m pip install --upgrade setuptools cryptography ansible==2.8.5 pip"
 	})
 
-	if not success:
+	if not (success or shutil.which('ansible')):
 		could_not_install('Ansible')
 
 
@@ -169,15 +144,16 @@ def is_sudo_user():
 	return os.geteuid() == 0
 
 
-def install_package(package):
+def install_package(package, package_name=None):
 	if shutil.which(package):
 		log("{0} already installed!".format(package), level=1)
 	else:
 		log("Installing {0}...".format(package))
+		package_name = package_name or package
 		success = run_os_command({
-			'apt-get': ['sudo apt-get install -y {0}'.format(package)],
-			'yum': ['sudo yum install -y {0}'.format(package)],
-			'brew': ['brew install {0}'.format(package)]
+			'apt-get': ['sudo apt-get install -y {0}'.format(package_name)],
+			'yum': ['sudo yum install -y {0}'.format(package_name)],
+			'brew': ['brew install {0}'.format(package_name)]
 		})
 		if success:
 			log("{0} installed!".format(package), level=1)
@@ -277,12 +253,16 @@ def clone_bench_repo(args):
 	return success
 
 
+def passwords_didnt_match(context=''):
+	log("{} passwords did not match!".format(context), level=3)
+
+
 def get_passwords(args):
 	"""
 	Returns a dict of passwords for further use
 	and creates passwords.txt in the bench user's home directory
 	"""
-	log("Input mySQL and Frappe Administrator passwords:")
+	log("Input MySQL and Frappe Administrator passwords:")
 	ignore_prompt = args.run_travis or args.without_bench_setup
 	mysql_root_password, admin_password = '', ''
 	passwords_file_path = os.path.join(os.path.expanduser('~' + args.user), 'passwords.txt')
@@ -309,6 +289,7 @@ def get_passwords(args):
 				conf_mysql_passwd = getpass.unix_getpass(prompt='Re-enter mysql root password: ')
 
 				if mysql_root_password != conf_mysql_passwd or mysql_root_password == '':
+					passwords_didnt_match("MySQL")
 					mysql_root_password = ''
 					continue
 
@@ -318,6 +299,7 @@ def get_passwords(args):
 				conf_admin_passswd = getpass.unix_getpass(prompt='Re-enter Administrator password: ')
 
 				if admin_password != conf_admin_passswd or admin_password == '':
+					passwords_didnt_match("Administrator")
 					admin_password = ''
 					continue
 
@@ -412,6 +394,10 @@ def parse_commandline_args():
 	return args
 
 if __name__ == '__main__':
+	if sys.version[0] == '2':
+		if not raw_input("It is recommended to run this script with Python 3\nDo you still wish to continue? [Y/n]: ").lower() == "y":
+			sys.exit()
+
 	if not is_sudo_user():
 		log("Please run this script as a non-root user with sudo privileges", level=3)
 		sys.exit()

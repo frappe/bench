@@ -118,7 +118,7 @@ def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=Fal
 	shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
 	branch = '--branch {branch}'.format(branch=branch) if branch else ''
 
-	exec_cmd("git clone {git_url} {branch} {shallow_clone} --origin upstream".format(
+	exec_cmd("git clone -q {git_url} {branch} {shallow_clone} --origin upstream".format(
 				git_url=git_url,
 				shallow_clone=shallow_clone,
 				branch=branch),
@@ -423,11 +423,22 @@ def get_apps_json(path):
 		return json.load(f)
 
 def validate_branch():
-	for app in ['frappe', 'erpnext']:
+	installed_apps = set(get_apps())
+	check_apps = set(['frappe', 'erpnext'])
+	intersection_apps = installed_apps.intersection(check_apps)
+
+	for app in intersection_apps:
 		branch = get_current_branch(app)
 
 		if branch == "master":
-			print(''' master branch is renamed to version-11 and develop to version-12. Please switch to new branches to get future updates.
+			print("""'master' branch is renamed to 'version-11' since 'version-12' release.
+As of January 2020, the following branches are
+version		Frappe			ERPNext
+11		version-11		version-11
+12		version-12		version-12
+13		develop			develop
 
-To switch to version 11, run the following commands: bench switch-to-branch version-11''')
+Please switch to new branches to get future updates.
+To switch to your required branch, run the following commands: bench switch-to-branch [branch-name]""")
+
 			sys.exit(1)
