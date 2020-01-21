@@ -425,7 +425,7 @@ def get_apps_json(path):
 def validate_branch():
 	installed_apps = set(get_apps())
 	check_apps = set(['frappe', 'erpnext'])
-	intersection_apps = installed_apps and check_apps
+	intersection_apps = installed_apps.intersection(check_apps)
 
 	for app in intersection_apps:
 		branch = get_current_branch(app)
