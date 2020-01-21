@@ -44,7 +44,11 @@ Bench is a command line tool that helps you install, setup, manage multiple site
 
 * Install apps on a particular site
 
-		bench --site [site-name] install-app [app-name]
+		bench new-site site1.local
+		
+	**Optional**: If the database for the site does not reside on localhost or listens on a custom port, you can use the flags `--db-host` to set a custom host and/or `--db-port` to set a custom port.
+    
+		bench new-site site1.local --db-host 192.168.1.1 --db-port 3307
 
 * Start bench (only for development)
 
