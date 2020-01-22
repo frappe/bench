@@ -1,9 +1,12 @@
-import os, sys, shutil, subprocess, logging, itertools, requests, json, platform, select, pwd, grp, multiprocessing, hashlib, glob, re, site, errno
+import errno, glob, grp, itertools, json, logging, multiprocessing, os, platform, pwd, re, select, shutil, site, subprocess, sys
 from distutils.spawn import find_executable
-import bench
+
+import requests
 import semantic_version
+from six import iteritems
+
+import bench
 from bench import env
-from six import iteritems, PY2
 
 
 class PatchError(Exception):
@@ -718,17 +721,20 @@ def post_upgrade(from_ver, to_ver, bench_path='.'):
 		if from_ver <= 5 and to_ver == 6:
 			setup_socketio(bench_path=bench_path)
 
-		print("As you have setup your bench for production, you will have to reload configuration for nginx and supervisor")
-		print("To complete the migration, please run the following commands")
-		print()
-		print("sudo service nginx restart")
-		print("sudo supervisorctl reload")
+		message = """
+As you have setup your bench for production, you will have to reload configuration for nginx and supervisor. To complete the migration, please run the following commands
+sudo service nginx restart
+sudo supervisorctl reload
+		""".strip()
+		print(message)
+
 
 def update_translations_p(args):
 	try:
 		update_translations(*args)
 	except requests.exceptions.HTTPError:
 		print('Download failed for', args[0], args[1])
+
 
 def download_translations_p():
 	pool = multiprocessing.Pool(4)
@@ -739,17 +745,20 @@ def download_translations_p():
 
 	pool.map(update_translations_p, args)
 
+
 def download_translations():
 	langs = get_langs()
 	apps = ('frappe', 'erpnext')
 	for app, lang in itertools.product(apps, langs):
 		update_translations(app, lang)
 
+
 def get_langs():
 	lang_file = 'apps/frappe/frappe/geo/languages.json'
 	with open(lang_file) as f:
 		langs = json.loads(f.read())
 	return [d['code'] for d in langs]
+
 
 def update_translations(app, lang):
 	translations_dir = os.path.join('apps', app, app, 'translations')
@@ -795,14 +804,17 @@ def log_line(data, stream):
 		return sys.stderr.write(data)
 	return sys.stdout.write(data)
 
+
 def get_output(*cmd):
 	s = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 	out = s.stdout.read()
 	s.stdout.close()
 	return out
 
+
 def before_update(bench_path, requirements):
 	validate_pillow_dependencies(bench_path, requirements)
+
 
 def validate_pillow_dependencies(bench_path, requirements):
 	if not requirements:
@@ -831,8 +843,10 @@ def validate_pillow_dependencies(bench_path, requirements):
 
 			raise
 
+
 def get_bench_name(bench_path):
 	return os.path.basename(os.path.abspath(bench_path))
+
 
 def setup_fonts():
 	fonts_path = os.path.join('/tmp', 'fonts')
@@ -848,6 +862,7 @@ def setup_fonts():
 	shutil.rmtree(fonts_path)
 	exec_cmd("fc-cache -fv")
 
+
 def set_git_remote_url(git_url, bench_path='.'):
 	"Set app remote git url"
 	app = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
@@ -859,6 +874,7 @@ def set_git_remote_url(git_url, bench_path='.'):
 	app_dir = bench.app.get_repo_dir(app, bench_path=bench_path)
 	if os.path.exists(os.path.join(app_dir, '.git')):
 		exec_cmd("git remote set-url upstream {}".format(git_url), cwd=app_dir)
+
 
 def run_playbook(playbook_name, extra_vars=None, tag=None):
 	if not find_executable('ansible'):
@@ -873,6 +889,7 @@ def run_playbook(playbook_name, extra_vars=None, tag=None):
 		args.extend(['-t', tag])
 
 	subprocess.check_call(args, cwd=os.path.join(os.path.dirname(bench.__path__[0]), 'playbooks'))
+
 
 def find_benches(directory=None):
 	if not directory:
@@ -901,6 +918,7 @@ def find_benches(directory=None):
 				benches.extend(find_benches(sub))
 
 	return benches
+
 
 def in_virtual_env():
 	# type: () -> bool
