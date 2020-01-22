@@ -1,4 +1,4 @@
-import os, sys, shutil, subprocess, logging, itertools, requests, json, platform, select, pwd, grp, multiprocessing, hashlib, glob, errno
+import os, sys, shutil, subprocess, logging, itertools, requests, json, platform, select, pwd, grp, multiprocessing, hashlib, glob, re, site, errno
 from distutils.spawn import find_executable
 import bench
 import semantic_version
@@ -536,12 +536,6 @@ def update_npm_packages(bench_path='.'):
 	exec_cmd('npm install', cwd=bench_path)
 
 
-def in_virtual_env():
-	if sys.version_info.major == 2:
-		return hasattr(sys, 'real_prefix')
-	if sys.version_info.major == 3:
-		return sys.base_prefix != sys.prefix
-
 def install_requirements(req_file, user=False):
 	if os.path.exists(req_file):
 		if user:
@@ -907,3 +901,67 @@ def find_benches(directory=None):
 				benches.extend(find_benches(sub))
 
 	return benches
+
+def in_virtual_env():
+	# type: () -> bool
+	"""Returns a boolean, whether running in venv with no system site-packages.
+	pip really does the best job at this: virtualenv_no_global at https://raw.githubusercontent.com/pypa/pip/master/src/pip/_internal/utils/virtualenv.py
+	"""
+
+	def running_under_venv():
+		# handles PEP 405 compliant virtual environments.
+		return sys.prefix != getattr(sys, "base_prefix", sys.prefix)
+
+	def running_under_regular_virtualenv():
+		# pypa/virtualenv case
+		return hasattr(sys, 'real_prefix')
+
+	def _no_global_under_venv():
+		# type: () -> bool
+		"""Check `{sys.prefix}/pyvenv.cfg` for system site-packages inclusion
+		PEP 405 specifies that when system site-packages are not supposed to be
+		visible from a virtual environment, `pyvenv.cfg` must contain the following
+		line:
+			include-system-site-packages = false
+		Additionally, log a warning if accessing the file fails.
+		"""
+		def _get_pyvenv_cfg_lines():
+			pyvenv_cfg_file = os.path.join(sys.prefix, 'pyvenv.cfg')
+			try:
+				with open(pyvenv_cfg_file) as f:
+					return f.read().splitlines()  # avoids trailing newlines
+			except IOError:
+				return None
+
+		_INCLUDE_SYSTEM_SITE_PACKAGES_REGEX = re.compile(
+			r"include-system-site-packages\s*=\s*(?P<value>true|false)"
+		)
+		cfg_lines = _get_pyvenv_cfg_lines()
+		if cfg_lines is None:
+			# We're not in a "sane" venv, so assume there is no system
+			# site-packages access (since that's PEP 405's default state).
+			return True
+
+		for line in cfg_lines:
+			match = _INCLUDE_SYSTEM_SITE_PACKAGES_REGEX.match(line)
+			if match is not None and match.group('value') == 'false':
+				return True
+		return False
+
+	def _no_global_under_regular_virtualenv():
+		# type: () -> bool
+		"""Check if "no-global-site-packages.txt" exists beside site.py
+		This mirrors logic in pypa/virtualenv for determining whether system
+		site-packages are visible in the virtual environment.
+		"""
+		site_mod_dir = os.path.dirname(os.path.abspath(site.__file__))
+		no_global_site_packages_file = os.path.join(site_mod_dir, 'no-global-site-packages.txt')
+		return os.path.exists(no_global_site_packages_file)
+
+	if running_under_regular_virtualenv():
+		return _no_global_under_regular_virtualenv()
+
+	if running_under_venv():
+		return _no_global_under_venv()
+
+	return False
