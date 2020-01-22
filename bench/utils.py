@@ -537,10 +537,15 @@ def update_npm_packages(bench_path='.'):
 	exec_cmd('npm install', cwd=bench_path)
 
 
+def in_virtual_env():
+	if sys.version_info.major == 2:
+		return hasattr(sys, 'real_prefix')
+	if sys.version_info.major == 3:
+		return sys.base_prefix != sys.prefix
+
 def install_requirements(pip, req_file, user=False):
 	if os.path.exists(req_file):
-		# sys.real_prefix exists only in a virtualenv
-		if hasattr(sys, 'real_prefix'):
+		if in_virtual_env():
 			user = False
 
 		user_flag = "--user" if user else ""
