@@ -15,21 +15,42 @@ import click
 @click.option('--skip-redis-config-generation', is_flag=True, help="Skip redis config generation if already specifying the common-site-config file")
 @click.option('--skip-assets',is_flag=True, default=False, help="Do not build assets")
 @click.option('--verbose',is_flag=True, help="Verbose output during install")
-def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups,
-		no_auto_update, clone_from, verbose, skip_redis_config_generation, clone_without_update,
-		ignore_exist = False, skip_assets=False,
-		python 		 = 'python3'):
+def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups, no_auto_update, clone_from, verbose, skip_redis_config_generation, clone_without_update, ignore_exist=False, skip_assets=False, python='python3'):
 	'''
 	Create a New Bench Instance.
 	'''
-	from bench.utils import init
-	init(path, apps_path=apps_path, no_procfile=no_procfile, no_backups=no_backups,
-			no_auto_update=no_auto_update, frappe_path=frappe_path, frappe_branch=frappe_branch,
-			verbose=verbose, clone_from=clone_from, skip_redis_config_generation=skip_redis_config_generation,
+	from bench.utils import init, log
+
+	try:
+		init(
+			path,
+			apps_path=apps_path,
+			no_procfile=no_procfile,
+			no_backups=no_backups,
+			no_auto_update=no_auto_update,
+			frappe_path=frappe_path,
+			frappe_branch=frappe_branch,
+			verbose=verbose,
+			clone_from=clone_from,
+			skip_redis_config_generation=skip_redis_config_generation,
 			clone_without_update=clone_without_update,
-			ignore_exist = ignore_exist, skip_assets=skip_assets,
-			python 		 = python)
-	click.echo('Bench {} initialized'.format(path))
+			ignore_exist=ignore_exist,
+			skip_assets=skip_assets,
+			python=python,
+		)
+		log('Bench {} initialized'.format(path), level=1)
+	except SystemExit:
+		pass
+	except:
+		import os, shutil, time, six
+		# add a sleep here so that the traceback of other processes doesnt overlap with the prompts
+		time.sleep(1)
+		log("There was a problem while creating {}".format(path), level=2)
+		if six.moves.input("Do you want to rollback these changes? [Y/n]: ").lower() == "y":
+			print('Rolling back Bench "{}"'.format(path))
+			if os.path.exists(path):
+				shutil.rmtree(path)
+
 
 @click.command('get-app')
 @click.argument('name', nargs=-1) # Dummy argument for backward compatibility
