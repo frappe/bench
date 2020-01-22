@@ -9,12 +9,12 @@ cache:
   - yarn
 
 before_install:
-  - wget -O /tmp/wkhtmltox.tar.xz https://github.com/frappe/wkhtmltopdf/raw/master/wkhtmltox-0.12.3_linux-generic-amd64.tar.xz
+  - wget -q -O /tmp/wkhtmltox.tar.xz https://github.com/frappe/wkhtmltopdf/raw/master/wkhtmltox-0.12.3_linux-generic-amd64.tar.xz
   - tar -xf /tmp/wkhtmltox.tar.xz -C /tmp
   - sudo mv /tmp/wkhtmltox/bin/wkhtmltopdf /usr/local/bin/wkhtmltopdf
   - sudo chmod o+x /usr/local/bin/wkhtmltopdf
-  - sudo apt-get install libcups2-dev
-  - sudo apt-get purge -y mysql-common mysql-server mysql-client
+  - sudo apt-get -qq install libcups2-dev
+  - sudo apt-get -qq purge -y mysql-common mysql-server mysql-client
 
 matrix:
   include:
@@ -26,19 +26,19 @@ matrix:
     python: 3.6
     script:
     - python -m unittest -v bench.tests.test_setup_production
-    - python $TRAVIS_BUILD_DIR/playbooks/install.py --user travis --run-travis --production --verbose
+    - sudo python $TRAVIS_BUILD_DIR/playbooks/install.py --user travis --run-travis --production --verbose
 
   - name: "Python 3.7"
     python: 3.7
     script:
     - python -m unittest -v bench.tests.test_setup_production
-    - python $TRAVIS_BUILD_DIR/playbooks/install.py --user travis --run-travis --production --verbose
+    - sudo python $TRAVIS_BUILD_DIR/playbooks/install.py --user travis --run-travis --production --verbose
 
   - name: "Python 3.8"
     python: 3.8
     script:
     - python -m unittest -v bench.tests.test_setup_production
-    - python $TRAVIS_BUILD_DIR/playbooks/install.py --user travis --run-travis --production --verbose
+    - sudo python $TRAVIS_BUILD_DIR/playbooks/install.py --user travis --run-travis --production --verbose
 
 install:
   - mkdir -p ~/.bench
@@ -47,4 +47,4 @@ install:
   - cp -r $TRAVIS_BUILD_DIR/* /tmp/.bench
 
   - pip install urllib3 pyOpenSSL ndg-httpsclient pyasn1
-  - pip install -e ~/.bench
+  - pip install -q -U -e ~/.bench
