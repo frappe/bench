@@ -457,8 +457,7 @@ def set_default_site(site, bench_path='.'):
 
 def update_bench_requirements():
 	bench_req_file = os.path.join(os.path.dirname(bench.__path__[0]), 'requirements.txt')
-	user_pip = which("pip" if PY2 else "pip3")
-	install_requirements(user_pip, bench_req_file, user=True)
+	install_requirements(bench_req_file, user=True)
 
 def update_env_pip(bench_path):
 	env_pip = os.path.join(bench_path, 'env', 'bin', 'pip')
@@ -543,13 +542,19 @@ def in_virtual_env():
 	if sys.version_info.major == 3:
 		return sys.base_prefix != sys.prefix
 
-def install_requirements(pip, req_file, user=False):
+def install_requirements(req_file, user=False):
 	if os.path.exists(req_file):
+		if user:
+			python = sys.executable
+		else:
+			python = os.path.join("env", "bin", "python")
+
 		if in_virtual_env():
 			user = False
 
 		user_flag = "--user" if user else ""
-		exec_cmd("{pip} install {user_flag} -q -U -r {req_file}".format(pip=pip, user_flag=user_flag, req_file=req_file))
+
+		exec_cmd("{python} -m pip install {user_flag} -q -U -r {req_file}".format(python=python, user_flag=user_flag, req_file=req_file))
 
 def backup_site(site, bench_path='.'):
 	bench.set_frappe_version(bench_path=bench_path)
