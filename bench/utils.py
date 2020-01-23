@@ -77,7 +77,8 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False, no_auto_upda
 	if os.path.exists(path) and not ignore_exist:
 		log('Path {path} already exists!'.format(path=path))
 		sys.exit(0)
-	else:
+	elif not os.path.exists(path):
+		# only create dir if it does not exist
 		os.makedirs(path)
 
 	for dirname in folders_in_bench:
