@@ -33,7 +33,7 @@
 
   - name: Fix permissions
     become_user: root
-    command: chown {{ frappe_user }} -R ~
+    command: chown {{ frappe_user }} -R /home/{{ frappe_user }}
 
   - name:  python3 bench init for develop
     command: bench init {{ bench_path }} --frappe-path {{ frappe_repo_url }} --frappe-branch {{ frappe_branch }} --python {{ python }}
