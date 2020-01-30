@@ -215,7 +215,7 @@ class TestBenchInit(unittest.TestCase):
 	def assert_virtual_env(self, bench_name):
 		bench_path = os.path.abspath(bench_name)
 		python = os.path.join(bench_path, "env", "bin", "python")
-		python_path = bench.utils.get_cmd_output('{python} -c "import os; print os.path.dirname(os.__file__)"'.format(python=python))
+		python_path = bench.utils.get_cmd_output('{python} -c "from __future__ import print_function; import os; print(os.path.dirname(os.__file__))"'.format(python=python))
 
 		# part of bench's virtualenv
 		self.assertTrue(python_path.startswith(bench_path))
