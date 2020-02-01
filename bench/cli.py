@@ -119,21 +119,21 @@ def get_frappe_help(bench_path='.'):
 
 def find_parent_bench(path):
 	"""Checks if parent directories are benches"""
-	path = os.path.abspath(path)
-	is_bench = is_bench_directory(directory=path)
+	if is_bench_directory(directory=path):
+		return path
+
 	home_path = os.path.expanduser("~")
 	root_path = os.path.abspath(os.sep)
 
 	if path not in {home_path, root_path}:
-		if is_bench:
-			return path
-
-		dir_list = os.path.split(path)
-		parent_dir = dir_list[0] if type(dir_list) == tuple else dir_list
+		# NOTE: the os.path.split assumes that given path is absolute
+		parent_dir = os.path.split(path)[0]
 		return find_parent_bench(parent_dir)
-
 
 def change_working_directory():
 	"""Allows bench commands to be run from anywhere inside a bench directory"""
-	bench_path = find_parent_bench(".") or os.path.abspath(".")
-	os.chdir(bench_path)
+	cur_dir = os.path.abspath(".")
+	bench_path = find_parent_bench(cur_dir)
+
+	if bench_path:
+		os.chdir(bench_path)
