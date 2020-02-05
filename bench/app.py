@@ -92,37 +92,36 @@ def remove_from_excluded_apps_txt(app, bench_path='.'):
 		apps.remove(app)
 		return write_excluded_apps_txt(apps, bench_path=bench_path)
 
-def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=False,
-	postprocess = True):
-	# from bench.utils import check_url
-	try:
-		from urlparse import urljoin
-	except ImportError:
-		from urllib.parse import urljoin
+def get_app(url, branch=None, bench_path='.', skip_assets=False, verbose=False, postprocess = True):
+	"""Installs Frappe app from url (git repo or file system) in bench env"""
+	if os.path.exists(url):
+		# handles "/path/to/app/" and "/path/to/app"
+		repo_name = os.path.split(url[:-1] if url[-1] == os.sep else url)[-1]
+		shutil.copytree(url, os.path.join(bench_path, 'apps', repo_name))
+	else:
+		if not check_url(url, raise_err=False):
+			orgs = ['frappe', 'erpnext']
+			for org in orgs:
+				url = 'https://api.github.com/repos/{org}/{app}'.format(org=org, app=url)
+				res = requests.get(url)
+				if res.ok:
+					data = res.json()
+					if 'name' in data:
+						if url == data['name']:
+							url = 'https://github.com/{org}/{app}'.format(org=org, app=url)
+							break
 
-	if not check_url(git_url, raise_err = False):
-		orgs = ['frappe', 'erpnext']
-		for org in orgs:
-			url = 'https://api.github.com/repos/{org}/{app}'.format(org = org, app = git_url)
-			res = requests.get(url)
-			if res.ok:
-				data    = res.json()
-				if 'name' in data:
-					if git_url == data['name']:
-						git_url = 'https://github.com/{org}/{app}'.format(org = org, app = git_url)
-						break
+		# Gets repo name from URL
+		repo_name = url.rsplit('/', 1)[1].rsplit('.', 1)[0]
+		logger.info('getting app {}'.format(repo_name))
+		shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
+		branch = '--branch {branch}'.format(branch=branch) if branch else ''
 
-	#Gets repo name from URL
-	repo_name = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
-	logger.info('getting app {}'.format(repo_name))
-	shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
-	branch = '--branch {branch}'.format(branch=branch) if branch else ''
-
-	exec_cmd("git clone -q {git_url} {branch} {shallow_clone} --origin upstream".format(
-				git_url=git_url,
-				shallow_clone=shallow_clone,
-				branch=branch),
-			cwd=os.path.join(bench_path, 'apps'))
+		exec_cmd("git clone -q {git_url} {branch} {shallow_clone} --origin upstream".format(
+					git_url=url,
+					shallow_clone=shallow_clone,
+					branch=branch),
+					cwd=os.path.join(bench_path, 'apps'))
 
 	#Retrieves app name from setup.py
 	app_path = os.path.join(bench_path, 'apps', repo_name, 'setup.py')
@@ -136,7 +135,6 @@ def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=Fal
 	install_app(app=app_name, bench_path=bench_path, verbose=verbose)
 
 	if postprocess:
-
 		if not skip_assets:
 			build_assets(bench_path=bench_path, app=app_name)
 		conf = get_config(bench_path=bench_path)
