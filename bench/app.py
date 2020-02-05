@@ -2,7 +2,7 @@ from __future__ import print_function
 import os
 from .utils import (exec_cmd, get_frappe, check_git_for_shallow_clone, build_assets,
 	restart_supervisor_processes, get_cmd_output, run_frappe_cmd, CommandFailedError,
-	restart_systemd_processes)
+	restart_systemd_processes, log)
 from .config.common_site_config import get_config
 
 import logging
@@ -92,36 +92,45 @@ def remove_from_excluded_apps_txt(app, bench_path='.'):
 		apps.remove(app)
 		return write_excluded_apps_txt(apps, bench_path=bench_path)
 
-def get_app(url, branch=None, bench_path='.', skip_assets=False, verbose=False, postprocess = True):
+def get_remote_app(url, branch=None, bench_path='.', skip_assets=False, verbose=False, postprocess=True):
+	if not check_url(url, raise_err=False):
+		orgs = ['frappe', 'erpnext']
+		for org in orgs:
+			api_url = 'https://api.github.com/repos/{org}/{app}'.format(org=org, app=url)
+			res = requests.get(api_url)
+			if res.ok:
+				data = res.json()
+				if 'name' in data:
+					if url == data['name']:
+						url = 'https://github.com/{org}/{app}'.format(org=org, app=url)
+						break
+
+	# Gets repo name from URL
+	repo_name = url.rsplit('/', 1)[1].rsplit('.', 1)[0]
+	logger.info('getting app {}'.format(repo_name))
+	shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
+	branch = '--branch {branch}'.format(branch=branch) if branch else ''
+
+	exec_cmd("git clone -q {git_url} {branch} {shallow_clone} --origin upstream".format(
+				git_url=url,
+				shallow_clone=shallow_clone,
+				branch=branch),
+				cwd=os.path.join(bench_path, 'apps'))
+
+def get_app(url, branch=None, bench_path='.', skip_assets=False, verbose=False, postprocess=True):
 	"""Installs Frappe app from url (git repo or file system) in bench env"""
-	if os.path.exists(url):
-		# handles "/path/to/app/" and "/path/to/app"
-		repo_name = os.path.split(url[:-1] if url[-1] == os.sep else url)[-1]
-		shutil.copytree(url, os.path.join(bench_path, 'apps', repo_name))
-	else:
-		if not check_url(url, raise_err=False):
-			orgs = ['frappe', 'erpnext']
-			for org in orgs:
-				url = 'https://api.github.com/repos/{org}/{app}'.format(org=org, app=url)
-				res = requests.get(url)
-				if res.ok:
-					data = res.json()
-					if 'name' in data:
-						if url == data['name']:
-							url = 'https://github.com/{org}/{app}'.format(org=org, app=url)
-							break
 
-		# Gets repo name from URL
-		repo_name = url.rsplit('/', 1)[1].rsplit('.', 1)[0]
-		logger.info('getting app {}'.format(repo_name))
-		shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
-		branch = '--branch {branch}'.format(branch=branch) if branch else ''
-
-		exec_cmd("git clone -q {git_url} {branch} {shallow_clone} --origin upstream".format(
-					git_url=url,
-					shallow_clone=shallow_clone,
-					branch=branch),
-					cwd=os.path.join(bench_path, 'apps'))
+	try:
+		if os.path.exists(url):
+			# handles "/path/to/app/" and "/path/to/app"
+			repo_name = os.path.split(url[:-1] if url[-1] == os.sep else url)[-1]
+			shutil.copytree(url, os.path.join(bench_path, 'apps', repo_name))
+		else:
+			get_remote_app(url, branch=branch, bench_path=bench_path, skip_assets=skip_assets, verbose=verbose, postprocess=postprocess)
+	except (OSError, bench.utils.CommandFailedError):
+		if os.path.exists(os.path.join(bench_path, 'apps', repo_name)):
+			log("Directory apps/{0} already exists!".format(repo_name), level=2)
+		return
 
 	#Retrieves app name from setup.py
 	app_path = os.path.join(bench_path, 'apps', repo_name, 'setup.py')
@@ -131,7 +140,7 @@ def get_app(url, branch=None, bench_path='.', skip_assets=False, verbose=False, 
 			apps_path = os.path.join(os.path.abspath(bench_path), 'apps')
 			os.rename(os.path.join(apps_path, repo_name), os.path.join(apps_path, app_name))
 
-	print('installing', app_name)
+	logger.info('installing {}'.format(app_name))
 	install_app(app=app_name, bench_path=bench_path, verbose=verbose)
 
 	if postprocess:
