@@ -1,9 +1,11 @@
 import errno, glob, grp, itertools, json, logging, multiprocessing, os, platform, pwd, re, select, shutil, site, subprocess, sys
+from datetime import datetime
 from distutils.spawn import find_executable
 
 import requests
 import semantic_version
 from six import iteritems
+from six.moves.urllib.parse import urlparse
 
 import bench
 from bench import env
@@ -984,3 +986,68 @@ def in_virtual_env():
 		return _no_global_under_venv()
 
 	return False
+
+def migrate_env(python, no_backup=False):
+	from bench.config.common_site_config import get_config
+	from bench.app import get_apps
+
+	log = logging.getLogger(__name__)
+	log.setLevel(logging.DEBUG)
+
+	nvenv = 'env'
+	path = os.getcwd()
+	python = which(python)
+	virtualenv = which('virtualenv')
+	pvenv = os.path.join(path, nvenv)
+	pip = os.path.join(pvenv, 'bin', 'pip')
+
+	# Clear Cache before Bench Dies.
+	try:
+		config = get_config(bench_path=os.getcwd())
+		rredis = urlparse(config['redis_cache'])
+
+		redis  = '{redis} -p {port}'.format(redis=which('redis-cli'), port=rredis.port)
+
+		log.debug('Clearing Redis Cache...')
+		exec_cmd('{redis} FLUSHALL'.format(redis = redis))
+		log.debug('Clearing Redis DataBase...')
+		exec_cmd('{redis} FLUSHDB'.format(redis = redis))
+	except:
+		log.warn('Please ensure Redis Connections are running or Daemonized.')
+
+	# I know, bad name for a flag. Thanks, Ameya! :| - <achilles@frappe.io>
+	if not no_backup:
+		# Back, the f*ck up.
+		parch = os.path.join(path, 'archived_envs')
+		if not os.path.exists(parch):
+			os.mkdir(parch)
+
+		# Simply moving. Thanks, Ameya.
+		# I'm keen to zip.
+		source = os.path.join(path, 'env')
+		target = parch
+
+		log.debug('Backing up Virtual Environment')
+		stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+		dest = os.path.join(path, str(stamp))
+
+		# WARNING: This is an archive, you might have to use virtualenv --relocate
+		# That's because virtualenv creates symlinks with shebangs pointing to executables.
+		# shebangs, shebangs - ricky martin.
+
+		# ...and shutil.copytree is a f*cking mess.
+		os.rename(source, dest)
+		shutil.move(dest, target)
+
+	try:
+		log.debug('Setting up a New Virtual {} Environment'.format(python))
+
+		exec_cmd('{virtualenv} --python {python} {pvenv}'.format(virtualenv=virtualenv, python=python, pvenv=pvenv))
+
+		apps = ' '.join(["-e {}".format(os.path.join("apps", app)) for app in get_apps()])
+		exec_cmd('{0} install -q -U {1}'.format(pip, apps))
+
+		log.debug('Migration Successful to {}'.format(python))
+	except:
+		log.debug('Migration Error')
+		raise
