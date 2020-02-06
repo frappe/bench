@@ -83,7 +83,7 @@ If you have questions, please ask them on the [forum](https://discuss.erpnext.co
 - Works on Ubuntu 16.04+, CentOS 7+, Debian 8+
 - You may have to install Python 3 and other essentials by running `apt-get install python3-minimal build-essential python3-setuptools`
 - This script will install the pre-requisites, install bench and setup an ERPNext site `(site1.local under frappe-bench)`
-- Passwords for Frappe Administrator and MariaDB (root) will be asked and saved under `~/passwoords.txt`
+- Passwords for Frappe Administrator and MariaDB (root) will be asked and saved under `~/passwords.txt`
 - MariaDB (root) password may be `password` on a fresh server
 - You can then login as **Administrator** with the Administrator password
 - The log file is saved under `/tmp/logs/install_bench.log` in case you run into any issues during the install.
