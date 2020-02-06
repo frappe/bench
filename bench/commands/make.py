@@ -93,3 +93,14 @@ def include_app_for_update(app_name):
 	"Include app from updating"
 	from bench.app import remove_from_excluded_apps_txt
 	remove_from_excluded_apps_txt(app_name)
+
+
+@click.command('pip', context_settings={"ignore_unknown_options": True}, help="For pip help use `bench pip help [COMMAND]` or `bench pip [COMMAND] -h`")
+@click.argument('args', nargs=-1)
+@click.pass_context
+def pip(ctx, args):
+	"Run pip commands in bench env"
+	import os
+	from bench.utils import get_env_cmd
+	env_pip = get_env_cmd('pip')
+	os.execv(env_pip, (env_pip,) + args)
