@@ -1,31 +1,28 @@
-from __future__ import print_function
-import os
-from .utils import (exec_cmd, get_frappe, check_git_for_shallow_clone, build_assets,
-	restart_supervisor_processes, get_cmd_output, run_frappe_cmd, CommandFailedError,
-	restart_systemd_processes, log)
-from .config.common_site_config import get_config
+import json, logging, os, re, shutil, subprocess, sys
 
-import logging
 import requests
 import semantic_version
-import json
-import re
-import subprocess
+
 import bench
-import sys
-import shutil
+from bench.config.common_site_config import get_config
+from bench.utils import (CommandFailedError, build_assets, check_git_for_shallow_clone, exec_cmd, get_cmd_output,
+	get_frappe, log, restart_supervisor_processes, restart_systemd_processes, run_frappe_cmd)
+
 
 logging.basicConfig(level="DEBUG")
 logger = logging.getLogger(__name__)
 
+
 class InvalidBranchException(Exception): pass
 class InvalidRemoteException(Exception): pass
+
 
 class MajorVersionUpgradeException(Exception):
 	def __init__(self, message, upstream_version, local_version):
 		super(MajorVersionUpgradeException, self).__init__(message)
 		self.upstream_version = upstream_version
 		self.local_version = local_version
+
 
 def get_apps(bench_path='.'):
 	try:
@@ -34,11 +31,13 @@ def get_apps(bench_path='.'):
 	except IOError:
 		return []
 
+
 def add_to_appstxt(app, bench_path='.'):
 	apps = get_apps(bench_path=bench_path)
 	if app not in apps:
 		apps.append(app)
 		return write_appstxt(apps, bench_path=bench_path)
+
 
 def remove_from_appstxt(app, bench_path='.'):
 	apps = get_apps(bench_path=bench_path)
@@ -46,9 +45,11 @@ def remove_from_appstxt(app, bench_path='.'):
 		apps.remove(app)
 		return write_appstxt(apps, bench_path=bench_path)
 
+
 def write_appstxt(apps, bench_path='.'):
 	with open(os.path.join(bench_path, 'sites', 'apps.txt'), 'w') as f:
 		return f.write('\n'.join(apps))
+
 
 def check_url(url, raise_err = True):
 	try:
@@ -65,12 +66,14 @@ def check_url(url, raise_err = True):
 
 	return True
 
+
 def get_excluded_apps(bench_path='.'):
 	try:
 		with open(os.path.join(bench_path, 'sites', 'excluded_apps.txt')) as f:
 			return f.read().strip().split('\n')
 	except IOError:
 		return []
+
 
 def add_to_excluded_apps_txt(app, bench_path='.'):
 	if app == 'frappe':
@@ -82,15 +85,18 @@ def add_to_excluded_apps_txt(app, bench_path='.'):
 		apps.append(app)
 		return write_excluded_apps_txt(apps, bench_path=bench_path)
 
+
 def write_excluded_apps_txt(apps, bench_path='.'):
 	with open(os.path.join(bench_path, 'sites', 'excluded_apps.txt'), 'w') as f:
 		return f.write('\n'.join(apps))
+
 
 def remove_from_excluded_apps_txt(app, bench_path='.'):
 	apps = get_excluded_apps(bench_path=bench_path)
 	if app in apps:
 		apps.remove(app)
 		return write_excluded_apps_txt(apps, bench_path=bench_path)
+
 
 def get_remote_app(url, branch=None, bench_path='.', skip_assets=False, verbose=False, postprocess=True):
 	if not check_url(url, raise_err=False):
@@ -118,6 +124,7 @@ def get_remote_app(url, branch=None, bench_path='.', skip_assets=False, verbose=
 				cwd=os.path.join(bench_path, 'apps'))
 
 	return repo_name
+
 
 def get_app(url, branch=None, bench_path='.', skip_assets=False, verbose=False, postprocess=True):
 	"""Installs Frappe app from url (git repo or file system) in bench env"""
@@ -155,6 +162,7 @@ def get_app(url, branch=None, bench_path='.', skip_assets=False, verbose=False, 
 		if conf.get('restart_systemd_on_update'):
 			restart_systemd_processes(bench_path=bench_path)
 
+
 def new_app(app, bench_path='.'):
 	# For backwards compatibility
 	app = app.lower().replace(" ", "_").replace("-", "_")
@@ -169,6 +177,7 @@ def new_app(app, bench_path='.'):
 		run_frappe_cmd('make-app', apps, app, bench_path=bench_path)
 	install_app(app, bench_path=bench_path)
 
+
 def install_app(app, bench_path=".", verbose=False, no_cache=False):
 	logger.info("installing {}".format(app))
 
@@ -179,6 +188,7 @@ def install_app(app, bench_path=".", verbose=False, no_cache=False):
 
 	exec_cmd("{pip} install {quiet} -U -e {app} {no_cache}".format(pip=pip_path, quiet=quiet_flag, app=app_path, no_cache=cache_flag))
 	add_to_appstxt(app, bench_path=bench_path)
+
 
 def remove_app(app, bench_path='.'):
 	if not app in get_apps(bench_path):
@@ -205,6 +215,7 @@ def remove_app(app, bench_path='.'):
 		restart_supervisor_processes(bench_path=bench_path)
 	if get_config(bench_path).get('restart_systemd_on_update'):
 		restart_systemd_processes(bench_path=bench_path)
+
 
 def pull_all_apps(bench_path='.', reset=False):
 	'''Check all apps if there no local changes, pull'''
@@ -278,15 +289,18 @@ def is_version_upgrade(app='frappe', bench_path='.', branch=None):
 
 	return (False, local_version, upstream_version)
 
+
 def get_current_frappe_version(bench_path='.'):
 	try:
 		return get_major_version(get_current_version('frappe', bench_path=bench_path))
 	except IOError:
 		return 0
 
+
 def get_current_branch(app, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	return get_cmd_output("basename $(git symbolic-ref -q HEAD)", cwd=repo_dir)
+
 
 def get_remote(app, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
@@ -302,14 +316,17 @@ def get_remote(app, bench_path='.'):
 		# get the first remote
 		return contents.splitlines()[0].split()[0]
 
+
 def use_rq(bench_path):
 	bench_path = os.path.abspath(bench_path)
 	celery_app = os.path.join(bench_path, 'apps', 'frappe', 'frappe', 'celery_app.py')
 	return not os.path.exists(celery_app)
 
+
 def fetch_upstream(app, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	return subprocess.call(["git", "fetch", "upstream"], cwd=repo_dir)
+
 
 def get_current_version(app, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
@@ -322,10 +339,12 @@ def get_current_version(app, bench_path='.'):
 		with open(os.path.join(repo_dir, 'setup.py')) as f:
 			return get_version_from_string(f.read(), field='version')
 
+
 def get_develop_version(app, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	with open(os.path.join(repo_dir, os.path.basename(repo_dir), 'hooks.py')) as f:
 		return get_version_from_string(f.read(), field='develop_version')
+
 
 def get_upstream_version(app, branch=None, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
@@ -341,12 +360,15 @@ def get_upstream_version(app, branch=None, bench_path='.'):
 			raise
 	return get_version_from_string(contents)
 
+
 def get_upstream_url(app, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	return subprocess.check_output(['git', 'config', '--get', 'remote.upstream.url'], cwd=repo_dir).strip()
 
+
 def get_repo_dir(app, bench_path='.'):
 	return os.path.join(bench_path, 'apps', app)
+
 
 def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrade=True):
 	from .utils import update_requirements, update_node_packages, backup_all_sites, patch_sites, build_assets, pre_upgrade, post_upgrade
@@ -401,27 +423,34 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 		build_assets()
 		post_upgrade(version_upgrade[1], version_upgrade[2])
 
+
 def switch_to_branch(branch=None, apps=None, bench_path='.', upgrade=False):
 	switch_branch(branch, apps=apps, bench_path=bench_path, upgrade=upgrade)
+
 
 def switch_to_master(apps=None, bench_path='.', upgrade=True):
 	switch_branch('master', apps=apps, bench_path=bench_path, upgrade=upgrade)
 
+
 def switch_to_develop(apps=None, bench_path='.', upgrade=True):
 	switch_branch('develop', apps=apps, bench_path=bench_path, upgrade=upgrade)
+
 
 def get_version_from_string(contents, field='__version__'):
 	match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % field,
 			contents)
 	return match.group(2)
 
+
 def get_major_version(version):
 	return semantic_version.Version(version).major
+
 
 def install_apps_from_path(path, bench_path='.'):
 	apps = get_apps_json(path)
 	for app in apps:
 		get_app(app['url'], branch=app.get('branch'), bench_path=bench_path, skip_assets=True)
+
 
 def get_apps_json(path):
 	if path.startswith('http'):
@@ -430,6 +459,7 @@ def get_apps_json(path):
 
 	with open(path) as f:
 		return json.load(f)
+
 
 def validate_branch():
 	installed_apps = set(get_apps())
