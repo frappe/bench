@@ -117,6 +117,8 @@ def get_remote_app(url, branch=None, bench_path='.', skip_assets=False, verbose=
 				branch=branch),
 				cwd=os.path.join(bench_path, 'apps'))
 
+	return repo_name
+
 def get_app(url, branch=None, bench_path='.', skip_assets=False, verbose=False, postprocess=True):
 	"""Installs Frappe app from url (git repo or file system) in bench env"""
 
@@ -126,7 +128,7 @@ def get_app(url, branch=None, bench_path='.', skip_assets=False, verbose=False, 
 			repo_name = os.path.split(url[:-1] if url[-1] == os.sep else url)[-1]
 			shutil.copytree(url, os.path.join(bench_path, 'apps', repo_name))
 		else:
-			get_remote_app(url, branch=branch, bench_path=bench_path, skip_assets=skip_assets, verbose=verbose, postprocess=postprocess)
+			repo_name = get_remote_app(url, branch=branch, bench_path=bench_path, skip_assets=skip_assets, verbose=verbose, postprocess=postprocess)
 	except (OSError, bench.utils.CommandFailedError):
 		if os.path.exists(os.path.join(bench_path, 'apps', repo_name)):
 			log("Directory apps/{0} already exists!".format(repo_name), level=2)
