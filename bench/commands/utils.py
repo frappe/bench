@@ -202,8 +202,8 @@ def find_benches(location):
 
 @click.command('migrate-env')
 @click.argument('python', type=str)
-@click.option('--no-backup', is_flag=True)
-def migrate_env(python, no_backup=False):
+@click.option('--no-backup', 'backup', is_flag=True, default=True)
+def migrate_env(python, backup=True):
 	"""Migrate Virtual Environment to desired Python Version"""
 	from bench.utils import migrate_env
-	migrate_env(python=python, no_backup=no_backup)
+	migrate_env(python=python, backup=backup)

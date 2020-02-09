@@ -987,7 +987,7 @@ def in_virtual_env():
 
 	return False
 
-def migrate_env(python, no_backup=False):
+def migrate_env(python, backup=False):
 	from bench.config.common_site_config import get_config
 	from bench.app import get_apps
 
@@ -1015,15 +1015,12 @@ def migrate_env(python, no_backup=False):
 	except:
 		log.warn('Please ensure Redis Connections are running or Daemonized.')
 
-	# I know, bad name for a flag. Thanks, Ameya! :| - <achilles@frappe.io>
-	if not no_backup:
-		# Back, the f*ck up.
+	# Backup venv: restore using `virtualenv --relocatable` if needed
+	if backup:
 		parch = os.path.join(path, 'archived_envs')
 		if not os.path.exists(parch):
 			os.mkdir(parch)
 
-		# Simply moving. Thanks, Ameya.
-		# I'm keen to zip.
 		source = os.path.join(path, 'env')
 		target = parch
 
@@ -1031,17 +1028,12 @@ def migrate_env(python, no_backup=False):
 		stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 		dest = os.path.join(path, str(stamp))
 
-		# WARNING: This is an archive, you might have to use virtualenv --relocate
-		# That's because virtualenv creates symlinks with shebangs pointing to executables.
-		# shebangs, shebangs - ricky martin.
-
-		# ...and shutil.copytree is a f*cking mess.
 		os.rename(source, dest)
 		shutil.move(dest, target)
 
+	# Create virtualenv using specified python
 	try:
 		log.debug('Setting up a New Virtual {} Environment'.format(python))
-
 		exec_cmd('{virtualenv} --python {python} {pvenv}'.format(virtualenv=virtualenv, python=python, pvenv=pvenv))
 
 		apps = ' '.join(["-e {}".format(os.path.join("apps", app)) for app in get_apps()])
