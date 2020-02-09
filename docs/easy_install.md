@@ -1,7 +1,7 @@
 # Easy Install Script
 
 - This script will install the pre-requisites, install bench and setup an ERPNext site `(site1.local under frappe-bench)`
-- Passwords for Frappe Administrator and MariaDB (root) will be asked and saved under `~/passwoords.txt`
+- Passwords for Frappe Administrator and MariaDB (root) will be asked and saved under `~/passwords.txt`
 - MariaDB (root) password may be `password` on a fresh server
 - You can then login as **Administrator** with the Administrator password
 - The log file is saved under `/tmp/logs/install_bench.log` in case you run into any issues during the install.
@@ -45,7 +45,7 @@ Switch to `[frappe-user]` (using `su [frappe-user]`) and start the setup
 
 *Note: `user` flag to create a user and install using that user (By default, the script will create a user with the username `frappe` if the --user flag is not used)*
 
-For production or development, append teh `--production` or `--develop` flag to the command respectively.
+For production or development, append the `--production` or `--develop` flag to the command respectively.
 
 	sudo python3 install.py --production --user [frappe-user]
 
