@@ -497,7 +497,10 @@ def update_node_packages(bench_path='.'):
 		update_yarn_packages(bench_path)
 
 def update_yarn_packages(bench_path='.'):
+	from bench.config.common_site_config import get_config
+
 	apps_dir = os.path.join(bench_path, 'apps')
+	production_mode = "" if get_config(".").get("developer_mode") else "--production"
 
 	if not find_executable('yarn'):
 		print("Please install yarn using below command and try again.")
@@ -507,7 +510,7 @@ def update_yarn_packages(bench_path='.'):
 	for app in os.listdir(apps_dir):
 		app_path = os.path.join(apps_dir, app)
 		if os.path.exists(os.path.join(app_path, 'package.json')):
-			exec_cmd('yarn install', cwd=app_path)
+			exec_cmd('yarn install {}'.format(production_mode), cwd=app_path)
 
 
 def update_npm_packages(bench_path='.'):
