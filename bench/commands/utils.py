@@ -198,3 +198,12 @@ def find_benches(location):
 	"""Finds benches recursively from location"""
 	from bench.utils import find_benches
 	find_benches(directory=location)
+
+
+@click.command('migrate-env')
+@click.argument('python', type=str)
+@click.option('--no-backup', 'backup', is_flag=True, default=True)
+def migrate_env(python, backup=True):
+	"""Migrate Virtual Environment to desired Python Version"""
+	from bench.utils import migrate_env
+	migrate_env(python=python, backup=backup)
