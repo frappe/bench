@@ -1,8 +1,9 @@
 import click
+import re
 import sys
 import os
 from bench.config.common_site_config import get_config, update_config
-from bench.app import pull_all_apps, is_version_upgrade, validate_branch
+from bench.app import pull_apps, is_version_upgrade, validate_branch
 from bench.utils import (update_bench, validate_upgrade, pre_upgrade, post_upgrade, before_update,
 	update_requirements, update_node_packages, backup_all_sites, patch_sites, build_assets,
 	restart_supervisor_processes, restart_systemd_processes, is_bench_directory)
@@ -12,6 +13,7 @@ from six.moves import reload_module
 
 @click.command('update')
 @click.option('--pull', is_flag=True, help="Pull changes in all the apps in bench")
+@click.option('--apps', type=str)
 @click.option('--patch', is_flag=True, help="Run migrations for all sites in the bench")
 @click.option('--build', is_flag=True, help="Build JS and CSS artifacts for the bench")
 @click.option('--bench', is_flag=True, help="Update bench")
@@ -22,7 +24,7 @@ from six.moves import reload_module
 @click.option('--no-backup', is_flag=True)
 @click.option('--force', is_flag=True)
 @click.option('--reset', is_flag=True, help="Hard resets git branch's to their new states overriding any changes and overriding rebase on pull")
-def update(pull=False, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, restart_systemd=False, requirements=False, no_backup=False, force=False, reset=False):
+def update(pull=False, apps=None, patch=False, build=False, bench=False, auto=False, restart_supervisor=False, restart_systemd=False, requirements=False, no_backup=False, force=False, reset=False):
 	"Update bench"
 
 	if not is_bench_directory():
@@ -39,16 +41,20 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 	patches.run(bench_path='.')
 	conf = get_config(".")
 
+	if apps and not pull:
+		apps = []
+
 	if bench and conf.get('update_bench_on_update'):
 		update_bench(bench_repo=True, requirements=False)
 		restart_update({
-				'pull': pull,
-				'patch': patch,
-				'build': build,
-				'requirements': requirements,
-				'no-backup': no_backup,
-				'restart-supervisor': restart_supervisor,
-				'reset': reset
+			'pull': pull,
+			'apps': apps,
+			'patch': patch,
+			'build': build,
+			'requirements': requirements,
+			'no-backup': no_backup,
+			'restart-supervisor': restart_supervisor,
+			'reset': reset
 		})
 
 	if conf.get('release_bench'):
@@ -65,9 +71,9 @@ def update(pull=False, patch=False, build=False, bench=False, auto=False, restar
 		print("This would take significant time to migrate and might break custom apps.")
 		click.confirm('Do you want to continue?', abort=True)
 
-	_update(pull, patch, build, bench, auto, restart_supervisor, restart_systemd, requirements, no_backup, force=force, reset=reset)
+	_update(pull, apps, patch, build, bench, auto, restart_supervisor, restart_systemd, requirements, no_backup, force=force, reset=reset)
 
-def _update(pull=False, patch=False, build=False, update_bench=False, auto=False, restart_supervisor=False,
+def _update(pull=False, apps=None, patch=False, build=False, update_bench=False, auto=False, restart_supervisor=False,
 		restart_systemd=False, requirements=False, no_backup=False, bench_path='.', force=False, reset=False):
 	conf = get_config(bench_path=bench_path)
 	version_upgrade = is_version_upgrade(bench_path=bench_path)
@@ -84,8 +90,11 @@ def _update(pull=False, patch=False, build=False, update_bench=False, auto=False
 		print('Backing up sites...')
 		backup_all_sites(bench_path=bench_path)
 
+	if apps:
+		apps = [app for app in re.split(",| ", apps) if app]
+
 	if pull:
-		pull_all_apps(bench_path=bench_path, reset=reset)
+		pull_apps(apps=apps, bench_path=bench_path, reset=reset)
 
 	if requirements:
 		update_requirements(bench_path=bench_path)
@@ -121,7 +130,7 @@ def _update(pull=False, patch=False, build=False, update_bench=False, auto=False
 @click.command('retry-upgrade')
 @click.option('--version', default=5)
 def retry_upgrade(version):
-	pull_all_apps()
+	pull_apps()
 	patch_sites()
 	build_assets()
 	post_upgrade(version-1, version)
