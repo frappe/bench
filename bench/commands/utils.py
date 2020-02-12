@@ -116,19 +116,6 @@ def renew_lets_encrypt():
 	from bench.config.lets_encrypt import renew_certs
 	renew_certs()
 
-@click.command()
-def shell(bench_path='.'):
-	if not os.environ.get('SHELL'):
-		print("Cannot get shell")
-		sys.exit(1)
-	if not os.path.exists('sites'):
-		print("sites dir doesn't exist")
-		sys.exit(1)
-	env = copy.copy(os.environ)
-	env['PS1'] = '(' + os.path.basename(os.path.dirname(os.path.abspath(__file__))) + ')' + env.get('PS1', '')
-	env['PATH'] = os.path.dirname(os.path.abspath(os.path.join('env','bin')) + ':' + env['PATH'])
-	os.chdir('sites')
-	os.execve(env['SHELL'], [env['SHELL']], env)
 
 @click.command('backup', help="Backup single site")
 @click.argument('site')
