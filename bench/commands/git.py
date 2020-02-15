@@ -1,6 +1,5 @@
 # imports - standard imports
 import os
-import re
 import subprocess
 
 # imports - module imports

@@ -61,11 +61,10 @@ def setup_fonts():
 @click.option("--yes", help="Yes to regeneration config", is_flag=True, default=False)
 def setup_production(user, yes=False):
 	from bench.config.production_setup import setup_production
-	from bench.utils import run_playbook
 	# Install prereqs for production
 	from distutils.spawn import find_executable
 	if not find_executable("ansible"):
-		exec_cmd("sudo {0} install ansible".format("pip3" if PY3 else "pip2"))
+		exec_cmd("sudo -H {0} -m pip install ansible".format(sys.executable))
 	if not find_executable("fail2ban-client"):
 		exec_cmd("bench setup role fail2ban")
 	if not find_executable("nginx"):
@@ -164,13 +163,19 @@ def setup_requirements(node=False, python=False):
 @click.option("--domain", help="Domain on which you want to run bench manager")
 def setup_manager(yes=False, port=23624, domain=None):
 	from six.moves import input
+	from bench.utils import get_sites
+	from bench.config.common_site_config import get_config
+	from bench.config.nginx import make_bench_manager_nginx_conf
+
 	create_new_site = True
+
 	if "bench-manager.local" in os.listdir("sites"):
 		ans = input("Site already exists. Overwrite existing site? [Y/n]: ").lower()
 		while ans not in ("y", "n", ""):
 			ans = input("Please enter 'y' or 'n'. Site already exists. Overwrite existing site? [Y/n]: ").lower()
 		if ans == "n":
 			create_new_site = False
+
 	if create_new_site:
 		exec_cmd("bench new-site --force bench-manager.local")
 
@@ -181,22 +186,18 @@ def setup_manager(yes=False, port=23624, domain=None):
 
 	exec_cmd("bench --site bench-manager.local install-app bench_manager")
 
-	from bench.config.common_site_config import get_config
 	bench_path = "."
 	conf = get_config(bench_path)
+
 	if conf.get("restart_supervisor_on_update") or conf.get("restart_systemd_on_update"):
 		# implicates a production setup or so I presume
 		if not domain:
 			print("Please specify the site name on which you want to host bench-manager using the 'domain' flag")
 			sys.exit(1)
 
-		from bench.utils import get_sites, get_bench_name
-		bench_name = get_bench_name(bench_path)
-
 		if domain not in get_sites(bench_path):
 			raise Exception("No such site")
 
-		from bench.config.nginx import make_bench_manager_nginx_conf
 		make_bench_manager_nginx_conf(bench_path, yes=yes, port=port, domain=domain)
 
 

@@ -1,10 +1,5 @@
-# imports - standard imports
-import os
-import sys
-import json
-
 # imports - module imports
-from bench.utils import run_playbook, setup_sudoers, is_root
+from bench.utils import run_playbook, setup_sudoers
 
 # imports - third party imports
 import click

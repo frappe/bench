@@ -15,16 +15,13 @@ import shutil
 import site
 import subprocess
 import sys
-import time
 from datetime import datetime
 from distutils.spawn import find_executable
 
 # imports - third party imports
 import click
 import requests
-import semantic_version
 from six import iteritems
-from six.moves import reload_module
 from six.moves.urllib.parse import urlparse
 
 # imports - module imports
@@ -314,7 +311,6 @@ def exec_cmd(cmd, cwd='.'):
 
 
 def which(executable, raise_err = False):
-	from distutils.spawn import find_executable
 	exec_ = find_executable(executable)
 
 	if not exec_ and raise_err:
