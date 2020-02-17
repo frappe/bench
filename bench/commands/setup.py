@@ -124,7 +124,7 @@ def set_ssh_port(port, force=False):
 @click.command("lets-encrypt", help="Setup lets-encrypt SSL for site")
 @click.argument("site")
 @click.option("--custom-domain")
-@click.option("-n", "--non-interactive", default=False, is_flag=True, help="Run certbot non-interactively. Shouldn't be used on 1'st attempt")
+@click.option('-n', '--non-interactive', default=False, is_flag=True, help="Run command non-interactively. This flag restarts nginx and runs certbot non interactively. Shouldn't be used on 1'st attempt")
 def setup_letsencrypt(site, custom_domain, non_interactive):
 	from bench.config.lets_encrypt import setup_letsencrypt
 	setup_letsencrypt(site, custom_domain, bench_path=".", interactive=not non_interactive)

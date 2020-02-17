@@ -29,9 +29,10 @@ def setup_letsencrypt(site, custom_domain, bench_path, interactive):
 			print("No custom domain named {0} set for site".format(custom_domain))
 			return
 
-	click.confirm('Running this will stop the nginx service temporarily causing your sites to go offline\n'
-		'Do you want to continue?',
-		abort=True)
+	if interactive:
+		click.confirm('Running this will stop the nginx service temporarily causing your sites to go offline\n'
+			'Do you want to continue?',
+			abort=True)
 
 	if not get_config(bench_path).get("dns_multitenant"):
 		print("You cannot setup SSL without DNS Multitenancy")
