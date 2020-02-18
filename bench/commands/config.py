@@ -1,80 +1,87 @@
-import click, json
-from bench.config.common_site_config import update_config
+# imports - standard imports
+import ast
+import json
 
-## Config
-## Not DRY
-@click.group()
+# imports - module imports
+from bench.config.common_site_config import update_config, get_config, put_config
+
+# imports - third party imports
+import click
+
+
+
+class AliasedGroup(click.Group):
+	def get_command(self, ctx, cmd_name):
+		try:
+			cmd_name = ALIASES[cmd_name].name
+		except KeyError:
+			pass
+		return super(AliasedGroup, self).get_command(ctx, cmd_name)
+
+
+@click.group(cls=AliasedGroup, help='Change bench configuration')
 def config():
-	"change bench configuration"
 	pass
 
-@click.command('auto_update')
+
+@click.command('auto_update', help='Enable/Disable auto update for bench')
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_auto_update(state):
-	"Enable/Disable auto update for bench"
 	state = True if state == 'on' else False
 	update_config({'auto_update': state})
 
 
-@click.command('restart_supervisor_on_update')
+@click.command('restart_supervisor_on_update', help='Enable/Disable auto restart of supervisor processes')
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_restart_supervisor_on_update(state):
-	"Enable/Disable auto restart of supervisor processes"
 	state = True if state == 'on' else False
 	update_config({'restart_supervisor_on_update': state})
 
-@click.command('restart_systemd_on_update')
+
+@click.command('restart_systemd_on_update', help='Enable/Disable auto restart of systemd units')
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_restart_systemd_on_update(state):
-	"Enable/Disable auto restart of systemd units"
 	state = True if state == 'on' else False
 	update_config({'restart_systemd_on_update': state})
 
-@click.command('update_bench_on_update')
+
+@click.command('update_bench_on_update', help='Enable/Disable bench updates on running bench update')
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_update_bench_on_update(state):
-	"Enable/Disable bench updates on running bench update"
 	state = True if state == 'on' else False
 	update_config({'update_bench_on_update': state})
 
 
-@click.command('dns_multitenant')
+@click.command('dns_multitenant', help='Enable/Disable bench multitenancy on running bench update')
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_dns_multitenant(state):
-	"Enable/Disable bench updates on running bench update"
 	state = True if state == 'on' else False
 	update_config({'dns_multitenant': state})
 
 
-@click.command('serve_default_site')
+@click.command('serve_default_site', help='Configure nginx to serve the default site on port 80')
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_serve_default_site(state):
-	"Configure nginx to serve the default site on port 80"
 	state = True if state == 'on' else False
 	update_config({'serve_default_site': state})
 
 
-@click.command('rebase_on_pull')
+@click.command('rebase_on_pull', help='Rebase repositories on pulling')
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_rebase_on_pull(state):
-	"Rebase repositories on pulling"
 	state = True if state == 'on' else False
 	update_config({'rebase_on_pull': state})
 
 
-@click.command('http_timeout')
+@click.command('http_timeout', help='Set HTTP timeout')
 @click.argument('seconds', type=int)
 def config_http_timeout(seconds):
-	"set http timeout"
 	update_config({'http_timeout': seconds})
 
 
-@click.command('set-common-config')
+@click.command('set-common-config', help='Set value in common config')
 @click.option('configs', '-c', '--config', multiple=True, type=(str, str))
 def set_common_config(configs):
-	import ast
-	from bench.config.common_site_config import update_config
-
 	common_site_config = {}
 	for key, value in configs:
 		if value in ("False", "True"):
@@ -103,10 +110,9 @@ def set_common_config(configs):
 	update_config(common_site_config, bench_path='.')
 
 
-@click.command('remove-common-config')
+@click.command('remove-common-config', help='Remove specific keys from current bench\'s common config')
 @click.argument('keys', nargs=-1)
 def remove_common_config(keys):
-	from bench.config.common_site_config import get_config, put_config
 	common_site_config = get_config('.')
 	for key in keys:
 		if key in common_site_config:
@@ -124,3 +130,6 @@ config.add_command(config_serve_default_site)
 config.add_command(config_http_timeout)
 config.add_command(set_common_config)
 config.add_command(remove_common_config)
+
+# aliases for _ seperated commands to - ones
+ALIASES = {k.replace('_', '-'):v for k, v in config.commands.items() if '_' in k}
