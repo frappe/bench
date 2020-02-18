@@ -9,17 +9,7 @@ from bench.config.common_site_config import update_config, get_config, put_confi
 import click
 
 
-
-class AliasedGroup(click.Group):
-	def get_command(self, ctx, cmd_name):
-		try:
-			cmd_name = ALIASES[cmd_name].name
-		except KeyError:
-			pass
-		return super(AliasedGroup, self).get_command(ctx, cmd_name)
-
-
-@click.group(cls=AliasedGroup, help='Change bench configuration')
+@click.group(help='Change bench configuration')
 def config():
 	pass
 
@@ -130,6 +120,3 @@ config.add_command(config_serve_default_site)
 config.add_command(config_http_timeout)
 config.add_command(set_common_config)
 config.add_command(remove_common_config)
-
-# aliases for _ seperated commands to - ones
-ALIASES = {k.replace('_', '-'):v for k, v in config.commands.items() if '_' in k}
