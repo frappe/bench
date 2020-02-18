@@ -2,22 +2,20 @@ import click
 import sys, os, copy
 
 
-@click.command('start')
+@click.command('start', help="Start Frappe development processes")
 @click.option('--no-dev', is_flag=True, default=False)
 @click.option('--concurrency', '-c', type=str)
 @click.option('--procfile', '-p', type=str)
 def start(no_dev, concurrency, procfile):
-	"Start Frappe development processes"
 	from bench.utils import start
 	start(no_dev=no_dev, concurrency=concurrency, procfile=procfile)
 
 
-@click.command('restart')
+@click.command('restart', help="Restart supervisor processes or systemd units")
 @click.option('--web', is_flag=True, default=False)
 @click.option('--supervisor', is_flag=True, default=False)
 @click.option('--systemd', is_flag=True, default=False)
 def restart(web, supervisor, systemd):
-	"Restart supervisor processes or systemd units"
 	from bench.utils import restart_supervisor_processes, restart_systemd_processes
 	from bench.config.common_site_config import get_config
 	if get_config('.').get('restart_supervisor_on_update') or supervisor:
@@ -25,20 +23,18 @@ def restart(web, supervisor, systemd):
 	if get_config('.').get('restart_systemd_on_update') or systemd:
 		restart_systemd_processes(bench_path='.', web_workers=web)
 
-@click.command('set-nginx-port')
+@click.command('set-nginx-port', help="Set nginx port for site")
 @click.argument('site')
 @click.argument('port', type=int)
 def set_nginx_port(site, port):
-	"Set nginx port for site"
 	from bench.config.site_config import set_nginx_port
 	set_nginx_port(site, port)
 
 
-@click.command('set-ssl-certificate')
+@click.command('set-ssl-certificate', help="Set ssl certificate path for site")
 @click.argument('site')
 @click.argument('ssl-certificate-path')
 def set_ssl_certificate(site, ssl_certificate_path):
-	"Set ssl certificate path for site"
 	from bench.config.site_config import set_ssl_certificate
 	set_ssl_certificate(site, ssl_certificate_path)
 
@@ -134,25 +130,23 @@ def shell(bench_path='.'):
 	os.execve(env['SHELL'], [env['SHELL']], env)
 
 
-@click.command('backup')
+@click.command('backup', help="Backup single site")
 @click.argument('site')
 def backup_site(site):
-	"backup site"
 	from bench.utils import get_sites, backup_site
 	if site not in get_sites(bench_path='.'):
-		print('site not found')
+		print('Site `{0}` not found'.format(site))
 		sys.exit(1)
 	backup_site(site, bench_path='.')
 
 
-@click.command('backup-all-sites')
+@click.command('backup-all-sites', help="Backup all sites in current bench")
 def backup_all_sites():
-	"backup all sites"
 	from bench.utils import backup_all_sites
 	backup_all_sites(bench_path='.')
 
 
-@click.command('release')
+@click.command('release', help="Release a Frappe app (internal to the Frappe team)")
 @click.argument('app')
 @click.argument('bump-type', type=click.Choice(['major', 'minor', 'patch', 'stable', 'prerelease']))
 @click.option('--from-branch', default='develop')
@@ -162,48 +156,42 @@ def backup_all_sites():
 @click.option('--repo-name')
 @click.option('--dont-frontport', is_flag=True, default=False, help='Front port fixes to new branches, example merging hotfix(v10) into staging-fixes(v11)')
 def release(app, bump_type, from_branch, to_branch, owner, repo_name, remote, dont_frontport):
-	"Release app (internal to the Frappe team)"
 	from bench.release import release
 	frontport = not dont_frontport
 	release(bench_path='.', app=app, bump_type=bump_type, from_branch=from_branch, to_branch=to_branch,
 		remote=remote, owner=owner, repo_name=repo_name, frontport=frontport)
 
 
-@click.command('prepare-beta-release')
+@click.command('prepare-beta-release', help="Prepare major beta release from develop branch")
 @click.argument('app')
 @click.option('--owner', default='frappe')
 def prepare_beta_release(app, owner):
-	"""Prepare major beta release from develop branch"""
 	from bench.prepare_beta_release import prepare_beta_release
 	prepare_beta_release(bench_path='.', app=app, owner=owner)
 
 
-@click.command('disable-production')
+@click.command('disable-production', help="Disables production environment for the bench.")
 def disable_production():
-	"""Disables production environment for the bench."""
 	from bench.config.production_setup import disable_production
 	disable_production(bench_path='.')
 
 
-@click.command('src')
+@click.command('src', help="Prints bench source folder path, which can be used as: cd `bench src`")
 def bench_src():
-	"""Prints bench source folder path, which can be used as: cd `bench src` """
 	import bench
 	print(os.path.dirname(bench.__path__[0]))
 
 
-@click.command('find')
+@click.command('find', help="Finds benches recursively from location")
 @click.argument('location', default='')
 def find_benches(location):
-	"""Finds benches recursively from location"""
 	from bench.utils import find_benches
 	find_benches(directory=location)
 
 
-@click.command('migrate-env')
+@click.command('migrate-env', help="Migrate Virtual Environment to desired Python Version")
 @click.argument('python', type=str)
 @click.option('--no-backup', 'backup', is_flag=True, default=True)
 def migrate_env(python, backup=True):
-	"""Migrate Virtual Environment to desired Python Version"""
 	from bench.utils import migrate_env
 	migrate_env(python=python, backup=backup)
