@@ -1,14 +1,34 @@
-import errno, glob, grp, itertools, json, logging, multiprocessing, os, platform, pwd, re, select, shutil, site, subprocess, sys
+# imports - standard imports
+import errno
+import glob
+import grp
+import itertools
+import json
+import logging
+import multiprocessing
+import os
+import platform
+import pwd
+import re
+import select
+import shutil
+import site
+import subprocess
+import sys
+import time
 from datetime import datetime
 from distutils.spawn import find_executable
 
+# imports - third party imports
+import click
 import requests
 import semantic_version
 from six import iteritems
+from six.moves import reload_module
 from six.moves.urllib.parse import urlparse
 
+# imports - module imports
 import bench
-from bench import env
 
 
 class PatchError(Exception):
@@ -70,9 +90,11 @@ def get_frappe(bench_path='.'):
 def get_env_cmd(cmd, bench_path='.'):
 	return os.path.abspath(os.path.join(bench_path, 'env', 'bin', cmd))
 
-def init(path, apps_path=None, no_procfile=False, no_backups=False, no_auto_update=False,
-		frappe_path=None, frappe_branch=None, wheel_cache_dir=None, verbose=False, clone_from=None,
-		skip_redis_config_generation=False, clone_without_update=False, ignore_exist = False, skip_assets=False, python='python3'):
+def init(path, apps_path=None, no_procfile=False, no_backups=False,
+		frappe_path=None, frappe_branch=None, verbose=False, clone_from=None,
+		skip_redis_config_generation=False, clone_without_update=False, ignore_exist=False, skip_assets=False,
+		python='python3'):
+	"""Initialize a new bench directory"""
 	from bench.app import get_app, install_apps_from_path
 	from bench.config import redis
 	from bench.config.common_site_config import make_config
@@ -127,9 +149,98 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False, no_auto_upda
 		setup_procfile(path)
 	if not no_backups:
 		setup_backups(bench_path=path)
-	if not no_auto_update:
-		setup_auto_update(bench_path=path)
+
 	copy_patches_txt(path)
+
+def restart_update(kwargs):
+	args = ['--'+k for k, v in list(kwargs.items()) if v]
+	os.execv(sys.argv[0], sys.argv[:2] + args)
+
+def update(pull=False, patch=False, build=False, bench=False, restart_supervisor=False,
+	restart_systemd=False, requirements=False, backup=True, force=False, reset=False):
+	"""command: bench update"""
+
+	if not is_bench_directory():
+		"""Update only bench CLI if bench update called from outside a bench"""
+		update_bench(bench_repo=True, requirements=True)
+		sys.exit(0)
+
+	from bench import patches
+	from bench.app import is_version_upgrade, pull_all_apps, validate_branch
+	from bench.config.common_site_config import get_config, update_config
+
+	bench_path = os.path.abspath(".")
+	patches.run(bench_path=bench_path)
+	conf = get_config(bench_path)
+
+	if conf.get('release_bench'):
+		print('Release bench detected, cannot update!')
+		sys.exit(1)
+
+	if not (pull or patch or build or bench or requirements):
+		pull, patch, build, bench, requirements = True, True, True, True, True
+
+	if bench and conf.get('update_bench_on_update'):
+		update_bench(bench_repo=True, requirements=False)
+		restart_update({
+			'pull': pull,
+			'patch': patch,
+			'build': build,
+			'requirements': requirements,
+			'backup': backup,
+			'restart-supervisor': restart_supervisor,
+			'reset': reset
+		})
+
+	validate_branch()
+	version_upgrade = is_version_upgrade()
+
+	if version_upgrade[0]:
+		if force:
+			print("Force flag has been used for a major version change in Frappe and it's apps. \nThis will take significant time to migrate and might break custom apps.")
+		else:
+			print("This update will cause a major version change in Frappe/ERPNext from {0} to {1}. \nThis would take significant time to migrate and might break custom apps.".format(*version_upgrade[1:]))
+			click.confirm('Do you want to continue?', abort=True)
+
+	if version_upgrade[0] or (not version_upgrade[0] and force):
+		validate_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
+
+	before_update(bench_path=bench_path, requirements=requirements)
+
+	conf.update({ "maintenance_mode": 1, "pause_scheduler": 1 })
+	update_config(conf, bench_path=bench_path)
+
+	if backup:
+		print('Backing up sites...')
+		backup_all_sites(bench_path=bench_path)
+
+	if pull:
+		pull_all_apps(bench_path=bench_path, reset=reset)
+
+	if requirements:
+		update_requirements(bench_path=bench_path)
+		update_node_packages(bench_path=bench_path)
+
+	if patch:
+		print('Patching sites...')
+		patch_sites(bench_path=bench_path)
+
+	if build:
+		build_assets(bench_path=bench_path)
+
+	if version_upgrade[0] or (not version_upgrade[0] and force):
+		post_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
+
+	if restart_supervisor or conf.get('restart_supervisor_on_update'):
+		restart_supervisor_processes(bench_path=bench_path)
+
+	if restart_systemd or conf.get('restart_systemd_on_update'):
+		restart_systemd_processes(bench_path=bench_path)
+
+	conf.update({ "maintenance_mode": 0, "pause_scheduler": 0 })
+	update_config(conf, bench_path=bench_path)
+
+	print("_" * 80 + "\nBench: Deployment tool for Frappe and Frappe Applications (https://frappe.io/bench).\nOpen source depends on your contributions, so please contribute bug reports, patches, fixes or cash and be a part of the community")
 
 def copy_patches_txt(bench_path):
 	shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'patches', 'patches.txt'),
@@ -246,12 +357,6 @@ def get_sites(bench_path='.'):
 def get_bench_dir(bench_path='.'):
 	return os.path.abspath(bench_path)
 
-def setup_auto_update(bench_path='.'):
-	logger.info('setting up auto update')
-	add_to_crontab('0 10 * * * cd {bench_dir} &&  {bench} update --auto >> {logfile} 2>&1'.format(bench_dir=get_bench_dir(bench_path=bench_path),
-		bench=os.path.join(get_bench_dir(bench_path=bench_path), 'env', 'bin', 'bench'),
-		logfile=os.path.join(get_bench_dir(bench_path=bench_path), 'logs', 'auto_update_log.log')))
-
 def setup_backups(bench_path='.'):
 	logger.info('setting up backups')
 	bench_dir = get_bench_dir(bench_path=bench_path)
@@ -302,6 +407,8 @@ def update_bench(bench_repo=True, requirements=True):
 	logger.info("Bench Updated!")
 
 def setup_sudoers(user):
+	from bench import env
+
 	if not os.path.exists('/etc/sudoers.d'):
 		os.makedirs('/etc/sudoers.d')
 
@@ -689,20 +796,6 @@ def validate_upgrade(from_ver, to_ver, bench_path='.'):
 	if to_ver >= 6:
 		if not find_executable('npm') and not (find_executable('node') or find_executable('nodejs')):
 			raise Exception("Please install nodejs and npm")
-
-def pre_upgrade(from_ver, to_ver, bench_path='.'):
-	pip = os.path.join(bench_path, 'env', 'bin', 'pip')
-
-	if from_ver <= 4 and to_ver >= 5:
-		from .migrate_to_v5 import remove_shopping_cart
-		apps = ('frappe', 'erpnext')
-		remove_shopping_cart(bench_path=bench_path)
-
-		for app in apps:
-			cwd = os.path.abspath(os.path.join(bench_path, 'apps', app))
-			if os.path.exists(cwd):
-				exec_cmd("git clean -dxf", cwd=cwd)
-				exec_cmd("{pip} install --upgrade -e {app}".format(pip=pip, app=cwd))
 
 def post_upgrade(from_ver, to_ver, bench_path='.'):
 	from .config.common_site_config import get_config
