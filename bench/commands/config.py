@@ -14,12 +14,6 @@ def config():
 	pass
 
 
-@click.command('auto_update', help='Enable/Disable auto update for bench')
-@click.argument('state', type=click.Choice(['on', 'off']))
-def config_auto_update(state):
-	update_config({'auto_update': state == 'on'})
-
-
 @click.command('restart_supervisor_on_update', help='Enable/Disable auto restart of supervisor processes')
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_restart_supervisor_on_update(state):
@@ -90,7 +84,6 @@ def remove_common_config(keys):
 	put_config(common_site_config)
 
 
-config.add_command(config_auto_update)
 config.add_command(config_update_bench_on_update)
 config.add_command(config_restart_supervisor_on_update)
 config.add_command(config_restart_systemd_on_update)

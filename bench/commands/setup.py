@@ -75,12 +75,6 @@ def setup_production(user, yes=False):
 	setup_production(user=user, yes=yes)
 
 
-@click.command("auto-update", help="Add cronjob for bench auto update")
-def setup_auto_update():
-	from bench.utils import setup_auto_update
-	setup_auto_update()
-
-
 @click.command("backups", help="Add cronjob for bench backups")
 def setup_backups():
 	from bench.utils import setup_backups
@@ -309,7 +303,6 @@ setup.add_command(setup_redis)
 setup.add_command(setup_letsencrypt)
 setup.add_command(setup_wildcard_ssl)
 setup.add_command(setup_production)
-setup.add_command(setup_auto_update)
 setup.add_command(setup_backups)
 setup.add_command(setup_env)
 setup.add_command(setup_procfile)

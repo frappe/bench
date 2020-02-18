@@ -13,11 +13,10 @@ import click
 @click.option('--clone-without-update', is_flag=True, help="copy repos from path without update")
 @click.option('--no-procfile', is_flag=True, help="Pull changes in all the apps in bench")
 @click.option('--no-backups',is_flag=True, help="Run migrations for all sites in the bench")
-@click.option('--no-auto-update',is_flag=True, help="Build JS and CSS artifacts for the bench")
 @click.option('--skip-redis-config-generation', is_flag=True, help="Skip redis config generation if already specifying the common-site-config file")
 @click.option('--skip-assets',is_flag=True, default=False, help="Do not build assets")
 @click.option('--verbose',is_flag=True, help="Verbose output during install")
-def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups, no_auto_update, clone_from, verbose, skip_redis_config_generation, clone_without_update, ignore_exist=False, skip_assets=False, python='python3'):
+def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups, clone_from, verbose, skip_redis_config_generation, clone_without_update, ignore_exist=False, skip_assets=False, python='python3'):
 	from bench.utils import init, log
 
 	try:
@@ -26,7 +25,6 @@ def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups, n
 			apps_path=apps_path,
 			no_procfile=no_procfile,
 			no_backups=no_backups,
-			no_auto_update=no_auto_update,
 			frappe_path=frappe_path,
 			frappe_branch=frappe_branch,
 			verbose=verbose,
