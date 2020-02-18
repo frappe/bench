@@ -17,50 +17,43 @@ def config():
 @click.command('auto_update', help='Enable/Disable auto update for bench')
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_auto_update(state):
-	state = True if state == 'on' else False
-	update_config({'auto_update': state})
+	update_config({'auto_update': state == 'on'})
 
 
 @click.command('restart_supervisor_on_update', help='Enable/Disable auto restart of supervisor processes')
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_restart_supervisor_on_update(state):
-	state = True if state == 'on' else False
-	update_config({'restart_supervisor_on_update': state})
+	update_config({'restart_supervisor_on_update': state == 'on'})
 
 
 @click.command('restart_systemd_on_update', help='Enable/Disable auto restart of systemd units')
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_restart_systemd_on_update(state):
-	state = True if state == 'on' else False
-	update_config({'restart_systemd_on_update': state})
+	update_config({'restart_systemd_on_update': state == 'on'})
 
 
 @click.command('update_bench_on_update', help='Enable/Disable bench updates on running bench update')
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_update_bench_on_update(state):
-	state = True if state == 'on' else False
-	update_config({'update_bench_on_update': state})
+	update_config({'update_bench_on_update': state == 'on'})
 
 
 @click.command('dns_multitenant', help='Enable/Disable bench multitenancy on running bench update')
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_dns_multitenant(state):
-	state = True if state == 'on' else False
-	update_config({'dns_multitenant': state})
+	update_config({'dns_multitenant': state == 'on'})
 
 
 @click.command('serve_default_site', help='Configure nginx to serve the default site on port 80')
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_serve_default_site(state):
-	state = True if state == 'on' else False
-	update_config({'serve_default_site': state})
+	update_config({'serve_default_site': state == 'on'})
 
 
 @click.command('rebase_on_pull', help='Rebase repositories on pulling')
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_rebase_on_pull(state):
-	state = True if state == 'on' else False
-	update_config({'rebase_on_pull': state})
+	update_config({'rebase_on_pull': state == 'on'})
 
 
 @click.command('http_timeout', help='Set HTTP timeout')
@@ -74,26 +67,12 @@ def config_http_timeout(seconds):
 def set_common_config(configs):
 	common_site_config = {}
 	for key, value in configs:
-		if value in ("False", "True"):
+		if value in ('true', 'false'):
+			value = value.title()
+		try:
 			value = ast.literal_eval(value)
-
-		elif "." in value:
-			try:
-				value = float(value)
-			except ValueError:
-				pass
-
-		elif "{" in value or "[" in value:
-			try:
-				value = json.loads(value)
-			except ValueError:
-				pass
-
-		else:
-			try:
-				value = int(value)
-			except ValueError:
-				pass
+		except ValueError:
+			pass
 
 		common_site_config[key] = value
 
