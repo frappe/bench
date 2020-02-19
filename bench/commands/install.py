@@ -15,7 +15,7 @@ def install():
 	pass
 
 
-@click.command('prerequisites')
+@click.command('prerequisites', help="Installs pre-requisite libraries, essential tools like b2zip, htop, screen, vim, x11-fonts, python libs, cups and Redis")
 def install_prerequisites():
 	run_playbook('site.yml', tag='common, redis')
 
