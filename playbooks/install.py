@@ -390,20 +390,57 @@ def parse_commandline_args():
 	parser.add_argument('--python', dest='python', default='python3', help=argparse.SUPPRESS)
 	# LXC Support
 	parser.add_argument('--container', dest='container', default=False, action='store_true', help='Use if you\'re creating inside LXC')
+	# docker options - single container or multiple containers
+	parser.add_argument('--single-docker', dest='docker_single_container', default=False, action='store_true', help='Use if you just want to evaluate ERPNext')
+	parser.add_argument('--multi-docker', dest='docker_multi_container', default=False, action='store_true', help='Use to setup frappe_docker to use ERPNext')
 	args = parser.parse_args()
 
 	return args
+
 
 if __name__ == '__main__':
 	if sys.version[0] == '2':
 		if not raw_input("It is recommended to run this script with Python 3\nDo you still wish to continue? [Y/n]: ").lower() == "y":
 			sys.exit()
 
+	args = parse_commandline_args()
+
+	if args.docker_single_container or args.docker_multi_container:
+		if not shutil.which("docker"):
+			log("Docker is not found in PATH. Check if it's installed and try again!", level=2)
+			sys.exit(1)
+		import shlex
+
+	if args.docker_single_container:
+		print("Only ERPNext version 12 is available for single container setup!\nSetting up instance...\nFor more information follow https://hub.docker.com/r/frappe/erpnext")
+		command = shlex.split("docker run -d --name erpnext -p 80:80 frappe/erpnext:version-12")
+		os.execvp('docker', command)
+
+	if args.docker_multi_container:
+		frappe_docker_repo_url = "https://github.com/frappe/frappe_docker"
+		print("Setting up your ERPNext instance via frappe_docker!\nFor more information follow {}".format(frappe_docker_repo_url))
+		setup_dbench = False
+		steps = [
+			"git clone --quiet --depth 1 {}".format(frappe_docker_repo_url),
+			"./dbench setup docker",
+			"./dbench init",
+			"./dbench new-site site1.local",
+			"./dbench setup hosts",
+			"./dbench start"
+		]
+		setup_docker = [shlex.split(step) for step in steps]
+		for step in setup_docker:
+			subprocess.run(step)
+			if not setup_dbench:
+				os.chdir(os.path.abspath('./frappe_docker'))
+				setup_dbench = True
+
+		sys.exit(0)
+
 	if not is_sudo_user():
 		log("Please run this script as a non-root user with sudo privileges", level=3)
 		sys.exit()
 
-	args = parse_commandline_args()
 
 	with warnings.catch_warnings():
 		warnings.simplefilter("ignore")
