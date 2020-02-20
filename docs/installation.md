@@ -18,6 +18,7 @@ To manually install frappe/erpnext, you can follow this [this wiki](https://gith
 #### 1. Install Prerequisites
 <pre>
 • Python 3.6+
+• Virtualenv 16+
 • Node.js 12
 • Redis 5					(caching and realtime updates)
 • MariaDB 10.3 / Postgres 9.5			(to run database driven apps)

@@ -59,13 +59,23 @@ or
 *Note: `container` flag to install inside a container (this will prevent the `/proc/sys/vm/swappiness: Read-only` file system error)*
 
 
-	python3 install.py --production --version 11 --user [frappe-user]
+	sudo python3 install.py --production --version 11 --user [frappe-user]
 
 use --version flag to install specific version
 
-	python3 install.py --production --version 11 --python python2.7 --user [frappe-user]
+	sudo python3 install.py --production --version 11 --python python2.7 --user [frappe-user]
 
 use --python flag to specify virtual environments python version, by default script setup python3
+
+If you've setup docker on your system, I'd say best to create a new user, add that user to the *docker* group and fire away after logging in from said user account. It is recommended that you run these commands without *sudo*.
+
+	python3 install.py --single-docker
+
+use `--single-docker` if you just want to evaluate ERPNext. This is a single container setup which would work fine generally, but not recommended for production setups.
+
+	python3 install.py --multi-docker
+
+use `--multi-docker` flag to set up [frappe_docker](https://github.com/frappe/frappe_docker) which uses a multi container approach for production as well as development setups for ERPNext.
 
 ---
 
