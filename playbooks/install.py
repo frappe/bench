@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import print_function
 import os, sys, subprocess, getpass, json, multiprocessing, shutil, platform, warnings, datetime
 
 tmp_bench_repo = os.path.join('/', 'tmp', '.bench')
