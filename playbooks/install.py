@@ -405,9 +405,12 @@ def parse_commandline_args():
 	return args
 
 if __name__ == '__main__':
-	if sys.version[0] == '2' and not os.environ.get('CI'):
-		if not raw_input("It is recommended to run this script with Python 3\nDo you still wish to continue? [Y/n]: ").lower() == "y":
-			sys.exit()
+	if sys.version[0] == '2':
+		from disutils.spawn import find_executable
+		shutil.which = find_executable
+		if not os.environ.get('CI'):
+			if not raw_input("It is recommended to run this script with Python 3\nDo you still wish to continue? [Y/n]: ").lower() == "y":
+				sys.exit()
 
 	if not is_sudo_user():
 		log("Please run this script as a non-root user with sudo privileges", level=3)
