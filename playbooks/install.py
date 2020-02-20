@@ -406,7 +406,12 @@ def parse_commandline_args():
 
 if __name__ == '__main__':
 	if sys.version[0] == '2':
-		from disutils.spawn import find_executable
+		try:
+			from disutils.spawn import find_executable
+		except ImportError:
+			print("Please install distutils or use Python3 to run the script")
+			print("$ pip install distutils")
+			sys.exit(1)
 		shutil.which = find_executable
 		if not os.environ.get('CI'):
 			if not raw_input("It is recommended to run this script with Python 3\nDo you still wish to continue? [Y/n]: ").lower() == "y":
