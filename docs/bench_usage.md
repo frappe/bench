@@ -3,54 +3,6 @@
 This may not be known to a lot of people but half the bench commands we're used to, exist in the Frappe Framework and not in bench directly. Those commands generally are the `--site` commands. This page is concerned only with the commands in the bench project. Any framework commands won't be a part of this consolidation.
 
 
-## How are Frappe Framework commands available via bench?
-
-bench utilizes `frappe.utils.bench_manager` to get the framework's as well as those of any custom commands written in application installed in the Frappe environment. Currently, with *version 12* there are commands related to the scheduler, sites, translations and other utils in Frappe inherited by bench.
-
-
-## Can I add CLI commands in my custom app and call them via bench?
-
-Along with the framework commands, Frappe's `bench_manager` module also searches for any commands in your custom applications. Thereby, bench communicates with the respective bench's Frappe which in turn checks for available commands in all of the applications.
-
-To make your custom command available to bench, just create a `commands` module under your parent module and write the command with a click wrapper and a variable commands which contains a list of click functions, which are your own commands. The directory strcuture may be visualized as:
-
-```
-frappe-bench
-|──apps
-    |── frappe
-    ├── custom_app
-    │   ├── README.md
-    │   ├── custom_app
-    │   │   ├── commands    <------ commands module
-    │   ├── license.txt
-    │   ├── requirements.txt
-    │   └── setup.py
-```
-
-The commands module maybe a single file such as `commands.py` or a directory with an `__init__.py` file. For a custom application of name 'flags', example may be given as
-
-```python
-# file_path: frappe-bench/apps/flags/flags/commands.py
-import click
-
-@click.command('set-flags')
-@click.argument('state', type=click.Choice(['on', 'off']))
-def set_flags(state):
-    from flags.utils import set_flags
-    set_flags(state=state)
-
-commands = [
-    set_flags
-]
-```
-
-and with context of the current bench, this command maybe executed simply as
-
-```zsh
-➜ bench set-flags
-Flags are set to state: 'on'
-```
-
 # bench CLI Commands
 
 Under Click's structure, `bench` is the main command group, under which there are three main groups of commands in bench currently, namely
@@ -118,25 +70,25 @@ These commands belong directly to the bench group so they can be invoked directl
 
 ### The usual commands
 
- - **init**: Initialize a new bench instance in the specified path
- - **restart**: Restart supervisor processes or systemd units. Used in production setup
- - **update**: Updates bench tool and if executed in a bench directory, without any flags will backup, pull, setup requirements, build, run patches and restart bench. Using specific flags will only do certain tasks instead of all
- - **migrate-env**: Migrate Virtual Environment to desired Python Version
+ - **init**: Initialize a new bench instance in the specified path. This sets up a complete bench folder with an `apps` folder which contains all the Frappe apps available in the current bench, `sites` folder that stores all site data seperated by individual site folders, `config` folder that contains your redis, NGINX and supervisor configuration files. The `env` folder consists of all python dependencies the current bench and installed Frappe applications have.
+ - **restart**: Restart web, supervisor, systemd processes units. Used in production setup.
+ - **update**: Updates bench tool and if executed in a bench directory, without any flags will backup, pull, setup requirements, build, run patches and restart bench. Using specific flags will only do certain tasks instead of all.
+ - **migrate-env**: Migrate Virtual Environment to desired Python version. This regenerates the `env` folder with the specified Python version.
  - **retry-upgrade**: Retry a failed upgrade
  - **disable-production**: Disables production environment for the bench.
- - **renew-lets-encrypt**: Renew Let's Encrypt certificate
- - **backup**: Backup single site
- - **backup-all-sites**: Backup all sites in current bench
+ - **renew-lets-encrypt**: Renew Let's Encrypt certificate for site SSL.
+ - **backup**: Backup single site data. Can be used to backup files as well.
+ - **backup-all-sites**: Backup all sites in current bench.
 
- - **get-app**: Clone an app from the internet or filesystem and set it up in your bench
- - **remove-app**: Completely remove app from bench and re-build assets if not installed on any site
- - **exclude-app**: Exclude app from updating
- - **include-app**: Include app for updating
+ - **get-app**: Download an app from the internet or filesystem and set it up in your bench. This clones the git repo of the Frappe project and installs it in the bench environment.
+ - **remove-app**: Completely remove app from bench and re-build assets if not installed on any site.
+ - **exclude-app**: Exclude app from updating during a `bench update`
+ - **include-app**: Include app for updating. All Frappe applications are included by default when installed.
  - **remote-set-url**: Set app remote url
  - **remote-reset-url**: Reset app remote url to frappe official
  - **remote-urls**: Show apps remote url
  - **switch-to-branch**: Switch all apps to specified branch, or specify apps separated by space
- - **switch-to-develop**: Switch frappe and erpnext to develop branch
+ - **switch-to-develop**: Switch Frappe and ERPNext to develop branch
 
 
 ### A little advanced
@@ -155,15 +107,15 @@ These commands belong directly to the bench group so they can be invoked directl
 
 ### Developer's commands
 
- - **start**: Start Frappe development processes
- - **src**: Prints bench source folder path, which can be used as:  cd `bench src`
- - **find**: Finds benches recursively from location
- - **pip**: For pip help use `bench pip help [COMMAND]` or `bench pip [COMMAND] -h`
- - **new-app**: Create a new Frappe application under apps folder
+ - **start**: Start Frappe development processes. Uses the Procfile to start the Frappe development environment.
+ - **src**: Prints bench source folder path, which can be used to cd into the bench installation repository by `cd $(bench src)`.
+ - **find**: Finds benches recursively from location or specified path.
+ - **pip**: Use the current bench's pip to manage Python packages. For help about pip usage: `bench pip help [COMMAND]` or `bench pip [COMMAND] -h`.
+ - **new-app**: Create a new Frappe application under apps folder.
 
 
 ### Release bench
- - **release**: Release a Frappe application
+ - **release**: Create a release of a Frappe application
  - **prepare-beta-release**: Prepare major beta release from develop branch
 
 
@@ -176,9 +128,9 @@ The setup commands used for setting up the Frappe environment in context of the 
     bench setup COMMAND [ARGS]...
 ```
 
- - **sudoers**: Add commands to sudoers list for execution without password
+ - **sudoers**: Add commands to sudoers list for allowing bench commands execution without root password
 
- - **env**: Setup virtualenv for bench
+ - **env**: Setup virtualenv for bench. This sets up a `env` folder under the root of the bench directory.
  - **redis**: Generates configuration for Redis
  - **fonts**: Add Frappe fonts to system
  - **config**: Generate or over-write sites/common_site_config.json
@@ -186,11 +138,11 @@ The setup commands used for setting up the Frappe environment in context of the 
  - **socketio**: Setup node dependencies for socketio server
  - **requirements**: Setup Python and Node dependencies
 
- - **manager**: Setup bench-manager.local site with the bench_manager app installed on it
+ - **manager**: Setup `bench-manager.local` site with the [Bench Manager](https://github.com/frappe/bench_manager) app, a GUI for bench installed on it.
 
  - **procfile**: Generate Procfile for bench start
 
- - **production**: Setup Frappe production environment for specific user
+ - **production**: Setup Frappe production environment for specific user. This installs ansible, NGINX, supervisor, fail2ban and generates the respective configuration files.
  - **nginx**: Generate configuration files for NGINX
  - **fail2ban**: Setup fail2ban, an intrusion prevention software framework that protects computer servers from brute-force attacks
  - **systemd**: Generate configuration for systemd
