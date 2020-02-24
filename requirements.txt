@@ -2,7 +2,7 @@ Click==7.0
 GitPython==2.1.11
 honcho==1.0.1
 Jinja2==2.10.3
-python_crontab==2.4.0
+python-crontab==2.4.0
 requests==2.22.0
 semantic_version==2.8.2
 setuptools==40.8.0
