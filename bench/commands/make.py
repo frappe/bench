@@ -15,31 +15,53 @@ import click
 @click.option('--skip-redis-config-generation', is_flag=True, help="Skip redis config generation if already specifying the common-site-config file")
 @click.option('--skip-assets',is_flag=True, default=False, help="Do not build assets")
 @click.option('--verbose',is_flag=True, help="Verbose output during install")
-def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups,
-		no_auto_update, clone_from, verbose, skip_redis_config_generation, clone_without_update,
-		ignore_exist = False, skip_assets=False,
-		python 		 = 'python3'):
+def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups, no_auto_update, clone_from, verbose, skip_redis_config_generation, clone_without_update, ignore_exist=False, skip_assets=False, python='python3'):
 	'''
 	Create a New Bench Instance.
 	'''
-	from bench.utils import init
-	init(path, apps_path=apps_path, no_procfile=no_procfile, no_backups=no_backups,
-			no_auto_update=no_auto_update, frappe_path=frappe_path, frappe_branch=frappe_branch,
-			verbose=verbose, clone_from=clone_from, skip_redis_config_generation=skip_redis_config_generation,
+	from bench.utils import init, log
+
+	try:
+		init(
+			path,
+			apps_path=apps_path,
+			no_procfile=no_procfile,
+			no_backups=no_backups,
+			no_auto_update=no_auto_update,
+			frappe_path=frappe_path,
+			frappe_branch=frappe_branch,
+			verbose=verbose,
+			clone_from=clone_from,
+			skip_redis_config_generation=skip_redis_config_generation,
 			clone_without_update=clone_without_update,
-			ignore_exist = ignore_exist, skip_assets=skip_assets,
-			python 		 = python)
-	click.echo('Bench {} initialized'.format(path))
+			ignore_exist=ignore_exist,
+			skip_assets=skip_assets,
+			python=python,
+		)
+		log('Bench {} initialized'.format(path), level=1)
+	except SystemExit:
+		pass
+	except:
+		import os, shutil, time, six
+		# add a sleep here so that the traceback of other processes doesnt overlap with the prompts
+		time.sleep(1)
+		log("There was a problem while creating {}".format(path), level=2)
+		if six.moves.input("Do you want to rollback these changes? [Y/n]: ").lower() == "y":
+			print('Rolling back Bench "{}"'.format(path))
+			if os.path.exists(path):
+				shutil.rmtree(path)
+
 
 @click.command('get-app')
 @click.argument('name', nargs=-1) # Dummy argument for backward compatibility
 @click.argument('git-url')
 @click.option('--branch', default=None, help="branch to checkout")
-@click.option('--overwrite', is_flag=True)
-def get_app(git_url, branch, overwrite, name=None):
+@click.option('--overwrite', is_flag=True, default=False)
+@click.option('--skip-assets', is_flag=True, default=False, help="Do not build assets")
+def get_app(git_url, branch, name=None, overwrite=False, skip_assets=False):
 	"clone an app from the internet and set it up in your bench"
 	from bench.app import get_app
-	get_app(git_url, branch=branch, overwrite=overwrite)
+	get_app(git_url, branch=branch, skip_assets=skip_assets, overwrite=overwrite)
 
 
 @click.command('new-app')
@@ -72,3 +94,14 @@ def include_app_for_update(app_name):
 	"Include app from updating"
 	from bench.app import remove_from_excluded_apps_txt
 	remove_from_excluded_apps_txt(app_name)
+
+
+@click.command('pip', context_settings={"ignore_unknown_options": True}, help="For pip help use `bench pip help [COMMAND]` or `bench pip [COMMAND] -h`")
+@click.argument('args', nargs=-1)
+@click.pass_context
+def pip(ctx, args):
+	"Run pip commands in bench env"
+	import os
+	from bench.utils import get_env_cmd
+	env_pip = get_env_cmd('pip')
+	os.execv(env_pip, (env_pip,) + args)

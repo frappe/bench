@@ -94,7 +94,7 @@ def remove_from_excluded_apps_txt(app, bench_path='.'):
 		apps.remove(app)
 		return write_excluded_apps_txt(apps, bench_path=bench_path)
 
-def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbose=False,
+def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=False,
 		postprocess=True, overwrite=False):
 	# from bench.utils import check_url
 	try:
@@ -128,7 +128,7 @@ Do you want to continue and overwrite it?'''.format(repo_name)):
 		elif click.confirm('''Do you want to reinstall the existing application?''', abort=True):
 			app_name = get_app_name(bench_path, repo_name)
 			print("Reinstalling {0}".format(app_name))
-			install_app(app=app_name, bench_path=bench_path, verbose=verbose, build_asset_files=build_asset_files)
+			install_app(app=app_name, bench_path=bench_path, verbose=verbose, skip_assets=skip_assets)
 			sys.exit()
 
 	logger.info('Getting app {0}'.format(repo_name))
@@ -140,7 +140,7 @@ Do you want to continue and overwrite it?'''.format(repo_name)):
 
 	app_name = get_app_name(bench_path, repo_name)
 	print("Installing {0}".format(app_name))
-	install_app(app=app_name, bench_path=bench_path, verbose=verbose, build_asset_files=build_asset_files)
+	install_app(app=app_name, bench_path=bench_path, verbose=verbose, skip_assets=skip_assets)
 
 
 def get_app_name(bench_path, repo_name):
@@ -169,7 +169,7 @@ def new_app(app, bench_path='.'):
 	install_app(app, bench_path=bench_path)
 
 
-def install_app(app, bench_path=".", verbose=False, no_cache=False, postprocess=True, build_asset_files=True):
+def install_app(app, bench_path=".", verbose=False, no_cache=False, postprocess=True, skip_assets=False):
 	logger.info("installing {}".format(app))
 
 	pip_path = os.path.join(bench_path, "env", "bin", "pip")
@@ -182,7 +182,7 @@ def install_app(app, bench_path=".", verbose=False, no_cache=False, postprocess=
 	add_to_appstxt(app, bench_path=bench_path)
 
 	if postprocess:
-		if build_asset_files:
+		if not skip_assets:
 			build_assets(bench_path=bench_path, app=app)
 		conf = get_config(bench_path=bench_path)
 
@@ -427,7 +427,7 @@ def get_major_version(version):
 def install_apps_from_path(path, bench_path='.'):
 	apps = get_apps_json(path)
 	for app in apps:
-		get_app(app['url'], branch=app.get('branch'), bench_path=bench_path, build_asset_files=False)
+		get_app(app['url'], branch=app.get('branch'), bench_path=bench_path, skip_assets=True)
 
 def get_apps_json(path):
 	if path.startswith('http'):
@@ -438,12 +438,22 @@ def get_apps_json(path):
 		return json.load(f)
 
 def validate_branch():
-	for app in ['frappe', 'erpnext']:
+	installed_apps = set(get_apps())
+	check_apps = set(['frappe', 'erpnext'])
+	intersection_apps = installed_apps.intersection(check_apps)
+
+	for app in intersection_apps:
 		branch = get_current_branch(app)
 
 		if branch == "master":
-			print('''master branch is renamed to version-11 and develop to version-12.
-Please switch to new branches to get future updates.
+			print("""'master' branch is renamed to 'version-11' since 'version-12' release.
+As of January 2020, the following branches are
+version		Frappe			ERPNext
+11		version-11		version-11
+12		version-12		version-12
+13		develop			develop
 
-To switch to version 11, run the following commands: bench switch-to-branch version-11''')
+Please switch to new branches to get future updates.
+To switch to your required branch, run the following commands: bench switch-to-branch [branch-name]""")
+
 			sys.exit(1)

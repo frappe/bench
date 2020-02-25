@@ -16,12 +16,16 @@
   changed_when: false
 
 - name: Install MariaDB
-  apt: pkg={{ item }} state=present
-  with_items:
-    - mariadb-server
-    - mariadb-client
-    - libmariadbclient18
+  apt:
+    pkg:
+      - mariadb-server
+      - mariadb-client
+      - libmariadbclient18
+    state: present
 
 - name: Install MySQLdb Python package for secure installations.
-  apt: pkg=python3-mysqldb state=present
+  apt:
+    pkg:
+      - python3-mysqldb
+    state: present
   when: mysql_secure_installation and mysql_root_password is defined

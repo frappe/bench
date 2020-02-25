@@ -1,6 +1,8 @@
 ---
 - name: Install unzip
-  apt: pkg={{ item }} update_cache=yes state=present
-  with_items:
-    - unzip
+  apt:
+    pkg:
+      - unzip
+    update_cache: yes
+    state: present
 ...

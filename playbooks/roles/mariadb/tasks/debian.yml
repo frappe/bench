@@ -1,11 +1,17 @@
 ---
 - name: Add apt key for mariadb for Debian <= 8
   apt_key: keyserver=hkp://keyserver.ubuntu.com:80 id=0xcbcb082a1bb943db state=present
-  when: ansible_distribution_major_version | version_compare('8', 'le')
+  when: ansible_distribution_major_version is version_compare('8', 'le')
+
+- name: Install dirmngr for apt key for mariadb for Debian > 8
+  apt:
+    pkg: dirmngr
+    state: present
+  when: ansible_distribution_major_version is version_compare('8', 'gt')
 
 - name: Add apt key for mariadb for Debian > 8
   apt_key: keyserver=hkp://keyserver.ubuntu.com:80 id=0xF1656F24C74CD1D8 state=present
-  when: ansible_distribution_major_version | version_compare('8', 'gt')
+  when: ansible_distribution_major_version is version_compare('8', 'gt')
 
 - name: Add apt repository
   apt_repository:
@@ -21,11 +27,13 @@
   shell: export DEBIAN_FRONTEND=noninteractive
 
 - name: apt-get install
-  apt: pkg={{ item }} update_cache=yes state=present
-  with_items:
-    - mariadb-server
-    - mariadb-client
-    - mariadb-common
-    - libmariadbclient18
-    - python3-mysqldb
+  apt:
+    pkg:
+      - mariadb-server
+      - mariadb-client
+      - mariadb-common
+      - libmariadbclient18
+      - python3-mysqldb
+    update_cache: yes
+    state: present
 ...

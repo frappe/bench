@@ -1,9 +1,10 @@
 ---
 - name: Install ntpd
-  yum: name="{{item}}" state=installed
-  with_items:
-    - ntp
-    - ntpdate
+  yum:
+    name:
+      - ntp
+      - ntpdate
+    state: present
   when: ansible_distribution == 'CentOS'
 
 - name: Enable ntpd
@@ -11,10 +12,11 @@
   when: ansible_distribution == 'CentOS'
 
 - name: Install ntpd
-  apt: name="{{item}}" state=installed
-  with_items:
-    - ntp
-    - ntpdate
+  apt:
+    pkg:
+      - ntp
+      - ntpdate
+    state: present
   when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
 - name: Enable ntpd

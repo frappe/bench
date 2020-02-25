@@ -1,4 +1,5 @@
 from bench.utils import exec_cmd
+from six import PY3
 import click, sys, json
 import os
 
@@ -57,7 +58,7 @@ def setup_production(user, yes=False):
 	# Install prereqs for production
 	from distutils.spawn import find_executable
 	if not find_executable('ansible'):
-		exec_cmd("sudo pip install ansible")
+		exec_cmd("sudo {0} install ansible".format("pip3" if PY3 else "pip2"))
 	if not find_executable('fail2ban-client'):
 		exec_cmd("bench setup role fail2ban")
 	if not find_executable('nginx'):
@@ -121,7 +122,7 @@ def set_ssh_port(port, force=False):
 @click.command('lets-encrypt')
 @click.argument('site')
 @click.option('--custom-domain')
-@click.option('-n', '--non-interactive', default=False, is_flag=True, help="Run certbot non-interactively. Shouldn't be used on 1'st attempt")
+@click.option('-n', '--non-interactive', default=False, is_flag=True, help="Run command non-interactively. This flag restarts nginx and runs certbot non interactively. Shouldn't be used on 1'st attempt")
 def setup_letsencrypt(site, custom_domain, non_interactive):
 	"Setup lets-encrypt for site"
 	from bench.config.lets_encrypt import setup_letsencrypt
