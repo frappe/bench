@@ -172,26 +172,10 @@ def clone_apps_from(bench_path, clone_from, update_app=True):
 		setup_app(app)
 
 def exec_cmd(cmd, cwd='.'):
-	from .cli import from_command_line
-
-	is_async = False if from_command_line else True
-	if is_async:
-		stderr = stdout = subprocess.PIPE
-	else:
-		stderr = stdout = None
-
+	import shlex
 	logger.info(cmd)
-
-	p = subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=stdout, stderr=stderr,
-		universal_newlines=True)
-
-	if is_async:
-		return_code = print_output(p)
-	else:
-		return_code = p.wait()
-
-	if return_code > 0:
-		raise CommandFailedError(cmd)
+	cmd = shlex.split(cmd)
+	subprocess.call(cmd, cwd=cwd, universal_newlines=True)
 
 def which(executable, raise_err = False):
 	from distutils.spawn import find_executable
