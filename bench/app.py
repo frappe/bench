@@ -123,13 +123,13 @@ def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbos
 		# application directory already exists
 		# prompt user to overwrite it
 		if overwrite or click.confirm('''A directory for the application "{0}" already exists.
-Do you want to continue and overwrite it?'''):
+Do you want to continue and overwrite it?'''.format(repo_name)):
 			shutil.rmtree(os.path.join(bench_path, 'apps', repo_name))
 		elif click.confirm('''Do you want to reinstall the existing application?''', abort=True):
 			app_name = get_app_name(bench_path, repo_name)
 			print("Reinstalling {0}".format(app_name))
 			install_app(app=app_name, bench_path=bench_path, verbose=verbose, build_asset_files=build_asset_files)
-			sys.exit(1)
+			sys.exit()
 
 	logger.info('Getting app {0}'.format(repo_name))
 	exec_cmd("git clone {git_url} {branch} {shallow_clone} --origin upstream".format(
