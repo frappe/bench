@@ -127,7 +127,6 @@ Do you want to continue and overwrite it?'''.format(repo_name)):
 			shutil.rmtree(os.path.join(bench_path, 'apps', repo_name))
 		elif click.confirm('''Do you want to reinstall the existing application?''', abort=True):
 			app_name = get_app_name(bench_path, repo_name)
-			print("Reinstalling {0}".format(app_name))
 			install_app(app=app_name, bench_path=bench_path, verbose=verbose, skip_assets=skip_assets)
 			sys.exit()
 
@@ -139,7 +138,6 @@ Do you want to continue and overwrite it?'''.format(repo_name)):
 		cwd=os.path.join(bench_path, 'apps'))
 
 	app_name = get_app_name(bench_path, repo_name)
-	print("Installing {0}".format(app_name))
 	install_app(app=app_name, bench_path=bench_path, verbose=verbose, skip_assets=skip_assets)
 
 
