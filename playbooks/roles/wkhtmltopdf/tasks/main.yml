@@ -20,16 +20,66 @@
     force: yes
   when: ansible_os_family == 'Debian'
 
-# wkhtmltopdf has been locked down to 0.12.3 intentionally since 0.12.4 has problems.
-# I you want to upgrade try it on multiple platforms and then decide
-- name: download wkthmltox linux
-  get_url: url=https://github.com/frappe/wkhtmltopdf/raw/master/wkhtmltox-0.12.3_linux-generic-{{ "amd64" if ansible_architecture == "x86_64" else "i386"}}.tar.xz dest=/tmp/wkhtmltox.tar.xz
+- name: download wkthmltox Ubuntu 18
+  get_url:
+    url: https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.bionic_{{ "amd64" if ansible_architecture == "x86_64" else "i386"}}.deb
+    dest: /tmp/wkhtmltox
+    checksum: '{{ db48fa1a043309c4bfe8c8e0e38dc06c183f821599dd88d4e3cea47c5a5d4cd3 if ansible_architecture == "x86_64" else 1f5ac84c1cb25e385b49b94a04807d60bf73da217bc6c9fe2cbd1f0a61d33f63 }}'
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '14'
 
-- name: Creates directory
-  file: path=/tmp/wkhtmltox state=directory
+- name: download wkthmltox Ubuntu 16
+  get_url:
+    url: https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.xenial_{{ "amd64" if ansible_architecture == "x86_64" else "i386"}}.deb
+    dest: /tmp/wkhtmltox
+    checksum: '{{ df203cee4dc9b3efb8d0cd6fc25fa819883224f50c75b76bd9c856903711dc14 if ansible_architecture == "x86_64" else 27b6edafee099b87b2911cc68b780e79cffed3948bb5a074e8ea1cf8820da156 }}'
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '16'
 
-- name: unarchive wkhtmltopdf
-  unarchive: src=/tmp/wkhtmltox.tar.xz dest=/tmp
+- name: download wkthmltox Ubuntu 14
+  get_url:
+    url: https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.trusty_{{ "amd64" if ansible_architecture == "x86_64" else "i386"}}.deb
+    dest: /tmp/wkhtmltox
+    checksum: '{{ 2a3d1fe80da0dbc69da56cf90a3d0ec2786d1b919be29527630d609fea4a6b7c if ansible_architecture == "x86_64" else 582e02881e4bc6be9aaa634da1fe8c02d3233fb57f6daab9efa137edb812dd3b }}'
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '14'
+
+- name: download wkthmltox CentOS 6
+  get_url:
+    url: https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox-0.12.5-1.centos6.{{ "x86_64" if ansible_architecture == "x86_64" else "i686"}}.rpm
+    dest: /tmp/wkhtmltox
+    checksum: '{{ 17bff4966143d240a126b6cc414c6f79aa2106c0c97c772228e84d685221c25f if ansible_architecture == "x86_64" else c60e75fef5bfa1e79983919ffb47b40dcfbb49d121a510f11ca4b2a2603c00f1 }}'
+  when: ansible_distribution == 'CentOS' and ansible_distribution_major_version == '6'
+
+- name: download wkthmltox CentOS 7
+  get_url:
+    url: https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox-0.12.5-1.centos7.{{ "x86_64" if ansible_architecture == "x86_64" else "i686"}}.rpm
+    dest: /tmp/wkhtmltox
+    checksum: '{{ ac4f909b836fa1fc0188d19a1ab844910f91612e9ccefcb5298aa955a058ffe4 if ansible_architecture == "x86_64" else 1030279ac4b5b15dda04de2587b2a1942bde1c78aa1837dfec4ddcbea426721f }}'
+  when: ansible_distribution == 'CentOS' and ansible_distribution_major_version == '7'
+
+- name: download wkthmltox CentOS 8
+  get_url:
+    url: https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox-0.12.5-1.centos8.x86_64.rpm
+    dest: /tmp/wkhtmltox
+  when: ansible_distribution == 'CentOS' and ansible_distribution_major_version == '8'
+
+- name: download wkthmltox Debian 8
+  get_url:
+    url: https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.jessie_{{ "amd64" if ansible_architecture == "x86_64" else "i386"}}.deb
+    dest: /tmp/wkhtmltox
+    checksum: '{{ 2583399a865d7604726da166ee7cec656b87ae0a6016e6bce7571dcd3045f98b if ansible_architecture == "x86_64" else 3a6969f3ed207a805092e05794644eb9e152aaa6518e9204c819fa318947a8a8 }}'
+  when: ansible_distribution == 'Debian' and ansible_distribution_major_version == '8'
+
+- name: download wkthmltox Debian 9
+  get_url:
+    url: https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.stretch_{{ "amd64" if ansible_architecture == "x86_64" else "i386"}}.deb
+    dest: /tmp/wkhtmltox
+    checksum: '{{ 1140b0ab02aa6e17346af2f14ed0de807376de475ba90e1db3975f112fbd20bb if ansible_architecture == "x86_64" else 5b2d15e738ac479e7a8ca6fd765f406c3684a48091813520f87878278d6dd22a }}'
+  when: ansible_distribution == 'Debian' and ansible_distribution_major_version == '9'
+
+- name: download wkthmltox Debian 10
+  get_url:
+    url: https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.buster_{{ "amd64" if ansible_architecture == "x86_64" else "i386"}}.deb
+    dest: /tmp/wkhtmltox
+  when: ansible_distribution == 'Debian' and ansible_distribution_major_version == '10'
 
 - name: copy to /usr/local/bin
   copy: src="/tmp/wkhtmltox/bin/wkhtmltopdf" dest="/usr/local/bin/wkhtmltopdf"
