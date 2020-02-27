@@ -107,7 +107,7 @@ class TestBenchInit(unittest.TestCase):
 	def test_get_app(self):
 		self.init_bench("test-bench")
 		bench_path = os.path.join(self.benches_path, "test-bench")
-		bench.app.get_app("https://github.com/frappe/frappe_theme", bench_path=bench_path)
+		bench.app.get_app("https://github.com/frappe/frappe_theme", bench_path=bench_path, skip_assets=True)
 		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", "frappe_theme")))
 
 	def test_install_app(self):
@@ -116,7 +116,7 @@ class TestBenchInit(unittest.TestCase):
 		site_name = "install-app.test"
 
 		self.new_site(site_name, "test-bench")
-		bench.app.get_app("https://github.com/frappe/erpnext", "version-12", bench_path=bench_path)
+		bench.app.get_app("https://github.com/frappe/erpnext", "version-12", bench_path=bench_path, skip_assets=True)
 		bench.app.install_app("erpnext", bench_path=bench_path)
 
 		subprocess.call(["bench", "--site", site_name, "install-app", "erpnext"], cwd=bench_path)
@@ -126,7 +126,7 @@ class TestBenchInit(unittest.TestCase):
 	def test_remove_app(self):
 		self.init_bench("test-bench")
 		bench_path = os.path.join(self.benches_path, "test-bench")
-		bench.app.get_app("https://github.com/frappe/erpnext", "version-12", bench_path=bench_path)
+		bench.app.get_app("https://github.com/frappe/erpnext", "version-12", bench_path=bench_path, skip_assets=True)
 		bench.app.remove_app("erpnext", bench_path=bench_path)
 		self.assertFalse(os.path.exists(os.path.join(bench_path, "apps", "erpnext")))
 
