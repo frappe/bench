@@ -1,13 +1,20 @@
-import json, logging, os, re, shutil, subprocess, sys
+# imports - standard imports
+import json
+import logging
+import os
+import re
+import shutil
+import subprocess
+import sys
 
+# imports - third party imports
 import requests
 import semantic_version
 
+# imports - module imports
 import bench
 from bench.config.common_site_config import get_config
-from bench.utils import (CommandFailedError, build_assets, check_git_for_shallow_clone, exec_cmd, get_cmd_output,
-	get_frappe, log, restart_supervisor_processes, restart_systemd_processes, run_frappe_cmd)
-
+from bench.utils import CommandFailedError, build_assets, check_git_for_shallow_clone, exec_cmd, get_cmd_output, get_frappe, log, restart_supervisor_processes, restart_systemd_processes, run_frappe_cmd
 
 logging.basicConfig(level="DEBUG")
 logger = logging.getLogger(__name__)
