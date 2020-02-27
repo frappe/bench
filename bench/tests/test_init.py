@@ -224,11 +224,6 @@ class TestBenchInit(unittest.TestCase):
 		self.assert_exists(python_path, "site-packages", "IPython")
 		self.assert_exists(python_path, "site-packages", "pip")
 
-		site_packages = os.listdir(os.path.join(python_path, "site-packages"))
-		# removing test case temporarily
-		# as develop and master branch havin differnt version of mysqlclient
-		#self.assertTrue(any(package.startswith("mysqlclient-1.3.12") for package in site_packages))
-
 	def assert_config(self, bench_name):
 		for config, search_key in (
 			("redis_queue.conf", "redis_queue.rdb"),
@@ -238,16 +233,11 @@ class TestBenchInit(unittest.TestCase):
 			self.assert_exists(bench_name, "config", config)
 
 			with open(os.path.join(bench_name, "config", config), "r") as f:
-				f = f.read().decode("utf-8")
-				self.assertTrue(search_key in f)
+				self.assertTrue(search_key in f.read())
 
 	def assert_socketio(self, bench_name):
-		try: # for v10 and under
-			self.assert_exists(bench_name, "node_modules")
-			self.assert_exists(bench_name, "node_modules", "socket.io")
-		except: # for v11 and above
-			self.assert_exists(bench_name, "apps", "frappe", "node_modules")
-			self.assert_exists(bench_name, "apps", "frappe", "node_modules", "socket.io")
+		self.assert_exists(bench_name, "apps", "frappe", "node_modules")
+		self.assert_exists(bench_name, "apps", "frappe", "node_modules", "socket.io")
 
 	def assert_common_site_config(self, bench_name, expected_config):
 		common_site_config_path = os.path.join(bench_name, 'sites', 'common_site_config.json')
@@ -263,4 +253,4 @@ class TestBenchInit(unittest.TestCase):
 
 	def load_json(self, path):
 		with open(path, "r") as f:
-			return json.loads(f.read().decode("utf-8"))
+			return json.load(f)
