@@ -415,7 +415,7 @@ if __name__ == '__main__':
 		except ImportError:
 			try:
 				subprocess.check_call('pip install --upgrade setuptools')
-			except:
+			except subprocess.CalledProcessError:
 				print("Install distutils or use Python3 to run the script")
 				sys.exit(1)
 
