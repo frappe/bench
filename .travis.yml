@@ -8,7 +8,7 @@ install:
   - sudo pip install urllib3 pyOpenSSL ndg-httpsclient pyasn1
   - sudo apt-get purge -y mysql-common mysql-server mysql-client
   - sudo apt-get install --only-upgrade -y git
-  - sudo apt-get install hhvm python-distutils && rm -rf /home/travis/.kiex/
+  - sudo apt-get install hhvm && rm -rf /home/travis/.kiex/
   - mkdir -p ~/.bench
   - mkdir -p /tmp/.bench
   - cp -r $TRAVIS_BUILD_DIR/* ~/.bench
