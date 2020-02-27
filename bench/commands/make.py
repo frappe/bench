@@ -56,11 +56,12 @@ def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups, n
 @click.argument('name', nargs=-1) # Dummy argument for backward compatibility
 @click.argument('git-url')
 @click.option('--branch', default=None, help="branch to checkout")
+@click.option('--overwrite', is_flag=True, default=False)
 @click.option('--skip-assets', is_flag=True, default=False, help="Do not build assets")
-def get_app(git_url, branch, name=None, skip_assets=False):
+def get_app(git_url, branch, name=None, overwrite=False, skip_assets=False):
 	"clone an app from the internet and set it up in your bench"
 	from bench.app import get_app
-	get_app(git_url, branch=branch, skip_assets=skip_assets)
+	get_app(git_url, branch=branch, skip_assets=skip_assets, overwrite=overwrite)
 
 
 @click.command('new-app')
@@ -93,3 +94,14 @@ def include_app_for_update(app_name):
 	"Include app from updating"
 	from bench.app import remove_from_excluded_apps_txt
 	remove_from_excluded_apps_txt(app_name)
+
+
+@click.command('pip', context_settings={"ignore_unknown_options": True}, help="For pip help use `bench pip help [COMMAND]` or `bench pip [COMMAND] -h`")
+@click.argument('args', nargs=-1)
+@click.pass_context
+def pip(ctx, args):
+	"Run pip commands in bench env"
+	import os
+	from bench.utils import get_env_cmd
+	env_pip = get_env_cmd('pip')
+	os.execv(env_pip, (env_pip,) + args)

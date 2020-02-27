@@ -7,7 +7,7 @@ jobs:
       - checkout
       - run:
           name: Setup
-          command: |
+          command: |            
             sudo pip install --ignore-installed setuptools
             sudo pip install urllib3 pyOpenSSL ndg-httpsclient pyasn1
             sudo cp -r ~/.ssh/* /root/.ssh
@@ -24,7 +24,7 @@ jobs:
           name: Setup Tests
           command: |
             cd ~
-            sudo pip install --upgrade pip==19.3.1
+            sudo pip install --upgrade pip
             sudo pip install -e ~/.bench
 
       - run:

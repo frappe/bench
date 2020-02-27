@@ -1,9 +1,10 @@
 import click
 import os, sys, logging, json, pwd, subprocess
-from bench.utils import is_root, PatchError, drop_privileges, get_env_cmd, get_cmd_output, get_frappe, log
+from bench.utils import is_root, PatchError, drop_privileges, get_env_cmd, get_cmd_output, get_frappe, log, is_bench_directory
 from bench.app import get_apps
 from bench.config.common_site_config import get_config
 from bench.commands import bench_command
+
 
 logger = logging.getLogger('bench')
 from_command_line = False
@@ -12,6 +13,7 @@ def cli():
 	global from_command_line
 	from_command_line = True
 
+	change_working_directory()
 	check_uid()
 	change_dir()
 	change_uid()
@@ -114,3 +116,24 @@ def get_frappe_help(bench_path='.'):
 		return "Framework commands:\n" + out.split('Commands:')[1]
 	except subprocess.CalledProcessError:
 		return ""
+
+def find_parent_bench(path):
+	"""Checks if parent directories are benches"""
+	if is_bench_directory(directory=path):
+		return path
+
+	home_path = os.path.expanduser("~")
+	root_path = os.path.abspath(os.sep)
+
+	if path not in {home_path, root_path}:
+		# NOTE: the os.path.split assumes that given path is absolute
+		parent_dir = os.path.split(path)[0]
+		return find_parent_bench(parent_dir)
+
+def change_working_directory():
+	"""Allows bench commands to be run from anywhere inside a bench directory"""
+	cur_dir = os.path.abspath(".")
+	bench_path = find_parent_bench(cur_dir)
+
+	if bench_path:
+		os.chdir(bench_path)

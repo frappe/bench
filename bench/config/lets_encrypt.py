@@ -29,9 +29,10 @@ def setup_letsencrypt(site, custom_domain, bench_path, interactive):
 			print("No custom domain named {0} set for site".format(custom_domain))
 			return
 
-	click.confirm('Running this will stop the nginx service temporarily causing your sites to go offline\n'
-		'Do you want to continue?',
-		abort=True)
+	if interactive:
+		click.confirm('Running this will stop the nginx service temporarily causing your sites to go offline\n'
+			'Do you want to continue?',
+			abort=True)
 
 	if not get_config(bench_path).get("dns_multitenant"):
 		print("You cannot setup SSL without DNS Multitenancy")
@@ -82,11 +83,10 @@ def run_certbot_and_setup_ssl(site, custom_domain, bench_path, interactive=True)
 
 def setup_crontab():
 	job_command = '/opt/certbot-auto renew -a nginx --post-hook "systemctl reload nginx"'
-	system_crontab = CronTab(tabfile='/etc/crontab', user=True)
+	system_crontab = CronTab(user='root')
 	if job_command not in str(system_crontab):
-		job  = system_crontab.new(command=job_command, comment="Renew lets-encrypt every month")
-		job.every().month()
-		job.enable()
+		job = system_crontab.new(command=job_command, comment="Renew lets-encrypt every month")
+		job.day.on(1)
 		system_crontab.write()
 
 
