@@ -1,11 +1,19 @@
-
+# imports - standard imports
+import json
+import os
+import shutil
+import subprocess
 import unittest
-import json, os, shutil, subprocess
+
+# imports - third paty imports
+import git
+
+# imports - module imports
 import bench
-import bench.utils
 import bench.app
-import bench.config.common_site_config
 import bench.cli
+import bench.config.common_site_config
+import bench.utils
 from bench.release import get_bumped_version
 
 bench.cli.from_command_line = True
@@ -154,14 +162,13 @@ class TestBenchInit(unittest.TestCase):
 		bench_path = os.path.join(self.benches_path, "test-bench")
 		app_path = os.path.join(bench_path, "apps", "frappe")
 
-		bench.app.switch_branch(branch="master", apps=["frappe"], bench_path=bench_path, check_upgrade=False)
-		out = subprocess.check_output(['git', 'status'], cwd=app_path)
-		self.assertTrue("master" in out)
+		bench.app.switch_branch(branch="version-12", apps=["frappe"], bench_path=bench_path, check_upgrade=False)
+		app_branch_after_switch = str(git.Repo(path=app_path).active_branch)
+		self.assertEqual("version-12", app_branch_after_switch)
 
-		# bring it back to develop!
 		bench.app.switch_branch(branch="develop", apps=["frappe"], bench_path=bench_path, check_upgrade=False)
-		out = subprocess.check_output(['git', 'status'], cwd=app_path)
-		self.assertTrue("develop" in out)
+		app_branch_after_second_switch = str(git.Repo(path=app_path).active_branch)
+		self.assertEqual("develop", app_branch_after_second_switch)
 
 	def init_bench(self, bench_name, **kwargs):
 		self.benches.append(bench_name)
