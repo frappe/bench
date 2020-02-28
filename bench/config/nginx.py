@@ -1,14 +1,23 @@
-import os, json, click, random, string, hashlib
-from bench.utils import get_sites, get_bench_name, exec_cmd
+# imports - standard imports
+import hashlib
+import json
+import os
+import random
+import string
+
+# imports - third party imports
+import click
 from six import string_types
-from six.moves import input
+
+# imports - module imports
+from bench.utils import exec_cmd, get_bench_name, get_sites
 
 
 def make_nginx_conf(bench_path, yes=False):
 	conf_path = os.path.join(bench_path, "config", "nginx.conf")
 
 	if not yes and os.path.exists(conf_path):
-		if input('nginx.conf already exists and this will overwrite it. Do you want to continue? [y/N]').lower() == 'n':
+		if not click.confirm('nginx.conf already exists and this will overwrite it. Do you want to continue?'):
 			return
 
 	from bench import env
