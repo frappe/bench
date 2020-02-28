@@ -382,9 +382,9 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 				unshallow = "--unshallow" if os.path.exists(os.path.join(app_dir, ".git", "shallow")) else ""
 				exec_cmd("git config --unset-all remote.upstream.fetch", cwd=app_dir)
 				exec_cmd("git config --add remote.upstream.fetch '+refs/heads/*:refs/remotes/upstream/*'", cwd=app_dir)
-				exec_cmd("git fetch upstream {unshallow}".format(unshallow=unshallow), cwd=app_dir)
-				exec_cmd("git checkout {branch}".format(branch=branch), cwd=app_dir)
-				exec_cmd("git merge upstream/{branch}".format(branch=branch), cwd=app_dir)
+				exec_cmd("git fetch upstream {unshallow} -q".format(unshallow=unshallow), cwd=app_dir)
+				exec_cmd("git checkout {branch} -q".format(branch=branch), cwd=app_dir)
+				exec_cmd("git merge upstream/{branch} -q".format(branch=branch), cwd=app_dir)
 				switched_apps.append(app)
 			except CommandFailedError:
 				print("Error switching to branch {0} for {1}".format(branch, app))
