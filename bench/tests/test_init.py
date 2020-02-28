@@ -21,11 +21,11 @@ from bench.release import get_bumped_version
 bench.cli.from_command_line = True
 
 class TestBenchInit(unittest.TestCase):
-	def test_setup(self):
+	def setUp(self):
 		self.benches_path = "."
 		self.benches = []
 
-	def test_destroy(self):
+	def tearDown(self):
 		for bench_name in self.benches:
 			bench_path = os.path.join(self.benches_path, bench_name)
 			mariadb_password = "travis" if os.environ.get("CI") else getpass.getpass(prompt="Enter MariaDB root Password: ")
@@ -85,14 +85,11 @@ class TestBenchInit(unittest.TestCase):
 		})
 
 	def test_new_site(self):
-		random_bench = random.choice(self.benches)
-		bench_path = os.path.join(self.benches_path, random_bench)
+		self.init_bench("test-bench")
+		bench_path = os.path.join(self.benches_path, "test-bench")
 		site_name = "test-site.local"
 		site_path = os.path.join(bench_path, "sites", site_name)
 		site_config_path = os.path.join(site_path, "site_config.json")
-
-		if not os.path.exists(bench_path):
-			self.init_bench(random_bench)
 
 		self.assertTrue(os.path.exists(site_path))
 		self.assertTrue(os.path.exists(os.path.join(site_path, "private", "backups")))
@@ -108,17 +105,17 @@ class TestBenchInit(unittest.TestCase):
 				self.assertTrue(site_config[key])
 
 	def test_get_app(self):
-		bench_name = random.choice(self.benches)
-		bench_path = os.path.join(self.benches_path, bench_name)
+		self.init_bench("test-bench")
+		bench_path = os.path.join(self.benches_path, "test-bench")
 		bench.app.get_app("https://github.com/frappe/frappe_theme", bench_path=bench_path)
 		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", "frappe_theme")))
 
 	def test_install_app(self):
-		site_name = "install-app.test"
-		bench_name = random.choice(self.benches)
+		self.init_bench("test-bench")
 		bench_path = os.path.join(self.benches_path, "test-bench")
+		site_name = "install-app.test"
 
-		self.new_site(site_name, bench_name)
+		self.new_site(site_name, "test-bench")
 		bench.app.get_app("https://github.com/frappe/erpnext", "version-12", bench_path=bench_path)
 		bench.app.install_app("erpnext", bench_path=bench_path)
 
@@ -127,15 +124,15 @@ class TestBenchInit(unittest.TestCase):
 		self.assertTrue("erpnext" in out)
 
 	def test_remove_app(self):
-		bench_name = random.choice(self.benches)
-		bench_path = os.path.join(self.benches_path, bench_name)
+		self.init_bench("test-bench")
+		bench_path = os.path.join(self.benches_path, "test-bench")
 		bench.app.get_app("https://github.com/frappe/erpnext", "version-12", bench_path=bench_path)
 		bench.app.remove_app("erpnext", bench_path=bench_path)
 		self.assertFalse(os.path.exists(os.path.join(bench_path, "apps", "erpnext")))
 
 	def test_switch_to_branch(self):
-		bench_name = random.choice(self.benches)
-		bench_path = os.path.join(self.benches_path, bench_name)
+		self.init_bench("test-bench")
+		bench_path = os.path.join(self.benches_path, "test-bench")
 		app_path = os.path.join(bench_path, "apps", "frappe")
 
 		bench.app.switch_branch(branch="version-12", apps=["frappe"], bench_path=bench_path, check_upgrade=False)
@@ -199,10 +196,17 @@ class TestBenchInit(unittest.TestCase):
 
 	def init_bench(self, bench_name, **kwargs):
 		self.benches.append(bench_name)
+		frappe_tmp_path = "/tmp/frappe"
+
+		if not os.path.exists(frappe_tmp_path):
+			git.Repo.clone_from("https://github.com/frappe/frappe", frappe_tmp_path, depth=1)
+
 		kwargs.update(dict(
 			no_procfile=True,
 			no_backups=True,
 			no_auto_update=True,
-			skip_assets=True
+			skip_assets=True,
+			frappe_path=frappe_tmp_path
 		))
+
 		bench.utils.init(bench_name, **kwargs)

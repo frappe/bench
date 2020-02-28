@@ -19,8 +19,10 @@ class TestSetupProduction(test_init.TestBenchInit):
 
 	def test_setup_production(self):
 		# running basic bench operations
-		self.test_setup()
 		self.test_bench_init()
+
+		for bench_name in ("test-bench-1", "test-bench-2"):
+			self.init_bench(bench_name)
 
 		user = getpass.getuser()
 		bench.utils.setup_sudoers(user)
@@ -38,7 +40,6 @@ class TestSetupProduction(test_init.TestBenchInit):
 			bench_path = os.path.join(os.path.abspath(self.benches_path), bench_name)
 			disable_production(bench_path)
 
-		self.test_destroy()
 
 	def assert_nginx_config(self, bench_name):
 		conf_src = os.path.join(os.path.abspath(self.benches_path), bench_name, 'config', 'nginx.conf')
