@@ -1,6 +1,5 @@
 # imports - standard imports
 import hashlib
-import json
 import os
 import random
 import string
@@ -10,7 +9,7 @@ import click
 from six import string_types
 
 # imports - module imports
-from bench.utils import exec_cmd, get_bench_name, get_sites
+from bench.utils import get_bench_name, get_sites
 
 
 def make_nginx_conf(bench_path, yes=False):
