@@ -21,11 +21,11 @@ from bench.release import get_bumped_version
 bench.cli.from_command_line = True
 
 class TestBenchInit(unittest.TestCase):
-	def setUp(self):
+	def test_setup(self):
 		self.benches_path = "."
 		self.benches = []
 
-	def tearDown(self):
+	def test_destroy(self):
 		for bench_name in self.benches:
 			bench_path = os.path.join(self.benches_path, bench_name)
 			mariadb_password = "travis" if os.environ.get("CI") else getpass.getpass(prompt="Enter MariaDB root Password: ")

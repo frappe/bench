@@ -16,30 +16,26 @@ from bench.tests import test_init
 class TestSetupProduction(test_init.TestBenchInit):
 	def test_setup_production(self):
 		# running basic bench operations
+		self.test_setup()
 		self.test_bench_init()
 
 		user = getpass.getuser()
-
+		bench.utils.setup_sudoers(user)
 		for bench_name in self.benches:
 			bench_path = os.path.join(os.path.abspath(self.benches_path), bench_name)
 			bench.utils.exec_cmd("sudo bench setup production {0}".format(user), cwd=bench_path)
 			self.assert_nginx_config(bench_name)
 			self.assert_supervisor_config(bench_name)
-
-		# test after start of both benches
-		for bench_name in ("test-bench-1", "test-bench-2"):
 			self.assert_supervisor_process(bench_name)
 
 		self.assert_nginx_process()
-
-		# sudoers
-		bench.utils.setup_sudoers(user)
 		self.assert_sudoers(user)
 
 		for bench_name in self.benches:
 			bench_path = os.path.join(os.path.abspath(self.benches_path), bench_name)
 			disable_production(bench_path)
 
+		self.test_destroy()
 
 	def assert_nginx_config(self, bench_name):
 		conf_src = os.path.join(os.path.abspath(self.benches_path), bench_name, 'config', 'nginx.conf')
