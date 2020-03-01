@@ -172,6 +172,12 @@ class TestBenchInit(unittest.TestCase):
 
 	def init_bench(self, bench_name, **kwargs):
 		self.benches.append(bench_name)
+		kwargs.update(dict(
+			no_procfile=True,
+			no_backups=True,
+			no_auto_update=True,
+			skip_assets=True
+		))
 		bench.utils.init(bench_name, **kwargs)
 
 	def test_drop_site(self):
