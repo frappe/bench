@@ -174,9 +174,8 @@ def clone_apps_from(bench_path, clone_from, update_app=True):
 
 def exec_cmd(cmd, cwd='.'):
 	import shlex
-	logger.info(cmd)
-	cmd = shlex.split(cmd)
 	print("{0}$ {1}{2}".format(color.silver, cmd, color.nc))
+	cmd = shlex.split(cmd)
 	subprocess.call(cmd, cwd=cwd, universal_newlines=True)
 
 def which(executable, raise_err = False):
