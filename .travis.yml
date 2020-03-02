@@ -65,8 +65,4 @@ install:
 
   - pip install urllib3 pyOpenSSL ndg-httpsclient pyasn1
   - pip install -q -U -e ~/.bench
-
-  - mysql -u root -e "SET GLOBAL character_set_server = 'utf8mb4'";
-  - mysql -u root -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'";
-  - mysql -u root -e "UPDATE mysql.user SET Password=PASSWORD('travis') WHERE User='root'";
-  - mysql -u root -e "FLUSH PRIVILEGES";
+  - sudo bench install mariadb --mysql_root_password travis
