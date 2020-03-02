@@ -14,6 +14,9 @@ from bench.tests import test_init
 
 
 class TestSetupProduction(test_init.TestBenchInit):
+	def __init__(self, *args, **kwargs):
+		test_init.TestBenchInit.__init__(self, *args, **kwargs)
+
 	def test_setup_production(self):
 		# running basic bench operations
 		self.test_setup()
