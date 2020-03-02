@@ -16,49 +16,43 @@ matrix:
   include:
   - name: "Python 2.7 Production Setup"
     python: 2.7
-    env: TEST=production
-    script: travis_wait 40 python -m unittest -v bench.tests.test_setup_production
+    env: TEST=bench
+    script: python -m unittest -v bench.tests.test_setup_production
 
   - name: "Python 3.6 Production Setup"
     python: 3.6
-    env: TEST=production
-    script:
-    - python -m unittest -v bench.tests.test_setup_production
+    env: TEST=bench
+    script: python -m unittest -v bench.tests.test_setup_production
 
   - name: "Python 3.7 Production Setup"
     python: 3.7
-    env: TEST=production
-    script:
-    - python -m unittest -v bench.tests.test_setup_production
+    env: TEST=bench
+    script: python -m unittest -v bench.tests.test_setup_production
 
   - name: "Python 3.8 Production Setup"
     python: 3.8
-    env: TEST=production
-    script:
-    - python -m unittest -v bench.tests.test_setup_production
+    env: TEST=bench
+    script: python -m unittest -v bench.tests.test_setup_production
 
   - name: "Python 3.6 Easy Install"
     python: 3.6
     env: TEST=easy_install
-    script:
-    - sudo python $TRAVIS_BUILD_DIR/playbooks/install.py --user travis --run-travis --production --verbose
+    script: sudo python $TRAVIS_BUILD_DIR/playbooks/install.py --user travis --run-travis --production --verbose
 
   - name: "Python 3.7 Easy Install"
     python: 3.7
     env: TEST=easy_install
-    script:
-    - sudo python $TRAVIS_BUILD_DIR/playbooks/install.py --user travis --run-travis --production --verbose
+    script: sudo python $TRAVIS_BUILD_DIR/playbooks/install.py --user travis --run-travis --production --verbose
 
   - name: "Python 3.8 Easy Install"
     python: 3.8
     env: TEST=easy_install
-    script:
-    - sudo python $TRAVIS_BUILD_DIR/playbooks/install.py --user travis --run-travis --production --verbose
+    script: sudo python $TRAVIS_BUILD_DIR/playbooks/install.py --user travis --run-travis --production --verbose
 
 install:
   - pip install urllib3 pyOpenSSL ndg-httpsclient pyasn1
 
-  - if [ $TEST == "production" ];then
+  - if [ $TEST == "bench" ];then
        wget -q -O /tmp/wkhtmltox.tar.xz https://github.com/frappe/wkhtmltopdf/raw/master/wkhtmltox-0.12.3_linux-generic-amd64.tar.xz;
        tar -xf /tmp/wkhtmltox.tar.xz -C /tmp;
        sudo mv /tmp/wkhtmltox/bin/wkhtmltopdf /usr/local/bin/wkhtmltopdf;
