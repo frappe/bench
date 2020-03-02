@@ -204,7 +204,6 @@ class TestBenchInit(unittest.TestCase):
 		kwargs.update(dict(
 			no_procfile=True,
 			no_backups=True,
-			no_auto_update=True,
 			skip_assets=True,
 			frappe_path=frappe_tmp_path
 		))
