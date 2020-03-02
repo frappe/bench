@@ -21,23 +21,36 @@ before_install:
 
 matrix:
   include:
-  - name: "Python 2.7"
+  - name: "Python 2.7 Production Setup"
     python: 2.7
     script: python -m unittest -v bench.tests.test_setup_production
 
-  - name: "Python 3.6"
+  - name: "Python 3.6 Production Setup"
     python: 3.6
     script:
     - python -m unittest -v bench.tests.test_setup_production
-    - sudo python $TRAVIS_BUILD_DIR/playbooks/install.py --user travis --run-travis --production --verbose
 
-  - name: "Python 3.7"
+  - name: "Python 3.7 Production Setup"
     python: 3.7
     script:
     - python -m unittest -v bench.tests.test_setup_production
+
+  - name: "Python 3.8 Production Setup"
+    python: 3.8
+    script:
+    - python -m unittest -v bench.tests.test_setup_production
+
+  - name: "Python 3.6 Easy Install"
+    python: 3.6
+    script:
     - sudo python $TRAVIS_BUILD_DIR/playbooks/install.py --user travis --run-travis --production --verbose
 
-  - name: "Python 3.8"
+  - name: "Python 3.7 Easy Install"
+    python: 3.7
+    script:
+    - sudo python $TRAVIS_BUILD_DIR/playbooks/install.py --user travis --run-travis --production --verbose
+
+  - name: "Python 3.8 Easy Install"
     python: 3.8
     script:
     - python -m unittest -v bench.tests.test_setup_production
