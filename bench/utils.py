@@ -28,6 +28,7 @@ class color:
 	green = '\033[92m'
 	yellow = '\033[93m'
 	red = '\033[91m'
+	silver = '\033[90m'
 
 
 def is_bench_directory(directory=os.path.curdir):
@@ -175,6 +176,7 @@ def exec_cmd(cmd, cwd='.'):
 	import shlex
 	logger.info(cmd)
 	cmd = shlex.split(cmd)
+	print("{0}$ {1}{2}".format(color.silver, cmd, color.nc))
 	subprocess.call(cmd, cwd=cwd, universal_newlines=True)
 
 def which(executable, raise_err = False):
