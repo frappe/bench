@@ -17,8 +17,6 @@ before_install:
   - tar -xf /tmp/wkhtmltox.tar.xz -C /tmp
   - sudo mv /tmp/wkhtmltox/bin/wkhtmltopdf /usr/local/bin/wkhtmltopdf
   - sudo chmod o+x /usr/local/bin/wkhtmltopdf
-  - sudo apt-get -qq install libcups2-dev
-  - sudo apt-get -qq purge -y mysql-common mysql-server mysql-client
 
 matrix:
   include:
@@ -65,4 +63,8 @@ install:
 
   - pip install urllib3 pyOpenSSL ndg-httpsclient pyasn1
   - pip install -q -U -e ~/.bench
-  - sudo bench install mariadb --mysql_root_password travis
+
+  - mysql -u root -e "SET GLOBAL character_set_server = 'utf8mb4'";
+  - mysql -u root -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'";
+  - mysql -u root -e "UPDATE mysql.user SET Password=PASSWORD('travis') WHERE User='root'";
+  - mysql -u root -e "FLUSH PRIVILEGES";
