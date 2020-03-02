@@ -1,4 +1,5 @@
 language: python
+dist: trusty
 
 git:
   depth: 1
@@ -9,7 +10,7 @@ cache:
   - yarn
 
 addons:
-  mariadb: "10.3"
+  mariadb: 10.3
 
 before_install:
   - wget -q -O /tmp/wkhtmltox.tar.xz https://github.com/frappe/wkhtmltopdf/raw/master/wkhtmltox-0.12.3_linux-generic-amd64.tar.xz
