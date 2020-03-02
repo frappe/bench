@@ -1,7 +1,6 @@
 # imports - standard imports
 import os
 import sys
-import json
 
 # imports - module imports
 from bench.utils import exec_cmd

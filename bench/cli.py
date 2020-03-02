@@ -1,6 +1,6 @@
 import click
 import os, sys, logging, json, pwd, subprocess
-from bench.utils import is_root, PatchError, drop_privileges, get_env_cmd, get_cmd_output, get_frappe, log, is_bench_directory, find_parent_bench
+from bench.utils import is_root, PatchError, drop_privileges, get_env_cmd, get_cmd_output, get_frappe, log, find_parent_bench
 from bench.app import get_apps
 from bench.config.common_site_config import get_config
 from bench.commands import bench_command

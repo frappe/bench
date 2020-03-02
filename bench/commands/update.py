@@ -1,6 +1,5 @@
 # imports - standard imports
 import os
-import sys
 
 # imports - third party imports
 import click

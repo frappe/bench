@@ -1,5 +1,4 @@
 # imports - standard imports
-import copy
 import os
 import sys
 
