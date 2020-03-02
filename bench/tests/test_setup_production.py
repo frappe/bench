@@ -1,14 +1,17 @@
-
-from bench.tests import test_init
-from bench.config.production_setup import setup_production, get_supervisor_confdir, disable_production
-import bench.utils
-import os
+# imports - standard imports
 import getpass
+import os
 import re
-import unittest
-import time
 import shlex
 import subprocess
+import time
+import unittest
+
+# imports - module imports
+import bench.utils
+from bench.config.production_setup import disable_production, get_supervisor_confdir, setup_production
+from bench.tests import test_init
+
 
 class TestSetupProduction(test_init.TestBenchInit):
 	# setUp, tearDown and other tests are defiend in TestBenchInit
