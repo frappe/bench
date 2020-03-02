@@ -23,8 +23,7 @@ class TestSetupProduction(test_init.TestBenchInit):
 
 		for bench_name in ("test-bench-1", "test-bench-2"):
 			bench_path = os.path.join(os.path.abspath(self.benches_path), bench_name)
-			cmd = shlex.split("bench setup production {0}".format(user))
-			subprocess.call(cmd, cwd=bench_path)
+			bench.utils.exec_cmd("sudo bench setup production {0}".format(user), cwd=bench_path)
 			self.assert_nginx_config(bench_name)
 			self.assert_supervisor_config(bench_name)
 
