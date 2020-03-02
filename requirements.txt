@@ -6,5 +6,5 @@ python-crontab==2.4.0
 requests==2.22.0
 semantic-version==2.8.2
 setuptools==40.8.0
-six==1.12.0
+six==1.14.0
 virtualenv==16.6.0
