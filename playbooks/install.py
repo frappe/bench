@@ -352,7 +352,7 @@ def run_playbook(playbook_name, sudo=False, extra_vars=None):
 
 	if sudo:
 		user = extra_vars.get('user') or getpass.getuser()
-		args.extend(['--become', '--become-user={0}'.format(user)])
+		args.extend(['-become', '--become-user={0}'.format(user)])
 
 	if os.path.exists(tmp_bench_repo):
 		cwd = tmp_bench_repo
