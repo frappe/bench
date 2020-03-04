@@ -596,14 +596,14 @@ def update_requirements(bench_path='.'):
 	from bench.app import get_apps, install_app
 	print('Updating Python libraries...')
 
-	# update env pip
-	update_env_pip(bench_path)
-
 	# Update bench requirements (at user level)
 	update_bench_requirements()
 
+	# update env pip
+	update_env_pip(bench_path)
+
 	for app in get_apps():
-		install_app(app, bench_path=bench_path)
+		install_app(app, bench_path=bench_path, skip_assets=True)
 
 
 def update_node_packages(bench_path='.'):
