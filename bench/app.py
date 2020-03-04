@@ -207,7 +207,7 @@ def remove_app(app, bench_path='.'):
 				print("Cannot remove, app is installed on site: {0}".format(site))
 				sys.exit(1)
 
-	exec_cmd(["{0} uninstall -y {1}".format(pip, app)])
+	exec_cmd("{0} uninstall -y {1}".format(pip, app), cwd=bench_path)
 	remove_from_appstxt(app, bench_path)
 	shutil.rmtree(app_path)
 	run_frappe_cmd("build", bench_path=bench_path)

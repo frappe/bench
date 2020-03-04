@@ -85,11 +85,14 @@ class TestBenchInit(unittest.TestCase):
 		})
 
 	def test_new_site(self):
-		self.init_bench("test-bench")
-		bench_path = os.path.join(self.benches_path, "test-bench")
+		bench_name = "test-bench"
 		site_name = "test-site.local"
+		bench_path = os.path.join(self.benches_path, bench_name)
 		site_path = os.path.join(bench_path, "sites", site_name)
 		site_config_path = os.path.join(site_path, "site_config.json")
+
+		self.init_bench(bench_name)
+		self.new_site(site_name, bench_name)
 
 		self.assertTrue(os.path.exists(site_path))
 		self.assertTrue(os.path.exists(os.path.join(site_path, "private", "backups")))
@@ -121,7 +124,7 @@ class TestBenchInit(unittest.TestCase):
 		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", "erpnext")))
 
 		# check if app is installed
-		app_installed_in_env = "erpnext" in subprocess.check_output(["env/bin/python", '-m', 'pip', 'freeze']).decode('utf8')
+		app_installed_in_env = "erpnext" in subprocess.check_output(["env/bin/python", '-m', 'pip', 'freeze'], cwd=bench_path).decode('utf8')
 		self.assertTrue(app_installed_in_env)
 
 		# install it to site
@@ -153,10 +156,7 @@ class TestBenchInit(unittest.TestCase):
 	def assert_folders(self, bench_name):
 		for folder in bench.utils.folders_in_bench:
 			self.assert_exists(bench_name, folder)
-
-		self.assert_exists(bench_name, "sites", "assets")
 		self.assert_exists(bench_name, "apps", "frappe")
-		self.assert_exists(bench_name, "apps", "frappe", "setup.py")
 
 	def assert_virtual_env(self, bench_name):
 		bench_path = os.path.abspath(bench_name)
