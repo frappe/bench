@@ -165,3 +165,7 @@ class TestSetupProduction(TestBenchInit):
 				self.assertFalse(re.search(key.format(bench_name=bench_name), out))
 			else:
 				self.assertTrue(re.search(key.format(bench_name=bench_name), out))
+
+
+if __name__ == '__main__':
+	unittest.main()

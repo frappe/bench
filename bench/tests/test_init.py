@@ -209,3 +209,7 @@ class TestBenchInit(unittest.TestCase):
 		))
 
 		bench.utils.init(bench_name, **kwargs)
+
+
+if __name__ == '__main__':
+	unittest.main()
