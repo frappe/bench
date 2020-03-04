@@ -32,7 +32,7 @@ class TestBenchInit(unittest.TestCase):
 			if os.path.exists(bench_path):
 				sites = bench.utils.get_sites(bench_path=bench_path)
 				for site in sites:
-					subprocess.call(["bench", "drop-site", site, "--force", "--root-password", mariadb_password], cwd=bench_path)
+					subprocess.call(["bench", "drop-site", site, "--force", "--no-backup", "--root-password", mariadb_password], cwd=bench_path)
 				shutil.rmtree(bench_path, ignore_errors=True)
 
 	def test_bench_init(self):
