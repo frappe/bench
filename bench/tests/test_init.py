@@ -122,14 +122,15 @@ class TestBenchInit(unittest.TestCase):
 
 		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", "erpnext")))
 
-		# install app
-		bench.app.install_app("erpnext", bench_path=bench_path)
+		# check if app is installed
+		app_installed_in_env = "erpnext" in subprocess.check_output(["env/bin/python", '-m', 'pip', 'freeze']).decode('utf8')
+		self.assertTrue(app_installed_in_env)
 
 		# install it to site
 		subprocess.check_output(["bench", "--site", site_name, "install-app", "erpnext"], cwd=bench_path)
 
-		out = subprocess.check_output(["bench", "--site", site_name, "list-apps"], cwd=bench_path)
-		self.assertTrue("erpnext" in out)
+		app_installed_on_site = subprocess.check_output(["bench", "--site", site_name, "list-apps"], cwd=bench_path)
+		self.assertTrue("erpnext" in app_installed_on_site)
 
 
 	def test_remove_app(self):
