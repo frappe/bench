@@ -15,10 +15,10 @@ from bench.tests.test_init import TestBenchInit
 
 class TestSetupProduction(TestBenchInit):
 	def setUp(self, *args, **kwargs):
-		super(TestSetupProduction).setUp(*args, **kwargs)
+		super(TestSetupProduction, self).setUp(*args, **kwargs)
 
 	def tearDown(self, *args, **kwargs):
-		super(TestSetupProduction).setUp(*args, **kwargs)
+		super(TestSetupProduction, self).setUp(*args, **kwargs)
 
 	def test_setup_production(self):
 		for bench_name in ("test-bench-1", "test-bench-2"):
