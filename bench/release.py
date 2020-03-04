@@ -83,9 +83,7 @@ def bump(bench_path, app, bump_type, from_branch, to_branch, remote, owner, repo
 		print('No commits to release')
 		return
 
-	print()
 	print(message)
-	print()
 
 	click.confirm('Do you want to continue?', abort=True)
 
