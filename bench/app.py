@@ -358,7 +358,7 @@ def get_repo_dir(app, bench_path='.'):
 	return os.path.join(bench_path, 'apps', app)
 
 def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrade=True):
-	from .utils import update_requirements, update_node_packages, backup_all_sites, patch_sites, build_assets, pre_upgrade, post_upgrade
+	from .utils import update_requirements, update_node_packages, backup_all_sites, patch_sites, build_assets, post_upgrade
 	from . import utils
 	apps_dir = os.path.join(bench_path, 'apps')
 	version_upgrade = (False,)
@@ -399,7 +399,6 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 	if version_upgrade[0] and upgrade:
 		update_requirements()
 		update_node_packages()
-		pre_upgrade(version_upgrade[1], version_upgrade[2])
 		reload_module(utils)
 		backup_all_sites()
 		patch_sites()
