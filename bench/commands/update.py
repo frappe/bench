@@ -23,7 +23,7 @@ from bench.utils import post_upgrade, patch_sites, build_assets
 @click.option('--reset', is_flag=True, help="Hard resets git branch's to their new states overriding any changes and overriding rebase on pull")
 def update(pull, patch, build, bench, requirements, restart_supervisor, restart_systemd, no_backup, force, reset):
 	from bench.utils import update
-	update(pull=pull, patch=patch, build=build, bench=bench, requirements=requirements, restart_supervisor=restart_supervisor, restart_systemd=restart_systemd, backup= not no_backup, force=force, reset=reset)
+	update(pull=pull, patch=patch, build=build, bench=bench, requirements=requirements, restart_supervisor=restart_supervisor, restart_systemd=restart_systemd, backup= no_backup, force=force, reset=reset)
 
 
 @click.command('retry-upgrade', help="Retry a failed upgrade")

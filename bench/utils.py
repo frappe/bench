@@ -190,7 +190,7 @@ def update(pull=False, patch=False, build=False, bench=False, restart_supervisor
 			'patch': patch,
 			'build': build,
 			'requirements': requirements,
-			'backup': backup,
+			'no-backup': not backup,
 			'restart-supervisor': restart_supervisor,
 			'reset': reset
 		})
