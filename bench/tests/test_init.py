@@ -117,7 +117,6 @@ class TestBenchInit(unittest.TestCase):
 
 		self.new_site(site_name, "test-bench")
 		bench.app.get_app("https://github.com/frappe/erpnext", "version-12", bench_path=bench_path, skip_assets=True)
-		bench.app.install_app("erpnext", bench_path=bench_path)
 
 		subprocess.call(["bench", "--site", site_name, "install-app", "erpnext"], cwd=bench_path)
 		out = subprocess.check_output(["bench", "--site", site_name, "list-apps"], cwd=bench_path)
