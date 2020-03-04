@@ -10,17 +10,17 @@ import unittest
 # imports - module imports
 import bench.utils
 from bench.config.production_setup import disable_production, get_supervisor_confdir, setup_production
-from bench.tests import test_init
+from bench.tests.test_init import TestBenchInit
 
 
-class TestSetupProduction(test_init.TestBenchInit):
-	def __init__(self, *args, **kwargs):
-		test_init.TestBenchInit.__init__(self, *args, **kwargs)
+class TestSetupProduction(TestBenchInit):
+	def setUp(self, *args, **kwargs):
+		super(TestSetupProduction).setUp(*args, **kwargs)
+
+	def tearDown(self, *args, **kwargs):
+		super(TestSetupProduction).setUp(*args, **kwargs)
 
 	def test_setup_production(self):
-		# running basic bench operations
-		self.test_bench_init()
-
 		for bench_name in ("test-bench-1", "test-bench-2"):
 			self.init_bench(bench_name)
 

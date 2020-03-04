@@ -35,16 +35,6 @@ class TestBenchInit(unittest.TestCase):
 					subprocess.call(["bench", "drop-site", site, "--force", "--no-backup", "--root-password", mariadb_password], cwd=bench_path)
 				shutil.rmtree(bench_path, ignore_errors=True)
 
-	def test_bench_init(self):
-		self.test_init()
-		self.test_multiple_benches()
-		self.test_new_site()
-		self.test_get_app()
-		self.test_install_app()
-		self.test_remove_app()
-		self.test_semantic_version()
-		self.test_switch_to_branch()
-
 	def test_semantic_version(self):
 		self.assertEqual( get_bumped_version('11.0.4', 'major'), '12.0.0' )
 		self.assertEqual( get_bumped_version('11.0.4', 'minor'), '11.1.0' )
@@ -92,6 +82,7 @@ class TestBenchInit(unittest.TestCase):
 		site_config_path = os.path.join(site_path, "site_config.json")
 
 		self.init_bench(bench_name)
+		bench.utils.exec_cmd("bench setup requirements --node", cwd=bench_path)
 		self.new_site(site_name, bench_name)
 
 		self.assertTrue(os.path.exists(site_path))
@@ -118,19 +109,22 @@ class TestBenchInit(unittest.TestCase):
 		bench_path = os.path.join(self.benches_path, "test-bench")
 		site_name = "install-app.test"
 
+		bench.utils.exec_cmd("bench setup requirements --node", cwd=bench_path)
+		bench.utils.exec_cmd("bench build", cwd=bench_path)
+
 		# get app
 		bench.app.get_app("https://github.com/frappe/erpnext", "develop", bench_path=bench_path)
 
 		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", "erpnext")))
 
 		# check if app is installed
-		app_installed_in_env = "erpnext" in subprocess.check_output(["env/bin/python", '-m', 'pip', 'freeze'], cwd=bench_path).decode('utf8')
+		app_installed_in_env = "erpnext" in subprocess.check_output(["bench", "pip", "freeze"], cwd=bench_path).decode('utf8')
 		self.assertTrue(app_installed_in_env)
 
 		# install it to site
-		subprocess.check_output(["bench", "--site", site_name, "install-app", "erpnext"], cwd=bench_path)
+		bench.utils.exec_cmd("bench --site {0} install-app erpnext".format(site_name), cwd=bench_path)
 
-		app_installed_on_site = subprocess.check_output(["bench", "--site", site_name, "list-apps"], cwd=bench_path)
+		app_installed_on_site = subprocess.check_output(["bench", "--site", site_name, "list-apps"], cwd=bench_path).decode('utf8')
 		self.assertTrue("erpnext" in app_installed_on_site)
 
 	def test_remove_app(self):
@@ -138,6 +132,9 @@ class TestBenchInit(unittest.TestCase):
 		bench_path = os.path.join(self.benches_path, "test-bench")
 		bench.app.get_app("https://github.com/frappe/erpnext", "version-12", bench_path=bench_path, skip_assets=True)
 		bench.app.remove_app("erpnext", bench_path=bench_path)
+
+		self.assertFalse("erpnext" in open(os.path.join('.', "sites", "apps.txt")).read())
+		self.assertFalse("erpnext" in subprocess.check_output(["bench", "pip", "freeze"], cwd=bench_path).decode('utf8'))
 		self.assertFalse(os.path.exists(os.path.join(bench_path, "apps", "erpnext")))
 
 	def test_switch_to_branch(self):
@@ -160,14 +157,10 @@ class TestBenchInit(unittest.TestCase):
 
 	def assert_virtual_env(self, bench_name):
 		bench_path = os.path.abspath(bench_name)
-		python = os.path.join(bench_path, "env", "bin", "python")
-		python_path = bench.utils.get_cmd_output('{python} -c "from __future__ import print_function; import os; print(os.path.dirname(os.__file__))"'.format(python=python))
-
+		python_path = os.path.abspath(os.path.join(bench_path, "env", "bin", "python"))
 		self.assertTrue(python_path.startswith(bench_path))
-		self.assert_exists(python_path)
-		self.assert_exists(python_path, "site-packages")
-		self.assert_exists(python_path, "site-packages", "IPython")
-		self.assert_exists(python_path, "site-packages", "pip")
+		for subdir in ("bin", "include", "lib", "share"):
+			self.assert_exists(bench_name, "env", subdir)
 
 	def assert_config(self, bench_name):
 		for config, search_key in (
