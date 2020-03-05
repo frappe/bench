@@ -4,7 +4,6 @@ import os
 import shutil
 import subprocess
 import unittest
-import random
 import getpass
 
 # imports - third paty imports
@@ -101,19 +100,21 @@ class TestBenchInit(unittest.TestCase):
 	def test_get_app(self):
 		self.init_bench("test-bench")
 		bench_path = os.path.join(self.benches_path, "test-bench")
-		bench.app.get_app("https://github.com/frappe/frappe_theme", bench_path=bench_path, skip_assets=True)
+		bench.utils.exec_cmd("bench get-app frappe_theme --skip-assets", cwd=bench_path)
 		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", "frappe_theme")))
+		app_installed_in_env = "frappe_theme" in subprocess.check_output(["bench", "pip", "freeze"], cwd=bench_path).decode('utf8')
+		self.assertTrue(app_installed_in_env)
+
 
 	def test_install_app(self):
-		self.init_bench("test-bench")
-		bench_path = os.path.join(self.benches_path, "test-bench")
+		bench_name = "test-bench"
 		site_name = "install-app.test"
+		bench_path = os.path.join(self.benches_path, "test-bench")
 
+		self.init_bench(bench_name)
 		bench.utils.exec_cmd("bench setup requirements --node", cwd=bench_path)
 		bench.utils.exec_cmd("bench build", cwd=bench_path)
-
-		# get app
-		bench.app.get_app("https://github.com/frappe/erpnext", "develop", bench_path=bench_path)
+		bench.utils.exec_cmd("bench get-app erpnext", cwd=bench_path)
 
 		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", "erpnext")))
 
@@ -121,7 +122,8 @@ class TestBenchInit(unittest.TestCase):
 		app_installed_in_env = "erpnext" in subprocess.check_output(["bench", "pip", "freeze"], cwd=bench_path).decode('utf8')
 		self.assertTrue(app_installed_in_env)
 
-		# install it to site
+		# create and install app on site
+		self.new_site(site_name, bench_name)
 		bench.utils.exec_cmd("bench --site {0} install-app erpnext".format(site_name), cwd=bench_path)
 
 		app_installed_on_site = subprocess.check_output(["bench", "--site", site_name, "list-apps"], cwd=bench_path).decode('utf8')
@@ -130,8 +132,10 @@ class TestBenchInit(unittest.TestCase):
 	def test_remove_app(self):
 		self.init_bench("test-bench")
 		bench_path = os.path.join(self.benches_path, "test-bench")
-		bench.app.get_app("https://github.com/frappe/erpnext", "version-12", bench_path=bench_path, skip_assets=True)
-		bench.app.remove_app("erpnext", bench_path=bench_path)
+
+		bench.utils.exec_cmd("bench setup requirements --node", cwd=bench_path)
+		bench.utils.exec_cmd("bench get-app erpnext --branch version-12 --skip-assets --overwrite", cwd=bench_path)
+		bench.utils.exec_cmd("bench remove-app erpnext", cwd=bench_path)
 
 		self.assertFalse("erpnext" in open(os.path.join('.', "sites", "apps.txt")).read())
 		self.assertFalse("erpnext" in subprocess.check_output(["bench", "pip", "freeze"], cwd=bench_path).decode('utf8'))
@@ -142,11 +146,11 @@ class TestBenchInit(unittest.TestCase):
 		bench_path = os.path.join(self.benches_path, "test-bench")
 		app_path = os.path.join(bench_path, "apps", "frappe")
 
-		bench.app.switch_branch(branch="version-12", apps=["frappe"], bench_path=bench_path, check_upgrade=False)
+		bench.utils.exec_cmd("bench switch-to-branch version-12 frappe", cwd=bench_path)
 		app_branch_after_switch = str(git.Repo(path=app_path).active_branch)
 		self.assertEqual("version-12", app_branch_after_switch)
 
-		bench.app.switch_branch(branch="develop", apps=["frappe"], bench_path=bench_path, check_upgrade=False)
+		bench.utils.exec_cmd("bench switch-to-branch develop frappe", cwd=bench_path)
 		app_branch_after_second_switch = str(git.Repo(path=app_path).active_branch)
 		self.assertEqual("develop", app_branch_after_second_switch)
 
@@ -208,7 +212,8 @@ class TestBenchInit(unittest.TestCase):
 			frappe_path=frappe_tmp_path
 		))
 
-		bench.utils.init(bench_name, **kwargs)
+		if not os.path.exists(os.path.join(self.benches_path, bench_name)):
+			bench.utils.init(bench_name, **kwargs)
 
 
 if __name__ == '__main__':
