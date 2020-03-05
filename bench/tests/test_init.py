@@ -55,7 +55,7 @@ class TestBenchInit(unittest.TestCase):
 		for bench_name in ("test-bench-1", "test-bench-2"):
 			self.init_bench(bench_name)
 
-		self.assert_common_site_config("test-bench-1", {
+		self.assert_common_site_config("test-bench", {
 			"webserver_port": 8000,
 			"socketio_port": 9000,
 			"file_watcher_port": 6787,
@@ -64,13 +64,22 @@ class TestBenchInit(unittest.TestCase):
 			"redis_cache": "redis://localhost:13000"
 		})
 
-		self.assert_common_site_config("test-bench-2", {
+		self.assert_common_site_config("test-bench-1", {
 			"webserver_port": 8001,
 			"socketio_port": 9001,
 			"file_watcher_port": 6788,
 			"redis_queue": "redis://localhost:11001",
 			"redis_socketio": "redis://localhost:12001",
 			"redis_cache": "redis://localhost:13001"
+		})
+
+		self.assert_common_site_config("test-bench-2", {
+			"webserver_port": 8002,
+			"socketio_port": 9002,
+			"file_watcher_port": 6789,
+			"redis_queue": "redis://localhost:11002",
+			"redis_socketio": "redis://localhost:12002",
+			"redis_cache": "redis://localhost:13002"
 		})
 
 	def test_new_site(self):
@@ -137,7 +146,7 @@ class TestBenchInit(unittest.TestCase):
 		bench.utils.exec_cmd("bench get-app erpnext --branch version-12 --skip-assets --overwrite", cwd=bench_path)
 		bench.utils.exec_cmd("bench remove-app erpnext", cwd=bench_path)
 
-		self.assertFalse("erpnext" in open(os.path.join('.', "sites", "apps.txt")).read())
+		self.assertFalse("erpnext" in open(os.path.join(bench_path, "sites", "apps.txt")).read())
 		self.assertFalse("erpnext" in subprocess.check_output(["bench", "pip", "freeze"], cwd=bench_path).decode('utf8'))
 		self.assertFalse(os.path.exists(os.path.join(bench_path, "apps", "erpnext")))
 
