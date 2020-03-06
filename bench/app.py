@@ -16,6 +16,7 @@ import bench
 import sys
 import shutil
 import click
+import git
 
 logging.basicConfig(level="DEBUG")
 logger = logging.getLogger(__name__)
@@ -374,25 +375,21 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 	for app in apps:
 		app_dir = os.path.join(apps_dir, app)
 		if os.path.exists(app_dir):
-			try:
-				if check_upgrade:
-					version_upgrade = is_version_upgrade(app=app, bench_path=bench_path, branch=branch)
-					if version_upgrade[0] and not upgrade:
-						raise MajorVersionUpgradeException("Switching to {0} will cause upgrade from {1} to {2}. Pass --upgrade to confirm".format(branch, version_upgrade[1], version_upgrade[2]), version_upgrade[1], version_upgrade[2])
-				print("Switching for "+app)
-				unshallow = "--unshallow" if os.path.exists(os.path.join(app_dir, ".git", "shallow")) else ""
-				exec_cmd("git config --unset-all remote.upstream.fetch", cwd=app_dir)
-				exec_cmd("git config --add remote.upstream.fetch '+refs/heads/*:refs/remotes/upstream/*'", cwd=app_dir)
-				exec_cmd("git fetch upstream {unshallow} -q".format(unshallow=unshallow), cwd=app_dir)
-				exec_cmd("git checkout {branch} -q".format(branch=branch), cwd=app_dir)
-				exec_cmd("git merge upstream/{branch} -q".format(branch=branch), cwd=app_dir)
+			if check_upgrade:
+				version_upgrade = is_version_upgrade(app=app, bench_path=bench_path, branch=branch)
+				if version_upgrade[0] and not upgrade:
+					raise MajorVersionUpgradeException("Switching to {0} will cause upgrade from {1} to {2}. Pass --upgrade to confirm".format(branch, version_upgrade[1], version_upgrade[2]), version_upgrade[1], version_upgrade[2])
+			print("Switching for "+app)
+
+			repo = git.Repo(app_dir)
+			for remote in repo.git.remotes:
+				remote.fetch(unshallow=True)
+			repo.git.checkout(branch)
+
+			if str(repo.active_branch) == branch:
 				switched_apps.append(app)
-			except CommandFailedError:
-				print("Error switching to branch {0} for {1}".format(branch, app))
-			except InvalidRemoteException:
-				print("Remote does not exist for app {0}".format(app))
-			except InvalidBranchException:
-				print("Branch {0} does not exist in Upstream for {1}".format(branch, app))
+			else:
+				print("Switching branches failed for: {}".format(app))
 
 	if switched_apps:
 		print("Successfully switched branches for:\n" + "\n".join(switched_apps))
