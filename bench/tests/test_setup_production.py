@@ -19,18 +19,13 @@ def file_exists(path):
 
 
 class TestSetupProduction(TestBenchInit):
-	def setUp(self, *args, **kwargs):
-		super(TestSetupProduction, self).setUp(*args, **kwargs)
-
-	def tearDown(self, *args, **kwargs):
-		super(TestSetupProduction, self).setUp(*args, **kwargs)
-
 	def test_setup_production(self):
 		for bench_name in ("test-bench-1", "test-bench-2"):
 			self.init_bench(bench_name)
 
 		user = getpass.getuser()
-		bench.utils.setup_sudoers(user)
+		bench.utils.exec_cmd("sudo bench setup sudoers {0}".format(user))
+
 		for bench_name in self.benches:
 			bench_path = os.path.join(os.path.abspath(self.benches_path), bench_name)
 			bench.utils.exec_cmd("sudo bench setup production {0}".format(user), cwd=bench_path)
