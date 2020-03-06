@@ -2,6 +2,7 @@
 import getpass
 import os
 import re
+import subprocess
 import time
 import unittest
 
@@ -9,6 +10,12 @@ import unittest
 import bench.utils
 from bench.config.production_setup import disable_production, get_supervisor_confdir, setup_production
 from bench.tests.test_init import TestBenchInit
+
+
+def file_exists(path):
+	if os.environ.get("CI"):
+		return subprocess.getstatusoutput("sudo test -f {0}".format(path))[0]
+	return os.path.isfile(path)
 
 
 class TestSetupProduction(TestBenchInit):
