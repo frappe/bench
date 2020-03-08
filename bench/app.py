@@ -377,8 +377,8 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 		if os.path.exists(app_dir):
 
 			repo = git.Repo(app_dir)
-			unshallow = True if os.path.exists(os.path.join(app_dir, ".git", "shallow")) else False
-			for remote in repo.git.remotes:
+			unshallow = os.path.exists(os.path.join(app_dir, ".git", "shallow"))
+			for remote in repo.remotes:
 				remote.fetch(unshallow=unshallow)
 
 			if check_upgrade:
