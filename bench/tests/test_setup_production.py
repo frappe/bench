@@ -45,8 +45,8 @@ class TestSetupProduction(TestBenchInit):
 		conf_src = os.path.join(os.path.abspath(self.benches_path), bench_name, 'config', 'nginx.conf')
 		conf_dest = "/etc/nginx/conf.d/{bench_name}.conf".format(bench_name=bench_name)
 
-		self.assertTrue(os.path.exists(conf_src))
-		self.assertTrue(os.path.exists(conf_dest))
+		self.assertTrue(file_exists(conf_src))
+		self.assertTrue(file_exists(conf_dest))
 
 		# symlink matches
 		self.assertEqual(os.path.realpath(conf_dest), conf_src)
@@ -69,7 +69,7 @@ class TestSetupProduction(TestBenchInit):
 
 	def assert_sudoers(self, user):
 		sudoers_file = '/etc/sudoers.d/frappe'
-		self.assertTrue(os.path.exists(sudoers_file))
+		self.assertTrue(file_exists(sudoers_file))
 
 		with open(sudoers_file, 'r') as f:
 			sudoers = f.read().decode('utf-8')
@@ -85,8 +85,8 @@ class TestSetupProduction(TestBenchInit):
 		supervisor_conf_dir = get_supervisor_confdir()
 		conf_dest = "{supervisor_conf_dir}/{bench_name}.conf".format(supervisor_conf_dir=supervisor_conf_dir, bench_name=bench_name)
 
-		self.assertTrue(os.path.exists(conf_src))
-		self.assertTrue(os.path.exists(conf_dest))
+		self.assertTrue(file_exists(conf_src))
+		self.assertTrue(file_exists(conf_dest))
 
 		# symlink matches
 		self.assertEqual(os.path.realpath(conf_dest), conf_src)
