@@ -2,23 +2,16 @@
 import getpass
 import os
 import re
-import subprocess
 import time
 import unittest
 
 # imports - module imports
 import bench.utils
 from bench.config.production_setup import disable_production, get_supervisor_confdir, setup_production
-from bench.tests.test_init import TestBenchInit
+from bench.tests.test_base import TestBenchBase
 
 
-def file_exists(path):
-	if os.environ.get("CI"):
-		return subprocess.getstatusoutput("sudo test -f {0}".format(path))[0]
-	return os.path.isfile(path)
-
-
-class TestSetupProduction(TestBenchInit):
+class TestSetupProduction(TestBenchBase):
 	def test_setup_production(self):
 		for bench_name in ("test-bench-1", "test-bench-2"):
 			self.init_bench(bench_name)
@@ -45,8 +38,8 @@ class TestSetupProduction(TestBenchInit):
 		conf_src = os.path.join(os.path.abspath(self.benches_path), bench_name, 'config', 'nginx.conf')
 		conf_dest = "/etc/nginx/conf.d/{bench_name}.conf".format(bench_name=bench_name)
 
-		self.assertTrue(file_exists(conf_src))
-		self.assertTrue(file_exists(conf_dest))
+		self.assertTrue(self.file_exists(conf_src))
+		self.assertTrue(self.file_exists(conf_dest))
 
 		# symlink matches
 		self.assertEqual(os.path.realpath(conf_dest), conf_src)
@@ -69,7 +62,7 @@ class TestSetupProduction(TestBenchInit):
 
 	def assert_sudoers(self, user):
 		sudoers_file = '/etc/sudoers.d/frappe'
-		self.assertTrue(file_exists(sudoers_file))
+		self.assertTrue(self.file_exists(sudoers_file))
 
 		with open(sudoers_file, 'r') as f:
 			sudoers = f.read().decode('utf-8')
@@ -85,8 +78,8 @@ class TestSetupProduction(TestBenchInit):
 		supervisor_conf_dir = get_supervisor_confdir()
 		conf_dest = "{supervisor_conf_dir}/{bench_name}.conf".format(supervisor_conf_dir=supervisor_conf_dir, bench_name=bench_name)
 
-		self.assertTrue(file_exists(conf_src))
-		self.assertTrue(file_exists(conf_dest))
+		self.assertTrue(self.file_exists(conf_src))
+		self.assertTrue(self.file_exists(conf_dest))
 
 		# symlink matches
 		self.assertEqual(os.path.realpath(conf_dest), conf_src)

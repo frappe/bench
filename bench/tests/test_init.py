@@ -1,39 +1,20 @@
 # imports - standard imports
 import json
 import os
-import shutil
 import subprocess
 import unittest
-import getpass
 
 # imports - third paty imports
 import git
 
 # imports - module imports
 import bench
-import bench.app
-import bench.cli
-import bench.config.common_site_config
 import bench.utils
 from bench.release import get_bumped_version
+from bench.tests.test_base import TestBenchBase
 
-bench.cli.from_command_line = True
 
-class TestBenchInit(unittest.TestCase):
-	def setUp(self):
-		self.benches_path = "."
-		self.benches = []
-
-	def tearDown(self):
-		for bench_name in self.benches:
-			bench_path = os.path.join(self.benches_path, bench_name)
-			mariadb_password = "travis" if os.environ.get("CI") else getpass.getpass(prompt="Enter MariaDB root Password: ")
-			if os.path.exists(bench_path):
-				sites = bench.utils.get_sites(bench_path=bench_path)
-				for site in sites:
-					subprocess.call(["bench", "drop-site", site, "--force", "--no-backup", "--root-password", mariadb_password], cwd=bench_path)
-				shutil.rmtree(bench_path, ignore_errors=True)
-
+class TestBenchInit(TestBenchBase):
 	def test_semantic_version(self):
 		self.assertEqual( get_bumped_version('11.0.4', 'major'), '12.0.0' )
 		self.assertEqual( get_bumped_version('11.0.4', 'minor'), '11.1.0' )
@@ -45,11 +26,13 @@ class TestBenchInit(unittest.TestCase):
 		self.assertEqual( get_bumped_version('11.0.5-beta.22', 'patch'), '11.0.5' )
 		self.assertEqual( get_bumped_version('11.0.5-beta.22', 'prerelease'), '11.0.5-beta.23' )
 
+
 	def test_init(self, bench_name="test-bench", **kwargs):
 		self.init_bench(bench_name, **kwargs)
 		self.assert_folders(bench_name)
 		self.assert_virtual_env(bench_name)
 		self.assert_config(bench_name)
+
 
 	def test_multiple_benches(self):
 		for bench_name in ("test-bench-1", "test-bench-2"):
@@ -81,6 +64,7 @@ class TestBenchInit(unittest.TestCase):
 			"redis_socketio": "redis://localhost:12002",
 			"redis_cache": "redis://localhost:13002"
 		})
+
 
 	def test_new_site(self):
 		bench_name = "test-bench"
@@ -138,6 +122,7 @@ class TestBenchInit(unittest.TestCase):
 		app_installed_on_site = subprocess.check_output(["bench", "--site", site_name, "list-apps"], cwd=bench_path).decode('utf8')
 		self.assertTrue("erpnext" in app_installed_on_site)
 
+
 	def test_remove_app(self):
 		self.init_bench("test-bench")
 		bench_path = os.path.join(self.benches_path, "test-bench")
@@ -149,6 +134,7 @@ class TestBenchInit(unittest.TestCase):
 		self.assertFalse("erpnext" in open(os.path.join(bench_path, "sites", "apps.txt")).read())
 		self.assertFalse("erpnext" in subprocess.check_output(["bench", "pip", "freeze"], cwd=bench_path).decode('utf8'))
 		self.assertFalse(os.path.exists(os.path.join(bench_path, "apps", "erpnext")))
+
 
 	def test_switch_to_branch(self):
 		self.init_bench("test-bench")
@@ -162,67 +148,6 @@ class TestBenchInit(unittest.TestCase):
 		bench.utils.exec_cmd("bench switch-to-branch develop frappe", cwd=bench_path)
 		app_branch_after_second_switch = str(git.Repo(path=app_path).active_branch)
 		self.assertEqual("develop", app_branch_after_second_switch)
-
-	def assert_folders(self, bench_name):
-		for folder in bench.utils.folders_in_bench:
-			self.assert_exists(bench_name, folder)
-		self.assert_exists(bench_name, "apps", "frappe")
-
-	def assert_virtual_env(self, bench_name):
-		bench_path = os.path.abspath(bench_name)
-		python_path = os.path.abspath(os.path.join(bench_path, "env", "bin", "python"))
-		self.assertTrue(python_path.startswith(bench_path))
-		for subdir in ("bin", "include", "lib", "share"):
-			self.assert_exists(bench_name, "env", subdir)
-
-	def assert_config(self, bench_name):
-		for config, search_key in (
-			("redis_queue.conf", "redis_queue.rdb"),
-			("redis_socketio.conf", "redis_socketio.rdb"),
-			("redis_cache.conf", "redis_cache.rdb")):
-
-			self.assert_exists(bench_name, "config", config)
-
-			with open(os.path.join(bench_name, "config", config), "r") as f:
-				self.assertTrue(search_key in f.read())
-
-	def assert_common_site_config(self, bench_name, expected_config):
-		common_site_config_path = os.path.join(bench_name, 'sites', 'common_site_config.json')
-		self.assertTrue(os.path.exists(common_site_config_path))
-
-		with open(common_site_config_path, "r") as f:
-			config = json.load(f)
-
-		for key, value in list(expected_config.items()):
-			self.assertEqual(config.get(key), value)
-
-	def assert_exists(self, *args):
-		self.assertTrue(os.path.exists(os.path.join(*args)))
-
-	def new_site(self, site_name, bench_name):
-		new_site_cmd = ["bench", "new-site", site_name, "--admin-password", "admin"]
-
-		if os.environ.get('CI'):
-			new_site_cmd.extend(["--mariadb-root-password", "travis"])
-
-		subprocess.call(new_site_cmd, cwd=os.path.join(self.benches_path, bench_name))
-
-	def init_bench(self, bench_name, **kwargs):
-		self.benches.append(bench_name)
-		frappe_tmp_path = "/tmp/frappe"
-
-		if not os.path.exists(frappe_tmp_path):
-			git.Repo.clone_from("https://github.com/frappe/frappe", frappe_tmp_path, depth=1)
-
-		kwargs.update(dict(
-			no_procfile=True,
-			no_backups=True,
-			skip_assets=True,
-			frappe_path=frappe_tmp_path
-		))
-
-		if not os.path.exists(os.path.join(self.benches_path, bench_name)):
-			bench.utils.init(bench_name, **kwargs)
 
 
 if __name__ == '__main__':
