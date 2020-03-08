@@ -92,5 +92,5 @@ class TestBenchBase(unittest.TestCase):
 
 	def file_exists(self, path):
 		if os.environ.get("CI"):
-			return subprocess.getstatusoutput("sudo test -f {0}".format(path))[0]
+			return not subprocess.getstatusoutput("sudo test -f {0}".format(path))[0]
 		return os.path.isfile(path)
