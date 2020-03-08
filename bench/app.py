@@ -375,15 +375,18 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 	for app in apps:
 		app_dir = os.path.join(apps_dir, app)
 		if os.path.exists(app_dir):
+
+			repo = git.Repo(app_dir)
+			unshallow = True if os.path.exists(os.path.join(app_dir, ".git", "shallow")) else False
+			for remote in repo.git.remotes:
+				remote.fetch(unshallow=unshallow)
+
 			if check_upgrade:
 				version_upgrade = is_version_upgrade(app=app, bench_path=bench_path, branch=branch)
 				if version_upgrade[0] and not upgrade:
 					raise MajorVersionUpgradeException("Switching to {0} will cause upgrade from {1} to {2}. Pass --upgrade to confirm".format(branch, version_upgrade[1], version_upgrade[2]), version_upgrade[1], version_upgrade[2])
-			print("Switching for "+app)
 
-			repo = git.Repo(app_dir)
-			for remote in repo.git.remotes:
-				remote.fetch(unshallow=True)
+			print("Switching for "+app)
 			repo.git.checkout(branch)
 
 			if str(repo.active_branch) == branch:
