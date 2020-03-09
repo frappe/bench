@@ -8,7 +8,7 @@ import unittest
 
 # imports - module imports
 import bench.utils
-from bench.config.production_setup import disable_production, get_supervisor_confdir, setup_production
+from bench.config.production_setup import get_supervisor_confdir, setup_production
 from bench.tests.test_base import TestBenchBase
 
 
@@ -30,7 +30,7 @@ class TestSetupProduction(TestBenchBase):
 
 		for bench_name in self.benches:
 			bench_path = os.path.join(os.path.abspath(self.benches_path), bench_name)
-			disable_production(bench_path)
+			bench.utils.exec_cmd("sudo bench disable-production", cwd=bench_path)
 
 
 	def assert_nginx_config(self, bench_name):
