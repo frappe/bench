@@ -116,6 +116,8 @@ class TestSetupProduction(TestBenchBase):
 				])
 
 			for key in tests:
+				if key.format(bench_name=bench_name) not in f:
+					print(key.format(bench_name=bench_name))
 				self.assertTrue(key.format(bench_name=bench_name) in f)
 
 
