@@ -46,7 +46,7 @@ class TestSetupProduction(TestBenchBase):
 
 		# file content
 		with open(conf_src, "r") as f:
-			f = f.read().decode("utf-8")
+			f = f.read()
 
 			for key in (
 					"upstream {bench_name}-frappe",
@@ -65,7 +65,7 @@ class TestSetupProduction(TestBenchBase):
 		self.assertTrue(self.file_exists(sudoers_file))
 
 		with open(sudoers_file, 'r') as f:
-			sudoers = f.read().decode('utf-8')
+			sudoers = f.read()
 
 		self.assertTrue('{user} ALL = (root) NOPASSWD: /usr/sbin/service nginx *'.format(user=user) in sudoers)
 		self.assertTrue('{user} ALL = (root) NOPASSWD: /usr/bin/supervisorctl'.format(user=user) in sudoers)
@@ -86,7 +86,7 @@ class TestSetupProduction(TestBenchBase):
 
 		# file content
 		with open(conf_src, "r") as f:
-			f = f.read().decode("utf-8")
+			f = f.read()
 
 			tests = [
 				"program:{bench_name}-frappe-web",
