@@ -53,7 +53,7 @@ class TestBenchBase(unittest.TestCase):
 				self.assertTrue(search_key in f.read())
 
 	def assert_common_site_config(self, bench_name, expected_config):
-		common_site_config_path = os.path.join(bench_name, 'sites', 'common_site_config.json')
+		common_site_config_path = os.path.join(self.benches_path, bench_name, 'sites', 'common_site_config.json')
 		self.assertTrue(os.path.exists(common_site_config_path))
 
 		with open(common_site_config_path, "r") as f:

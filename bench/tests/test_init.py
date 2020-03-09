@@ -38,15 +38,6 @@ class TestBenchInit(TestBenchBase):
 		for bench_name in ("test-bench-1", "test-bench-2"):
 			self.init_bench(bench_name)
 
-		self.assert_common_site_config("test-bench", {
-			"webserver_port": 8000,
-			"socketio_port": 9000,
-			"file_watcher_port": 6787,
-			"redis_queue": "redis://localhost:11000",
-			"redis_socketio": "redis://localhost:12000",
-			"redis_cache": "redis://localhost:13000"
-		})
-
 		self.assert_common_site_config("test-bench-1", {
 			"webserver_port": 8001,
 			"socketio_port": 9001,
@@ -131,7 +122,8 @@ class TestBenchInit(TestBenchBase):
 		bench.utils.exec_cmd("bench get-app erpnext --branch version-12 --skip-assets --overwrite", cwd=bench_path)
 		bench.utils.exec_cmd("bench remove-app erpnext", cwd=bench_path)
 
-		self.assertFalse("erpnext" in open(os.path.join(bench_path, "sites", "apps.txt")).read())
+		with open(os.path.join(bench_path, "sites", "apps.txt")) as f:
+			self.assertFalse("erpnext" in f.read())
 		self.assertFalse("erpnext" in subprocess.check_output(["bench", "pip", "freeze"], cwd=bench_path).decode('utf8'))
 		self.assertFalse(os.path.exists(os.path.join(bench_path, "apps", "erpnext")))
 
