@@ -101,30 +101,28 @@ def remove_from_excluded_apps_txt(app, bench_path='.'):
 		apps.remove(app)
 		return write_excluded_apps_txt(apps, bench_path=bench_path)
 
-def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=False,
-		postprocess=True, overwrite=False):
-	# from bench.utils import check_url
-	try:
-		from urlparse import urljoin
-	except ImportError:
-		from urllib.parse import urljoin
+def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=False, postprocess=True, overwrite=False):
+	if not os.path.exists(git_url):
+		if not check_url(git_url, raise_err=False):
+			orgs = ['frappe', 'erpnext']
+			for org in orgs:
+				url = 'https://api.github.com/repos/{org}/{app}'.format(org=org, app=git_url)
+				res = requests.get(url)
+				if res.ok:
+					data = res.json()
+					if 'name' in data:
+						if git_url == data['name']:
+							git_url = 'https://github.com/{org}/{app}'.format(org=org, app=git_url)
+							break
 
-	if not check_url(git_url, raise_err=False):
-		orgs = ['frappe', 'erpnext']
-		for org in orgs:
-			url = 'https://api.github.com/repos/{org}/{app}'.format(org=org, app=git_url)
-			res = requests.get(url)
-			if res.ok:
-				data = res.json()
-				if 'name' in data:
-					if git_url == data['name']:
-						git_url = 'https://github.com/{org}/{app}'.format(org=org, app=git_url)
-						break
-
-	# Gets repo name from URL
-	repo_name = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
-	shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
-	branch = '--branch {branch}'.format(branch=branch) if branch else ''
+		# Gets repo name from URL
+		repo_name = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
+		shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
+		branch = '--branch {branch}'.format(branch=branch) if branch else ''
+	else:
+		repo_name = git_url.split(os.sep)[-1]
+		shallow_clone = ''
+		branch = '--branch {branch}'.format(branch=branch) if branch else ''
 
 	if os.path.isdir(os.path.join(bench_path, 'apps', repo_name)):
 		# application directory already exists
@@ -214,7 +212,7 @@ def remove_app(app, bench_path='.'):
 				print("Cannot remove, app is installed on site: {0}".format(site))
 				sys.exit(1)
 
-	exec_cmd(["{0} uninstall -y {1}".format(pip, app)])
+	exec_cmd("{0} uninstall -y {1}".format(pip, app), cwd=bench_path)
 	remove_from_appstxt(app, bench_path)
 	shutil.rmtree(app_path)
 	run_frappe_cmd("build", bench_path=bench_path)

@@ -373,7 +373,7 @@ def add_to_crontab(line):
 	line = str.encode(line)
 	if not line in current_crontab:
 		cmd = ["crontab"]
-		if platform.system() == 'FreeBSD' or platform.linux_distribution()[0]=="arch":
+		if platform.system() == 'FreeBSD':
 			cmd = ["crontab", "-"]
 		s = subprocess.Popen(cmd, stdin=subprocess.PIPE)
 		s.stdin.write(current_crontab)
