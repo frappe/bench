@@ -8,7 +8,7 @@ import unittest
 
 # imports - module imports
 import bench.utils
-from bench.config.production_setup import get_supervisor_confdir, setup_production
+from bench.config.production_setup import get_supervisor_confdir
 from bench.tests.test_base import TestBenchBase
 
 

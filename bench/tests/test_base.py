@@ -7,9 +7,6 @@ import sys
 import unittest
 import getpass
 
-# imports - third paty imports
-import git
-
 # imports - module imports
 import bench
 import bench.utils

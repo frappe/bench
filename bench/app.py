@@ -101,10 +101,7 @@ def remove_from_excluded_apps_txt(app, bench_path='.'):
 		apps.remove(app)
 		return write_excluded_apps_txt(apps, bench_path=bench_path)
 
-def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=False,
-		postprocess=True, overwrite=False):
-	from six.moves.urllib_parse import urljoin
-
+def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=False, postprocess=True, overwrite=False):
 	if not os.path.exists(git_url):
 		if not check_url(git_url, raise_err=False):
 			orgs = ['frappe', 'erpnext']
