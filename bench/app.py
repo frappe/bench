@@ -1,24 +1,31 @@
+# imports - compatibility imports
 from __future__ import print_function
-import os
-from .utils import (exec_cmd, get_frappe, check_git_for_shallow_clone, build_assets,
-	restart_supervisor_processes, get_cmd_output, run_frappe_cmd, CommandFailedError,
-	restart_systemd_processes)
-from .config.common_site_config import get_config
-from six.moves import reload_module
 
+# imports - standard imports
+import json
 import logging
+import os
+import re
+import shutil
+import subprocess
+import sys
+
+# imports - third party imports
+import click
+import git
 import requests
 import semantic_version
-import json
-import re
-import subprocess
-import bench
-import sys
-import shutil
-import click
+from six.moves import reload_module
 
-logging.basicConfig(level="DEBUG")
+# imports - module imports
+import bench
+from bench.config.common_site_config import get_config
+from bench.utils import CommandFailedError, build_assets, check_git_for_shallow_clone, exec_cmd, get_cmd_output, get_frappe, restart_supervisor_processes, restart_systemd_processes, run_frappe_cmd
+
+
+logging.basicConfig(level="INFO")
 logger = logging.getLogger(__name__)
+
 
 class InvalidBranchException(Exception): pass
 class InvalidRemoteException(Exception): pass
@@ -358,8 +365,7 @@ def get_repo_dir(app, bench_path='.'):
 	return os.path.join(bench_path, 'apps', app)
 
 def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrade=True):
-	from .utils import update_requirements, update_node_packages, backup_all_sites, patch_sites, build_assets, post_upgrade
-	from . import utils
+	from bench.utils import update_requirements, update_node_packages, backup_all_sites, patch_sites, build_assets, post_upgrade
 	apps_dir = os.path.join(bench_path, 'apps')
 	version_upgrade = (False,)
 	switched_apps = []
@@ -372,29 +378,35 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 
 	for app in apps:
 		app_dir = os.path.join(apps_dir, app)
-		if os.path.exists(app_dir):
-			try:
-				if check_upgrade:
-					version_upgrade = is_version_upgrade(app=app, bench_path=bench_path, branch=branch)
-					if version_upgrade[0] and not upgrade:
-						raise MajorVersionUpgradeException("Switching to {0} will cause upgrade from {1} to {2}. Pass --upgrade to confirm".format(branch, version_upgrade[1], version_upgrade[2]), version_upgrade[1], version_upgrade[2])
-				print("Switching for "+app)
-				unshallow = "--unshallow" if os.path.exists(os.path.join(app_dir, ".git", "shallow")) else ""
-				exec_cmd("git config --unset-all remote.upstream.fetch", cwd=app_dir)
-				exec_cmd("git config --add remote.upstream.fetch '+refs/heads/*:refs/remotes/upstream/*'", cwd=app_dir)
-				exec_cmd("git fetch upstream {unshallow}".format(unshallow=unshallow), cwd=app_dir)
-				exec_cmd("git checkout {branch}".format(branch=branch), cwd=app_dir)
-				exec_cmd("git merge upstream/{branch}".format(branch=branch), cwd=app_dir)
-				switched_apps.append(app)
-			except CommandFailedError:
-				print("Error switching to branch {0} for {1}".format(branch, app))
-			except InvalidRemoteException:
-				print("Remote does not exist for app {0}".format(app))
-			except InvalidBranchException:
-				print("Branch {0} does not exist in Upstream for {1}".format(branch, app))
+
+		if not os.path.exists(app_dir):
+			bench.utils.log("{} does not exist!".format(app), level=2)
+			continue
+
+		repo = git.Repo(app_dir)
+		unshallow_flag = os.path.exists(os.path.join(app_dir, ".git", "shallow"))
+		bench.utils.log("Fetching upstream {0}for {1}".format("unshallow " if unshallow_flag else "", app))
+
+		bench.utils.exec_cmd("git remote set-branches upstream  '*'", cwd=app_dir)
+		bench.utils.exec_cmd("git fetch --all{0}".format(" --unshallow" if unshallow_flag else ""), cwd=app_dir)
+
+		if check_upgrade:
+			version_upgrade = is_version_upgrade(app=app, bench_path=bench_path, branch=branch)
+			if version_upgrade[0] and not upgrade:
+				bench.utils.log("Switching to {0} will cause upgrade from {1} to {2}. Pass --upgrade to confirm".format(branch, version_upgrade[1], version_upgrade[2]), level=2)
+				sys.exit(1)
+
+		print("Switching for "+app)
+		bench.utils.exec_cmd("git checkout {0}".format(branch), cwd=app_dir)
+
+		if str(repo.active_branch) == branch:
+			switched_apps.append(app)
+		else:
+			bench.utils.log("Switching branches failed for: {}".format(app), level=2)
 
 	if switched_apps:
-		print("Successfully switched branches for:\n" + "\n".join(switched_apps))
+		bench.utils.log("Successfully switched branches for: " + ", ".join(switched_apps), level=1)
+		print('Please run `bench update --patch` to be safe from any differences in database schema')
 
 	if version_upgrade[0] and upgrade:
 		update_requirements()
@@ -404,6 +416,7 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 		patch_sites()
 		build_assets()
 		post_upgrade(version_upgrade[1], version_upgrade[2])
+
 
 def switch_to_branch(branch=None, apps=None, bench_path='.', upgrade=False):
 	switch_branch(branch, apps=apps, bench_path=bench_path, upgrade=upgrade)
