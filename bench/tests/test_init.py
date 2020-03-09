@@ -39,6 +39,15 @@ class TestBenchInit(TestBenchBase):
 			self.init_bench(bench_name)
 
 		self.assert_common_site_config("test-bench-1", {
+			"webserver_port": 8000,
+			"socketio_port": 9000,
+			"file_watcher_port": 6787,
+			"redis_queue": "redis://localhost:11000",
+			"redis_socketio": "redis://localhost:12000",
+			"redis_cache": "redis://localhost:13000"
+		})
+
+		self.assert_common_site_config("test-bench-2", {
 			"webserver_port": 8001,
 			"socketio_port": 9001,
 			"file_watcher_port": 6788,
@@ -47,14 +56,6 @@ class TestBenchInit(TestBenchBase):
 			"redis_cache": "redis://localhost:13001"
 		})
 
-		self.assert_common_site_config("test-bench-2", {
-			"webserver_port": 8002,
-			"socketio_port": 9002,
-			"file_watcher_port": 6789,
-			"redis_queue": "redis://localhost:11002",
-			"redis_socketio": "redis://localhost:12002",
-			"redis_cache": "redis://localhost:13002"
-		})
 
 
 	def test_new_site(self):
