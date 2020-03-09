@@ -3,6 +3,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import unittest
 import getpass
 
@@ -81,6 +82,7 @@ class TestBenchBase(unittest.TestCase):
 			git.Repo.clone_from("https://github.com/frappe/frappe", frappe_tmp_path, depth=1)
 
 		kwargs.update(dict(
+			python=sys.executable,
 			no_procfile=True,
 			no_backups=True,
 			skip_assets=True,
