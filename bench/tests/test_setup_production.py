@@ -14,20 +14,18 @@ from bench.tests.test_base import TestBenchBase
 
 class TestSetupProduction(TestBenchBase):
 	def test_setup_production(self):
-		for bench_name in ("test-bench-1", "test-bench-2"):
-			self.init_bench(bench_name)
-
 		user = getpass.getuser()
-		bench.utils.exec_cmd("sudo bench setup sudoers {0}".format(user))
 
-		for bench_name in self.benches:
+		for bench_name in ("test-bench-1", "test-bench-2"):
 			bench_path = os.path.join(os.path.abspath(self.benches_path), bench_name)
+			self.init_bench(bench_name)
 			bench.utils.exec_cmd("sudo bench setup production {0}".format(user), cwd=bench_path)
 			self.assert_nginx_config(bench_name)
 			self.assert_supervisor_config(bench_name)
 			self.assert_supervisor_process(bench_name)
 
 		self.assert_nginx_process()
+		bench.utils.exec_cmd("sudo bench setup sudoers {0}".format(user))
 		self.assert_sudoers(user)
 
 		for bench_name in self.benches:
