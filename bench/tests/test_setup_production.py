@@ -2,6 +2,7 @@
 import getpass
 import os
 import re
+import subprocess
 import time
 import unittest
 
@@ -64,8 +65,11 @@ class TestSetupProduction(TestBenchBase):
 		sudoers_file = '/etc/sudoers.d/frappe'
 		self.assertTrue(self.file_exists(sudoers_file))
 
-		with open(sudoers_file, 'r') as f:
-			sudoers = f.read()
+		if os.environ.get("CI"):
+			sudoers = subprocess.check_output(["sudo", "cat", sudoers_file]).decode("utf-8")
+		else:
+			with open(sudoers_file, 'r') as f:
+				sudoers = f.read()
 
 		self.assertTrue('{user} ALL = (root) NOPASSWD: /usr/sbin/service nginx *'.format(user=user) in sudoers)
 		self.assertTrue('{user} ALL = (root) NOPASSWD: /usr/bin/supervisorctl'.format(user=user) in sudoers)

@@ -79,7 +79,7 @@ class TestBenchBase(unittest.TestCase):
 		frappe_tmp_path = "/tmp/frappe"
 
 		if not os.path.exists(frappe_tmp_path):
-			git.Repo.clone_from("https://github.com/frappe/frappe", frappe_tmp_path, depth=1)
+			bench.utils.exec_cmd("git clone https://github.com/frappe/frappe --depth 1 --origin upstream {location}".format(location=frappe_tmp_path))
 
 		kwargs.update(dict(
 			python=sys.executable,
@@ -94,5 +94,5 @@ class TestBenchBase(unittest.TestCase):
 
 	def file_exists(self, path):
 		if os.environ.get("CI"):
-			return not subprocess.getstatusoutput("sudo test -f {0}".format(path))[0]
+			return not subprocess.call(["sudo", "test", "-f", path])
 		return os.path.isfile(path)
