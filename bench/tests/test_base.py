@@ -91,7 +91,7 @@ class TestBenchBase(unittest.TestCase):
 
 		if not os.path.exists(os.path.join(self.benches_path, bench_name)):
 			bench.utils.init(bench_name, **kwargs)
-			bench.utils.exec_cmd("git remote set-url upstream https://gihub.com/frappe/frappe", cwd=os.path.join(self.benches_path, bench_name, "apps", "frappe"))
+			bench.utils.exec_cmd("git remote set-url upstream https://github.com/frappe/frappe", cwd=os.path.join(self.benches_path, bench_name, "apps", "frappe"))
 
 	def file_exists(self, path):
 		if os.environ.get("CI"):
