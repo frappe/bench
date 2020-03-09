@@ -93,11 +93,13 @@ class TestSetupProduction(TestBenchBase):
 				"program:{bench_name}-redis-cache",
 				"program:{bench_name}-redis-queue",
 				"program:{bench_name}-redis-socketio",
-				"program:{bench_name}-node-socketio",
 				"group:{bench_name}-web",
 				"group:{bench_name}-workers",
 				"group:{bench_name}-redis"
 			]
+
+			if not os.environ.get("CI"):
+				tests.append("program:{bench_name}-node-socketio")
 
 			if use_rq:
 				tests.extend([
