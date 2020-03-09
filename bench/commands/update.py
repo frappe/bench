@@ -42,8 +42,6 @@ def retry_upgrade(version):
 def switch_to_branch(branch, apps, upgrade=False):
 	from bench.app import switch_to_branch
 	switch_to_branch(branch=branch, apps=list(apps), upgrade=upgrade)
-	print('Switched to ' + branch)
-	print('Please run `bench update --patch` to be safe from any differences in database schema')
 
 
 @click.command('switch-to-master', help="[DEPRECATED]: Switch frappe and erpnext to master branch")
@@ -57,4 +55,3 @@ def switch_to_develop(upgrade=False):
 	"Switch frappe and erpnext to develop branch"
 	from bench.app import switch_to_develop
 	switch_to_develop(apps=['frappe', 'erpnext'])
-	print('Switched to develop\nPlease run `bench update --patch` to be safe from any differences in database schema')
