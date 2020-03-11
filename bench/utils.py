@@ -154,20 +154,9 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	copy_patches_txt(path)
 
 
-def restart_update(kwargs):
-	args = ['--'+k for k, v in list(kwargs.items()) if v]
-	os.execv(sys.argv[0], sys.argv[:2] + args)
-
-
-def update(pull=False, patch=False, build=False, bench=False, restart_supervisor=False,
-	restart_systemd=False, requirements=False, backup=True, force=False, reset=False):
+def update(pull=False, patch=False, build=False, requirements=False, backup=True, force=False, reset=False,
+	restart_supervisor=False, restart_systemd=False):
 	"""command: bench update"""
-
-	if not is_bench_directory():
-		"""Update only bench CLI if bench update called from outside a bench"""
-		update_bench(bench_repo=True, requirements=True)
-		sys.exit(0)
-
 	from bench import patches
 	from bench.app import is_version_upgrade, pull_all_apps, validate_branch
 	from bench.config.common_site_config import get_config, update_config
@@ -180,20 +169,8 @@ def update(pull=False, patch=False, build=False, bench=False, restart_supervisor
 		print('Release bench detected, cannot update!')
 		sys.exit(1)
 
-	if not (pull or patch or build or bench or requirements):
-		pull, patch, build, bench, requirements = True, True, True, True, True
-
-	if bench and conf.get('update_bench_on_update'):
-		update_bench(bench_repo=True, requirements=False)
-		restart_update({
-			'pull': pull,
-			'patch': patch,
-			'build': build,
-			'requirements': requirements,
-			'no-backup': backup,
-			'restart-supervisor': restart_supervisor,
-			'reset': reset
-		})
+	if not (pull or patch or build or requirements):
+		pull, patch, build, requirements = True, True, True, True
 
 	validate_branch()
 	version_upgrade = is_version_upgrade()
@@ -207,8 +184,6 @@ def update(pull=False, patch=False, build=False, bench=False, restart_supervisor
 
 	if version_upgrade[0] or (not version_upgrade[0] and force):
 		validate_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
-
-	before_update(bench_path=bench_path, requirements=requirements)
 
 	conf.update({ "maintenance_mode": 1, "pause_scheduler": 1 })
 	update_config(conf, bench_path=bench_path)
@@ -306,13 +281,25 @@ def which(executable, raise_err = False):
 	return exec_
 
 
-def setup_env(bench_path='.', python = 'python3'):
-	python = which(python, raise_err = True)
-	pip    = os.path.join('env', 'bin', 'pip')
+def get_venv_path():
+	venv = which('virtualenv')
 
-	exec_cmd('virtualenv -q {} -p {}'.format('env', python), cwd=bench_path)
-	exec_cmd('{} -q install -U pip wheel six'.format(pip), cwd=bench_path)
-	exec_cmd('{} -q install -e git+https://github.com/frappe/python-pdfkit.git#egg=pdfkit'.format(pip), cwd=bench_path)
+	if not venv:
+		current_python = sys.executable
+		with open(os.devnull, "wb") as devnull:
+			is_venv_installed = not subprocess.call([current_python, "-m", "venv", "--help"], stdout=devnull)
+		if is_venv_installed:
+			venv = "{} -m venv".format(current_python)
+
+	return venv or log("virtualenv cannot be found", level=2)
+
+def setup_env(bench_path='.', python='python3'):
+	frappe = os.path.join(bench_path, "apps", "frappe")
+	pip = os.path.join(".", "env", "bin", "pip")
+	virtualenv = get_venv_path()
+
+	exec_cmd('{} -q env -p {}'.format(virtualenv, python), cwd=bench_path)
+	exec_cmd('{} install -q -U -e {}'.format(pip, frappe), cwd=bench_path)
 
 
 def setup_socketio(bench_path='.'):
@@ -386,25 +373,6 @@ def read_crontab():
 	out = s.stdout.read()
 	s.stdout.close()
 	return out
-
-
-def update_bench(bench_repo=True, requirements=True):
-	logger.info("Updating bench")
-
-	# bench-repo folder
-	cwd = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-	if bench_repo:
-		try:
-			exec_cmd("git pull", cwd=cwd)
-		except bench.utils.CommandFailedError:
-			exec_cmd("git -c user.name=bench -c user.email=developers@frappe.io stash", cwd=cwd)
-			logger.info("Stashing changes made at {}\nUse git stash apply to recover changes after the successful update!".format(cwd))
-
-	if requirements:
-		update_bench_requirements()
-
-	logger.info("Bench Updated!")
 
 
 def setup_sudoers(user):
@@ -582,11 +550,6 @@ def set_default_site(site, bench_path='.'):
 			cwd=os.path.join(bench_path, 'sites'))
 
 
-def update_bench_requirements():
-	bench_req_file = os.path.join(os.path.dirname(bench.__path__[0]), 'requirements.txt')
-	install_requirements(bench_req_file, user=True)
-
-
 def update_env_pip(bench_path):
 	env_pip = os.path.join(bench_path, 'env', 'bin', 'pip')
 	exec_cmd("{pip} install -q -U pip".format(pip=env_pip))
@@ -595,9 +558,6 @@ def update_env_pip(bench_path):
 def update_requirements(bench_path='.'):
 	from bench.app import get_apps, install_app
 	print('Updating Python libraries...')
-
-	# Update bench requirements (at user level)
-	update_bench_requirements()
 
 	# update env pip
 	update_env_pip(bench_path)
@@ -938,38 +898,6 @@ def get_output(*cmd):
 	out = s.stdout.read()
 	s.stdout.close()
 	return out
-
-
-def before_update(bench_path, requirements):
-	validate_pillow_dependencies(bench_path, requirements)
-
-
-def validate_pillow_dependencies(bench_path, requirements):
-	if not requirements:
-		return
-
-	try:
-		pip = os.path.join(bench_path, 'env', 'bin', 'pip')
-		exec_cmd("{pip} install Pillow".format(pip=pip))
-
-	except CommandFailedError:
-		distro = platform.linux_distribution()
-		distro_name = distro[0].lower()
-		if "centos" in distro_name or "fedora" in distro_name:
-			print("Please install these dependencies using the command:")
-			print("sudo yum install libtiff-devel libjpeg-devel libzip-devel freetype-devel lcms2-devel libwebp-devel tcl-devel tk-devel")
-
-			raise
-
-		elif "ubuntu" in distro_name or "elementary os" in distro_name or "debian" in distro_name:
-			print("Please install these dependencies using the command:")
-
-			if "ubuntu" in distro_name and distro[1]=="12.04":
-				print("sudo apt-get install -y libtiff4-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.5-dev tk8.5-dev python-tk")
-			else:
-				print("sudo apt-get install -y libtiff5-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python-tk")
-
-			raise
 
 
 def get_bench_name(bench_path):

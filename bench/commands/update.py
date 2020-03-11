@@ -14,16 +14,15 @@ from bench.utils import post_upgrade, patch_sites, build_assets
 @click.option('--pull', is_flag=True, help="Pull updates for all the apps in bench")
 @click.option('--patch', is_flag=True, help="Run migrations for all sites in the bench")
 @click.option('--build', is_flag=True, help="Build JS and CSS assets for the bench")
-@click.option('--bench', is_flag=True, help="Update bench CLI tool")
 @click.option('--requirements', is_flag=True, help="Update requirements. If run alone, equivalent to `bench setup requirements`")
 @click.option('--restart-supervisor', is_flag=True, help="Restart supervisor processes after update")
 @click.option('--restart-systemd', is_flag=True, help="Restart systemd units after update")
 @click.option('--no-backup', is_flag=True, help="If this flag is set, sites won't be backed up prior to updates. Note: This is not recommended in production.")
 @click.option('--force', is_flag=True, help="Forces major version upgrades")
 @click.option('--reset', is_flag=True, help="Hard resets git branch's to their new states overriding any changes and overriding rebase on pull")
-def update(pull, patch, build, bench, requirements, restart_supervisor, restart_systemd, no_backup, force, reset):
+def update(pull, patch, build, requirements, restart_supervisor, restart_systemd, no_backup, force, reset):
 	from bench.utils import update
-	update(pull=pull, patch=patch, build=build, bench=bench, requirements=requirements, restart_supervisor=restart_supervisor, restart_systemd=restart_systemd, backup= not no_backup, force=force, reset=reset)
+	update(pull=pull, patch=patch, build=build, requirements=requirements, restart_supervisor=restart_supervisor, restart_systemd=restart_systemd, backup=not no_backup, force=force, reset=reset)
 
 
 @click.command('retry-upgrade', help="Retry a failed upgrade")
