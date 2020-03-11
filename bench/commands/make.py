@@ -38,10 +38,11 @@ def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups, c
 		log('Bench {} initialized'.format(path), level=1)
 	except SystemExit:
 		pass
-	except:
+	except Exception as e:
 		import os, shutil, time, six
 		# add a sleep here so that the traceback of other processes doesnt overlap with the prompts
 		time.sleep(1)
+		print(e)
 		log("There was a problem while creating {}".format(path), level=2)
 		if six.moves.input("Do you want to rollback these changes? [Y/n]: ").lower() == "y":
 			print('Rolling back Bench "{}"'.format(path))
