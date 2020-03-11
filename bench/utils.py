@@ -147,7 +147,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		redis.generate_config(path)
 
 	if not no_procfile:
-		setup_procfile(path)
+		setup_procfile(path, skip_redis=skip_redis_config_generation)
 	if not no_backups:
 		setup_backups(bench_path=path)
 
