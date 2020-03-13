@@ -126,12 +126,12 @@ class TestSetupProduction(TestBenchBase):
 
 
 	def assert_supervisor_process(self, bench_name, use_rq=True, disable_production=False):
-		out = bench.utils.get_cmd_output("sudo supervisorctl status")
+		out = bench.utils.get_cmd_output("supervisorctl status")
 
 		while "STARTING" in out:
 			print ("Waiting for all processes to start...")
 			time.sleep(10)
-			out = bench.utils.get_cmd_output("sudo supervisorctl status")
+			out = bench.utils.get_cmd_output("supervisorctl status")
 
 		tests = [
 			"{bench_name}-web:{bench_name}-frappe-web[\s]+RUNNING",

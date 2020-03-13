@@ -37,6 +37,7 @@ class CommandFailedError(Exception):
 logger = logging.getLogger(__name__)
 
 folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
+sudoers_file = '/etc/sudoers.d/frappe'
 
 
 class color:
@@ -423,16 +424,12 @@ def setup_sudoers(user):
 		if set_permissions:
 			os.chmod('/etc/sudoers', 0o440)
 
-	sudoers_file = '/etc/sudoers.d/frappe'
-
 	template = env.get_template('frappe_sudoers')
 	frappe_sudoers = template.render(**{
 		'user': user,
 		'service': find_executable('service'),
 		'systemctl': find_executable('systemctl'),
-		'supervisorctl': find_executable('supervisorctl'),
 		'nginx': find_executable('nginx'),
-		'bench': find_executable('bench')
 	})
 	frappe_sudoers = safe_decode(frappe_sudoers)
 
@@ -548,7 +545,7 @@ def restart_supervisor_processes(bench_path='.', web_workers=False):
 		exec_cmd(cmd, cwd=bench_path)
 
 	else:
-		supervisor_status = subprocess.check_output(['sudo', 'supervisorctl', 'status'], cwd=bench_path)
+		supervisor_status = subprocess.check_output(['supervisorctl', 'status'], cwd=bench_path)
 		supervisor_status = safe_decode(supervisor_status)
 
 		if web_workers and '{bench_name}-web:'.format(bench_name=bench_name) in supervisor_status:
@@ -565,7 +562,7 @@ def restart_supervisor_processes(bench_path='.', web_workers=False):
 		else:
 			group = 'frappe:'
 
-		exec_cmd('sudo supervisorctl restart {group}'.format(group=group), cwd=bench_path)
+		exec_cmd('supervisorctl restart {group}'.format(group=group), cwd=bench_path)
 
 
 def restart_systemd_processes(bench_path='.', web_workers=False):

@@ -60,16 +60,6 @@ def setup_fonts():
 @click.option("--yes", help="Yes to regeneration config", is_flag=True, default=False)
 def setup_production(user, yes=False):
 	from bench.config.production_setup import setup_production
-	# Install prereqs for production
-	from distutils.spawn import find_executable
-	if not find_executable("ansible"):
-		exec_cmd("sudo -H {0} -m pip install ansible".format(sys.executable))
-	if not find_executable("fail2ban-client"):
-		exec_cmd("bench setup role fail2ban")
-	if not find_executable("nginx"):
-		exec_cmd("bench setup role nginx")
-	if not find_executable("supervisord"):
-		exec_cmd("bench setup role supervisor")
 	setup_production(user=user, yes=yes)
 
 

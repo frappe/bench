@@ -4,8 +4,23 @@ from bench.config.systemd import generate_systemd_config
 from bench.config.nginx import make_nginx_conf
 from bench.config.common_site_config import get_config
 import os, subprocess
+import sys
+from distutils.spawn import find_executable
+
+
+def setup_production_prerequisites():
+	if not find_executable("ansible"):
+		exec_cmd("sudo {0} -m pip install ansible".format(sys.executable))
+	if not find_executable("fail2ban-client"):
+		exec_cmd("bench setup role fail2ban")
+	if not find_executable("nginx"):
+		exec_cmd("bench setup role nginx")
+	if not find_executable("supervisord"):
+		exec_cmd("bench setup role supervisor")
+
 
 def setup_production(user, bench_path='.', yes=False):
+	setup_production_prerequisites()
 	if get_config(bench_path).get('restart_supervisor_on_update') and get_config(bench_path).get('restart_systemd_on_update'):
 		raise Exception("You cannot use supervisor and systemd at the same time. Modify your common_site_config accordingly." )
 
@@ -109,15 +124,15 @@ def reload_supervisor():
 
 	try:
 		# first try reread/update
-		exec_cmd('sudo {0} reread'.format(supervisorctl))
-		exec_cmd('sudo {0} update'.format(supervisorctl))
+		exec_cmd('{0} reread'.format(supervisorctl))
+		exec_cmd('{0} update'.format(supervisorctl))
 		return
 	except CommandFailedError:
 		pass
 
 	try:
 		# something is wrong, so try reloading
-		exec_cmd('sudo {0} reload'.format(supervisorctl))
+		exec_cmd('{0} reload'.format(supervisorctl))
 		return
 	except CommandFailedError:
 		pass
