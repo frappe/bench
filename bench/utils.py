@@ -450,17 +450,11 @@ def setup_logging(bench_path='.'):
 		logger.setLevel(logging.DEBUG)
 
 
-def get_program(programs):
-	program = None
-	for p in programs:
-		program = find_executable(p)
-		if program:
-			break
-	return program
-
-
 def get_process_manager():
-	return get_program(['foreman', 'forego', 'honcho'])
+	for proc_man in ['honcho', 'foreman', 'forego']:
+		proc_man_path = find_executable(proc_man)
+		if proc_man_path:
+			return proc_man_path
 
 
 def start(no_dev=False, concurrency=None, procfile=None):
@@ -516,14 +510,15 @@ def check_git_for_shallow_clone():
 
 
 def get_cmd_output(cmd, cwd='.'):
+	print("{0}$ {1}{2}".format(color.silver, cmd, color.nc))
 	try:
 		output = subprocess.check_output(cmd, cwd=cwd, shell=True, stderr=subprocess.PIPE).strip()
-		output = output.decode('utf-8')
-		return output
 	except subprocess.CalledProcessError as e:
 		if e.output:
-			print(e.output)
-		raise
+			output = e.output
+		else:
+			raise
+	return safe_decode(output)
 
 
 def safe_encode(what, encoding = 'utf-8'):
@@ -545,7 +540,7 @@ def restart_supervisor_processes(bench_path='.', web_workers=False):
 		exec_cmd(cmd, cwd=bench_path)
 
 	else:
-		supervisor_status = subprocess.check_output(['supervisorctl', 'status'], cwd=bench_path)
+		supervisor_status = get_cmd_output('supervisorctl status', cwd=bench_path)
 		supervisor_status = safe_decode(supervisor_status)
 
 		if web_workers and '{bench_name}-web:'.format(bench_name=bench_name) in supervisor_status:
