@@ -40,7 +40,7 @@ bench_command.add_command(switch_to_develop)
 
 
 from bench.commands.utils import (start, restart, set_nginx_port, set_ssl_certificate, set_ssl_certificate_key, set_url_root,
-	set_mariadb_host, set_default_site, download_translations, shell, backup_site, backup_all_sites, release, renew_lets_encrypt,
+	set_mariadb_host, set_default_site, download_translations, backup_site, backup_all_sites, release, renew_lets_encrypt,
 	disable_production, bench_src, prepare_beta_release, set_redis_cache_host, set_redis_queue_host, set_redis_socketio_host, find_benches, migrate_env)
 bench_command.add_command(start)
 bench_command.add_command(restart)
@@ -54,7 +54,6 @@ bench_command.add_command(set_redis_queue_host)
 bench_command.add_command(set_redis_socketio_host)
 bench_command.add_command(set_default_site)
 bench_command.add_command(download_translations)
-bench_command.add_command(shell)
 bench_command.add_command(backup_site)
 bench_command.add_command(backup_all_sites)
 bench_command.add_command(release)

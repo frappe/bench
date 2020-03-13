@@ -15,6 +15,7 @@ bench is a command-line utility that helps you to install apps, manage multiple 
  - [bench CLI](#bench-cli)
 	- [Usage](#usage)
 	- [Installation](#installation)
+	- [Custom Bench commands](#custom-bench-commands)
  - [Easy Install Script](#easy-install-script)
  - [Release Bench](#release-bench)
  - [Guides](#guides)
@@ -49,7 +50,7 @@ Bench is a command line tool that helps you install, setup, manage multiple site
 * Install apps on a particular site
 
 		bench --site [site-name] install-app [app-name]
-		
+
 * Start bench (only for development)
 
 		bench start
@@ -60,7 +61,7 @@ Bench is a command line tool that helps you install, setup, manage multiple site
 
 _Note:_ Apart from `bench init`, all other bench commands have to be run having the respective bench directory as the working directory. _(`bench update` may also be run, but it's behaviour is covered in depth in the docs)_
 
-For more in depth information on commands and usage follow [here](https://github.com/frappe/bench/blob/master/docs/commands_and_usage.md).
+For more in depth information on commands and usage follow [here](https://github.com/frappe/bench/blob/master/docs/commands_and_usage.md). As for a consolidated list of bench commands, go through [this page](https://github.com/frappe/bench/blob/master/docs/bench_usage.md).
 
 ---
 
@@ -68,12 +69,18 @@ For more in depth information on commands and usage follow [here](https://github
 
 To do this install, you must have basic information on how Linux works and should be able to use the command-line. bench will also create nginx and supervisor config files, setup backups and much more. If you are using on a VPS make sure it has >= 1Gb of RAM or has swap setup properly.
 
-		git clone https://github.com/frappe/bench ~/.bench
-		pip3 install --user -e ~/.bench
+	git clone https://github.com/frappe/bench ~/.bench
+	pip3 install --user -e ~/.bench
 
 As bench is a python application, its installation really depends on `python` + `pip` + `git`. The Frappe Framework, however has various other system dependencies like `nodejs`, `yarn`, `redis` and a database system like `mariadb` or `postgres`. Go through the [installation requirements](https://github.com/frappe/bench/blob/master/docs/installation.md) for an updated list.
 
 If you have questions, please ask them on the [forum](https://discuss.erpnext.com/c/bench) under the "Install / Update" category.
+
+---
+
+## Custom Bench Commands
+
+Want to utilize a bench command you've added in your custom Frappe application? [This](https://github.com/frappe/bench/blob/master/docs/bench_custom_cmd.md) guide might be of some help.
 
 ---
 
