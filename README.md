@@ -117,12 +117,11 @@ Releases can be made for [Frappe](https://github.com/frappe/frappe) apps using b
 
 ---
 
-# Docker Install
+# Docker
 
-1. For developer setup, you can also use the official [Frappe Docker](https://github.com/frappe/frappe_docker/).
-2. The app, mariadb and redis run on individual containers.
-3. This setup supports multi-tenancy and exposes the frappe-bench volume as a external storage.
-4. For more details, [ead the instructions on the [Frappe Docker README](https://github.com/frappe/frappe_docker/)
+- For official images and resources [Frappe Docker](https://github.com/frappe/frappe_docker)
+- Production Installation [README](https://github.com/frappe/frappe_docker/blob/develop/README.md)
+- Developer Setup [README](https://github.com/frappe/frappe_docker/blob/develop/development/README.md)
 
 ---
 
