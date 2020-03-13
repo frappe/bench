@@ -8,6 +8,7 @@ import bench
 from bench.app import get_current_frappe_version, use_rq
 from bench.utils import get_bench_name, find_executable
 from bench.config.common_site_config import get_config, update_config, get_gunicorn_workers
+from bench.config.production_setup import service
 
 # imports - third party imports
 import click
@@ -74,3 +75,6 @@ def update_supervisord_conf(user):
 
 	with open(supervisord_conf, "w") as f:
 		config.write(f)
+
+	# restart supervisor to take new changes into effect
+	service('supervisor', 'restart')
