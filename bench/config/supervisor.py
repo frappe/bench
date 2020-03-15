@@ -8,7 +8,6 @@ import bench
 from bench.app import get_current_frappe_version, use_rq
 from bench.utils import get_bench_name, find_executable
 from bench.config.common_site_config import get_config, update_config, get_gunicorn_workers
-from bench.config.production_setup import service
 
 # imports - third party imports
 import click
@@ -65,6 +64,8 @@ def get_supervisord_conf():
 
 def update_supervisord_conf(user):
 	"""From bench v5.0, we're moving to supervisor running as user"""
+	from bench.config.production_setup import service
+
 	supervisord_conf = get_supervisord_conf() or "supervisord.conf"
 	section = "unix_http_server"
 

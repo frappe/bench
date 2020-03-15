@@ -3,7 +3,7 @@ import subprocess
 import sys
 
 # imports - module imports
-from bench.utils import log, get_cmd_output, exec_cmd, which
+from bench.utils import get_cmd_output, exec_cmd, which
 from bench.cli import change_uid_msg
 
 
