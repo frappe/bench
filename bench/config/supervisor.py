@@ -1,5 +1,4 @@
 # imports - standard imports
-import configparser
 import getpass
 import os
 
@@ -11,6 +10,7 @@ from bench.config.common_site_config import get_config, update_config, get_gunic
 
 # imports - third party imports
 import click
+from six.moves import configparser
 
 
 def generate_supervisor_config(bench_path, user=None, yes=False):
