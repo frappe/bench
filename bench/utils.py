@@ -437,6 +437,7 @@ def setup_sudoers(user):
 		f.write(frappe_sudoers)
 
 	os.chmod(sudoers_file, 0o440)
+	log("Sudoers was set up for user {}".format(user), level=1)
 
 
 def setup_logging(bench_path='.'):
@@ -510,7 +511,6 @@ def check_git_for_shallow_clone():
 
 
 def get_cmd_output(cmd, cwd='.'):
-	print("{0}$ {1}{2}".format(color.silver, cmd, color.nc))
 	try:
 		output = subprocess.check_output(cmd, cwd=cwd, shell=True, stderr=subprocess.PIPE).strip()
 	except subprocess.CalledProcessError as e:
