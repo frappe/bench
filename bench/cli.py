@@ -8,6 +8,7 @@ from bench.commands import bench_command
 
 logger = logging.getLogger('bench')
 from_command_line = False
+change_uid_msg = "You should not run this command as root"
 
 def cli():
 	global from_command_line
@@ -72,7 +73,7 @@ def change_uid():
 			drop_privileges(uid_name=frappe_user, gid_name=frappe_user)
 			os.environ['HOME'] = pwd.getpwnam(frappe_user).pw_dir
 		else:
-			log('You should not run this command as root', level=3)
+			log(change_uid_msg, level=3)
 			sys.exit(1)
 
 def old_frappe_cli(bench_path='.'):
