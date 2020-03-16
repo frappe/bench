@@ -78,8 +78,8 @@ def update_supervisord_conf(user):
 	if section not in config.sections():
 		config.add_section(section)
 
-	config[section]["chmod"] = "0760"
-	config[section]["chown"] = "{user}:{user}".format(user=user)
+	config.set(section, "chmod", "0760")
+	config.set(section, "chown", "{user}:{user}".format(user=user))
 
 	with open(supervisord_conf, "w") as f:
 		config.write(f)
