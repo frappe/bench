@@ -69,9 +69,6 @@ def update_supervisord_conf(user):
 	supervisord_conf = get_supervisord_conf()
 	section = "unix_http_server"
 
-	if not supervisord_conf:
-		return
-
 	config = configparser.ConfigParser()
 	config.read(supervisord_conf)
 	config[section]["chmod"] = "0760"

@@ -1,21 +1,38 @@
 # imports - standard imports
+import os
 import subprocess
-import sys
 
 # imports - module imports
-from bench.utils import get_cmd_output, exec_cmd, which
 from bench.cli import change_uid_msg
+from bench.config.production_setup import get_supervisor_confdir, is_centos7
+from bench.utils import exec_cmd, get_bench_name, get_cmd_output
+
+
+def is_sudoers_set():
+	cmd = ["sudo", "-n", "bench"]
+	return (not subprocess.call(cmd)) or (change_uid_msg in get_cmd_output(cmd))
+
+
+def is_production_set(bench_path):
+	production_setup = False
+	bench_name = get_bench_name(bench_path)
+
+	supervisor_conf_extn = "ini" if is_centos7() else "conf"
+	supervisor_conf_file_name = '{bench_name}.{extn}'.format(bench_name=bench_name, extn=supervisor_conf_extn)
+	supervisor_conf = os.path.join(get_supervisor_confdir(), supervisor_conf_file_name)
+
+	if os.path.exists(supervisor_conf):
+		production_setup = production_setup or True
+
+	nginx_conf = '/etc/nginx/conf.d/{bench_name}.conf'.format(bench_name=bench_name)
+
+	if os.path.exists(nginx_conf):
+		production_setup = production_setup or True
+
+	return production_setup
 
 
 def execute(bench_path):
-	cmd = ["sudo", "-n", "bench"]
-
-	is_bench_sudoers_set = (not subprocess.call(cmd)) or (change_uid_msg in get_cmd_output(cmd))
-	is_supervisor_installed = which('supervisorctl')
-
-	if not is_supervisor_installed:
-		exec_cmd("{} -m pip install supervisor".format(sys.executable))
-
-	if is_bench_sudoers_set:
+	if is_sudoers_set() or is_production_set(bench_path):
 		exec_cmd("sudo bench setup supervisor --yes")
 		exec_cmd("sudo bench setup sudoers")
