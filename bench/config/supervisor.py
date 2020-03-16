@@ -66,8 +66,11 @@ def update_supervisord_conf(user):
 	"""From bench v5.0, we're moving to supervisor running as user"""
 	from bench.config.production_setup import service
 
-	supervisord_conf = get_supervisord_conf() or "supervisord.conf"
+	supervisord_conf = get_supervisord_conf()
 	section = "unix_http_server"
+
+	if not supervisord_conf:
+		return
 
 	config = configparser.ConfigParser()
 	config.read(supervisord_conf)
