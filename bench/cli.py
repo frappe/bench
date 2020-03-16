@@ -1,6 +1,6 @@
 import click
 import os, sys, logging, json, pwd, subprocess
-from bench.utils import is_root, PatchError, drop_privileges, get_env_cmd, get_cmd_output, get_frappe, log, is_bench_directory
+from bench.utils import is_root, PatchError, drop_privileges, get_env_cmd, get_cmd_output, get_frappe, log, is_bench_directory, is_dist_editable
 from bench.app import get_apps
 from bench.config.common_site_config import get_config
 from bench.commands import bench_command
@@ -17,6 +17,10 @@ def cli():
 	check_uid()
 	change_dir()
 	change_uid()
+
+	if is_dist_editable("bench"):
+		log("bench is installed in editable mode!")
+		print("Install bench via PYPI for production instead, using `pip install frappe-bench`")
 
 	if len(sys.argv) > 2 and sys.argv[1] == "frappe":
 		return old_frappe_cli()

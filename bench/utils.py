@@ -1027,28 +1027,3 @@ def is_dist_editable(dist):
 		if os.path.isfile(egg_link):
 			return True
 	return False
-
-def install_checker():
-	development_mode = os.path.exists(os.path.expanduser("~/.bench.dev"))
-	bench_editable = is_dist_editable(dist="bench")
-
-	if development_mode and bench_editable:
-		log("bench is setup for development mode")
-
-	if development_mode and not bench_editable:
-		log("Clone bench's git repository from https://github.com/frappe/bench to develop using bench")
-
-	if not development_mode and not bench_editable:
-		"""Ideal scenario for bench users"""
-
-	if not development_mode and bench_editable:
-		log("Installing bench in editable mode is not recommended for production", level=3)
-		import click
-		# breaking change!!!
-		if click.confirm("Do you wish to uninstall editable install and install bench from PYPI?"):
-			log("Uninstalling bench")
-			os.system("pip uninstall bench -y")
-			log("Uninstalled bench", level=2)
-			log("Installing bench via PYPI")
-			os.system("pip install frappe-bench")
-			log("Installed bench via PYPI", level=2)
