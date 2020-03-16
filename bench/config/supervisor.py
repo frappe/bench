@@ -74,6 +74,10 @@ def update_supervisord_conf(user):
 
 	config = configparser.ConfigParser()
 	config.read(supervisord_conf)
+
+	if section not in config.sections():
+		config.add_section(section)
+
 	config[section]["chmod"] = "0760"
 	config[section]["chown"] = "{user}:{user}".format(user=user)
 
