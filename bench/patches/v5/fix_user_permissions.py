@@ -1,4 +1,5 @@
 # imports - standard imports
+import getpass
 import os
 import subprocess
 
@@ -33,6 +34,10 @@ def is_production_set(bench_path):
 
 
 def execute(bench_path):
-	if is_sudoers_set() or is_production_set(bench_path):
-		exec_cmd("sudo bench setup supervisor --yes")
-		exec_cmd("sudo bench setup sudoers")
+	user = getpass.getuser()
+
+	if is_sudoers_set():
+		exec_cmd("sudo bench setup sudoers {user}".format(user=user))
+
+		if is_production_set(bench_path):
+			exec_cmd("sudo bench setup supervisor --yes --user {user}".format(user=user))
