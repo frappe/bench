@@ -17,6 +17,7 @@ def bench_command(bench_path='.'):
 	import bench
 	from bench.utils import setup_logging
 
+	bench.set_frappe_version(bench_path=bench_path)
 	setup_logging(bench_path=bench_path)
 
 
