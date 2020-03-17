@@ -1,5 +1,16 @@
 #!/usr/bin/env python3
-import os, sys, subprocess, getpass, json, multiprocessing, shutil, platform, warnings, datetime
+from __future__ import print_function
+import os
+import sys
+import subprocess
+import getpass
+import json
+import multiprocessing
+import shutil
+import platform
+import warnings
+import datetime
+
 
 tmp_bench_repo = os.path.join('/', 'tmp', '.bench')
 tmp_log_folder = os.path.join('/', 'tmp', 'logs')
@@ -395,8 +406,20 @@ def parse_commandline_args():
 
 if __name__ == '__main__':
 	if sys.version[0] == '2':
-		if not raw_input("It is recommended to run this script with Python 3\nDo you still wish to continue? [Y/n]: ").lower() == "y":
-			sys.exit()
+		if not os.environ.get('CI'):
+			if not raw_input("It is recommended to run this script with Python 3\nDo you still wish to continue? [Y/n]: ").lower() == "y":
+				sys.exit()
+
+		try:
+			from distutils.spawn import find_executable
+		except ImportError:
+			try:
+				subprocess.check_call('pip install --upgrade setuptools')
+			except subprocess.CalledProcessError:
+				print("Install distutils or use Python3 to run the script")
+				sys.exit(1)
+
+		shutil.which = find_executable
 
 	if not is_sudo_user():
 		log("Please run this script as a non-root user with sudo privileges", level=3)

@@ -19,9 +19,7 @@ def prepare_staging(bench_path, app, remote='upstream'):
 		print('No commits to release')
 		return
 
-	print()
 	print(message)
-	print()
 
 	click.confirm('Do you want to continue?', abort=True)
 
@@ -52,13 +50,13 @@ def create_staging(repo_path, from_branch='develop'):
 		g.merge(from_branch, '--no-ff')
 	except git.exc.GitCommandError as e:
 		handle_merge_error(e, source=from_branch, target='staging')
-	
+
 	g.checkout(from_branch)
 	try:
 		g.merge('staging')
 	except git.exc.GitCommandError as e:
 		handle_merge_error(e, source='staging', target=from_branch)
-	
+
 def push_commits(repo_path, remote='upstream'):
 	print('pushing staging branch of', repo_path)
 
