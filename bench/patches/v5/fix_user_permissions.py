@@ -6,6 +6,7 @@ import subprocess
 # imports - module imports
 from bench.cli import change_uid_msg
 from bench.config.production_setup import get_supervisor_confdir, is_centos7
+from bench.config.common_site_config import get_config
 from bench.utils import exec_cmd, get_bench_name, get_cmd_output
 
 
@@ -34,7 +35,7 @@ def is_production_set(bench_path):
 
 
 def execute(bench_path):
-	user = getpass.getuser()
+	user = get_config('.').get("frappe_user") or getpass.getuser()
 
 	if is_sudoers_set():
 		exec_cmd("sudo bench setup sudoers {user}".format(user=user))
