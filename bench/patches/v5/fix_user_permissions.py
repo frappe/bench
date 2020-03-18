@@ -12,7 +12,7 @@ from bench.utils import exec_cmd, get_bench_name, get_cmd_output
 
 def is_sudoers_set():
 	cmd = ["sudo", "-n", "bench"]
-	return (not subprocess.call(cmd)) or (change_uid_msg in get_cmd_output(cmd))
+	return (not subprocess.call(cmd)) or (change_uid_msg in get_cmd_output(cmd, _raise=False))
 
 
 def is_production_set(bench_path):

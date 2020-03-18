@@ -510,13 +510,13 @@ def check_git_for_shallow_clone():
 		return True
 
 
-def get_cmd_output(cmd, cwd='.'):
+def get_cmd_output(cmd, cwd='.', _raise=True):
 	try:
 		output = subprocess.check_output(cmd, cwd=cwd, shell=True, stderr=subprocess.PIPE).strip()
 	except subprocess.CalledProcessError as e:
 		if e.output:
 			output = e.output
-		else:
+		elif _raise:
 			raise
 	return safe_decode(output)
 
