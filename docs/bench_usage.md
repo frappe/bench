@@ -79,6 +79,7 @@ These commands belong directly to the bench group so they can be invoked directl
  - **renew-lets-encrypt**: Renew Let's Encrypt certificate for site SSL.
  - **backup**: Backup single site data. Can be used to backup files as well.
  - **backup-all-sites**: Backup all sites in current bench.
+ - **restore**: Restore a site's database and optionally, its public and private file backups.
 
  - **get-app**: Download an app from the internet or filesystem and set it up in your bench. This clones the git repo of the Frappe project and installs it in the bench environment.
  - **remove-app**: Completely remove app from bench and re-build assets if not installed on any site.
