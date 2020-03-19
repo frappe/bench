@@ -511,6 +511,7 @@ def check_git_for_shallow_clone():
 
 
 def get_cmd_output(cmd, cwd='.', _raise=True):
+	output = ""
 	try:
 		output = subprocess.check_output(cmd, cwd=cwd, shell=True, stderr=subprocess.PIPE).strip()
 	except subprocess.CalledProcessError as e:
