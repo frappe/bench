@@ -60,10 +60,7 @@ def write_appstxt(apps, bench_path='.'):
 		return f.write('\n'.join(apps))
 
 def check_url(url, raise_err=True):
-	try:
-		from urlparse import urlparse
-	except ImportError:
-		from urllib.parse import urlparse
+	from six.moves.urllib.parse import urlparse
 
 	parsed = urlparse(url)
 	if not parsed.scheme:
