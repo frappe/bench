@@ -25,12 +25,6 @@ def config_restart_systemd_on_update(state):
 	update_config({'restart_systemd_on_update': state == 'on'})
 
 
-@click.command('update_bench_on_update', help='Enable/Disable bench updates on running bench update')
-@click.argument('state', type=click.Choice(['on', 'off']))
-def config_update_bench_on_update(state):
-	update_config({'update_bench_on_update': state == 'on'})
-
-
 @click.command('dns_multitenant', help='Enable/Disable bench multitenancy on running bench update')
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_dns_multitenant(state):
@@ -83,7 +77,6 @@ def remove_common_config(keys):
 	put_config(common_site_config)
 
 
-config.add_command(config_update_bench_on_update)
 config.add_command(config_restart_supervisor_on_update)
 config.add_command(config_restart_systemd_on_update)
 config.add_command(config_dns_multitenant)
