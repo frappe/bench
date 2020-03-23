@@ -1,131 +1,211 @@
 <div align="center">
 	<img src="https://github.com/frappe/design/raw/master/logos/png/bench-logo.png" height="128">
-	<h2>bench</h2>
+	<h2>Bench</h2>
 </div>
 
-bench is a command-line utility that helps you to install apps, manage multiple sites and update Frappe / ERPNext apps on */nix (macOS, Ubuntu, Debian, CentOS, etc) for development and production.
+Bench is a command-line utility that helps you to install, update, and manage multiple sites for Frappe/ERPNext applications on *nix systems[^nix] for development and production.
 
+## Table of Contents
 
-> **Note**: If you are looking for easier ways to get started and evaluate ERPNext, [download the Virtual Machine](https://erpnext.com/download) or take [a free trial on erpnext.com](https://erpnext.com/pricing).
-
----
-
-# Table of Contents
-
- - [bench CLI](#bench-cli)
-	- [Usage](#usage)
-	- [Installation](#installation)
-	- [Custom Bench commands](#custom-bench-commands)
- - [Easy Install Script](#easy-install-script)
- - [Release Bench](#release-bench)
+ - [Installation](#installation)
+	- [Docker Installation](#docker-installation)
+		- [Development Setup](#docker-installation-for-development)
+		- [Production Setup](#docker-installation-for-production)
+	- [Easy Install Script](#easy-install-script)
+	- [Manual Installation](#manual-installation)
+ - [Usage](#usage)
+ - [Custom Bench commands](#custom-bench-commands)
+ - [Bench Manager](#bench-manager)
  - [Guides](#guides)
  - [Resources](#resources)
  - [License](#license)
----
 
-# bench CLI
-
-Bench is a command line tool that helps you install, setup, manage multiple sites and apps based on Frappe Framework.
-
----
-
-## Usage
-
-* Create a new bench
-
-		bench init [bench-name]
-
-* Add a site under current bench
-
-		bench new-site [site-name]
-
-	**Optional**: If the database for the site does not reside on localhost or listens on a custom port, you can use the flags `--db-host` to set a custom host and/or `--db-port` to set a custom port.
-
-		bench new-site [site-name] --db-host [custom-db-host-ip] --db-port [custom-db-port]
-
-* Add apps to bench
-
-		bench get-app [app-name] [app-link]
-
-* Install apps on a particular site
-
-		bench --site [site-name] install-app [app-name]
-
-* Start bench (only for development)
-
-		bench start
-
-* Show bench help
-
-		bench --help
-
-_Note:_ Apart from `bench init`, all other bench commands have to be run having the respective bench directory as the working directory. _(`bench update` may also be run, but it's behaviour is covered in depth in the docs)_
-
-For more in depth information on commands and usage follow [here](https://github.com/frappe/bench/blob/master/docs/commands_and_usage.md). As for a consolidated list of bench commands, go through [this page](https://github.com/frappe/bench/blob/master/docs/bench_usage.md).
-
----
 
 ## Installation
 
-To do this install, you must have basic information on how Linux works and should be able to use the command-line. bench will also create nginx and supervisor config files, setup backups and much more. If you are using on a VPS make sure it has >= 1Gb of RAM or has swap setup properly.
+A typical bench setup provides two types of environments -- Development and Production.
 
-	git clone https://github.com/frappe/bench ~/.bench
-	pip3 install --user -e ~/.bench
+The setup for each of these installations can be achieved in multiple ways:
 
-As bench is a python application, its installation really depends on `python` + `pip` + `git`. The Frappe Framework, however has various other system dependencies like `nodejs`, `yarn`, `redis` and a database system like `mariadb` or `postgres`. Go through the [installation requirements](https://github.com/frappe/bench/blob/master/docs/installation.md) for an updated list.
+ - [Docker Installation](#docker-installation)
+ - [Easy Install Script](#easy-install-script)
+ - [Manual Installation](#manual-installation)
 
-If you have questions, please ask them on the [forum](https://discuss.erpnext.com/c/bench) under the "Install / Update" category.
+We recommend using either the Docker Installation or the Easy Install Script to setup a Production Environment. For Development, you may choose either of the three methods to setup an instance.
 
----
+Otherwise, if you are looking to evaluate ERPNext, you can also download the [Virtual Machine Image](https://erpnext.com/download) or register for [a free trial on erpnext.com](https://erpnext.com/pricing).
+
+
+### Docker Installation
+
+A Frappe/ERPNext instance can be setup and replicated easily using Docker[^docker]. The officially supported Docker installation can be used to setup either of both Development and Production environments.
+
+To setup either of the environments, you will need to clone the official docker repository:
+
+```sh
+$ git clone https://github.com/frappe/frappe_docker.git
+$ cd frappe_docker
+```
+
+A quick setup guide for both the envionments can be found below. For more details, check out the [Frappe/ERPNext Docker Repository](https://github.com/frappe/frappe_docker).
+
+#### Docker Installation for Development
+
+To setup a development environment for Docker, follow the [Frappe/ERPNext Docker for Development Guide](https://github.com/frappe/frappe_docker/blob/develop/development/README.md).
+
+#### Docker Installation for Production
+
+Copy the `env-example` file to `.env`
+
+```sh
+$ cp installation/env-example installation/.env
+```
+
+Make a directory for handling sites:
+
+```sh
+$ mkdir installation/sites
+```
+
+Optionally, you may also setup an NGINX Proxy for SSL Certificates[^nginx-ssl] with auto-renewal for your Production instance. We recommend this for instances being accessed over the internet. For this to work, the DNS needs to be configured correctly so that LetsEncrypt[^letsencrypt] can verify the domain. To setup the proxy, run the following commands:
+
+```sh
+$ git clone https://github.com/evertramos/docker-compose-letsencrypt-nginx-proxy-companion.git
+$ cd docker-compose-letsencrypt-nginx-proxy-companion
+$ cp .env.sample .env
+$ ./start.sh
+```
+
+**Note:** The Production setup does not contain, require, or use bench. For a list of substitute commands, check out the [Frappe/ERPNext Docker Site Operations](https://github.com/frappe/frappe_docker/#site-operations).
+
+
+### Easy Install Script
+
+The Easy Install script should get you going with a Frappe/ERPNext setup with minimal manual intervention and effort. Since there are a lot of configurations being automatically setup, we recommend executing this script on a fresh server.
+
+**Note:** This script works only on GNU/Linux based server distributions, and has been designed and tested to work on Ubuntu 16.04+, CentOS 7+, and Debian-based systems.
+
+#### Prerequisites
+
+You need to install the following packages for the script to run:
+
+ - ##### Ubuntu and Debian-based Distributions:
+
+	```sh
+	$ apt install python3-minimal build-essential python3-setuptools
+	```
+
+ - ##### CentOS and other RPM Distributions:
+
+	```sh
+	$ dnf groupinstall "Development Tools"
+	$ dnf install python3
+	```
+
+#### Setup
+
+Download the Easy Install script and execute it:
+
+```sh
+$ wget https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py
+$ python3 install.py --production
+```
+
+The script should then prompt you for the MySQL root password and an Administrator password for the Frappe/ERPNext instance, which will then be saved under `$HOME/passwords.txt` of the user used to setup the instance. This script will then install the required stack, setup bench and a default ERPNext instance.
+
+When the setup is complete, you will be able to access the system at `http://<your-server-ip>`, wherein you can use the administrator password to login.
+
+#### Troubleshooting
+
+In case the setup fails, the log file is saved under `/tmp/logs/install_bench.log`. You may then: 
+
+ - Create an Issue in this repository with the log file attached.
+ - Search for an existing issue or post the log file on the [Frappe/ERPNext Discuss Forum](https://discuss.erpnext.com/c/bench) with the tag `installation_problem` under "Install/Update" category.
+
+For more information and advanced setup instructions, check out the [Easy Install Documentation](https://github.com/frappe/bench/blob/master/docs/easy_install.md).
+
+
+### Manual Installation
+
+Although not recommended, some might want to manually setup a bench instance locally for development. To quickly get started on installing bench the hard way, you can follow [Installing Bench and Frappe](https://frappe.io/docs/user/en/installation).
+
+For more extensive distribution-dependent documentation, check out the following guides:
+
+ - [Hitchhiker's Guide to Installing Frappe on Linux](https://github.com/frappe/frappe/wiki/The-Hitchhiker%27s-Guide-to-Installing-Frappe-on-Linux)
+ - [Hitchhiker's Guide to Installing Frappe on MacOS](https://github.com/frappe/frappe/wiki/The-Hitchhiker%27s-Guide-to-Installing-Frappe-on-Mac-OS-X)
+
+
+## Basic Usage
+
+**Note:** Apart from `bench init`, all other bench commands are expected to be run in the respective bench directory.
+
+ * Create a new bench:
+
+	```sh
+	$ bench init [bench-name]
+	```
+
+ * Add a site under current bench:
+
+	```sh
+	$ bench new-site [site-name]
+	```
+	- **Optional**: If the database for the site does not reside on localhost or listens on a custom port, you can use the flags `--db-host` to set a custom host and/or `--db-port` to set a custom port.
+
+		```sh
+		$ bench new-site [site-name] --db-host [custom-db-host-ip] --db-port [custom-db-port]
+		```
+
+ * Download and add applications to bench:
+
+	```sh
+	$ bench get-app [app-name] [app-link]
+	```
+
+ * Install apps on a particular site
+
+	```sh
+	$ bench --site [site-name] install-app [app-name]
+	```
+
+ * Start bench (only for development)
+
+	```sh
+	$ bench start
+	```
+
+ * Show bench help:
+
+	```sh
+	$ bench help
+	```
+
+
+For more in-depth information on commands and their usage, follow [Commands and Usage](https://github.com/frappe/bench/blob/master/docs/commands_and_usage.md). As for a consolidated list of bench commands, check out [Bench Usage](https://github.com/frappe/bench/blob/master/docs/bench_usage.md).
+
 
 ## Custom Bench Commands
 
-Want to utilize a bench command you've added in your custom Frappe application? [This](https://github.com/frappe/bench/blob/master/docs/bench_custom_cmd.md) guide might be of some help.
+If you wish to extend the capabilities of bench with your own custom Frappe Application, you may follow [Adding Custom Bench Commands](https://github.com/frappe/bench/blob/master/docs/bench_custom_cmd.md).
 
----
 
-# Easy Install Script
+## Bench Manager
 
-- This is an opinionated setup so it is best to setup on a blank server.
-- Works on Ubuntu 16.04+, CentOS 7+, Debian 8+
-- You may have to install Python 3 and other essentials by running `apt-get install python3-minimal build-essential python3-setuptools`
-- This script will install the pre-requisites, install bench and setup an ERPNext site `(site1.local under frappe-bench)`
-- Passwords for Frappe Administrator and MariaDB (root) will be asked and saved under `~/passwoords.txt`
-- MariaDB (root) password may be `password` on a fresh server
-- You can then login as **Administrator** with the Administrator password
-- The log file is saved under `/tmp/logs/install_bench.log` in case you run into any issues during the install.
-- If you find any problems, post them on the forum: [https://discuss.erpnext.com](https://discuss.erpnext.com/c/bench) with the `installation_problem` under "Install / Update" category.
+[Bench Manager](https://github.com/frappe/bench_manager) is a GUI frontend for Bench with the same functionalties. You can install it by executing the following command:
 
-		wget https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py
-		python3 install.py --production
+```sh
+$ bench setup manager
+```
 
-Follow [Easy Install Docs](https://github.com/frappe/bench/blob/master/docs/easy_install.md) for more information.
+ - **Note:** This will create a new site to setup Bench Manager, if you want to set it up on an existing site, run the following commands:
 
----
+	```sh
+	$ bench get-app https://github.com/frappe/bench_manager.git
+	$ bench --site <sitename> install-app bench_manager
+	```
 
-# Release Bench
 
-Releases can be made for [Frappe](https://github.com/frappe/frappe) apps using bench. More information about this process can be found [here](https://github.com/frappe/bench/blob/master/docs/releasing_frappe_apps.md).
-
----
-
-# Bench Manager (GUI for Bench)
-
-[Bench Manager](https://github.com/frappe/bench_manager) is a graphical user interface to emulate the functionalities of Frappe Bench. Like the command line utility it helps you install apps, manage multiple sites, update apps and much more. Install just by executing the following command in the respective bench directory.
-
-		bench setup manager
-
----
-
-# Docker
-
-- For official images and resources [Frappe Docker](https://github.com/frappe/frappe_docker)
-- Production Installation [README](https://github.com/frappe/frappe_docker/blob/develop/README.md)
-- Developer Setup [README](https://github.com/frappe/frappe_docker/blob/develop/development/README.md)
-
----
-
-# Guides
+## Guides
 
 - [Configuring HTTPS](https://frappe.io/docs/user/en/bench/guides/configuring-https.html)
 - [Using Let's Encrypt to setup HTTPS](https://frappe.io/docs/user/en/bench/guides/lets-encrypt-ssl-setup.html)
@@ -136,16 +216,25 @@ Releases can be made for [Frappe](https://github.com/frappe/frappe) apps using b
 - [Setup Multitenancy](https://frappe.io/docs/user/en/bench/guides/setup-multitenancy.html)
 - [Stopping Production](https://github.com/frappe/bench/wiki/Stopping-Production-and-starting-Development)
 
----
+For an exhaustive list of guides, check out [Bench Guides](https://frappe.io/docs/user/en/bench/guides).
 
-# Resources
 
-- [Background Services](https://frappe.io/docs/user/en/bench/resources/background-services.html)
+## Resources
+
 - [Bench Commands Cheat Sheet](https://frappe.io/docs/user/en/bench/resources/bench-commands-cheatsheet.html)
+- [Background Services](https://frappe.io/docs/user/en/bench/resources/background-services.html)
 - [Bench Procfile](https://frappe.io/docs/user/en/bench/resources/bench-procfile.html)
 
----
+For an exhaustive list of resources, check out [Bench Resources](https://frappe.io/docs/user/en/bench/resources).
 
-# License
 
-bench is licensed under [GNU GPLv3](LICENSE)
+## License
+
+This repository has been released under the [GNU GPLv3 License](LICENSE).
+
+###### Footnotes:
+
+[^nix]: [*nix and unix-like systems](https://en.wikipedia.org/wiki/Unix-like)
+[^docker]: [Docker Website](https://docker.com)
+[^nginx-ssl]: [Web Proxy using Docker, NGINX and Let's Encrypt](https://github.com/evertramos/docker-compose-letsencrypt-nginx-proxy-companion)
+[^letsencrypt]: [LetsEncrypt Website](https://letsencrypt.org)
