@@ -3,7 +3,7 @@
 	<h2>Bench</h2>
 </div>
 
-Bench is a command-line utility that helps you to install, update, and manage multiple sites for Frappe/ERPNext applications on *nix systems[^nix] for development and production.
+Bench is a command-line utility that helps you to install, update, and manage multiple sites for Frappe/ERPNext applications on [*nix systems](https://en.wikipedia.org/wiki/Unix-like) for development and production.
 
 ## Table of Contents
 
@@ -38,7 +38,7 @@ Otherwise, if you are looking to evaluate ERPNext, you can also download the [Vi
 
 ### Docker Installation
 
-A Frappe/ERPNext instance can be setup and replicated easily using Docker[^docker]. The officially supported Docker installation can be used to setup either of both Development and Production environments.
+A Frappe/ERPNext instance can be setup and replicated easily using [Docker](https://docker.com). The officially supported Docker installation can be used to setup either of both Development and Production environments.
 
 To setup either of the environments, you will need to clone the official docker repository:
 
@@ -67,7 +67,7 @@ Make a directory for handling sites:
 $ mkdir installation/sites
 ```
 
-Optionally, you may also setup an NGINX Proxy for SSL Certificates[^nginx-ssl] with auto-renewal for your Production instance. We recommend this for instances being accessed over the internet. For this to work, the DNS needs to be configured correctly so that LetsEncrypt[^letsencrypt] can verify the domain. To setup the proxy, run the following commands:
+Optionally, you may also setup an [NGINX Proxy for SSL Certificates](https://github.com/evertramos/docker-compose-letsencrypt-nginx-proxy-companion) with auto-renewal for your Production instance. We recommend this for instances being accessed over the internet. For this to work, the DNS needs to be configured correctly so that [LetsEncrypt](https://letsencrypt.org) can verify the domain. To setup the proxy, run the following commands:
 
 ```sh
 $ git clone https://github.com/evertramos/docker-compose-letsencrypt-nginx-proxy-companion.git
@@ -231,10 +231,3 @@ For an exhaustive list of resources, check out [Bench Resources](https://frappe.
 ## License
 
 This repository has been released under the [GNU GPLv3 License](LICENSE).
-
-###### Footnotes:
-
-[^nix]: [*nix and unix-like systems](https://en.wikipedia.org/wiki/Unix-like)
-[^docker]: [Docker Website](https://docker.com)
-[^nginx-ssl]: [Web Proxy using Docker, NGINX and Let's Encrypt](https://github.com/evertramos/docker-compose-letsencrypt-nginx-proxy-companion)
-[^letsencrypt]: [LetsEncrypt Website](https://letsencrypt.org)
