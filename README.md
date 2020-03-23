@@ -23,7 +23,7 @@ Bench is a command-line utility that helps you to install, update, and manage mu
 
 ## Installation
 
-A typical bench setup provides two types of environments -- Development and Production.
+A typical bench setup provides two types of environments &mdash; Development and Production.
 
 The setup for each of these installations can be achieved in multiple ways:
 
