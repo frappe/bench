@@ -505,6 +505,7 @@ def update_yarn_packages(bench_path='.'):
 	for app in os.listdir(apps_dir):
 		app_path = os.path.join(apps_dir, app)
 		if os.path.exists(os.path.join(app_path, 'package.json')):
+			print('\nRunning "yarn install" for {0}'.format(app))
 			exec_cmd('yarn install', cwd=app_path)
 
 
