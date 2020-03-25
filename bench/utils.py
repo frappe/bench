@@ -295,11 +295,13 @@ def get_venv_path():
 
 def setup_env(bench_path='.', python='python3'):
 	frappe = os.path.join(bench_path, "apps", "frappe")
-	pip = os.path.join(".", "env", "bin", "pip")
+	pip = os.path.join(bench_path, "env", "bin", "pip")
 	virtualenv = get_venv_path()
 
 	exec_cmd('{} -q env -p {}'.format(virtualenv, python), cwd=bench_path)
-	exec_cmd('{} install -q -U -e {}'.format(pip, frappe), cwd=bench_path)
+
+	if os.path.exists(frappe):
+		exec_cmd('{} install -q -U -e {}'.format(pip, frappe), cwd=bench_path)
 
 
 def setup_socketio(bench_path='.'):
@@ -591,6 +593,7 @@ def update_yarn_packages(bench_path='.'):
 	for app in os.listdir(apps_dir):
 		app_path = os.path.join(apps_dir, app)
 		if os.path.exists(os.path.join(app_path, 'package.json')):
+			print('\n{0}Installing node dependencies for {1}{2}'.format(color.yellow, app, color.nc))
 			exec_cmd('yarn install', cwd=app_path)
 
 
