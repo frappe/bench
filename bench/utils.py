@@ -591,7 +591,7 @@ def update_yarn_packages(bench_path='.'):
 	for app in os.listdir(apps_dir):
 		app_path = os.path.join(apps_dir, app)
 		if os.path.exists(os.path.join(app_path, 'package.json')):
-			print('\nRunning "yarn install" for {0}'.format(app))
+			print('\n{0}Installing node dependencies for {1}{2}'.format(color.yellow, app, color.nc))
 			exec_cmd('yarn install', cwd=app_path)
 
 
