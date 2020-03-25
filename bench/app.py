@@ -1,22 +1,31 @@
+# imports - compatibility imports
 from __future__ import print_function
-import os
-from .utils import (exec_cmd, get_frappe, check_git_for_shallow_clone, build_assets,
-	restart_supervisor_processes, get_cmd_output, run_frappe_cmd, CommandFailedError,
-	restart_systemd_processes)
-from .config.common_site_config import get_config
 
+# imports - standard imports
+import json
 import logging
+import os
+import re
+import shutil
+import subprocess
+import sys
+
+# imports - third party imports
+import click
+import git
 import requests
 import semantic_version
-import json
-import re
-import subprocess
-import bench
-import sys
-import shutil
+from six.moves import reload_module
 
-logging.basicConfig(level="DEBUG")
+# imports - module imports
+import bench
+from bench.config.common_site_config import get_config
+from bench.utils import CommandFailedError, build_assets, check_git_for_shallow_clone, exec_cmd, get_cmd_output, get_frappe, restart_supervisor_processes, restart_systemd_processes, run_frappe_cmd
+
+
+logging.basicConfig(level="INFO")
 logger = logging.getLogger(__name__)
+
 
 class InvalidBranchException(Exception): pass
 class InvalidRemoteException(Exception): pass
@@ -50,16 +59,13 @@ def write_appstxt(apps, bench_path='.'):
 	with open(os.path.join(bench_path, 'sites', 'apps.txt'), 'w') as f:
 		return f.write('\n'.join(apps))
 
-def check_url(url, raise_err = True):
-	try:
-		from urlparse import urlparse
-	except ImportError:
-		from urllib.parse import urlparse
+def check_url(url, raise_err=True):
+	from six.moves.urllib.parse import urlparse
 
 	parsed = urlparse(url)
 	if not parsed.scheme:
 		if raise_err:
-			raise TypeError('{url} Not a valid URL'.format(url = url))
+			raise TypeError('{url} Not a valid URL'.format(url=url))
 		else:
 			return False
 
@@ -92,59 +98,61 @@ def remove_from_excluded_apps_txt(app, bench_path='.'):
 		apps.remove(app)
 		return write_excluded_apps_txt(apps, bench_path=bench_path)
 
-def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=False,
-	postprocess = True):
-	# from bench.utils import check_url
-	try:
-		from urlparse import urljoin
-	except ImportError:
-		from urllib.parse import urljoin
+def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=False, postprocess=True, overwrite=False):
+	if not os.path.exists(git_url):
+		if not check_url(git_url, raise_err=False):
+			orgs = ['frappe', 'erpnext']
+			for org in orgs:
+				url = 'https://api.github.com/repos/{org}/{app}'.format(org=org, app=git_url)
+				res = requests.get(url)
+				if res.ok:
+					data = res.json()
+					if 'name' in data:
+						if git_url == data['name']:
+							git_url = 'https://github.com/{org}/{app}'.format(org=org, app=git_url)
+							break
 
-	if not check_url(git_url, raise_err = False):
-		orgs = ['frappe', 'erpnext']
-		for org in orgs:
-			url = 'https://api.github.com/repos/{org}/{app}'.format(org = org, app = git_url)
-			res = requests.get(url)
-			if res.ok:
-				data    = res.json()
-				if 'name' in data:
-					if git_url == data['name']:
-						git_url = 'https://github.com/{org}/{app}'.format(org = org, app = git_url)
-						break
+		# Gets repo name from URL
+		repo_name = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
+		shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
+		branch = '--branch {branch}'.format(branch=branch) if branch else ''
+	else:
+		repo_name = git_url.split(os.sep)[-1]
+		shallow_clone = ''
+		branch = '--branch {branch}'.format(branch=branch) if branch else ''
 
-	#Gets repo name from URL
-	repo_name = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
-	logger.info('getting app {}'.format(repo_name))
-	shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
-	branch = '--branch {branch}'.format(branch=branch) if branch else ''
+	if os.path.isdir(os.path.join(bench_path, 'apps', repo_name)):
+		# application directory already exists
+		# prompt user to overwrite it
+		if overwrite or click.confirm('''A directory for the application "{0}" already exists.
+Do you want to continue and overwrite it?'''.format(repo_name)):
+			shutil.rmtree(os.path.join(bench_path, 'apps', repo_name))
+		elif click.confirm('''Do you want to reinstall the existing application?''', abort=True):
+			app_name = get_app_name(bench_path, repo_name)
+			install_app(app=app_name, bench_path=bench_path, verbose=verbose, skip_assets=skip_assets)
+			sys.exit()
 
-	exec_cmd("git clone -q {git_url} {branch} {shallow_clone} --origin upstream".format(
-				git_url=git_url,
-				shallow_clone=shallow_clone,
-				branch=branch),
-			cwd=os.path.join(bench_path, 'apps'))
+	logger.info('Getting app {0}'.format(repo_name))
+	exec_cmd("git clone {git_url} {branch} {shallow_clone} --origin upstream".format(
+		git_url=git_url,
+		shallow_clone=shallow_clone,
+		branch=branch),
+		cwd=os.path.join(bench_path, 'apps'))
 
-	#Retrieves app name from setup.py
+	app_name = get_app_name(bench_path, repo_name)
+	install_app(app=app_name, bench_path=bench_path, verbose=verbose, skip_assets=skip_assets)
+
+
+def get_app_name(bench_path, repo_name):
+	# retrieves app name from setup.py
 	app_path = os.path.join(bench_path, 'apps', repo_name, 'setup.py')
 	with open(app_path, 'rb') as f:
 		app_name = re.search(r'name\s*=\s*[\'"](.*)[\'"]', f.read().decode('utf-8')).group(1)
 		if repo_name != app_name:
 			apps_path = os.path.join(os.path.abspath(bench_path), 'apps')
 			os.rename(os.path.join(apps_path, repo_name), os.path.join(apps_path, app_name))
+		return app_name
 
-	print('installing', app_name)
-	install_app(app=app_name, bench_path=bench_path, verbose=verbose)
-
-	if postprocess:
-
-		if not skip_assets:
-			build_assets(bench_path=bench_path, app=app_name)
-		conf = get_config(bench_path=bench_path)
-
-		if conf.get('restart_supervisor_on_update'):
-			restart_supervisor_processes(bench_path=bench_path)
-		if conf.get('restart_systemd_on_update'):
-			restart_systemd_processes(bench_path=bench_path)
 
 def new_app(app, bench_path='.'):
 	# For backwards compatibility
@@ -160,7 +168,8 @@ def new_app(app, bench_path='.'):
 		run_frappe_cmd('make-app', apps, app, bench_path=bench_path)
 	install_app(app, bench_path=bench_path)
 
-def install_app(app, bench_path=".", verbose=False, no_cache=False):
+
+def install_app(app, bench_path=".", verbose=False, no_cache=False, postprocess=True, skip_assets=False):
 	logger.info("installing {}".format(app))
 
 	pip_path = os.path.join(bench_path, "env", "bin", "pip")
@@ -168,11 +177,23 @@ def install_app(app, bench_path=".", verbose=False, no_cache=False):
 	app_path = os.path.join(bench_path, "apps", app)
 	cache_flag = "--no-cache-dir" if no_cache else ""
 
-	exec_cmd("{pip} install {quiet} -U -e {app} {no_cache}".format(pip=pip_path, quiet=quiet_flag, app=app_path, no_cache=cache_flag))
+	exec_cmd("{pip} install {quiet} -U -e {app} {no_cache}".format(pip=pip_path,
+									quiet=quiet_flag, app=app_path, no_cache=cache_flag))
 	add_to_appstxt(app, bench_path=bench_path)
 
+	if postprocess:
+		if not skip_assets:
+			build_assets(bench_path=bench_path, app=app)
+		conf = get_config(bench_path=bench_path)
+
+		if conf.get('restart_supervisor_on_update'):
+			restart_supervisor_processes(bench_path=bench_path)
+		if conf.get('restart_systemd_on_update'):
+			restart_systemd_processes(bench_path=bench_path)
+
+
 def remove_app(app, bench_path='.'):
-	if not app in get_apps(bench_path):
+	if app not in get_apps(bench_path):
 		print("No app named {0}".format(app))
 		sys.exit(1)
 
@@ -188,7 +209,7 @@ def remove_app(app, bench_path='.'):
 				print("Cannot remove, app is installed on site: {0}".format(site))
 				sys.exit(1)
 
-	exec_cmd(["{0} uninstall -y {1}".format(pip, app)])
+	exec_cmd("{0} uninstall -y {1}".format(pip, app), cwd=bench_path)
 	remove_from_appstxt(app, bench_path)
 	shutil.rmtree(app_path)
 	run_frappe_cmd("build", bench_path=bench_path)
@@ -281,8 +302,7 @@ def get_current_branch(app, bench_path='.'):
 
 def get_remote(app, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
-	contents = subprocess.check_output(['git', 'remote', '-v'], cwd=repo_dir,
-									   stderr=subprocess.STDOUT)
+	contents = subprocess.check_output(['git', 'remote', '-v'], cwd=repo_dir, stderr=subprocess.STDOUT)
 	contents = contents.decode('utf-8')
 	if re.findall('upstream[\s]+', contents):
 		return 'upstream'
@@ -340,8 +360,7 @@ def get_repo_dir(app, bench_path='.'):
 	return os.path.join(bench_path, 'apps', app)
 
 def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrade=True):
-	from .utils import update_requirements, update_node_packages, backup_all_sites, patch_sites, build_assets, pre_upgrade, post_upgrade
-	from . import utils
+	from bench.utils import update_requirements, update_node_packages, backup_all_sites, patch_sites, build_assets, post_upgrade
 	apps_dir = os.path.join(bench_path, 'apps')
 	version_upgrade = (False,)
 	switched_apps = []
@@ -354,43 +373,45 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 
 	for app in apps:
 		app_dir = os.path.join(apps_dir, app)
-		if os.path.exists(app_dir):
-			try:
-				if check_upgrade:
-					version_upgrade = is_version_upgrade(app=app, bench_path=bench_path, branch=branch)
-					if version_upgrade[0] and not upgrade:
-						raise MajorVersionUpgradeException("Switching to {0} will cause upgrade from {1} to {2}. Pass --upgrade to confirm".format(branch, version_upgrade[1], version_upgrade[2]), version_upgrade[1], version_upgrade[2])
-				print("Switching for "+app)
-				unshallow = "--unshallow" if os.path.exists(os.path.join(app_dir, ".git", "shallow")) else ""
-				exec_cmd("git config --unset-all remote.upstream.fetch", cwd=app_dir)
-				exec_cmd("git config --add remote.upstream.fetch '+refs/heads/*:refs/remotes/upstream/*'", cwd=app_dir)
-				exec_cmd("git fetch upstream {unshallow}".format(unshallow=unshallow), cwd=app_dir)
-				exec_cmd("git checkout {branch}".format(branch=branch), cwd=app_dir)
-				exec_cmd("git merge upstream/{branch}".format(branch=branch), cwd=app_dir)
-				switched_apps.append(app)
-			except CommandFailedError:
-				print("Error switching to branch {0} for {1}".format(branch, app))
-			except InvalidRemoteException:
-				print("Remote does not exist for app "+app)
-			except InvalidBranchException:
-				print("Branch {0} does not exist in Upstream for {1}".format(branch, app))
+
+		if not os.path.exists(app_dir):
+			bench.utils.log("{} does not exist!".format(app), level=2)
+			continue
+
+		repo = git.Repo(app_dir)
+		unshallow_flag = os.path.exists(os.path.join(app_dir, ".git", "shallow"))
+		bench.utils.log("Fetching upstream {0}for {1}".format("unshallow " if unshallow_flag else "", app))
+
+		bench.utils.exec_cmd("git remote set-branches upstream  '*'", cwd=app_dir)
+		bench.utils.exec_cmd("git fetch --all{0}".format(" --unshallow" if unshallow_flag else ""), cwd=app_dir)
+
+		if check_upgrade:
+			version_upgrade = is_version_upgrade(app=app, bench_path=bench_path, branch=branch)
+			if version_upgrade[0] and not upgrade:
+				bench.utils.log("Switching to {0} will cause upgrade from {1} to {2}. Pass --upgrade to confirm".format(branch, version_upgrade[1], version_upgrade[2]), level=2)
+				sys.exit(1)
+
+		print("Switching for "+app)
+		bench.utils.exec_cmd("git checkout {0}".format(branch), cwd=app_dir)
+
+		if str(repo.active_branch) == branch:
+			switched_apps.append(app)
+		else:
+			bench.utils.log("Switching branches failed for: {}".format(app), level=2)
 
 	if switched_apps:
-		print("Successfully switched branches for:\n" + "\n".join(switched_apps))
+		bench.utils.log("Successfully switched branches for: " + ", ".join(switched_apps), level=1)
+		print('Please run `bench update --patch` to be safe from any differences in database schema')
 
 	if version_upgrade[0] and upgrade:
 		update_requirements()
 		update_node_packages()
-		pre_upgrade(version_upgrade[1], version_upgrade[2])
-		if sys.version_info >= (3, 4):
-			import importlib
-			importlib.reload(utils)
-		else:
-			reload(utils)
+		reload_module(utils)
 		backup_all_sites()
 		patch_sites()
 		build_assets()
 		post_upgrade(version_upgrade[1], version_upgrade[2])
+
 
 def switch_to_branch(branch=None, apps=None, bench_path='.', upgrade=False):
 	switch_branch(branch, apps=apps, bench_path=bench_path, upgrade=upgrade)
@@ -402,8 +423,7 @@ def switch_to_develop(apps=None, bench_path='.', upgrade=True):
 	switch_branch('develop', apps=apps, bench_path=bench_path, upgrade=upgrade)
 
 def get_version_from_string(contents, field='__version__'):
-	match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % field,
-			contents)
+	match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % field, contents)
 	return match.group(2)
 
 def get_major_version(version):
