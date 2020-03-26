@@ -8,6 +8,7 @@ from bench.commands import bench_command
 
 logger = logging.getLogger('bench')
 from_command_line = False
+change_uid_msg = "You should not run this command as root"
 
 def cli():
 	global from_command_line
@@ -48,7 +49,7 @@ def check_uid():
 		sys.exit(1)
 
 def cmd_requires_root():
-	if len(sys.argv) > 2 and sys.argv[2] in ('production', 'sudoers', 'lets-encrypt', 'fonts',
+	if len(sys.argv) > 2 and sys.argv[2] in ('production', 'sudoers', 'supervisor', 'lets-encrypt', 'fonts',
 		'print', 'firewall', 'ssh-port', 'role', 'fail2ban', 'wildcard-ssl'):
 		return True
 	if len(sys.argv) >= 2 and sys.argv[1] in ('patch', 'renew-lets-encrypt', 'disable-production',
@@ -72,7 +73,7 @@ def change_uid():
 			drop_privileges(uid_name=frappe_user, gid_name=frappe_user)
 			os.environ['HOME'] = pwd.getpwnam(frappe_user).pw_dir
 		else:
-			log('You should not run this command as root', level=3)
+			log(change_uid_msg, level=3)
 			sys.exit(1)
 
 def old_frappe_cli(bench_path='.'):

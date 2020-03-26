@@ -1,17 +1,27 @@
-import os, getpass, click
+# imports - standard imports
+import getpass
+import os
+
+# imports - module imports
 import bench
+from bench.app import get_current_frappe_version, use_rq
+from bench.utils import get_bench_name, find_executable
+from bench.config.common_site_config import get_config, update_config, get_gunicorn_workers
+
+# imports - third party imports
+import click
+from six.moves import configparser
+
 
 def generate_supervisor_config(bench_path, user=None, yes=False):
-	from bench.app import get_current_frappe_version, use_rq
-	from bench.utils import get_bench_name, find_executable
-	from bench.config.common_site_config import get_config, update_config, get_gunicorn_workers
-
-	template = bench.env.get_template('supervisor.conf')
+	"""Generate supervisor config for respective bench path"""
 	if not user:
 		user = getpass.getuser()
 
-	config = get_config(bench_path=bench_path)
+	update_supervisord_conf(user=user)
 
+	template = bench.env.get_template('supervisor.conf')
+	config = get_config(bench_path=bench_path)
 	bench_dir = os.path.abspath(bench_path)
 
 	config = template.render(**{
@@ -44,3 +54,37 @@ def generate_supervisor_config(bench_path, user=None, yes=False):
 	update_config({'restart_supervisor_on_update': True}, bench_path=bench_path)
 	update_config({'restart_systemd_on_update': False}, bench_path=bench_path)
 
+
+def get_supervisord_conf():
+	"""Returns path of supervisord config from possible paths"""
+	possibilities = ("supervisord.conf", "etc/supervisord.conf", "/etc/supervisord.conf", "/etc/supervisor/supervisord.conf", "/etc/supervisord.conf")
+
+	for possibility in possibilities:
+		if os.path.exists(possibility):
+			return possibility
+
+
+def update_supervisord_conf(user):
+	"""From bench v5.0, we're moving to supervisor running as user"""
+	from bench.config.production_setup import service
+
+	supervisord_conf = get_supervisord_conf()
+	section = "unix_http_server"
+
+	if not supervisord_conf:
+		return
+
+	config = configparser.ConfigParser()
+	config.read(supervisord_conf)
+
+	if section not in config.sections():
+		config.add_section(section)
+
+	config.set(section, "chmod", "0760")
+	config.set(section, "chown", "{user}:{user}".format(user=user))
+
+	with open(supervisord_conf, "w") as f:
+		config.write(f)
+
+	# restart supervisor to take new changes into effect
+	service('supervisor', 'restart')

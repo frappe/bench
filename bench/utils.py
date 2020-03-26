@@ -37,6 +37,7 @@ class CommandFailedError(Exception):
 logger = logging.getLogger(__name__)
 
 folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
+sudoers_file = '/etc/sudoers.d/frappe'
 
 
 class color:
@@ -65,10 +66,10 @@ def log(message, level=0):
 		2: color.red + 'ERROR',			# fail
 		3: color.yellow + 'WARN'		# warn/suggest
 	}
-	start = (levels.get(level) + ': ') if level in levels else ''
-	end = '\033[0m'
+	start_line = (levels.get(level) + ': ') if level in levels else ''
+	end_line = '\033[0m'
 
-	print(start + message + end)
+	print(start_line + message + end_line)
 
 
 def safe_decode(string, encoding = 'utf-8'):
@@ -393,16 +394,12 @@ def setup_sudoers(user):
 		if set_permissions:
 			os.chmod('/etc/sudoers', 0o440)
 
-	sudoers_file = '/etc/sudoers.d/frappe'
-
 	template = env.get_template('frappe_sudoers')
 	frappe_sudoers = template.render(**{
 		'user': user,
 		'service': find_executable('service'),
 		'systemctl': find_executable('systemctl'),
-		'supervisorctl': find_executable('supervisorctl'),
 		'nginx': find_executable('nginx'),
-		'bench': find_executable('bench')
 	})
 	frappe_sudoers = safe_decode(frappe_sudoers)
 
@@ -410,6 +407,7 @@ def setup_sudoers(user):
 		f.write(frappe_sudoers)
 
 	os.chmod(sudoers_file, 0o440)
+	log("Sudoers was set up for user {}".format(user), level=1)
 
 
 def setup_logging(bench_path='.'):
@@ -423,17 +421,11 @@ def setup_logging(bench_path='.'):
 		logger.setLevel(logging.DEBUG)
 
 
-def get_program(programs):
-	program = None
-	for p in programs:
-		program = find_executable(p)
-		if program:
-			break
-	return program
-
-
 def get_process_manager():
-	return get_program(['foreman', 'forego', 'honcho'])
+	for proc_man in ['honcho', 'foreman', 'forego']:
+		proc_man_path = find_executable(proc_man)
+		if proc_man_path:
+			return proc_man_path
 
 
 def start(no_dev=False, concurrency=None, procfile=None):
@@ -488,15 +480,16 @@ def check_git_for_shallow_clone():
 		return True
 
 
-def get_cmd_output(cmd, cwd='.'):
+def get_cmd_output(cmd, cwd='.', _raise=True):
+	output = ""
 	try:
 		output = subprocess.check_output(cmd, cwd=cwd, shell=True, stderr=subprocess.PIPE).strip()
-		output = output.decode('utf-8')
-		return output
 	except subprocess.CalledProcessError as e:
 		if e.output:
-			print(e.output)
-		raise
+			output = e.output
+		elif _raise:
+			raise
+	return safe_decode(output)
 
 
 def safe_encode(what, encoding = 'utf-8'):
@@ -518,7 +511,7 @@ def restart_supervisor_processes(bench_path='.', web_workers=False):
 		exec_cmd(cmd, cwd=bench_path)
 
 	else:
-		supervisor_status = subprocess.check_output(['sudo', 'supervisorctl', 'status'], cwd=bench_path)
+		supervisor_status = get_cmd_output('supervisorctl status', cwd=bench_path)
 		supervisor_status = safe_decode(supervisor_status)
 
 		if web_workers and '{bench_name}-web:'.format(bench_name=bench_name) in supervisor_status:
@@ -535,7 +528,7 @@ def restart_supervisor_processes(bench_path='.', web_workers=False):
 		else:
 			group = 'frappe:'
 
-		exec_cmd('sudo supervisorctl restart {group}'.format(group=group), cwd=bench_path)
+		exec_cmd('supervisorctl restart {group}'.format(group=group), cwd=bench_path)
 
 
 def restart_systemd_processes(bench_path='.', web_workers=False):
@@ -1048,8 +1041,8 @@ def migrate_env(python, backup=False):
 	from bench.config.common_site_config import get_config
 	from bench.app import get_apps
 
-	log = logging.getLogger(__name__)
-	log.setLevel(logging.DEBUG)
+	logger = logging.getLogger(__name__)
+	logger.setLevel(logging.DEBUG)
 
 	nvenv = 'env'
 	path = os.getcwd()
@@ -1065,12 +1058,12 @@ def migrate_env(python, backup=False):
 
 		redis  = '{redis} -p {port}'.format(redis=which('redis-cli'), port=rredis.port)
 
-		log.debug('Clearing Redis Cache...')
+		logger.debug('Clearing Redis Cache...')
 		exec_cmd('{redis} FLUSHALL'.format(redis = redis))
-		log.debug('Clearing Redis DataBase...')
+		logger.debug('Clearing Redis DataBase...')
 		exec_cmd('{redis} FLUSHDB'.format(redis = redis))
 	except:
-		log.warn('Please ensure Redis Connections are running or Daemonized.')
+		logger.warn('Please ensure Redis Connections are running or Daemonized.')
 
 	# Backup venv: restore using `virtualenv --relocatable` if needed
 	if backup:
@@ -1081,7 +1074,7 @@ def migrate_env(python, backup=False):
 		source = os.path.join(path, 'env')
 		target = parch
 
-		log.debug('Backing up Virtual Environment')
+		logger.debug('Backing up Virtual Environment')
 		stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 		dest = os.path.join(path, str(stamp))
 
@@ -1090,15 +1083,15 @@ def migrate_env(python, backup=False):
 
 	# Create virtualenv using specified python
 	try:
-		log.debug('Setting up a New Virtual {} Environment'.format(python))
+		logger.debug('Setting up a New Virtual {} Environment'.format(python))
 		exec_cmd('{virtualenv} --python {python} {pvenv}'.format(virtualenv=virtualenv, python=python, pvenv=pvenv))
 
 		apps = ' '.join(["-e {}".format(os.path.join("apps", app)) for app in get_apps()])
 		exec_cmd('{0} install -q -U {1}'.format(pip, apps))
 
-		log.debug('Migration Successful to {}'.format(python))
+		logger.debug('Migration Successful to {}'.format(python))
 	except:
-		log.debug('Migration Error')
+		logger.debug('Migration Error')
 		raise
 
 
