@@ -12,6 +12,7 @@ from bench.utils import CommandFailedError, exec_cmd, fix_prod_setup_perms, get_
 
 
 def setup_production_prerequisites():
+	"""Installs ansible, fail2banc, NGINX and supervisor"""
 	if not find_executable("ansible"):
 		exec_cmd("sudo {0} -m pip install ansible".format(sys.executable))
 	if not find_executable("fail2ban-client"):

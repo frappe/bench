@@ -11,6 +11,7 @@ from bench.utils import exec_cmd, get_bench_name, get_cmd_output
 
 
 def is_sudoers_set():
+	"""Check if bench sudoers is set"""
 	cmd = ["sudo", "-n", "bench"]
 
 	with open(os.devnull, "wb") as f:
@@ -28,6 +29,7 @@ def is_sudoers_set():
 
 
 def is_production_set(bench_path):
+	"""Check if production is set for current bench"""
 	production_setup = False
 	bench_name = get_bench_name(bench_path)
 
@@ -47,6 +49,7 @@ def is_production_set(bench_path):
 
 
 def execute(bench_path):
+	"""This patch checks if bench sudoers is set and regenerate supervisor and sudoers files"""
 	user = get_config('.').get("frappe_user") or getpass.getuser()
 
 	if is_sudoers_set():

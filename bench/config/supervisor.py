@@ -14,6 +14,7 @@ from six.moves import configparser
 
 
 def generate_supervisor_config(bench_path, user=None, yes=False):
+	"""Generate supervisor config for respective bench path"""
 	if not user:
 		user = getpass.getuser()
 
@@ -55,6 +56,7 @@ def generate_supervisor_config(bench_path, user=None, yes=False):
 
 
 def get_supervisord_conf():
+	"""Returns path of supervisord config from possible paths"""
 	possibilities = ("supervisord.conf", "etc/supervisord.conf", "/etc/supervisord.conf", "/etc/supervisor/supervisord.conf", "/etc/supervisord.conf")
 
 	for possibility in possibilities:
