@@ -20,7 +20,7 @@ def is_sudoers_set():
 	if return_code_check:
 		try:
 			bench_warn = change_uid_msg in get_cmd_output(cmd, _raise=False)
-		except Exception:
+		except subprocess.CalledProcessError:
 			bench_warn = False
 		finally:
 			return_code_check = return_code_check and bench_warn
