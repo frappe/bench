@@ -2,12 +2,21 @@
 import os
 import sys
 
-# imports - module imports
-from bench.utils import exec_cmd
-
 # imports - third party imports
-from six import PY3
 import click
+from six import PY3
+
+# imports - module imports
+import bench.config.lets_encrypt
+import bench.config.nginx
+import bench.config.procfile
+import bench.config.production_setup
+import bench.config.redis
+import bench.config.site_config
+import bench.config.supervisor
+
+import bench.utils
+from bench.utils import exec_cmd, run_playbook
 
 
 @click.group(help="Setup command group for enabling setting up a Frappe environment")
@@ -18,70 +27,59 @@ def setup():
 @click.command("sudoers", help="Add commands to sudoers list for execution without password")
 @click.argument("user")
 def setup_sudoers(user):
-	from bench.utils import setup_sudoers
-	setup_sudoers(user)
+	bench.utils.setup_sudoers(user)
 
 
 @click.command("nginx", help="Generate configuration files for NGINX")
 @click.option("--yes", help="Yes to regeneration of nginx config file", default=False, is_flag=True)
 def setup_nginx(yes=False):
-	from bench.config.nginx import make_nginx_conf
-	make_nginx_conf(bench_path=".", yes=yes)
+	bench.config.nginx.make_nginx_conf(bench_path=".", yes=yes)
 
 
 @click.command("reload-nginx", help="Checks NGINX config file and reloads service")
 def reload_nginx():
-	from bench.config.production_setup import reload_nginx
-	reload_nginx()
+	bench.config.production_setup.reload_nginx()
 
 
 @click.command("supervisor", help="Generate configuration for supervisor")
 @click.option("--user", help="optional user argument")
 @click.option("--yes", help="Yes to regeneration of supervisor config", is_flag=True, default=False)
 def setup_supervisor(user=None, yes=False):
-	from bench.config.supervisor import generate_supervisor_config
-	generate_supervisor_config(bench_path=".", user=user, yes=yes)
+	bench.config.supervisor.generate_supervisor_config(bench_path=".", user=user, yes=yes)
 
 
 @click.command("redis", help="Generates configuration for Redis")
 def setup_redis():
-	from bench.config.redis import generate_config
-	generate_config(".")
+	bench.config.redis.generate_config(".")
 
 
 @click.command("fonts", help="Add Frappe fonts to system")
 def setup_fonts():
-	from bench.utils import setup_fonts
-	setup_fonts()
+	bench.utils.setup_fonts()
 
 
 @click.command("production", help="Setup Frappe production environment for specific user")
 @click.argument("user")
 @click.option("--yes", help="Yes to regeneration config", is_flag=True, default=False)
 def setup_production(user, yes=False):
-	from bench.config.production_setup import setup_production
-	setup_production(user=user, yes=yes)
+	bench.config.production_setup.setup_production(user=user, yes=yes)
 
 
 @click.command("backups", help="Add cronjob for bench backups")
 def setup_backups():
-	from bench.utils import setup_backups
-	setup_backups()
+	bench.utils.setup_backups()
 
 
 @click.command("env", help="Setup virtualenv for bench")
 @click.option("--python", type = str, default = "python3", help = "Path to Python Executable.")
 def setup_env(python="python3"):
-	from bench.utils import setup_env
-	setup_env(python=python)
+	bench.utils.setup_env(python=python)
 
 
 @click.command("firewall", help="Setup firewall for system")
 @click.option("--ssh_port")
 @click.option("--force")
 def setup_firewall(ssh_port=None, force=False):
-	from bench.utils import run_playbook
-
 	if not force:
 		click.confirm("Setting up the firewall will block all ports except 80, 443 and {0}\nDo you want to continue?".format(ssh_port), abort=True)
 
@@ -95,8 +93,6 @@ def setup_firewall(ssh_port=None, force=False):
 @click.argument("port")
 @click.option("--force")
 def set_ssh_port(port, force=False):
-	from bench.utils import run_playbook
-
 	if not force:
 		click.confirm("This will change your SSH Port to {}\nDo you want to continue?".format(port), abort=True)
 
@@ -108,8 +104,7 @@ def set_ssh_port(port, force=False):
 @click.option("--custom-domain")
 @click.option('-n', '--non-interactive', default=False, is_flag=True, help="Run command non-interactively. This flag restarts nginx and runs certbot non interactively. Shouldn't be used on 1'st attempt")
 def setup_letsencrypt(site, custom_domain, non_interactive):
-	from bench.config.lets_encrypt import setup_letsencrypt
-	setup_letsencrypt(site, custom_domain, bench_path=".", interactive=not non_interactive)
+	bench.config.lets_encrypt.setup_letsencrypt(site, custom_domain, bench_path=".", interactive=not non_interactive)
 
 
 @click.command("wildcard-ssl", help="Setup wildcard SSL certificate for multi-tenant bench")
@@ -117,20 +112,17 @@ def setup_letsencrypt(site, custom_domain, non_interactive):
 @click.option("--email")
 @click.option("--exclude-base-domain", default=False, is_flag=True, help="SSL Certificate not applicable for base domain")
 def setup_wildcard_ssl(domain, email, exclude_base_domain):
-	from bench.config.lets_encrypt import setup_wildcard_ssl
-	setup_wildcard_ssl(domain, email, bench_path=".", exclude_base_domain=exclude_base_domain)
+	bench.config.lets_encrypt.setup_wildcard_ssl(domain, email, bench_path=".", exclude_base_domain=exclude_base_domain)
 
 
 @click.command("procfile", help="Generate Procfile for bench start")
 def setup_procfile():
-	from bench.config.procfile import setup_procfile
-	setup_procfile(".")
+	bench.config.procfile.setup_procfile(".")
 
 
 @click.command("socketio", help="Setup node dependencies for socketio server")
 def setup_socketio():
-	from bench.utils import setup_socketio
-	setup_socketio()
+	bench.utils.setup_socketio()
 
 
 @click.command("requirements", help="Setup Python and Node dependencies")
@@ -203,34 +195,28 @@ def setup_config():
 @click.option("--ssl-certificate-key", help="Absolute path to SSL Certificate Key")
 def add_domain(domain, site=None, ssl_certificate=None, ssl_certificate_key=None):
 	"""Add custom domain to site"""
-	from bench.config.site_config import add_domain
-
 	if not site:
 		print("Please specify site")
 		sys.exit(1)
 
-	add_domain(site, domain, ssl_certificate, ssl_certificate_key, bench_path=".")
+	bench.config.site_config.add_domain(site, domain, ssl_certificate, ssl_certificate_key, bench_path=".")
 
 
 @click.command("remove-domain", help="Remove custom domain from a site")
 @click.argument("domain")
 @click.option("--site", prompt=True)
 def remove_domain(domain, site=None):
-	from bench.config.site_config import remove_domain
-
 	if not site:
 		print("Please specify site")
 		sys.exit(1)
 
-	remove_domain(site, domain, bench_path=".")
+	bench.config.site_config.remove_domain(site, domain, bench_path=".")
 
 
 @click.command("sync-domains", help="Check if there is a change in domains. If yes, updates the domains list.")
 @click.option("--domain", multiple=True)
 @click.option("--site", prompt=True)
 def sync_domains(domain=None, site=None):
-	from bench.config.site_config import sync_domains
-
 	if not site:
 		print("Please specify site")
 		sys.exit(1)
@@ -241,7 +227,7 @@ def sync_domains(domain=None, site=None):
 		print("Domains should be a json list of strings or dictionaries")
 		sys.exit(1)
 
-	changed = sync_domains(site, domains, bench_path=".")
+	changed = bench.config.site_config.sync_domains(site, domains, bench_path=".")
 
 	# if changed, success, else failure
 	sys.exit(0 if changed else 1)
@@ -253,8 +239,6 @@ def sync_domains(domain=None, site=None):
 @click.option("--mysql_root_password")
 @click.option("--container", is_flag=True, default=False)
 def setup_roles(role, **kwargs):
-	from bench.utils import run_playbook
-
 	extra_vars = {"production": True}
 	extra_vars.update(kwargs)
 
@@ -269,7 +253,6 @@ def setup_roles(role, **kwargs):
 @click.option("--bantime", default=600, help="The counter is set to zero if no match is found within 'findtime' seconds. Default is 600 seconds")
 @click.option("--findtime", default=600, help="Duration (in seconds) for IP to be banned for. Negative number for 'permanent' ban. Default is 600 seconds")
 def setup_nginx_proxy_jail(**kwargs):
-	from bench.utils import run_playbook
 	run_playbook("roles/fail2ban/tasks/configure_nginx_jail.yml", extra_vars=kwargs)
 
 

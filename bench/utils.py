@@ -66,10 +66,10 @@ def log(message, level=0):
 		2: color.red + 'ERROR',			# fail
 		3: color.yellow + 'WARN'		# warn/suggest
 	}
-	start = (levels.get(level) + ': ') if level in levels else ''
-	end = '\033[0m'
+	start_line = (levels.get(level) + ': ') if level in levels else ''
+	end_line = '\033[0m'
 
-	print(start + message + end)
+	print(start_line + message + end_line)
 
 
 def safe_decode(string, encoding = 'utf-8'):
@@ -1110,8 +1110,8 @@ def migrate_env(python, backup=False):
 	from bench.config.common_site_config import get_config
 	from bench.app import get_apps
 
-	log = logging.getLogger(__name__)
-	log.setLevel(logging.DEBUG)
+	logger = logging.getLogger(__name__)
+	logger.setLevel(logging.DEBUG)
 
 	nvenv = 'env'
 	path = os.getcwd()
@@ -1127,12 +1127,12 @@ def migrate_env(python, backup=False):
 
 		redis  = '{redis} -p {port}'.format(redis=which('redis-cli'), port=rredis.port)
 
-		log.debug('Clearing Redis Cache...')
+		logger.debug('Clearing Redis Cache...')
 		exec_cmd('{redis} FLUSHALL'.format(redis = redis))
-		log.debug('Clearing Redis DataBase...')
+		logger.debug('Clearing Redis DataBase...')
 		exec_cmd('{redis} FLUSHDB'.format(redis = redis))
 	except:
-		log.warn('Please ensure Redis Connections are running or Daemonized.')
+		logger.warn('Please ensure Redis Connections are running or Daemonized.')
 
 	# Backup venv: restore using `virtualenv --relocatable` if needed
 	if backup:
@@ -1143,7 +1143,7 @@ def migrate_env(python, backup=False):
 		source = os.path.join(path, 'env')
 		target = parch
 
-		log.debug('Backing up Virtual Environment')
+		logger.debug('Backing up Virtual Environment')
 		stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 		dest = os.path.join(path, str(stamp))
 
@@ -1152,15 +1152,15 @@ def migrate_env(python, backup=False):
 
 	# Create virtualenv using specified python
 	try:
-		log.debug('Setting up a New Virtual {} Environment'.format(python))
+		logger.debug('Setting up a New Virtual {} Environment'.format(python))
 		exec_cmd('{virtualenv} --python {python} {pvenv}'.format(virtualenv=virtualenv, python=python, pvenv=pvenv))
 
 		apps = ' '.join(["-e {}".format(os.path.join("apps", app)) for app in get_apps()])
 		exec_cmd('{0} install -q -U {1}'.format(pip, apps))
 
-		log.debug('Migration Successful to {}'.format(python))
+		logger.debug('Migration Successful to {}'.format(python))
 	except:
-		log.debug('Migration Error')
+		logger.debug('Migration Error')
 		raise
 
 

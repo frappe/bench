@@ -83,17 +83,21 @@ def disable_production(bench_path='.'):
 	reload_nginx()
 
 
-def service(service, option):
+def service(service_name, service_option):
 	if os.path.basename(find_executable('systemctl') or '') == 'systemctl' and is_running_systemd():
-		exec_cmd("sudo {service_manager} {option} {service}".format(service_manager='systemctl', option=option, service=service))
+		systemctl_cmd = "sudo {service_manager} {service_option} {service_name}"
+		exec_cmd(systemctl_cmd.format(service_manager='systemctl', service_option=service_option, service_name=service_name))
+
 	elif os.path.basename(find_executable('service') or '') == 'service':
-		exec_cmd("sudo {service_manager} {service} {option} ".format(service_manager='service', service=service, option=option))
+		service_cmd = "sudo {service_manager} {service_name} {service_option}"
+		exec_cmd(service_cmd.format(service_manager='service', service_name=service_name, service_option=service_option))
+
 	else:
 		# look for 'service_manager' and 'service_manager_command' in environment
 		service_manager = os.environ.get("BENCH_SERVICE_MANAGER")
 		if service_manager:
 			service_manager_command = (os.environ.get("BENCH_SERVICE_MANAGER_COMMAND")
-				or "{service_manager} {option} {service}").format(service_manager=service_manager, service=service, option=option)
+				or "{service_manager} {service_option} {service}").format(service_manager=service_manager, service=service, service_option=service_option)
 			exec_cmd(service_manager_command)
 
 		else:
