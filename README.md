@@ -76,6 +76,31 @@ $ cp .env.sample .env
 $ ./start.sh
 ```
 
+To get the Production instance running, run the following command:
+
+```sh
+$ docker-compose \
+    --project-name <project-name> \
+    -f installation/docker-compose-common.yml \
+    -f installation/docker-compose-erpnext.yml \
+    -f installation/docker-compose-networks.yml \
+    --project-directory installation up -d
+```
+
+Make sure to replace `<project-name>` with whatever you wish to call it. This should get the instance running through docker. Now, to create a new site on the instance you may run:
+
+```sh
+docker exec -it \
+    -e "SITE_NAME=$SITE_NAME" \
+    -e "DB_ROOT_USER=$DB_ROOT_USER" \
+    -e "MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD" \
+    -e "ADMIN_PASSWORD=$ADMIN_PASSWORD" \
+    -e "INSTALL_APPS=erpnext" \ # optional, if you want to install any other apps
+    <project-name>_erpnext-python_1 docker-entrypoint.sh new
+```
+
+Once this is done, you may access the instance at `$SITE_NAME`.
+
 **Note:** The Production setup does not contain, require, or use bench. For a list of substitute commands, check out the [Frappe/ERPNext Docker Site Operations](https://github.com/frappe/frappe_docker/#site-operations).
 
 
