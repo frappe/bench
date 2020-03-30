@@ -19,7 +19,7 @@ def cli():
 	change_uid()
 
 	if is_dist_editable("bench"):
-		log("bench is installed in editable mode!\n\nThis is not the recommended mode of install for production. Use the PYPI package using `pip install frappe-bench` instead\n", level=3)
+		log("bench is installed in editable mode!\n\nThis is not the recommended mode of installation for production. Instead, install the package from PyPI with: `pip install frappe-bench`\n", level=3)
 
 	if len(sys.argv) > 2 and sys.argv[1] == "frappe":
 		return old_frappe_cli()
