@@ -1095,6 +1095,15 @@ def migrate_env(python, backup=False):
 		raise
 
 
+def is_dist_editable(dist):
+	"""Is distribution an editable install?"""
+	for path_item in sys.path:
+		egg_link = os.path.join(path_item, dist + '.egg-link')
+		if os.path.isfile(egg_link):
+			return True
+	return False
+
+
 def find_parent_bench(path):
 	"""Checks if parent directories are benches"""
 	if is_bench_directory(directory=path):
