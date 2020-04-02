@@ -10,7 +10,7 @@ def setup_procfile(bench_path, yes=False, skip_redis=False):
 		click.confirm('A Procfile already exists and this will overwrite it. Do you want to continue?',
 			abort=True)
 
-	procfile = bench.env.get_template('Procfile').render(
+	procfile = bench.config.env.get_template('Procfile').render(
 		node=find_executable("node") or find_executable("nodejs"),
 		use_rq=use_rq(bench_path),
 		webserver_port=config.get('webserver_port'),

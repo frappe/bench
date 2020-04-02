@@ -379,8 +379,6 @@ def read_crontab():
 
 
 def setup_sudoers(user):
-	from bench import env
-
 	if not os.path.exists('/etc/sudoers.d'):
 		os.makedirs('/etc/sudoers.d')
 
@@ -394,7 +392,7 @@ def setup_sudoers(user):
 		if set_permissions:
 			os.chmod('/etc/sudoers', 0o440)
 
-	template = env.get_template('frappe_sudoers')
+	template = bench.config.env.get_template('frappe_sudoers')
 	frappe_sudoers = template.render(**{
 		'user': user,
 		'service': find_executable('service'),
