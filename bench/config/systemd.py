@@ -1,9 +1,16 @@
-import os, getpass, click
+# imports - standard imports
+import getpass
+import os
+
+# imports - third partyimports
+import click
+
+# imports - module imports
 import bench
-from bench.utils import exec_cmd
 from bench.app import get_current_frappe_version, use_rq
-from bench.utils import get_bench_name, find_executable
-from bench.config.common_site_config import get_config, update_config, get_gunicorn_workers
+from bench.config.common_site_config import get_config, get_gunicorn_workers, update_config
+from bench.utils import exec_cmd, find_executable, get_bench_name
+
 
 def generate_systemd_config(bench_path, user=None, yes=False,
 	stop=False, create_symlinks=False,
