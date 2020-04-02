@@ -13,7 +13,6 @@ def print_bench_version(ctx, param, value):
 @click.group()
 @click.option('--version', is_flag=True, is_eager=True, callback=print_bench_version, expose_value=False)
 def bench_command(bench_path='.'):
-	"""Bench manager for Frappe"""
 	import bench
 	from bench.utils import setup_logging
 

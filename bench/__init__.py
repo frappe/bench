@@ -1,10 +1,11 @@
 from jinja2 import Environment, PackageLoader
 
-__version__ = "4.1.0"
-
+VERSION = "5.0.0"
+PROJECT_NAME = "frappe-bench"
+FRAPPE_VERSION = None
+__version__ = VERSION
 env = Environment(loader=PackageLoader('bench.config'))
 
-FRAPPE_VERSION = None
 
 def set_frappe_version(bench_path='.'):
 	from .app import get_current_frappe_version

@@ -406,7 +406,7 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 	if version_upgrade[0] and upgrade:
 		update_requirements()
 		update_node_packages()
-		reload_module(utils)
+		reload_module(bench.utils)
 		backup_all_sites()
 		patch_sites()
 		build_assets()
