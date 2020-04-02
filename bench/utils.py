@@ -82,7 +82,12 @@ def safe_decode(string, encoding = 'utf-8'):
 
 
 def check_latest_version():
-	pypi_request = requests.get("https://pypi.org/pypi/frappe-bench/json")
+	try:
+		pypi_request = requests.get("https://pypi.org/pypi/frappe-bench/json")
+	except Exception:
+		# Exceptions thrown are defined in requests.exceptions
+		# ignore checking on all Exceptions
+		return
 
 	if pypi_request.status_code == 200:
 		pypi_version_str = pypi_request.json().get('info').get('version')
