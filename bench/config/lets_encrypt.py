@@ -1,5 +1,4 @@
 # imports - standard imports
-import errno
 import os
 
 # imports - third party imports
