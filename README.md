@@ -202,7 +202,7 @@ For more extensive distribution-dependent documentation, check out the following
  * Show bench help:
 
 	```sh
-	$ bench help
+	$ bench --help
 	```
 
 
