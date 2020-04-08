@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # imports - standard imports
 import errno
 import glob
@@ -21,6 +24,7 @@ from distutils.spawn import find_executable
 # imports - third party imports
 import click
 import requests
+from semantic_version import Version
 from six import iteritems
 from six.moves.urllib.parse import urlparse
 
@@ -78,6 +82,23 @@ def safe_decode(string, encoding = 'utf-8'):
 	except Exception:
 		pass
 	return string
+
+
+def check_latest_version():
+	try:
+		pypi_request = requests.get("https://pypi.org/pypi/frappe-bench/json")
+	except Exception:
+		# Exceptions thrown are defined in requests.exceptions
+		# ignore checking on all Exceptions
+		return
+
+	if pypi_request.status_code == 200:
+		pypi_version_str = pypi_request.json().get('info').get('version')
+		pypi_version = Version(pypi_version_str)
+		local_version = Version(bench.__version__)
+
+		if pypi_version > local_version:
+			log("A newer version of bench is available: {0} → {1}".format(local_version, pypi_version))
 
 
 def get_frappe(bench_path='.'):
