@@ -61,7 +61,7 @@ def is_bench_directory(directory=os.path.curdir):
 
 def log(message, level=0):
 	levels = {
-		0: color.blue + 'LOG',			# normal
+		0: color.blue + 'INFO',			# normal
 		1: color.green + 'SUCCESS',		# success
 		2: color.red + 'ERROR',			# fail
 		3: color.yellow + 'WARN'		# warn/suggest
