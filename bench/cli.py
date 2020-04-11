@@ -69,9 +69,11 @@ def check_uid():
 
 def cmd_requires_root():
 	if len(sys.argv) > 2 and sys.argv[2] in ('production', 'sudoers', 'supervisor', 'lets-encrypt', 'fonts',
-		'print', 'firewall', 'ssh-port', 'role', 'fail2ban', 'wildcard-ssl', 'install'):
+		'print', 'firewall', 'ssh-port', 'role', 'fail2ban', 'wildcard-ssl'):
 		return True
 	if len(sys.argv) >= 2 and sys.argv[1] in ('patch', 'renew-lets-encrypt', 'disable-production'):
+		return True
+	if len(sys.argv) > 2 and sys.argv[1] in ('install'):
 		return True
 
 
