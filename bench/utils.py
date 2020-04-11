@@ -39,7 +39,7 @@ class CommandFailedError(Exception):
 	pass
 
 logger = logging.getLogger(__name__)
-
+bench_cache_file = '.bench.cmd'
 folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 sudoers_file = '/etc/sudoers.d/frappe'
 
@@ -186,6 +186,8 @@ def update(pull=False, patch=False, build=False, requirements=False, backup=True
 	bench_path = os.path.abspath(".")
 	patches.run(bench_path=bench_path)
 	conf = get_config(bench_path)
+
+	clear_command_cache(bench_path='.')
 
 	if conf.get('release_bench'):
 		print('Release bench detected, cannot update!')
@@ -1137,3 +1139,38 @@ def find_parent_bench(path):
 		# NOTE: the os.path.split assumes that given path is absolute
 		parent_dir = os.path.split(path)[0]
 		return find_parent_bench(parent_dir)
+
+
+def generate_command_cache(bench_path='.'):
+	"""
+	Caches all available commands (even custom apps) via Frappe
+	Default caching behaviour: generated the first time any command (for a specific bench directory)
+	"""
+
+	python = get_env_cmd('python', bench_path=bench_path)
+	sites_path = os.path.join(bench_path, 'sites')
+
+	if os.path.exists(bench_cache_file):
+		os.remove(bench_cache_file)
+
+	try:
+		output = get_cmd_output("{0} -m frappe.utils.bench_helper get-frappe-commands".format(python), cwd=sites_path)
+		with open(bench_cache_file, 'w') as f:
+			json.dump(eval(output), f)
+		return json.loads(output)
+
+	except subprocess.CalledProcessError as e:
+		if hasattr(e, "stderr"):
+			print(e.stderr.decode('utf-8'))
+
+
+def clear_command_cache(bench_path='.'):
+	"""
+	Clears commands cached
+	Default invalidation behaviour: destroyed on each run of `bench update`
+	"""
+
+	if os.path.exists(bench_cache_file):
+		os.remove(bench_cache_file)
+	else:
+		print("Bench command cache doesn't exist in this folder!")
