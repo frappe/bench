@@ -844,7 +844,7 @@ def update_translations_p(args):
 
 
 def download_translations_p():
-	pool = multiprocessing.Pool(4)
+	pool = multiprocessing.Pool(multiprocessing.cpu_count())
 
 	langs = get_langs()
 	apps = ('frappe', 'erpnext')
