@@ -4,7 +4,6 @@ import json
 import logging
 import os
 import pwd
-import subprocess
 import sys
 
 # imports - third party imports

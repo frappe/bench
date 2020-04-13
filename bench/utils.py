@@ -1142,8 +1142,7 @@ def find_parent_bench(path):
 
 
 def generate_command_cache(bench_path='.'):
-	"""
-	Caches all available commands (even custom apps) via Frappe
+	"""Caches all available commands (even custom apps) via Frappe
 	Default caching behaviour: generated the first time any command (for a specific bench directory)
 	"""
 
@@ -1165,8 +1164,7 @@ def generate_command_cache(bench_path='.'):
 
 
 def clear_command_cache(bench_path='.'):
-	"""
-	Clears commands cached
+	"""Clears commands cached
 	Default invalidation behaviour: destroyed on each run of `bench update`
 	"""
 
