@@ -240,7 +240,7 @@ def update(pull=False, patch=False, build=False, requirements=False, backup=True
 	conf.update({ "maintenance_mode": 0, "pause_scheduler": 0 })
 	update_config(conf, bench_path=bench_path)
 
-	print("_" * 80 + "\nBench: Deployment tool for Frappe and Frappe Applications (https://frappe.io/bench).\nOpen source depends on your contributions, so please contribute bug reports, patches, fixes or cash and be a part of the community")
+	print("_" * 80 + "\nBench: Deployment tool for Frappe and Frappe Applications (https://frappe.io/bench).\nOpen source depends on your contributions, so do give back by submitting bug reports, patches and fixes and be a part of the community :)")
 
 
 def copy_patches_txt(bench_path):
