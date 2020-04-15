@@ -72,7 +72,7 @@
   get_url:
     url: https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.stretch_{{ "amd64" if ansible_architecture == "x86_64" else "i386"}}.deb
     dest: /tmp/wkhtmltox.deb
-    checksum: "sha256:{{ '1140b0ab02aa6e17346af2f14ed0de807376de475ba90e1db3975f112fbd20bb' if ansible_architecture == "x86_64" else '5b2d15e738ac479e7a8ca6fd765f406c3684a48091813520f87878278d6dd22a' }}"
+    checksum: "sha256:{{ '1140b0ab02aa6e17346af2f14ed0de807376de475ba90e1db3975f112fbd20bb' if ansible_architecture == 'x86_64' else '5b2d15e738ac479e7a8ca6fd765f406c3684a48091813520f87878278d6dd22a' }}"
   when: ansible_distribution == 'Debian' and ansible_distribution_major_version == '9'
 
 - name: download wkthmltox Debian 10
