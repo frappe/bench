@@ -23,6 +23,7 @@ from distutils.spawn import find_executable
 
 # imports - third party imports
 import click
+from crontab import CronTab
 import requests
 from semantic_version import Version
 from six import iteritems
@@ -361,42 +362,27 @@ def get_sites(bench_path='.'):
 	return sites
 
 
-def get_bench_dir(bench_path='.'):
-	return os.path.abspath(bench_path)
-
-
 def setup_backups(bench_path='.'):
+	from bench.config.common_site_config import get_config
 	logger.info('setting up backups')
-	bench_dir = get_bench_dir(bench_path=bench_path)
+
+	bench_dir = os.path.abspath(bench_path)
+	user = get_config('.').get('frappe_user')
+	logfile = os.path.join(bench_dir, 'logs', 'backup.log')
 	bench.set_frappe_version(bench_path=bench_path)
+	system_crontab = CronTab(user=user)
 
 	if bench.FRAPPE_VERSION == 4:
 		backup_command = "cd {sites_dir} && {frappe} --backup all".format(frappe=get_frappe(bench_path=bench_path),)
 	else:
 		backup_command = "cd {bench_dir} && {bench} --site all backup".format(bench_dir=bench_dir, bench=sys.argv[0])
 
-	add_to_crontab('0 */6 * * *  {backup_command} >> {logfile} 2>&1'.format(backup_command=backup_command,
-		logfile=os.path.join(get_bench_dir(bench_path=bench_path), 'logs', 'backup.log')))
+	job_command = "{backup_command} >> {logfile} 2>&1".format(backup_command=backup_command, logfile=logfile)
 
-
-def add_to_crontab(line):
-	current_crontab = read_crontab()
-	line = str.encode(line)
-	if not line in current_crontab:
-		cmd = ["crontab"]
-		if platform.system() == 'FreeBSD':
-			cmd = ["crontab", "-"]
-		s = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-		s.stdin.write(current_crontab)
-		s.stdin.write(line + b'\n')
-		s.stdin.close()
-
-
-def read_crontab():
-	s = subprocess.Popen(["crontab", "-l"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-	out = s.stdout.read()
-	s.stdout.close()
-	return out
+	if job_command not in str(system_crontab):
+		job = system_crontab.new(command=job_command, comment="bench auto backups set for every 6 hours")
+		job.hour.every(6)
+		system_crontab.write()
 
 
 def setup_sudoers(user):
@@ -553,7 +539,6 @@ def restart_supervisor_processes(bench_path='.', web_workers=False):
 
 
 def restart_systemd_processes(bench_path='.', web_workers=False):
-	from .config.common_site_config import get_config
 	bench_name = get_bench_name(bench_path)
 	exec_cmd('sudo systemctl stop -- $(systemctl show -p Requires {bench_name}.target | cut -d= -f2)'.format(bench_name=bench_name))
 	exec_cmd('sudo systemctl start -- $(systemctl show -p Requires {bench_name}.target | cut -d= -f2)'.format(bench_name=bench_name))
