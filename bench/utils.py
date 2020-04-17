@@ -367,7 +367,7 @@ def setup_backups(bench_path='.'):
 	logger.info('setting up backups')
 
 	bench_dir = os.path.abspath(bench_path)
-	user = get_config('.').get('frappe_user')
+	user = get_config(bench_path=bench_dir).get('frappe_user')
 	logfile = os.path.join(bench_dir, 'logs', 'backup.log')
 	bench.set_frappe_version(bench_path=bench_path)
 	system_crontab = CronTab(user=user)
