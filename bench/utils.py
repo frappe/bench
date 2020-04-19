@@ -177,16 +177,19 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	copy_patches_txt(path)
 
 
-def update(pull=False, patch=False, build=False, requirements=False, backup=True, force=False, reset=False,
+def update(pull=False, apps=apps, patch=False, build=False, requirements=False, backup=True, force=False, reset=False,
 	restart_supervisor=False, restart_systemd=False):
 	"""command: bench update"""
 	from bench import patches
-	from bench.app import is_version_upgrade, pull_all_apps, validate_branch
+	from bench.app import is_version_upgrade, pull_apps, validate_branch
 	from bench.config.common_site_config import get_config, update_config
 
 	bench_path = os.path.abspath(".")
 	patches.run(bench_path=bench_path)
 	conf = get_config(bench_path)
+
+	if apps and not pull:
+		apps = []
 
 	clear_command_cache(bench_path='.')
 
@@ -217,8 +220,11 @@ def update(pull=False, patch=False, build=False, requirements=False, backup=True
 		print('Backing up sites...')
 		backup_all_sites(bench_path=bench_path)
 
+	if apps:
+		apps = [app.strip() for app in re.split(",| ", apps) if app]
+
 	if pull:
-		pull_all_apps(bench_path=bench_path, reset=reset)
+		pull_apps(apps=apps, bench_path=bench_path, reset=reset)
 
 	if requirements:
 		update_requirements(bench_path=bench_path)

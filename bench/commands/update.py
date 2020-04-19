@@ -1,17 +1,14 @@
-# imports - standard imports
-import os
-
 # imports - third party imports
 import click
-from six.moves import reload_module
 
 # imports - module imports
-from bench.app import pull_all_apps
+from bench.app import pull_apps
 from bench.utils import post_upgrade, patch_sites, build_assets
 
 
 @click.command('update', help="Updates bench tool and if executed in a bench directory, without any flags will backup, pull, setup requirements, build, run patches and restart bench. Using specific flags will only do certain tasks instead of all")
 @click.option('--pull', is_flag=True, help="Pull updates for all the apps in bench")
+@click.option('--apps', type=str)
 @click.option('--patch', is_flag=True, help="Run migrations for all sites in the bench")
 @click.option('--build', is_flag=True, help="Build JS and CSS assets for the bench")
 @click.option('--requirements', is_flag=True, help="Update requirements. If run alone, equivalent to `bench setup requirements`")
@@ -20,15 +17,15 @@ from bench.utils import post_upgrade, patch_sites, build_assets
 @click.option('--no-backup', is_flag=True, help="If this flag is set, sites won't be backed up prior to updates. Note: This is not recommended in production.")
 @click.option('--force', is_flag=True, help="Forces major version upgrades")
 @click.option('--reset', is_flag=True, help="Hard resets git branch's to their new states overriding any changes and overriding rebase on pull")
-def update(pull, patch, build, requirements, restart_supervisor, restart_systemd, no_backup, force, reset):
+def update(pull, apps, patch, build, requirements, restart_supervisor, restart_systemd, no_backup, force, reset):
 	from bench.utils import update
-	update(pull=pull, patch=patch, build=build, requirements=requirements, restart_supervisor=restart_supervisor, restart_systemd=restart_systemd, backup=not no_backup, force=force, reset=reset)
+	update(pull=pull, apps=apps, patch=patch, build=build, requirements=requirements, restart_supervisor=restart_supervisor, restart_systemd=restart_systemd, backup=not no_backup, force=force, reset=reset)
 
 
 @click.command('retry-upgrade', help="Retry a failed upgrade")
 @click.option('--version', default=5)
 def retry_upgrade(version):
-	pull_all_apps()
+	pull_apps()
 	patch_sites()
 	build_assets()
 	post_upgrade(version-1, version)
