@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # imports - standard imports
 import errno
 import glob
@@ -20,7 +23,9 @@ from distutils.spawn import find_executable
 
 # imports - third party imports
 import click
+from crontab import CronTab
 import requests
+from semantic_version import Version
 from six import iteritems
 from six.moves.urllib.parse import urlparse
 
@@ -35,8 +40,9 @@ class CommandFailedError(Exception):
 	pass
 
 logger = logging.getLogger(__name__)
-
+bench_cache_file = '.bench.cmd'
 folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
+sudoers_file = '/etc/sudoers.d/frappe'
 
 
 class color:
@@ -60,15 +66,15 @@ def is_bench_directory(directory=os.path.curdir):
 
 def log(message, level=0):
 	levels = {
-		0: color.blue + 'LOG',			# normal
+		0: color.blue + 'INFO',			# normal
 		1: color.green + 'SUCCESS',		# success
 		2: color.red + 'ERROR',			# fail
 		3: color.yellow + 'WARN'		# warn/suggest
 	}
-	start = (levels.get(level) + ': ') if level in levels else ''
-	end = '\033[0m'
+	start_line = (levels.get(level) + ': ') if level in levels else ''
+	end_line = '\033[0m'
 
-	print(start + message + end)
+	print(start_line + message + end_line)
 
 
 def safe_decode(string, encoding = 'utf-8'):
@@ -77,6 +83,23 @@ def safe_decode(string, encoding = 'utf-8'):
 	except Exception:
 		pass
 	return string
+
+
+def check_latest_version():
+	try:
+		pypi_request = requests.get("https://pypi.org/pypi/frappe-bench/json")
+	except Exception:
+		# Exceptions thrown are defined in requests.exceptions
+		# ignore checking on all Exceptions
+		return
+
+	if pypi_request.status_code == 200:
+		pypi_version_str = pypi_request.json().get('info').get('version')
+		pypi_version = Version(pypi_version_str)
+		local_version = Version(bench.__version__)
+
+		if pypi_version > local_version:
+			log("A newer version of bench is available: {0} → {1}".format(local_version, pypi_version))
 
 
 def get_frappe(bench_path='.'):
@@ -168,6 +191,8 @@ def update(pull=False, apps=apps, patch=False, build=False, requirements=False, 
 	if apps and not pull:
 		apps = []
 
+	clear_command_cache(bench_path='.')
+
 	if conf.get('release_bench'):
 		print('Release bench detected, cannot update!')
 		sys.exit(1)
@@ -224,7 +249,7 @@ def update(pull=False, apps=apps, patch=False, build=False, requirements=False, 
 	conf.update({ "maintenance_mode": 0, "pause_scheduler": 0 })
 	update_config(conf, bench_path=bench_path)
 
-	print("_" * 80 + "\nBench: Deployment tool for Frappe and Frappe Applications (https://frappe.io/bench).\nOpen source depends on your contributions, so please contribute bug reports, patches, fixes or cash and be a part of the community")
+	print("_" * 80 + "\nBench: Deployment tool for Frappe and Frappe Applications (https://frappe.io/bench).\nOpen source depends on your contributions, so do give back by submitting bug reports, patches and fixes and be a part of the community :)")
 
 
 def copy_patches_txt(bench_path):
@@ -301,11 +326,13 @@ def get_venv_path():
 
 def setup_env(bench_path='.', python='python3'):
 	frappe = os.path.join(bench_path, "apps", "frappe")
-	pip = os.path.join(".", "env", "bin", "pip")
+	pip = os.path.join(bench_path, "env", "bin", "pip")
 	virtualenv = get_venv_path()
 
 	exec_cmd('{} -q env -p {}'.format(virtualenv, python), cwd=bench_path)
-	exec_cmd('{} install -q -U -e {}'.format(pip, frappe), cwd=bench_path)
+
+	if os.path.exists(frappe):
+		exec_cmd('{} install -q -U -e {}'.format(pip, frappe), cwd=bench_path)
 
 
 def setup_socketio(bench_path='.'):
@@ -343,42 +370,27 @@ def get_sites(bench_path='.'):
 	return sites
 
 
-def get_bench_dir(bench_path='.'):
-	return os.path.abspath(bench_path)
-
-
 def setup_backups(bench_path='.'):
+	from bench.config.common_site_config import get_config
 	logger.info('setting up backups')
-	bench_dir = get_bench_dir(bench_path=bench_path)
+
+	bench_dir = os.path.abspath(bench_path)
+	user = get_config(bench_path=bench_dir).get('frappe_user')
+	logfile = os.path.join(bench_dir, 'logs', 'backup.log')
 	bench.set_frappe_version(bench_path=bench_path)
+	system_crontab = CronTab(user=user)
 
 	if bench.FRAPPE_VERSION == 4:
 		backup_command = "cd {sites_dir} && {frappe} --backup all".format(frappe=get_frappe(bench_path=bench_path),)
 	else:
-		backup_command = "cd {bench_dir} && {bench} --site all backup".format(bench_dir=bench_dir, bench=sys.argv[0])
+		backup_command = "cd {bench_dir} && {bench} --verbose --site all backup".format(bench_dir=bench_dir, bench=sys.argv[0])
 
-	add_to_crontab('0 */6 * * *  {backup_command} >> {logfile} 2>&1'.format(backup_command=backup_command,
-		logfile=os.path.join(get_bench_dir(bench_path=bench_path), 'logs', 'backup.log')))
+	job_command = "{backup_command} >> {logfile} 2>&1".format(backup_command=backup_command, logfile=logfile)
 
-
-def add_to_crontab(line):
-	current_crontab = read_crontab()
-	line = str.encode(line)
-	if not line in current_crontab:
-		cmd = ["crontab"]
-		if platform.system() == 'FreeBSD':
-			cmd = ["crontab", "-"]
-		s = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-		s.stdin.write(current_crontab)
-		s.stdin.write(line + b'\n')
-		s.stdin.close()
-
-
-def read_crontab():
-	s = subprocess.Popen(["crontab", "-l"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-	out = s.stdout.read()
-	s.stdout.close()
-	return out
+	if job_command not in str(system_crontab):
+		job = system_crontab.new(command=job_command, comment="bench auto backups set for every 6 hours")
+		job.hour.every(6)
+		system_crontab.write()
 
 
 def setup_sudoers(user):
@@ -397,16 +409,12 @@ def setup_sudoers(user):
 		if set_permissions:
 			os.chmod('/etc/sudoers', 0o440)
 
-	sudoers_file = '/etc/sudoers.d/frappe'
-
 	template = env.get_template('frappe_sudoers')
 	frappe_sudoers = template.render(**{
 		'user': user,
 		'service': find_executable('service'),
 		'systemctl': find_executable('systemctl'),
-		'supervisorctl': find_executable('supervisorctl'),
 		'nginx': find_executable('nginx'),
-		'bench': find_executable('bench')
 	})
 	frappe_sudoers = safe_decode(frappe_sudoers)
 
@@ -414,6 +422,7 @@ def setup_sudoers(user):
 		f.write(frappe_sudoers)
 
 	os.chmod(sudoers_file, 0o440)
+	log("Sudoers was set up for user {}".format(user), level=1)
 
 
 def setup_logging(bench_path='.'):
@@ -427,17 +436,11 @@ def setup_logging(bench_path='.'):
 		logger.setLevel(logging.DEBUG)
 
 
-def get_program(programs):
-	program = None
-	for p in programs:
-		program = find_executable(p)
-		if program:
-			break
-	return program
-
-
 def get_process_manager():
-	return get_program(['foreman', 'forego', 'honcho'])
+	for proc_man in ['honcho', 'foreman', 'forego']:
+		proc_man_path = find_executable(proc_man)
+		if proc_man_path:
+			return proc_man_path
 
 
 def start(no_dev=False, concurrency=None, procfile=None):
@@ -492,15 +495,16 @@ def check_git_for_shallow_clone():
 		return True
 
 
-def get_cmd_output(cmd, cwd='.'):
+def get_cmd_output(cmd, cwd='.', _raise=True):
+	output = ""
 	try:
 		output = subprocess.check_output(cmd, cwd=cwd, shell=True, stderr=subprocess.PIPE).strip()
-		output = output.decode('utf-8')
-		return output
 	except subprocess.CalledProcessError as e:
 		if e.output:
-			print(e.output)
-		raise
+			output = e.output
+		elif _raise:
+			raise
+	return safe_decode(output)
 
 
 def safe_encode(what, encoding = 'utf-8'):
@@ -522,7 +526,7 @@ def restart_supervisor_processes(bench_path='.', web_workers=False):
 		exec_cmd(cmd, cwd=bench_path)
 
 	else:
-		supervisor_status = subprocess.check_output(['sudo', 'supervisorctl', 'status'], cwd=bench_path)
+		supervisor_status = get_cmd_output('supervisorctl status', cwd=bench_path)
 		supervisor_status = safe_decode(supervisor_status)
 
 		if web_workers and '{bench_name}-web:'.format(bench_name=bench_name) in supervisor_status:
@@ -539,11 +543,10 @@ def restart_supervisor_processes(bench_path='.', web_workers=False):
 		else:
 			group = 'frappe:'
 
-		exec_cmd('sudo supervisorctl restart {group}'.format(group=group), cwd=bench_path)
+		exec_cmd('supervisorctl restart {group}'.format(group=group), cwd=bench_path)
 
 
 def restart_systemd_processes(bench_path='.', web_workers=False):
-	from .config.common_site_config import get_config
 	bench_name = get_bench_name(bench_path)
 	exec_cmd('sudo systemctl stop -- $(systemctl show -p Requires {bench_name}.target | cut -d= -f2)'.format(bench_name=bench_name))
 	exec_cmd('sudo systemctl start -- $(systemctl show -p Requires {bench_name}.target | cut -d= -f2)'.format(bench_name=bench_name))
@@ -597,6 +600,7 @@ def update_yarn_packages(bench_path='.'):
 	for app in os.listdir(apps_dir):
 		app_path = os.path.join(apps_dir, app)
 		if os.path.exists(os.path.join(app_path, 'package.json')):
+			print('\n{0}Installing node dependencies for {1}{2}'.format(color.yellow, app, color.nc))
 			exec_cmd('yarn install', cwd=app_path)
 
 
@@ -831,7 +835,7 @@ def update_translations_p(args):
 
 
 def download_translations_p():
-	pool = multiprocessing.Pool(4)
+	pool = multiprocessing.Pool(multiprocessing.cpu_count())
 
 	langs = get_langs()
 	apps = ('frappe', 'erpnext')
@@ -1051,8 +1055,8 @@ def migrate_env(python, backup=False):
 	from bench.config.common_site_config import get_config
 	from bench.app import get_apps
 
-	log = logging.getLogger(__name__)
-	log.setLevel(logging.DEBUG)
+	logger = logging.getLogger(__name__)
+	logger.setLevel(logging.DEBUG)
 
 	nvenv = 'env'
 	path = os.getcwd()
@@ -1068,12 +1072,12 @@ def migrate_env(python, backup=False):
 
 		redis  = '{redis} -p {port}'.format(redis=which('redis-cli'), port=rredis.port)
 
-		log.debug('Clearing Redis Cache...')
+		logger.debug('Clearing Redis Cache...')
 		exec_cmd('{redis} FLUSHALL'.format(redis = redis))
-		log.debug('Clearing Redis DataBase...')
+		logger.debug('Clearing Redis DataBase...')
 		exec_cmd('{redis} FLUSHDB'.format(redis = redis))
 	except:
-		log.warn('Please ensure Redis Connections are running or Daemonized.')
+		logger.warn('Please ensure Redis Connections are running or Daemonized.')
 
 	# Backup venv: restore using `virtualenv --relocatable` if needed
 	if backup:
@@ -1084,7 +1088,7 @@ def migrate_env(python, backup=False):
 		source = os.path.join(path, 'env')
 		target = parch
 
-		log.debug('Backing up Virtual Environment')
+		logger.debug('Backing up Virtual Environment')
 		stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 		dest = os.path.join(path, str(stamp))
 
@@ -1093,16 +1097,25 @@ def migrate_env(python, backup=False):
 
 	# Create virtualenv using specified python
 	try:
-		log.debug('Setting up a New Virtual {} Environment'.format(python))
+		logger.debug('Setting up a New Virtual {} Environment'.format(python))
 		exec_cmd('{virtualenv} --python {python} {pvenv}'.format(virtualenv=virtualenv, python=python, pvenv=pvenv))
 
 		apps = ' '.join(["-e {}".format(os.path.join("apps", app)) for app in get_apps()])
 		exec_cmd('{0} install -q -U {1}'.format(pip, apps))
 
-		log.debug('Migration Successful to {}'.format(python))
+		logger.debug('Migration Successful to {}'.format(python))
 	except:
-		log.debug('Migration Error')
+		logger.debug('Migration Error')
 		raise
+
+
+def is_dist_editable(dist):
+	"""Is distribution an editable install?"""
+	for path_item in sys.path:
+		egg_link = os.path.join(path_item, dist + '.egg-link')
+		if os.path.isfile(egg_link):
+			return True
+	return False
 
 
 def find_parent_bench(path):
@@ -1117,3 +1130,36 @@ def find_parent_bench(path):
 		# NOTE: the os.path.split assumes that given path is absolute
 		parent_dir = os.path.split(path)[0]
 		return find_parent_bench(parent_dir)
+
+
+def generate_command_cache(bench_path='.'):
+	"""Caches all available commands (even custom apps) via Frappe
+	Default caching behaviour: generated the first time any command (for a specific bench directory)
+	"""
+
+	python = get_env_cmd('python', bench_path=bench_path)
+	sites_path = os.path.join(bench_path, 'sites')
+
+	if os.path.exists(bench_cache_file):
+		os.remove(bench_cache_file)
+
+	try:
+		output = get_cmd_output("{0} -m frappe.utils.bench_helper get-frappe-commands".format(python), cwd=sites_path)
+		with open(bench_cache_file, 'w') as f:
+			json.dump(eval(output), f)
+		return json.loads(output)
+
+	except subprocess.CalledProcessError as e:
+		if hasattr(e, "stderr"):
+			print(e.stderr.decode('utf-8'))
+
+
+def clear_command_cache(bench_path='.'):
+	"""Clears commands cached
+	Default invalidation behaviour: destroyed on each run of `bench update`
+	"""
+
+	if os.path.exists(bench_cache_file):
+		os.remove(bench_cache_file)
+	else:
+		print("Bench command cache doesn't exist in this folder!")

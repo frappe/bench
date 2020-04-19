@@ -61,6 +61,9 @@ class TestSetupProduction(TestBenchBase):
 
 	def assert_sudoers(self, user):
 		sudoers_file = '/etc/sudoers.d/frappe'
+		service = bench.utils.which("service")
+		nginx = bench.utils.which("nginx")
+
 		self.assertTrue(self.file_exists(sudoers_file))
 
 		if os.environ.get("CI"):
@@ -69,9 +72,8 @@ class TestSetupProduction(TestBenchBase):
 			with open(sudoers_file, 'r') as f:
 				sudoers = f.read()
 
-		self.assertTrue('{user} ALL = (root) NOPASSWD: /usr/sbin/service nginx *'.format(user=user) in sudoers)
-		self.assertTrue('{user} ALL = (root) NOPASSWD: /usr/bin/supervisorctl'.format(user=user) in sudoers)
-		self.assertTrue('{user} ALL = (root) NOPASSWD: /usr/sbin/nginx'.format(user=user) in sudoers)
+		self.assertTrue('{user} ALL = (root) NOPASSWD: {service} nginx *'.format(service=service, user=user) in sudoers)
+		self.assertTrue('{user} ALL = (root) NOPASSWD: {nginx}'.format(nginx=nginx, user=user) in sudoers)
 
 
 	def assert_supervisor_config(self, bench_name, use_rq=True):
@@ -126,12 +128,12 @@ class TestSetupProduction(TestBenchBase):
 
 
 	def assert_supervisor_process(self, bench_name, use_rq=True, disable_production=False):
-		out = bench.utils.get_cmd_output("sudo supervisorctl status")
+		out = bench.utils.get_cmd_output("supervisorctl status")
 
 		while "STARTING" in out:
 			print ("Waiting for all processes to start...")
 			time.sleep(10)
-			out = bench.utils.get_cmd_output("sudo supervisorctl status")
+			out = bench.utils.get_cmd_output("supervisorctl status")
 
 		tests = [
 			"{bench_name}-web:{bench_name}-frappe-web[\s]+RUNNING",
