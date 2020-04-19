@@ -177,7 +177,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	copy_patches_txt(path)
 
 
-def update(pull=False, apps=apps, patch=False, build=False, requirements=False, backup=True, force=False, reset=False,
+def update(pull=False, apps=None, patch=False, build=False, requirements=False, backup=True, force=False, reset=False,
 	restart_supervisor=False, restart_systemd=False):
 	"""command: bench update"""
 	from bench import patches
