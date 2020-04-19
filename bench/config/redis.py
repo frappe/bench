@@ -1,11 +1,16 @@
-from .common_site_config import get_config
-import re, os, subprocess, semantic_version
-import bench
+# imports - standard imports
+import os
+import re
+import subprocess
 
-try:
-	from urllib.parse import urlparse
-except ImportError:
-	from urlparse import urlparse
+# imports - third party imports
+import semantic_version
+from six.moves.urllib.parse import urlparse
+
+# imports - module imports
+import bench
+from bench.config.common_site_config import get_config
+
 
 def generate_config(bench_path):
 	config = get_config(bench_path)

@@ -1,6 +1,8 @@
+{% if not skip_redis %}
 redis_cache: redis-server config/redis_cache.conf
 redis_socketio: redis-server config/redis_socketio.conf
 redis_queue: redis-server config/redis_queue.conf
+{% endif %}
 web: bench serve {% if webserver_port -%} --port {{ webserver_port }} {%- endif %}
 
 socketio: {{ node }} apps/frappe/socketio.js

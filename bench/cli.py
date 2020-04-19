@@ -1,6 +1,6 @@
 import click
 import os, sys, logging, json, pwd, subprocess
-from bench.utils import is_root, PatchError, drop_privileges, get_env_cmd, get_cmd_output, get_frappe, log, is_bench_directory
+from bench.utils import is_root, PatchError, drop_privileges, get_env_cmd, get_cmd_output, get_frappe, log, find_parent_bench
 from bench.app import get_apps
 from bench.config.common_site_config import get_config
 from bench.commands import bench_command
@@ -29,7 +29,6 @@ def cli():
 
 	elif len(sys.argv) > 1 and sys.argv[1]=="--help":
 		print(click.Context(bench_command).get_help())
-		print()
 		print(get_frappe_help())
 		return
 
@@ -99,7 +98,6 @@ def get_frappe_commands(bench_path='.'):
 		return []
 	try:
 		output = get_cmd_output("{python} -m frappe.utils.bench_helper get-frappe-commands".format(python=python), cwd=sites_path)
-		# output = output.decode('utf-8')
 		return json.loads(output)
 	except subprocess.CalledProcessError as e:
 		if hasattr(e, "stderr"):
@@ -109,26 +107,11 @@ def get_frappe_commands(bench_path='.'):
 def get_frappe_help(bench_path='.'):
 	python = get_env_cmd('python', bench_path=bench_path)
 	sites_path = os.path.join(bench_path, 'sites')
-	if not os.path.exists(sites_path):
-		return []
 	try:
 		out = get_cmd_output("{python} -m frappe.utils.bench_helper get-frappe-help".format(python=python), cwd=sites_path)
-		return "Framework commands:\n" + out.split('Commands:')[1]
-	except subprocess.CalledProcessError:
+		return "\n\nFramework commands:\n" + out.split('Commands:')[1]
+	except:
 		return ""
-
-def find_parent_bench(path):
-	"""Checks if parent directories are benches"""
-	if is_bench_directory(directory=path):
-		return path
-
-	home_path = os.path.expanduser("~")
-	root_path = os.path.abspath(os.sep)
-
-	if path not in {home_path, root_path}:
-		# NOTE: the os.path.split assumes that given path is absolute
-		parent_dir = os.path.split(path)[0]
-		return find_parent_bench(parent_dir)
 
 def change_working_directory():
 	"""Allows bench commands to be run from anywhere inside a bench directory"""
