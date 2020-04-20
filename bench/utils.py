@@ -572,7 +572,7 @@ def update_requirements(bench_path='.'):
 	update_env_pip(bench_path)
 
 	for app in get_apps():
-		install_app(app, bench_path=bench_path, skip_assets=True)
+		install_app(app, bench_path=bench_path, skip_assets=True, postprocess=False)
 
 
 def update_node_packages(bench_path='.'):
