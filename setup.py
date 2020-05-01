@@ -1,10 +1,8 @@
 import ast
-import os
 import re
 
 from setuptools import find_packages, setup
 
-playbooks_files = [os.path.join(dp, f) for dp, dn, filenames in os.walk("playbooks") for f in filenames]
 
 with open('requirements.txt') as f:
 	install_requires = f.read().strip().split('\n')
@@ -24,7 +22,6 @@ setup(
 	zip_safe=False,
 	include_package_data=True,
 	install_requires=install_requires,
-	package_data={ 'bench': playbooks_files },
 	entry_points='''
 [console_scripts]
 bench=bench.cli:cli
