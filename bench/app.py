@@ -218,13 +218,14 @@ def remove_app(app, bench_path='.'):
 	if get_config(bench_path).get('restart_systemd_on_update'):
 		restart_systemd_processes(bench_path=bench_path)
 
-def pull_all_apps(bench_path='.', reset=False):
+def pull_apps(apps=None, bench_path='.', reset=False):
 	'''Check all apps if there no local changes, pull'''
 	rebase = '--rebase' if get_config(bench_path).get('rebase_on_pull') else ''
 
+	apps = apps or get_apps(bench_path=bench_path)
 	# chech for local changes
 	if not reset:
-		for app in get_apps(bench_path=bench_path):
+		for app in apps:
 			excluded_apps = get_excluded_apps()
 			if app in excluded_apps:
 				print("Skipping reset for app {}".format(app))
@@ -248,7 +249,7 @@ Here are your choices:
 					sys.exit(1)
 
 	excluded_apps = get_excluded_apps()
-	for app in get_apps(bench_path=bench_path):
+	for app in apps:
 		if app in excluded_apps:
 			print("Skipping pull for app {}".format(app))
 			continue
