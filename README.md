@@ -132,7 +132,7 @@ You need to install the following packages for the script to run:
 Download the Easy Install script and execute it:
 
 ```sh
-$ wget https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py
+$ wget https://raw.githubusercontent.com/frappe/bench/master/install.py
 $ python3 install.py --production
 ```
 
@@ -142,7 +142,7 @@ When the setup is complete, you will be able to access the system at `http://<yo
 
 #### Troubleshooting
 
-In case the setup fails, the log file is saved under `/tmp/logs/install_bench.log`. You may then: 
+In case the setup fails, the log file is saved under `/tmp/logs/install_bench.log`. You may then:
 
  - Create an Issue in this repository with the log file attached.
  - Search for an existing issue or post the log file on the [Frappe/ERPNext Discuss Forum](https://discuss.erpnext.com/c/bench) with the tag `installation_problem` under "Install/Update" category.
