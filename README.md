@@ -132,7 +132,7 @@ You need to install the following packages for the script to run:
 Download the Easy Install script and execute it:
 
 ```sh
-$ wget https://raw.githubusercontent.com/frappe/bench/master/install.py
+$ wget https://raw.githubusercontent.com/frappe/bench/develop/install.py
 $ python3 install.py --production
 ```
 
