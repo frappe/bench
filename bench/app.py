@@ -177,8 +177,8 @@ def install_app(app, bench_path=".", verbose=False, no_cache=False, postprocess=
 	app_path = os.path.join(bench_path, "apps", app)
 	cache_flag = "--no-cache-dir" if no_cache else ""
 
-	exec_cmd("{pip} install {quiet} -U -e {app} {no_cache}".format(pip=pip_path,
-									quiet=quiet_flag, app=app_path, no_cache=cache_flag))
+	exec_cmd("{pip} install {quiet} -U -e {app} {no_cache}".format(pip=pip_path, quiet=quiet_flag, app=app_path, no_cache=cache_flag))
+	exec_cmd("yarn install", cwd=app_path)
 	add_to_appstxt(app, bench_path=bench_path)
 
 	if postprocess:
