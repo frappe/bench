@@ -111,6 +111,9 @@ def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=Fal
 						if git_url == data['name']:
 							git_url = 'https://github.com/{org}/{app}'.format(org=org, app=git_url)
 							break
+				else:
+					bench.utils.log("App {app} not found".format(app=git_url), level=2)
+					sys.exit(1)
 
 		# Gets repo name from URL
 		repo_name = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
@@ -407,7 +410,7 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 	if version_upgrade[0] and upgrade:
 		update_requirements()
 		update_node_packages()
-		reload_module(utils)
+		reload_module(bench.utils)
 		backup_all_sites()
 		patch_sites()
 		build_assets()
