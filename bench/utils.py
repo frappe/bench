@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # imports - standard imports
 import errno
 import glob
@@ -20,7 +23,9 @@ from distutils.spawn import find_executable
 
 # imports - third party imports
 import click
+from crontab import CronTab
 import requests
+from semantic_version import Version
 from six import iteritems
 from six.moves.urllib.parse import urlparse
 
@@ -35,7 +40,7 @@ class CommandFailedError(Exception):
 	pass
 
 logger = logging.getLogger(__name__)
-
+bench_cache_file = '.bench.cmd'
 folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 sudoers_file = '/etc/sudoers.d/frappe'
 
@@ -61,7 +66,7 @@ def is_bench_directory(directory=os.path.curdir):
 
 def log(message, level=0):
 	levels = {
-		0: color.blue + 'LOG',			# normal
+		0: color.blue + 'INFO',			# normal
 		1: color.green + 'SUCCESS',		# success
 		2: color.red + 'ERROR',			# fail
 		3: color.yellow + 'WARN'		# warn/suggest
@@ -78,6 +83,23 @@ def safe_decode(string, encoding = 'utf-8'):
 	except Exception:
 		pass
 	return string
+
+
+def check_latest_version():
+	try:
+		pypi_request = requests.get("https://pypi.org/pypi/frappe-bench/json")
+	except Exception:
+		# Exceptions thrown are defined in requests.exceptions
+		# ignore checking on all Exceptions
+		return
+
+	if pypi_request.status_code == 200:
+		pypi_version_str = pypi_request.json().get('info').get('version')
+		pypi_version = Version(pypi_version_str)
+		local_version = Version(bench.VERSION)
+
+		if pypi_version > local_version:
+			log("A newer version of bench is available: {0} → {1}".format(local_version, pypi_version))
 
 
 def get_frappe(bench_path='.'):
@@ -155,16 +177,21 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	copy_patches_txt(path)
 
 
-def update(pull=False, patch=False, build=False, requirements=False, backup=True, force=False, reset=False,
+def update(pull=False, apps=None, patch=False, build=False, requirements=False, backup=True, force=False, reset=False,
 	restart_supervisor=False, restart_systemd=False):
 	"""command: bench update"""
 	from bench import patches
-	from bench.app import is_version_upgrade, pull_all_apps, validate_branch
+	from bench.app import is_version_upgrade, pull_apps, validate_branch
 	from bench.config.common_site_config import get_config, update_config
 
 	bench_path = os.path.abspath(".")
 	patches.run(bench_path=bench_path)
 	conf = get_config(bench_path)
+
+	if apps and not pull:
+		apps = []
+
+	clear_command_cache(bench_path='.')
 
 	if conf.get('release_bench'):
 		print('Release bench detected, cannot update!')
@@ -193,8 +220,11 @@ def update(pull=False, patch=False, build=False, requirements=False, backup=True
 		print('Backing up sites...')
 		backup_all_sites(bench_path=bench_path)
 
+	if apps:
+		apps = [app.strip() for app in re.split(",| ", apps) if app]
+
 	if pull:
-		pull_all_apps(bench_path=bench_path, reset=reset)
+		pull_apps(apps=apps, bench_path=bench_path, reset=reset)
 
 	if requirements:
 		update_requirements(bench_path=bench_path)
@@ -219,7 +249,7 @@ def update(pull=False, patch=False, build=False, requirements=False, backup=True
 	conf.update({ "maintenance_mode": 0, "pause_scheduler": 0 })
 	update_config(conf, bench_path=bench_path)
 
-	print("_" * 80 + "\nBench: Deployment tool for Frappe and Frappe Applications (https://frappe.io/bench).\nOpen source depends on your contributions, so please contribute bug reports, patches, fixes or cash and be a part of the community")
+	print("_" * 80 + "\nBench: Deployment tool for Frappe and Frappe Applications (https://frappe.io/bench).\nOpen source depends on your contributions, so do give back by submitting bug reports, patches and fixes and be a part of the community :)")
 
 
 def copy_patches_txt(bench_path):
@@ -340,42 +370,27 @@ def get_sites(bench_path='.'):
 	return sites
 
 
-def get_bench_dir(bench_path='.'):
-	return os.path.abspath(bench_path)
-
-
 def setup_backups(bench_path='.'):
+	from bench.config.common_site_config import get_config
 	logger.info('setting up backups')
-	bench_dir = get_bench_dir(bench_path=bench_path)
+
+	bench_dir = os.path.abspath(bench_path)
+	user = get_config(bench_path=bench_dir).get('frappe_user')
+	logfile = os.path.join(bench_dir, 'logs', 'backup.log')
 	bench.set_frappe_version(bench_path=bench_path)
+	system_crontab = CronTab(user=user)
 
 	if bench.FRAPPE_VERSION == 4:
 		backup_command = "cd {sites_dir} && {frappe} --backup all".format(frappe=get_frappe(bench_path=bench_path),)
 	else:
-		backup_command = "cd {bench_dir} && {bench} --site all backup".format(bench_dir=bench_dir, bench=sys.argv[0])
+		backup_command = "cd {bench_dir} && {bench} --verbose --site all backup".format(bench_dir=bench_dir, bench=sys.argv[0])
 
-	add_to_crontab('0 */6 * * *  {backup_command} >> {logfile} 2>&1'.format(backup_command=backup_command,
-		logfile=os.path.join(get_bench_dir(bench_path=bench_path), 'logs', 'backup.log')))
+	job_command = "{backup_command} >> {logfile} 2>&1".format(backup_command=backup_command, logfile=logfile)
 
-
-def add_to_crontab(line):
-	current_crontab = read_crontab()
-	line = str.encode(line)
-	if not line in current_crontab:
-		cmd = ["crontab"]
-		if platform.system() == 'FreeBSD':
-			cmd = ["crontab", "-"]
-		s = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-		s.stdin.write(current_crontab)
-		s.stdin.write(line + b'\n')
-		s.stdin.close()
-
-
-def read_crontab():
-	s = subprocess.Popen(["crontab", "-l"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-	out = s.stdout.read()
-	s.stdout.close()
-	return out
+	if job_command not in str(system_crontab):
+		job = system_crontab.new(command=job_command, comment="bench auto backups set for every 6 hours")
+		job.hour.every(6)
+		system_crontab.write()
 
 
 def setup_sudoers(user):
@@ -530,7 +545,6 @@ def restart_supervisor_processes(bench_path='.', web_workers=False):
 
 
 def restart_systemd_processes(bench_path='.', web_workers=False):
-	from .config.common_site_config import get_config
 	bench_name = get_bench_name(bench_path)
 	exec_cmd('sudo systemctl stop -- $(systemctl show -p Requires {bench_name}.target | cut -d= -f2)'.format(bench_name=bench_name))
 	exec_cmd('sudo systemctl start -- $(systemctl show -p Requires {bench_name}.target | cut -d= -f2)'.format(bench_name=bench_name))
@@ -819,7 +833,7 @@ def update_translations_p(args):
 
 
 def download_translations_p():
-	pool = multiprocessing.Pool(4)
+	pool = multiprocessing.Pool(multiprocessing.cpu_count())
 
 	langs = get_langs()
 	apps = ('frappe', 'erpnext')
@@ -1114,3 +1128,36 @@ def find_parent_bench(path):
 		# NOTE: the os.path.split assumes that given path is absolute
 		parent_dir = os.path.split(path)[0]
 		return find_parent_bench(parent_dir)
+
+
+def generate_command_cache(bench_path='.'):
+	"""Caches all available commands (even custom apps) via Frappe
+	Default caching behaviour: generated the first time any command (for a specific bench directory)
+	"""
+
+	python = get_env_cmd('python', bench_path=bench_path)
+	sites_path = os.path.join(bench_path, 'sites')
+
+	if os.path.exists(bench_cache_file):
+		os.remove(bench_cache_file)
+
+	try:
+		output = get_cmd_output("{0} -m frappe.utils.bench_helper get-frappe-commands".format(python), cwd=sites_path)
+		with open(bench_cache_file, 'w') as f:
+			json.dump(eval(output), f)
+		return json.loads(output)
+
+	except subprocess.CalledProcessError as e:
+		if hasattr(e, "stderr"):
+			print(e.stderr.decode('utf-8'))
+
+
+def clear_command_cache(bench_path='.'):
+	"""Clears commands cached
+	Default invalidation behaviour: destroyed on each run of `bench update`
+	"""
+
+	if os.path.exists(bench_cache_file):
+		os.remove(bench_cache_file)
+	else:
+		print("Bench command cache doesn't exist in this folder!")

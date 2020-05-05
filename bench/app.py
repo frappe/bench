@@ -111,6 +111,9 @@ def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=Fal
 						if git_url == data['name']:
 							git_url = 'https://github.com/{org}/{app}'.format(org=org, app=git_url)
 							break
+				else:
+					bench.utils.log("App {app} not found".format(app=git_url), level=2)
+					sys.exit(1)
 
 		# Gets repo name from URL
 		repo_name = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
@@ -177,8 +180,8 @@ def install_app(app, bench_path=".", verbose=False, no_cache=False, postprocess=
 	app_path = os.path.join(bench_path, "apps", app)
 	cache_flag = "--no-cache-dir" if no_cache else ""
 
-	exec_cmd("{pip} install {quiet} -U -e {app} {no_cache}".format(pip=pip_path,
-									quiet=quiet_flag, app=app_path, no_cache=cache_flag))
+	exec_cmd("{pip} install {quiet} -U -e {app} {no_cache}".format(pip=pip_path, quiet=quiet_flag, app=app_path, no_cache=cache_flag))
+	exec_cmd("yarn install", cwd=app_path)
 	add_to_appstxt(app, bench_path=bench_path)
 
 	if postprocess:
@@ -218,13 +221,14 @@ def remove_app(app, bench_path='.'):
 	if get_config(bench_path).get('restart_systemd_on_update'):
 		restart_systemd_processes(bench_path=bench_path)
 
-def pull_all_apps(bench_path='.', reset=False):
+def pull_apps(apps=None, bench_path='.', reset=False):
 	'''Check all apps if there no local changes, pull'''
 	rebase = '--rebase' if get_config(bench_path).get('rebase_on_pull') else ''
 
+	apps = apps or get_apps(bench_path=bench_path)
 	# chech for local changes
 	if not reset:
-		for app in get_apps(bench_path=bench_path):
+		for app in apps:
 			excluded_apps = get_excluded_apps()
 			if app in excluded_apps:
 				print("Skipping reset for app {}".format(app))
@@ -248,7 +252,7 @@ Here are your choices:
 					sys.exit(1)
 
 	excluded_apps = get_excluded_apps()
-	for app in get_apps(bench_path=bench_path):
+	for app in apps:
 		if app in excluded_apps:
 			print("Skipping pull for app {}".format(app))
 			continue
