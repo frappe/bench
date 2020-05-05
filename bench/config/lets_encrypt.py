@@ -1,15 +1,19 @@
-import bench, os, click, errno
-from bench.utils import exec_cmd, CommandFailedError, update_common_site_config
-from bench.config.site_config import update_site_config, remove_domain, get_domains
+# imports - standard imports
+import os
+
+# imports - third party imports
+import click
+from crontab import CronTab
+from six.moves.urllib.request import urlretrieve
+
+# imports - module imports
+import bench
+from bench.config.common_site_config import get_config
 from bench.config.nginx import make_nginx_conf
 from bench.config.production_setup import service
-from bench.config.common_site_config import get_config
-from crontab import CronTab
+from bench.config.site_config import get_domains, remove_domain, update_site_config
+from bench.utils import CommandFailedError, exec_cmd, update_common_site_config
 
-try:
-	from urllib.request import urlretrieve
-except ImportError:
-	from urllib import urlretrieve
 
 def setup_letsencrypt(site, custom_domain, bench_path, interactive):
 
@@ -44,7 +48,7 @@ def setup_letsencrypt(site, custom_domain, bench_path, interactive):
 
 
 def create_config(site, custom_domain):
-	config = bench.env.get_template('letsencrypt.cfg').render(domain=custom_domain or site)
+	config = bench.config.env.get_template('letsencrypt.cfg').render(domain=custom_domain or site)
 	config_path = '/etc/letsencrypt/configs/{site}.cfg'.format(site=custom_domain or site)
 	create_dir_if_missing(config_path)
 
@@ -171,4 +175,3 @@ def setup_wildcard_ssl(domain, email, bench_path, exclude_base_domain):
 	make_nginx_conf(bench_path)
 	print("Restrting Nginx service")
 	service('nginx', 'restart')
-

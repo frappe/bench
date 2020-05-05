@@ -9,6 +9,7 @@ import click
 from six import string_types
 
 # imports - module imports
+import bench
 from bench.utils import get_bench_name, get_sites
 
 
@@ -19,14 +20,11 @@ def make_nginx_conf(bench_path, yes=False):
 		if not click.confirm('nginx.conf already exists and this will overwrite it. Do you want to continue?'):
 			return
 
-	from bench import env
-	from bench.config.common_site_config import get_config
-
-	template = env.get_template('nginx.conf')
+	template = bench.config.env.get_template('nginx.conf')
 	bench_path = os.path.abspath(bench_path)
 	sites_path = os.path.join(bench_path, "sites")
 
-	config = get_config(bench_path)
+	config = bench.config.common_site_config.get_config(bench_path)
 	sites = prepare_sites(config, bench_path)
 	bench_name = get_bench_name(bench_path)
 
@@ -58,17 +56,15 @@ def make_nginx_conf(bench_path, yes=False):
 		f.write(nginx_conf)
 
 def make_bench_manager_nginx_conf(bench_path, yes=False, port=23624, domain=None):
-	from bench import env
 	from bench.config.site_config import get_site_config
 	from bench.config.common_site_config import get_config
 
-	template = env.get_template('bench_manager_nginx.conf')
+	template = bench.config.env.get_template('bench_manager_nginx.conf')
 	bench_path = os.path.abspath(bench_path)
 	sites_path = os.path.join(bench_path, "sites")
 
 	config = get_config(bench_path)
 	site_config = get_site_config(domain, bench_path=bench_path)
-	sites = prepare_sites(config, bench_path)
 	bench_name = get_bench_name(bench_path)
 
 	template_vars = {
@@ -152,9 +148,6 @@ def prepare_sites(config, bench_path):
 					site["port"] = 8001
 				while site["port"] in ports_in_use:
 					site["port"] += 1
-
-#			if site["port"] in ports_in_use:
-#				raise Exception("Port {0} is being used by another site {1}".format(site["port"], ports_in_use[site["port"]]))
 
 			if site["port"] in ports_in_use and not site["name"] in ports_in_use[site["port"]]:
 				shared_port_exception_found = True
