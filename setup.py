@@ -1,6 +1,3 @@
-import ast
-import re
-
 from setuptools import find_packages, setup
 from bench import PROJECT_NAME, VERSION
 
