@@ -20,7 +20,7 @@ def generate_supervisor_config(bench_path, user=None, yes=False):
 
 	update_supervisord_conf(user=user)
 
-	template = bench.env.get_template('supervisor.conf')
+	template = bench.config.env.get_template('supervisor.conf')
 	config = get_config(bench_path=bench_path)
 	bench_dir = os.path.abspath(bench_path)
 
