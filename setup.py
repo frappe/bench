@@ -1,6 +1,4 @@
-from setuptools import setup, find_packages
-import re, ast
-
+from setuptools import find_packages, setup
 from bench import PROJECT_NAME, VERSION
 
 with open('requirements.txt') as f:

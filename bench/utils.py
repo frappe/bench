@@ -952,7 +952,7 @@ def run_playbook(playbook_name, extra_vars=None, tag=None):
 	if tag:
 		args.extend(['-t', tag])
 
-	subprocess.check_call(args, cwd=os.path.join(os.path.dirname(bench.__path__[0]), 'playbooks'))
+	subprocess.check_call(args, cwd=os.path.join(bench.__path__[0], 'playbooks'))
 
 
 def find_benches(directory=None):
