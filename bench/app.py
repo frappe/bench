@@ -111,6 +111,9 @@ def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=Fal
 						if git_url == data['name']:
 							git_url = 'https://github.com/{org}/{app}'.format(org=org, app=git_url)
 							break
+				else:
+					bench.utils.log("App {app} not found".format(app=git_url), level=2)
+					sys.exit(1)
 
 		# Gets repo name from URL
 		repo_name = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
@@ -177,8 +180,11 @@ def install_app(app, bench_path=".", verbose=False, no_cache=False, postprocess=
 	app_path = os.path.join(bench_path, "apps", app)
 	cache_flag = "--no-cache-dir" if no_cache else ""
 
-	exec_cmd("{pip} install {quiet} -U -e {app} {no_cache}".format(pip=pip_path,
-									quiet=quiet_flag, app=app_path, no_cache=cache_flag))
+	exec_cmd("{pip} install {quiet} -U -e {app} {no_cache}".format(pip=pip_path, quiet=quiet_flag, app=app_path, no_cache=cache_flag))
+
+	if os.path.exists(os.path.join(app_path, 'package.json')):
+		exec_cmd("yarn install", cwd=app_path)
+
 	add_to_appstxt(app, bench_path=bench_path)
 
 	if postprocess:
@@ -407,7 +413,7 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 	if version_upgrade[0] and upgrade:
 		update_requirements()
 		update_node_packages()
-		reload_module(utils)
+		reload_module(bench.utils)
 		backup_all_sites()
 		patch_sites()
 		build_assets()

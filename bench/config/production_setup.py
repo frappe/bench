@@ -1,14 +1,13 @@
 # imports - standard imports
 import os
 import sys
-from distutils.spawn import find_executable
 
 # imports - module imports
 from bench.config.common_site_config import get_config
 from bench.config.nginx import make_nginx_conf
 from bench.config.supervisor import generate_supervisor_config
 from bench.config.systemd import generate_systemd_config
-from bench.utils import CommandFailedError, exec_cmd, fix_prod_setup_perms, get_bench_name, get_cmd_output
+from bench.utils import CommandFailedError, exec_cmd, find_executable, fix_prod_setup_perms, get_bench_name, get_cmd_output
 
 
 def setup_production_prerequisites():

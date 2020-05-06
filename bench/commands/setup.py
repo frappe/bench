@@ -14,7 +14,6 @@ import bench.config.production_setup
 import bench.config.redis
 import bench.config.site_config
 import bench.config.supervisor
-
 import bench.utils
 from bench.utils import exec_cmd, run_playbook
 

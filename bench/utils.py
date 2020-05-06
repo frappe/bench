@@ -96,7 +96,7 @@ def check_latest_version():
 	if pypi_request.status_code == 200:
 		pypi_version_str = pypi_request.json().get('info').get('version')
 		pypi_version = Version(pypi_version_str)
-		local_version = Version(bench.__version__)
+		local_version = Version(bench.VERSION)
 
 		if pypi_version > local_version:
 			log("A newer version of bench is available: {0} → {1}".format(local_version, pypi_version))
@@ -394,8 +394,6 @@ def setup_backups(bench_path='.'):
 
 
 def setup_sudoers(user):
-	from bench import env
-
 	if not os.path.exists('/etc/sudoers.d'):
 		os.makedirs('/etc/sudoers.d')
 
@@ -409,7 +407,7 @@ def setup_sudoers(user):
 		if set_permissions:
 			os.chmod('/etc/sudoers', 0o440)
 
-	template = env.get_template('frappe_sudoers')
+	template = bench.config.env.get_template('frappe_sudoers')
 	frappe_sudoers = template.render(**{
 		'user': user,
 		'service': find_executable('service'),
@@ -427,7 +425,7 @@ def setup_sudoers(user):
 
 def setup_logging(bench_path='.'):
 	if os.path.exists(os.path.join(bench_path, 'logs')):
-		logger = logging.getLogger('bench')
+		logger = logging.getLogger(bench.PROJECT_NAME)
 		log_file = os.path.join(bench_path, 'logs', 'bench.log')
 		formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 		hdlr = logging.FileHandler(log_file)
@@ -954,7 +952,7 @@ def run_playbook(playbook_name, extra_vars=None, tag=None):
 	if tag:
 		args.extend(['-t', tag])
 
-	subprocess.check_call(args, cwd=os.path.join(os.path.dirname(bench.__path__[0]), 'playbooks'))
+	subprocess.check_call(args, cwd=os.path.join(bench.__path__[0], 'playbooks'))
 
 
 def find_benches(directory=None):
