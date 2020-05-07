@@ -359,7 +359,10 @@ def run_playbook(playbook_name, sudo=False, extra_vars=None):
 	else:
 		cwd = os.path.join(os.path.expanduser('~'), 'bench')
 
-	success = subprocess.check_call(args, cwd=os.path.join(cwd, 'bench', 'playbooks'), stdout=log_stream, stderr=sys.stderr)
+	playbooks_locations = [os.path.join(cwd, 'bench', 'playbooks'), os.path.join(cwd, 'playbooks')]
+	playbooks_folder = [x for x in playbooks_locations if os.path.exists(x)][0]
+
+	success = subprocess.check_call(args, cwd=playbooks_folder, stdout=log_stream, stderr=sys.stderr)
 	return success
 
 
