@@ -58,13 +58,7 @@ To setup a development environment for Docker, follow the [Frappe/ERPNext Docker
 Copy the `env-example` file to `.env`
 
 ```sh
-$ cp installation/env-example installation/.env
-```
-
-Make a directory for handling sites:
-
-```sh
-$ mkdir installation/sites
+$ cp env-example .env
 ```
 
 Optionally, you may also setup an [NGINX Proxy for SSL Certificates](https://github.com/evertramos/docker-compose-letsencrypt-nginx-proxy-companion) with auto-renewal for your Production instance. We recommend this for instances being accessed over the internet. For this to work, the DNS needs to be configured correctly so that [LetsEncrypt](https://letsencrypt.org) can verify the domain. To setup the proxy, run the following commands:
