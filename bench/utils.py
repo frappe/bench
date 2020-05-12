@@ -298,7 +298,7 @@ def exec_cmd(cmd, cwd='.'):
 	import shlex
 	print("{0}$ {1}{2}".format(color.silver, cmd, color.nc))
 	cmd = shlex.split(cmd)
-	subprocess.call(cmd, cwd=cwd, universal_newlines=True)
+	return subprocess.call(cmd, cwd=cwd, universal_newlines=True)
 
 
 def which(executable, raise_err = False):
