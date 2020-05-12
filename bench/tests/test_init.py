@@ -11,7 +11,7 @@ import git
 import bench
 import bench.utils
 from bench.release import get_bumped_version
-from bench.tests.test_base import TestBenchBase
+from bench.tests.test_base import TestBenchBase, FRAPPE_BRANCH
 
 
 class TestBenchInit(TestBenchBase):
@@ -99,7 +99,7 @@ class TestBenchInit(TestBenchBase):
 		self.init_bench(bench_name)
 		bench.utils.exec_cmd("bench setup requirements --node", cwd=bench_path)
 		bench.utils.exec_cmd("bench build", cwd=bench_path)
-		bench.utils.exec_cmd("bench get-app erpnext", cwd=bench_path)
+		bench.utils.exec_cmd("bench get-app erpnext --branch {0}".format(FRAPPE_BRANCH), cwd=bench_path)
 
 		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", "erpnext")))
 
@@ -109,7 +109,7 @@ class TestBenchInit(TestBenchBase):
 
 		# create and install app on site
 		self.new_site(site_name, bench_name)
-		bench.utils.exec_cmd("bench --site {0} install-app erpnext".format(site_name), cwd=bench_path)
+		installed_erpnext = not bench.utils.exec_cmd("bench --site {0} install-app erpnext".format(site_name), cwd=bench_path)
 
 		app_installed_on_site = subprocess.check_output(["bench", "--site", site_name, "list-apps"], cwd=bench_path).decode('utf8')
 		self.assertTrue("erpnext" in app_installed_on_site)
