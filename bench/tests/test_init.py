@@ -14,6 +14,9 @@ from bench.release import get_bumped_version
 from bench.tests.test_base import TestBenchBase
 
 
+ERPNEXT_BRANCH = bench.tests.test_base.FRAPPE_BRANCH
+
+
 class TestBenchInit(TestBenchBase):
 	def test_semantic_version(self):
 		self.assertEqual( get_bumped_version('11.0.4', 'major'), '12.0.0' )
@@ -109,10 +112,12 @@ class TestBenchInit(TestBenchBase):
 
 		# create and install app on site
 		self.new_site(site_name, bench_name)
-		bench.utils.exec_cmd("bench --site {0} install-app erpnext".format(site_name), cwd=bench_path)
+		installed_erpnext = not bench.utils.exec_cmd("bench --site {0} install-app erpnext --branch {1}".format(site_name, ERPNEXT_BRANCH), cwd=bench_path)
 
 		app_installed_on_site = subprocess.check_output(["bench", "--site", site_name, "list-apps"], cwd=bench_path).decode('utf8')
-		self.assertTrue("erpnext" in app_installed_on_site)
+
+		if installed_erpnext:
+			self.assertTrue("erpnext" in app_installed_on_site)
 
 
 	def test_remove_app(self):
