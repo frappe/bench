@@ -71,6 +71,11 @@ def check_url(url, raise_err=True):
 
 	return True
 
+def is_git_url(url):
+	# modified to allow without the tailing .git from https://github.com/jonschlinkert/is-git-url.git
+	pattern = r"(?:git|ssh|https?|git@[-\w.]+):(\/\/)?(.*?)(\.git)?(\/?|\#[-\d\w._]+?)$"
+	return bool(re.fullmatch(pattern, url))
+
 def get_excluded_apps(bench_path='.'):
 	try:
 		with open(os.path.join(bench_path, 'sites', 'excluded_apps.txt')) as f:
@@ -100,9 +105,7 @@ def remove_from_excluded_apps_txt(app, bench_path='.'):
 
 def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=False, postprocess=True, overwrite=False):
 	if not os.path.exists(git_url):
-		if git_url.startswith('git@'):
-			pass
-		elif not check_url(git_url, raise_err=False):
+		if not is_git_url(git_url):
 			orgs = ['frappe', 'erpnext']
 			for org in orgs:
 				url = 'https://api.github.com/repos/{org}/{app}'.format(org=org, app=git_url)
