@@ -395,7 +395,7 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 		bench.utils.log("Fetching upstream {0}for {1}".format("unshallow " if unshallow_flag else "", app))
 
 		bench.utils.exec_cmd("git remote set-branches upstream  '*'", cwd=app_dir)
-		bench.utils.exec_cmd("git fetch --all{0}".format(" --unshallow" if unshallow_flag else ""), cwd=app_dir)
+		bench.utils.exec_cmd("git fetch --all{0} --quiet".format(" --unshallow" if unshallow_flag else ""), cwd=app_dir)
 
 		if check_upgrade:
 			version_upgrade = is_version_upgrade(app=app, bench_path=bench_path, branch=branch)
@@ -404,7 +404,7 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 				sys.exit(1)
 
 		print("Switching for "+app)
-		bench.utils.exec_cmd("git checkout {0}".format(branch), cwd=app_dir)
+		bench.utils.exec_cmd("git checkout -f {0}".format(branch), cwd=app_dir)
 
 		if str(repo.active_branch) == branch:
 			switched_apps.append(app)
