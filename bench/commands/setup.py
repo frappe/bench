@@ -4,7 +4,6 @@ import sys
 
 # imports - third party imports
 import click
-from six import PY3
 
 # imports - module imports
 import bench.config.lets_encrypt

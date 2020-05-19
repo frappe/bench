@@ -359,10 +359,6 @@ def get_upstream_version(app, branch=None, bench_path='.'):
 			raise
 	return get_version_from_string(contents)
 
-def get_upstream_url(app, bench_path='.'):
-	repo_dir = get_repo_dir(app, bench_path=bench_path)
-	return subprocess.check_output(['git', 'config', '--get', 'remote.upstream.url'], cwd=repo_dir).strip()
-
 def get_repo_dir(app, bench_path='.'):
 	return os.path.join(bench_path, 'apps', app)
 
