@@ -285,7 +285,7 @@ def clone_apps_from(bench_path, clone_from, update_app=True):
 			subprocess.check_output(['git', 'reset', '--hard'], cwd=app_path)
 			subprocess.check_output(['git', 'pull', '--rebase', remote, branch], cwd=app_path)
 
-		install_app(app, bench_path)
+		install_app(app, bench_path, postprocess=False)
 
 	with open(os.path.join(clone_from, 'sites', 'apps.txt'), 'r') as f:
 		apps = f.read().splitlines()

@@ -187,9 +187,10 @@ def install_app(app, bench_path=".", verbose=False, no_cache=False, postprocess=
 
 	add_to_appstxt(app, bench_path=bench_path)
 
+	if not skip_assets:
+		build_assets(bench_path=bench_path, app=app)
+
 	if postprocess:
-		if not skip_assets:
-			build_assets(bench_path=bench_path, app=app)
 		conf = get_config(bench_path=bench_path)
 
 		if conf.get('restart_supervisor_on_update'):
