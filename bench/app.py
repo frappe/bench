@@ -98,7 +98,7 @@ def remove_from_excluded_apps_txt(app, bench_path='.'):
 		apps.remove(app)
 		return write_excluded_apps_txt(apps, bench_path=bench_path)
 
-def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=False, postprocess=True, overwrite=False):
+def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=False, restart_bench=True, overwrite=False):
 	if not os.path.exists(git_url):
 		if not check_url(git_url, raise_err=False):
 			orgs = ['frappe', 'erpnext']
@@ -172,7 +172,7 @@ def new_app(app, bench_path='.'):
 	install_app(app, bench_path=bench_path)
 
 
-def install_app(app, bench_path=".", verbose=False, no_cache=False, postprocess=True, skip_assets=False):
+def install_app(app, bench_path=".", verbose=False, no_cache=False, restart_bench=True, skip_assets=False):
 	logger.info("installing {}".format(app))
 
 	pip_path = os.path.join(bench_path, "env", "bin", "pip")
@@ -190,7 +190,7 @@ def install_app(app, bench_path=".", verbose=False, no_cache=False, postprocess=
 	if not skip_assets:
 		build_assets(bench_path=bench_path, app=app)
 
-	if postprocess:
+	if restart_bench:
 		conf = get_config(bench_path=bench_path)
 
 		if conf.get('restart_supervisor_on_update'):
