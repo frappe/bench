@@ -134,7 +134,7 @@ Do you want to continue and overwrite it?'''.format(repo_name)):
 			install_app(app=app_name, bench_path=bench_path, verbose=verbose, skip_assets=skip_assets)
 			sys.exit()
 
-	logger.log( 'Getting app {0}'.format(repo_name))
+	logger.log('Getting app {0}'.format(repo_name))
 	exec_cmd("git clone {git_url} {branch} {shallow_clone} --origin upstream".format(
 		git_url=git_url,
 		shallow_clone=shallow_clone,
@@ -159,7 +159,7 @@ def get_app_name(bench_path, repo_name):
 def new_app(app, bench_path='.'):
 	# For backwards compatibility
 	app = app.lower().replace(" ", "_").replace("-", "_")
-	logger.log( 'creating new app {}'.format(app))
+	logger.log('creating new app {}'.format(app))
 	apps = os.path.abspath(os.path.join(bench_path, 'apps'))
 	bench.set_frappe_version(bench_path=bench_path)
 
@@ -172,7 +172,7 @@ def new_app(app, bench_path='.'):
 
 
 def install_app(app, bench_path=".", verbose=False, no_cache=False, postprocess=True, skip_assets=False):
-	logger.log( "installing {}".format(app))
+	logger.log("installing {}".format(app))
 
 	pip_path = os.path.join(bench_path, "env", "bin", "pip")
 	quiet_flag = "-q" if not verbose else ""
@@ -266,7 +266,7 @@ Here are your choices:
 				add_to_excluded_apps_txt(app, bench_path=bench_path)
 				print("Skipping pull for app {}, since remote doesn't exist, and adding it to excluded apps".format(app))
 				continue
-			logger.log( 'pulling {0}'.format(app))
+			logger.log('pulling {0}'.format(app))
 			if reset:
 				exec_cmd("git fetch --all", cwd=app_dir)
 				exec_cmd("git reset --hard {remote}/{branch}".format(
