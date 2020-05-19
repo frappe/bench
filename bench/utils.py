@@ -564,13 +564,24 @@ def update_env_pip(bench_path):
 
 def update_requirements(bench_path='.'):
 	from bench.app import get_apps, install_app
-	print('Updating Python libraries...')
+	print('Installing applications...')
 
-	# update env pip
 	update_env_pip(bench_path)
 
 	for app in get_apps():
 		install_app(app, bench_path=bench_path, skip_assets=True)
+
+
+def update_python_packages(bench_path='.'):
+	from bench.app import get_apps
+	pip_path = os.path.join(bench_path, "env", "bin", "pip")
+	print('Updating Python libraries...')
+
+	update_env_pip(bench_path)
+	for app in get_apps():
+		print('\n{0}Installing python dependencies for {1}{2}'.format(color.yellow, app, color.nc))
+		app_path = os.path.join(bench_path, "apps", app)
+		exec_cmd("{0} install -q -U -e {1}".format(pip_path, app_path), cwd=bench_path)
 
 
 def update_node_packages(bench_path='.'):
