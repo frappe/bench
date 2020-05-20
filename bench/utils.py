@@ -39,7 +39,7 @@ class PatchError(Exception):
 class CommandFailedError(Exception):
 	pass
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(bench.PROJECT_NAME)
 bench_cache_file = '.bench.cmd'
 folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 sudoers_file = '/etc/sudoers.d/frappe'
@@ -139,7 +139,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 			if e.errno == errno.EEXIST:
 				pass
 
-	setup_logging()
+	setup_logging(bench_path=path)
 
 	setup_env(bench_path=path, python=python)
 
@@ -297,8 +297,13 @@ def clone_apps_from(bench_path, clone_from, update_app=True):
 def exec_cmd(cmd, cwd='.'):
 	import shlex
 	print("{0}$ {1}{2}".format(color.silver, cmd, color.nc))
+	cwd_info = "cd {0} && ".format(cwd) if cwd != "." else ""
+	cmd_log = "{0}{1}".format(cwd_info, cmd)
+	logger.debug(cmd_log)
 	cmd = shlex.split(cmd)
-	return subprocess.call(cmd, cwd=cwd, universal_newlines=True)
+	return_code = subprocess.call(cmd, cwd=cwd, universal_newlines=True)
+	if return_code:
+		logger.warn("{0} executed with exit code {1}".format(cmd_log, return_code))
 
 
 def which(executable, raise_err = False):
@@ -372,7 +377,7 @@ def get_sites(bench_path='.'):
 
 def setup_backups(bench_path='.'):
 	from bench.config.common_site_config import get_config
-	logger.info('setting up backups')
+	logger.log('setting up backups')
 
 	bench_dir = os.path.abspath(bench_path)
 	user = get_config(bench_path=bench_dir).get('frappe_user')
@@ -424,14 +429,36 @@ def setup_sudoers(user):
 
 
 def setup_logging(bench_path='.'):
+	LOG_LEVEL = 15
+	logging.addLevelName(LOG_LEVEL, "LOG")
+	def logv(self, message, *args, **kws):
+		if self.isEnabledFor(LOG_LEVEL):
+			self._log(LOG_LEVEL, message, args, **kws)
+	logging.Logger.log = logv
+
+	class log_filter(object):
+		def __init__(self, level):
+			self.__level = level
+
+		def filter(self, logRecord):
+			return logRecord.levelno == self.__level
+
 	if os.path.exists(os.path.join(bench_path, 'logs')):
 		logger = logging.getLogger(bench.PROJECT_NAME)
 		log_file = os.path.join(bench_path, 'logs', 'bench.log')
 		formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 		hdlr = logging.FileHandler(log_file)
 		hdlr.setFormatter(formatter)
+
+		log_hndlr = logging.StreamHandler(sys.stdout)
+		log_hndlr.setFormatter(logging.Formatter('%(message)s'))
+		log_hndlr.addFilter(log_filter(LOG_LEVEL))
+
 		logger.addHandler(hdlr)
+		logger.addHandler(log_hndlr)
 		logger.setLevel(logging.DEBUG)
+
+		return logger
 
 
 def get_process_manager():
@@ -1070,9 +1097,9 @@ def migrate_env(python, backup=False):
 
 		redis  = '{redis} -p {port}'.format(redis=which('redis-cli'), port=rredis.port)
 
-		logger.debug('Clearing Redis Cache...')
+		logger.log('Clearing Redis Cache...')
 		exec_cmd('{redis} FLUSHALL'.format(redis = redis))
-		logger.debug('Clearing Redis DataBase...')
+		logger.log('Clearing Redis DataBase...')
 		exec_cmd('{redis} FLUSHDB'.format(redis = redis))
 	except:
 		logger.warn('Please ensure Redis Connections are running or Daemonized.')
@@ -1086,7 +1113,7 @@ def migrate_env(python, backup=False):
 		source = os.path.join(path, 'env')
 		target = parch
 
-		logger.debug('Backing up Virtual Environment')
+		logger.log('Backing up Virtual Environment')
 		stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 		dest = os.path.join(path, str(stamp))
 
@@ -1094,17 +1121,18 @@ def migrate_env(python, backup=False):
 		shutil.move(dest, target)
 
 	# Create virtualenv using specified python
+	venv_creation, packages_setup = 1, 1
 	try:
-		logger.debug('Setting up a New Virtual {} Environment'.format(python))
-		exec_cmd('{virtualenv} --python {python} {pvenv}'.format(virtualenv=virtualenv, python=python, pvenv=pvenv))
+		logger.log('Setting up a New Virtual {} Environment'.format(python))
+		venv_creation = exec_cmd('{virtualenv} --python {python} {pvenv}'.format(virtualenv=virtualenv, python=python, pvenv=pvenv))
 
 		apps = ' '.join(["-e {}".format(os.path.join("apps", app)) for app in get_apps()])
-		exec_cmd('{0} install -q -U {1}'.format(pip, apps))
+		packages_setup = exec_cmd('{0} install -q -U {1}'.format(pip, apps))
 
-		logger.debug('Migration Successful to {}'.format(python))
+		logger.log('Migration Successful to {}'.format(python))
 	except:
-		logger.debug('Migration Error')
-		raise
+		if venv_creation or packages_setup:
+			logger.warn('Migration Error')
 
 
 def is_dist_editable(dist):
