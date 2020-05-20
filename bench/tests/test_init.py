@@ -136,13 +136,15 @@ class TestBenchInit(TestBenchBase):
 		bench_path = os.path.join(self.benches_path, "test-bench")
 		app_path = os.path.join(bench_path, "apps", "frappe")
 
-		bench.utils.exec_cmd("bench switch-to-branch version-12 frappe --upgrade", cwd=bench_path)
+		successful_switch = not bench.utils.exec_cmd("bench switch-to-branch version-12 frappe --upgrade", cwd=bench_path)
 		app_branch_after_switch = str(git.Repo(path=app_path).active_branch)
-		self.assertEqual("version-12", app_branch_after_switch)
+		if successful_switch:
+			self.assertEqual("version-12", app_branch_after_switch)
 
-		bench.utils.exec_cmd("bench switch-to-branch develop frappe --upgrade", cwd=bench_path)
+		successful_switch = not bench.utils.exec_cmd("bench switch-to-branch develop frappe --upgrade", cwd=bench_path)
 		app_branch_after_second_switch = str(git.Repo(path=app_path).active_branch)
-		self.assertEqual("develop", app_branch_after_second_switch)
+		if successful_switch:
+			self.assertEqual("develop", app_branch_after_second_switch)
 
 
 if __name__ == '__main__':
