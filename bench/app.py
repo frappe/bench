@@ -70,6 +70,11 @@ def check_url(url, raise_err=True):
 
 	return True
 
+def is_git_url(url):
+	# modified to allow without the tailing .git from https://github.com/jonschlinkert/is-git-url.git
+	pattern = r"(?:git|ssh|https?|git@[-\w.]+):(\/\/)?(.*?)(\.git)?(\/?|\#[-\d\w._]+?)$"
+	return bool(re.match(pattern, url))
+
 def get_excluded_apps(bench_path='.'):
 	try:
 		with open(os.path.join(bench_path, 'sites', 'excluded_apps.txt')) as f:
@@ -99,7 +104,7 @@ def remove_from_excluded_apps_txt(app, bench_path='.'):
 
 def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=False, postprocess=True, overwrite=False):
 	if not os.path.exists(git_url):
-		if not check_url(git_url, raise_err=False):
+		if not is_git_url(git_url):
 			orgs = ['frappe', 'erpnext']
 			for org in orgs:
 				url = 'https://api.github.com/repos/{org}/{app}'.format(org=org, app=git_url)
@@ -389,7 +394,7 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 		bench.utils.log("Fetching upstream {0}for {1}".format("unshallow " if unshallow_flag else "", app))
 
 		bench.utils.exec_cmd("git remote set-branches upstream  '*'", cwd=app_dir)
-		bench.utils.exec_cmd("git fetch --all{0}".format(" --unshallow" if unshallow_flag else ""), cwd=app_dir)
+		bench.utils.exec_cmd("git fetch --all{0} --quiet".format(" --unshallow" if unshallow_flag else ""), cwd=app_dir)
 
 		if check_upgrade:
 			version_upgrade = is_version_upgrade(app=app, bench_path=bench_path, branch=branch)
@@ -398,7 +403,7 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 				sys.exit(1)
 
 		print("Switching for "+app)
-		bench.utils.exec_cmd("git checkout {0}".format(branch), cwd=app_dir)
+		bench.utils.exec_cmd("git checkout -f {0}".format(branch), cwd=app_dir)
 
 		if str(repo.active_branch) == branch:
 			switched_apps.append(app)
