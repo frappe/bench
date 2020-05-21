@@ -14,10 +14,7 @@ def print_bench_version(ctx, param, value):
 @click.option('--version', is_flag=True, is_eager=True, callback=print_bench_version, expose_value=False)
 def bench_command(bench_path='.'):
 	import bench
-	from bench.utils import setup_logging
-
 	bench.set_frappe_version(bench_path=bench_path)
-	setup_logging(bench_path=bench_path)
 
 
 from bench.commands.make import init, get_app, new_app, remove_app, exclude_app_for_update, include_app_for_update, pip
