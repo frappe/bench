@@ -20,7 +20,7 @@ from six.moves import reload_module
 # imports - module imports
 import bench
 from bench.config.common_site_config import get_config
-from bench.utils import CommandFailedError, build_assets, check_git_for_shallow_clone, exec_cmd, get_cmd_output, get_frappe, restart_supervisor_processes, restart_systemd_processes, run_frappe_cmd
+from bench.utils import color, CommandFailedError, build_assets, check_git_for_shallow_clone, exec_cmd, get_cmd_output, get_frappe, restart_supervisor_processes, restart_systemd_processes, run_frappe_cmd
 
 
 logger = logging.getLogger(bench.PROJECT_NAME)
@@ -177,7 +177,9 @@ def new_app(app, bench_path='.'):
 
 
 def install_app(app, bench_path=".", verbose=False, no_cache=False, restart_bench=True, skip_assets=False):
-	logger.info("installing {}".format(app))
+	print('\n{0}Installing {1}{2}'.format(color.yellow, app, color.nc))
+	logger.log("installing {}".format(app))
+
 	pip_path = os.path.join(bench_path, "env", "bin", "pip")
 	quiet_flag = "-q" if not verbose else ""
 	app_path = os.path.join(bench_path, "apps", app)

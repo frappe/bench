@@ -128,13 +128,17 @@ def setup_socketio():
 @click.option("--node", help="Update only Node packages", default=False, is_flag=True)
 @click.option("--python", help="Update only Python packages", default=False, is_flag=True)
 def setup_requirements(node=False, python=False):
-	if not node:
-		from bench.utils import update_requirements as setup_python_packages
-		setup_python_packages()
+	if not (node or python):
+		from bench.utils import update_requirements
+		update_requirements()
 
-	if not python:
-		from bench.utils import update_node_packages as setup_node_packages
-		setup_node_packages()
+	elif not node:
+		from bench.utils import update_python_packages
+		update_python_packages()
+
+	elif not python:
+		from bench.utils import update_node_packages
+		update_node_packages()
 
 
 @click.command("manager", help="Setup bench-manager.local site with the bench_manager app installed on it")
