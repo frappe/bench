@@ -302,7 +302,7 @@ def exec_cmd(cmd, cwd='.'):
 	cmd = shlex.split(cmd)
 	return_code = subprocess.call(cmd, cwd=cwd, universal_newlines=True)
 	if return_code:
-		logger.warn("{0} executed with exit code {1}".format(cmd_log, return_code))
+		logger.warning("{0} executed with exit code {1}".format(cmd_log, return_code))
 
 
 def which(executable, raise_err = False):
@@ -435,26 +435,13 @@ def setup_logging(bench_path='.'):
 			self._log(LOG_LEVEL, message, args, **kws)
 	logging.Logger.log = logv
 
-	class log_filter(object):
-		def __init__(self, level):
-			self.__level = level
-
-		def filter(self, logRecord):
-			return logRecord.levelno == self.__level
-
 	if os.path.exists(os.path.join(bench_path, 'logs')):
 		logger = logging.getLogger(bench.PROJECT_NAME)
 		log_file = os.path.join(bench_path, 'logs', 'bench.log')
 		formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 		hdlr = logging.FileHandler(log_file)
 		hdlr.setFormatter(formatter)
-
-		log_hndlr = logging.StreamHandler(sys.stdout)
-		log_hndlr.setFormatter(logging.Formatter('%(message)s'))
-		log_hndlr.addFilter(log_filter(LOG_LEVEL))
-
 		logger.addHandler(hdlr)
-		logger.addHandler(log_hndlr)
 		logger.setLevel(logging.DEBUG)
 
 		return logger
@@ -985,7 +972,7 @@ def migrate_env(python, backup=False):
 		logger.log('Clearing Redis DataBase...')
 		exec_cmd('{redis} FLUSHDB'.format(redis = redis))
 	except:
-		logger.warn('Please ensure Redis Connections are running or Daemonized.')
+		logger.warning('Please ensure Redis Connections are running or Daemonized.')
 
 	# Backup venv: restore using `virtualenv --relocatable` if needed
 	if backup:
@@ -1015,7 +1002,7 @@ def migrate_env(python, backup=False):
 		logger.log('Migration Successful to {}'.format(python))
 	except:
 		if venv_creation or packages_setup:
-			logger.warn('Migration Error')
+			logger.warning('Migration Error')
 
 
 def is_dist_editable(dist):
