@@ -267,7 +267,7 @@ def exec_cmd(cmd, cwd='.'):
 	import shlex
 	print("{0}$ {1}{2}".format(color.silver, cmd, color.nc))
 	cmd = shlex.split(cmd)
-	subprocess.call(cmd, cwd=cwd, universal_newlines=True)
+	return subprocess.call(cmd, cwd=cwd, universal_newlines=True)
 
 
 def which(executable, raise_err = False):
@@ -563,7 +563,7 @@ def update_requirements(bench_path='.'):
 	update_env_pip(bench_path)
 
 	for app in get_apps():
-		install_app(app, bench_path=bench_path, skip_assets=True)
+		install_app(app, bench_path=bench_path, skip_assets=True, postprocess=False)
 
 
 def update_node_packages(bench_path='.'):
