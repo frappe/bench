@@ -284,7 +284,7 @@ def clone_apps_from(bench_path, clone_from, update_app=True):
 			subprocess.check_output(['git', 'reset', '--hard'], cwd=app_path)
 			subprocess.check_output(['git', 'pull', '--rebase', remote, branch], cwd=app_path)
 
-		install_app(app, bench_path)
+		install_app(app, bench_path, restart_bench=False)
 
 	with open(os.path.join(clone_from, 'sites', 'apps.txt'), 'r') as f:
 		apps = f.read().splitlines()
@@ -578,7 +578,7 @@ def update_requirements(bench_path='.'):
 	update_env_pip(bench_path)
 
 	for app in get_apps():
-		install_app(app, bench_path=bench_path, skip_assets=True)
+		install_app(app, bench_path=bench_path, skip_assets=True, restart_bench=False)
 
 
 def update_python_packages(bench_path='.'):
