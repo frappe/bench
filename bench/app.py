@@ -59,18 +59,6 @@ def write_appstxt(apps, bench_path='.'):
 	with open(os.path.join(bench_path, 'sites', 'apps.txt'), 'w') as f:
 		return f.write('\n'.join(apps))
 
-def check_url(url, raise_err=True):
-	from six.moves.urllib.parse import urlparse
-
-	parsed = urlparse(url)
-	if not parsed.scheme:
-		if raise_err:
-			raise TypeError('{url} Not a valid URL'.format(url=url))
-		else:
-			return False
-
-	return True
-
 def is_git_url(url):
 	# modified to allow without the tailing .git from https://github.com/jonschlinkert/is-git-url.git
 	pattern = r"(?:git|ssh|https?|git@[-\w.]+):(\/\/)?(.*?)(\.git)?(\/?|\#[-\d\w._]+?)$"
