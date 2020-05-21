@@ -455,7 +455,7 @@ def setup_logging(bench_path='.'):
 
 		logger.addHandler(hdlr)
 		logger.addHandler(log_hndlr)
-		logger.setLevel(logging.DEBUG)
+		logger.setLevel(logging.INFO)
 
 		return logger
 
