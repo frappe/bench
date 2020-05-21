@@ -172,9 +172,7 @@ def prepare_sites(config, bench_path):
 
 	if not dns_multitenant:
 		message = "Port configuration list:"
-		port_config_index = 0
 		for site in sites_configs:
-			port_config_index += 1
 			message += "\n\nSite {0} assigned port: {1}".format(site["name"], site["port"])
 
 		print(message)

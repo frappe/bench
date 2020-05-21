@@ -10,7 +10,6 @@ import json
 import logging
 import multiprocessing
 import os
-import platform
 import pwd
 import re
 import select
@@ -486,14 +485,6 @@ def start(no_dev=False, concurrency=None, procfile=None):
 	os.execv(program, command)
 
 
-def check_cmd(cmd, cwd='.'):
-	try:
-		subprocess.check_call(cmd, cwd=cwd, shell=True)
-		return True
-	except subprocess.CalledProcessError:
-		return False
-
-
 def get_git_version():
 	'''returns git version from `git --version`
 	extracts version number from string `get version 1.9.1` etc'''
@@ -530,15 +521,6 @@ def get_cmd_output(cmd, cwd='.', _raise=True):
 		elif _raise:
 			raise
 	return safe_decode(output)
-
-
-def safe_encode(what, encoding = 'utf-8'):
-	try:
-		what = what.encode(encoding)
-	except Exception:
-		pass
-
-	return what
 
 
 def restart_supervisor_processes(bench_path='.', web_workers=False):
@@ -672,21 +654,6 @@ def update_npm_packages(bench_path='.'):
 	exec_cmd('npm install', cwd=bench_path)
 
 
-def install_requirements(req_file, user=False):
-	if os.path.exists(req_file):
-		if user:
-			python = sys.executable
-		else:
-			python = os.path.join("env", "bin", "python")
-
-		if in_virtual_env():
-			user = False
-
-		user_flag = "--user" if user else ""
-
-		exec_cmd("{python} -m pip install {user_flag} -q -U -r {req_file}".format(python=python, user_flag=user_flag, req_file=req_file))
-
-
 def backup_site(site, bench_path='.'):
 	bench.set_frappe_version(bench_path=bench_path)
 
@@ -780,19 +747,6 @@ def fix_prod_setup_perms(bench_path='.', frappe_user=None):
 			os.chown(path, uid, gid)
 
 
-def fix_file_perms():
-	for dir_path, dirs, files in os.walk('.'):
-		for _dir in dirs:
-			os.chmod(os.path.join(dir_path, _dir), 0o755)
-		for _file in files:
-			os.chmod(os.path.join(dir_path, _file), 0o644)
-	bin_dir = './env/bin'
-	if os.path.exists(bin_dir):
-		for _file in os.listdir(bin_dir):
-			if not _file.startswith('activate'):
-				os.chmod(os.path.join(bin_dir, _file), 0o755)
-
-
 def get_current_frappe_version(bench_path='.'):
 	from .app import get_current_frappe_version as fv
 	return fv(bench_path=bench_path)
@@ -821,13 +775,6 @@ def run_frappe_cmd(*args, **kwargs):
 
 	if return_code > 0:
 		sys.exit(return_code)
-
-
-def get_frappe_cmd_output(*args, **kwargs):
-	bench_path = kwargs.get('bench_path', '.')
-	f = get_env_cmd('python', bench_path=bench_path)
-	sites_dir = os.path.join(bench_path, 'sites')
-	return subprocess.check_output((f, '-m', 'frappe.utils.bench_helper', 'frappe') + args, cwd=sites_dir)
 
 
 def validate_upgrade(from_ver, to_ver, bench_path='.'):
@@ -939,13 +886,6 @@ def log_line(data, stream):
 	return sys.stdout.write(data)
 
 
-def get_output(*cmd):
-	s = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-	out = s.stdout.read()
-	s.stdout.close()
-	return out
-
-
 def get_bench_name(bench_path):
 	return os.path.basename(os.path.abspath(bench_path))
 
@@ -1022,77 +962,9 @@ def find_benches(directory=None):
 	return benches
 
 
-def in_virtual_env():
-	# type: () -> bool
-	"""Returns a boolean, whether running in venv with no system site-packages.
-	pip really does the best job at this: virtualenv_no_global at https://raw.githubusercontent.com/pypa/pip/master/src/pip/_internal/utils/virtualenv.py
-	"""
-
-	def running_under_venv():
-		# handles PEP 405 compliant virtual environments.
-		return sys.prefix != getattr(sys, "base_prefix", sys.prefix)
-
-	def running_under_regular_virtualenv():
-		# pypa/virtualenv case
-		return hasattr(sys, 'real_prefix')
-
-	def _no_global_under_venv():
-		# type: () -> bool
-		"""Check `{sys.prefix}/pyvenv.cfg` for system site-packages inclusion
-		PEP 405 specifies that when system site-packages are not supposed to be
-		visible from a virtual environment, `pyvenv.cfg` must contain the following
-		line:
-			include-system-site-packages = false
-		Additionally, log a warning if accessing the file fails.
-		"""
-		def _get_pyvenv_cfg_lines():
-			pyvenv_cfg_file = os.path.join(sys.prefix, 'pyvenv.cfg')
-			try:
-				with open(pyvenv_cfg_file) as f:
-					return f.read().splitlines()  # avoids trailing newlines
-			except IOError:
-				return None
-
-		_INCLUDE_SYSTEM_SITE_PACKAGES_REGEX = re.compile(
-			r"include-system-site-packages\s*=\s*(?P<value>true|false)"
-		)
-		cfg_lines = _get_pyvenv_cfg_lines()
-		if cfg_lines is None:
-			# We're not in a "sane" venv, so assume there is no system
-			# site-packages access (since that's PEP 405's default state).
-			return True
-
-		for line in cfg_lines:
-			match = _INCLUDE_SYSTEM_SITE_PACKAGES_REGEX.match(line)
-			if match is not None and match.group('value') == 'false':
-				return True
-		return False
-
-	def _no_global_under_regular_virtualenv():
-		# type: () -> bool
-		"""Check if "no-global-site-packages.txt" exists beside site.py
-		This mirrors logic in pypa/virtualenv for determining whether system
-		site-packages are visible in the virtual environment.
-		"""
-		site_mod_dir = os.path.dirname(os.path.abspath(site.__file__))
-		no_global_site_packages_file = os.path.join(site_mod_dir, 'no-global-site-packages.txt')
-		return os.path.exists(no_global_site_packages_file)
-
-	if running_under_regular_virtualenv():
-		return _no_global_under_regular_virtualenv()
-
-	if running_under_venv():
-		return _no_global_under_venv()
-
-	return False
-
-
 def migrate_env(python, backup=False):
 	from bench.config.common_site_config import get_config
 	from bench.app import get_apps
-
-	logger = logging.getLogger(__name__)
-	logger.setLevel(logging.DEBUG)
 
 	nvenv = 'env'
 	path = os.getcwd()

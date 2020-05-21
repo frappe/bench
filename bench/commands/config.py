@@ -80,6 +80,7 @@ def remove_common_config(keys):
 config.add_command(config_restart_supervisor_on_update)
 config.add_command(config_restart_systemd_on_update)
 config.add_command(config_dns_multitenant)
+config.add_command(config_rebase_on_pull)
 config.add_command(config_serve_default_site)
 config.add_command(config_http_timeout)
 config.add_command(set_common_config)
