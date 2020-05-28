@@ -11,9 +11,9 @@ watch: bench watch
 {% endif %}
 {% if use_rq -%}
 schedule: bench schedule
-worker_short: bench worker --queue short --quiet
-worker_long: bench worker --queue long --quiet
-worker_default: bench worker --queue default --quiet
+worker_short: bench worker --queue short 1>> logs/worker.log 2>> logs/worker.error.log
+worker_long: bench worker --queue long 1>> logs/worker.log 2>> logs/worker.error.log
+worker_default: bench worker --queue default 1>> logs/worker.log 2>> logs/worker.error.log
 {% else %}
 workerbeat: sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app beat -s scheduler.schedule'
 worker: sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app worker -n jobs@%h -Ofair --soft-time-limit 360 --time-limit 390'
