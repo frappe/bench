@@ -1,5 +1,5 @@
 <div align="center">
-	<img src="https://github.com/frappe/design/raw/master/logos/png/bench-logo.png" height="128">
+	<img src="https://github.com/frappe/design/raw/develop/logos/png/bench-logo.png" height="128">
 	<h2>Bench</h2>
 </div>
 
@@ -141,17 +141,18 @@ In case the setup fails, the log file is saved under `/tmp/logs/install_bench.lo
  - Create an Issue in this repository with the log file attached.
  - Search for an existing issue or post the log file on the [Frappe/ERPNext Discuss Forum](https://discuss.erpnext.com/c/bench) with the tag `installation_problem` under "Install/Update" category.
 
-For more information and advanced setup instructions, check out the [Easy Install Documentation](https://github.com/frappe/bench/blob/master/docs/easy_install.md).
+For more information and advanced setup instructions, check out the [Easy Install Documentation](https://github.com/frappe/bench/blob/develop/docs/easy_install.md).
 
 
 ### Manual Installation
 
 Although not recommended, some might want to manually setup a bench instance locally for development. To quickly get started on installing bench the hard way, you can follow [Installing Bench and Frappe](https://frappe.io/docs/user/en/installation).
-	
+
 	```sh
 	$ pip install frappe-bench
 	```
-Next you'll have to set up the pre-requisites for setting up a Frappe Environment. Checkout [docs/installation](https://github.com/frappe/bench/blob/master/docs/installation.md) for more information on this.
+
+Next you'll have to set up the pre-requisites for setting up a Frappe Environment. Checkout [docs/installation](https://github.com/frappe/bench/blob/develop/docs/installation.md) for more information on this.
 
 For more extensive distribution-dependent documentation, check out the following guides:
 
@@ -205,12 +206,12 @@ For more extensive distribution-dependent documentation, check out the following
 	```
 
 
-For more in-depth information on commands and their usage, follow [Commands and Usage](https://github.com/frappe/bench/blob/master/docs/commands_and_usage.md). As for a consolidated list of bench commands, check out [Bench Usage](https://github.com/frappe/bench/blob/master/docs/bench_usage.md).
+For more in-depth information on commands and their usage, follow [Commands and Usage](https://github.com/frappe/bench/blob/develop/docs/commands_and_usage.md). As for a consolidated list of bench commands, check out [Bench Usage](https://github.com/frappe/bench/blob/develop/docs/bench_usage.md).
 
 
 ## Custom Bench Commands
 
-If you wish to extend the capabilities of bench with your own custom Frappe Application, you may follow [Adding Custom Bench Commands](https://github.com/frappe/bench/blob/master/docs/bench_custom_cmd.md).
+If you wish to extend the capabilities of bench with your own custom Frappe Application, you may follow [Adding Custom Bench Commands](https://github.com/frappe/bench/blob/develop/docs/bench_custom_cmd.md).
 
 
 ## Bench Manager
