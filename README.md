@@ -146,13 +146,14 @@ For more information and advanced setup instructions, check out the [Easy Instal
 
 ### Manual Installation
 
-Although not recommended, some might want to manually setup a bench instance locally for development. To quickly get started on installing bench the hard way, you can follow [Installing Bench and Frappe](https://frappe.io/docs/user/en/installation).
+Some might want to manually setup a bench instance locally for development. To quickly get started on installing bench the hard way, you can follow the guide on [Installing Bench and the Frappe Framework](https://frappe.io/docs/user/en/installation).
 
-	```sh
-	$ pip install frappe-bench
-	```
+You'll have to set up the system dependencies required for setting up a Frappe Environment. Checkout [docs/installation](https://github.com/frappe/bench/blob/develop/docs/installation.md) for more information on this. If you've already set up, install bench via pip:
 
-Next you'll have to set up the pre-requisites for setting up a Frappe Environment. Checkout [docs/installation](https://github.com/frappe/bench/blob/develop/docs/installation.md) for more information on this.
+
+```sh
+$ pip install frappe-bench
+```
 
 For more extensive distribution-dependent documentation, check out the following guides:
 
