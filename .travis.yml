@@ -3,7 +3,7 @@ dist: bionic
 sudo: true
 
 git:
-  depth: 10
+  depth: 2
 
 cache:
   - pip
