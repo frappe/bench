@@ -96,8 +96,10 @@ def prepare_sites(config, bench_path):
 	sites = {
 		"that_use_port": [],
 		"that_use_dns": [],
+		"that_use_dns_with_cors": [],
 		"that_use_ssl": [],
-		"that_use_wildcard_ssl": []
+		"that_use_wildcard_ssl": [],
+		"that_use_wildcard_ssl_with_cors": []
 	}
 
 	domain_map = {}
@@ -108,6 +110,11 @@ def prepare_sites(config, bench_path):
 	shared_port_exception_found = False
 	sites_configs = get_sites_with_config(bench_path=bench_path)
 
+	if config.get("allow_cors"):
+		# copy allow_cors from common_site_config
+		for site in sites_configs:
+			if not site.get("allow_cors"):
+				site["allow_cors"] = config.get("allow_cors")
 
 	# preload all preset site ports to avoid conflicts
 
@@ -129,7 +136,10 @@ def prepare_sites(config, bench_path):
 			site_name = domain or site['name']
 
 			if site.get('wildcard'):
-				sites["that_use_wildcard_ssl"].append(site_name)
+				if site.get("allow_cors"):
+					sites["that_use_wildcard_ssl_with_cors"].append(site_name)
+				else:
+					sites["that_use_wildcard_ssl"].append(site_name)
 
 				if not sites.get('wildcard_ssl_certificate'):
 					sites["wildcard_ssl_certificate"] = site['ssl_certificate']
@@ -139,7 +149,10 @@ def prepare_sites(config, bench_path):
 				sites["that_use_ssl"].append(site)
 
 			else:
-				sites["that_use_dns"].append(site_name)
+				if site.get("allow_cors"):
+					sites["that_use_dns_with_cors"].append(site_name)
+				else:
+					sites["that_use_dns"].append(site_name)
 
 		else:
 			if not site.get("port"):
@@ -212,7 +225,8 @@ def get_sites_with_config(bench_path):
 			"name": site,
 			"port": site_config.get('nginx_port'),
 			"ssl_certificate": site_config.get('ssl_certificate'),
-			"ssl_certificate_key": site_config.get('ssl_certificate_key')
+			"ssl_certificate_key": site_config.get('ssl_certificate_key'),
+			"allow_cors": site_config.get("allow_cors", 0)
 		})
 
 		if dns_multitenant and site_config.get('domains'):
