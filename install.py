@@ -8,6 +8,7 @@ import json
 import multiprocessing
 import shutil
 import platform
+import distro
 import warnings
 import datetime
 
@@ -78,7 +79,7 @@ def check_distribution_compatibility():
 	dist_name, dist_version = get_distribution_info()
 	supported_dists = {
 		'macos': [10.9, 10.10, 10.11, 10.12],
-		'ubuntu': [14, 15, 16, 18, 19],
+		'ubuntu': [14, 15, 16, 18, 19, 20],
 		'debian': [8, 9],
 		'centos': [7]
 	}
@@ -97,7 +98,7 @@ def check_distribution_compatibility():
 def get_distribution_info():
 	# return distribution name and major version
 	if platform.system() == "Linux":
-		current_dist = platform.dist()
+		current_dist = distro.linux_distribution(full_distribution_name=True)
 		return current_dist[0].lower(), current_dist[1].rsplit('.')[0]
 
 	elif platform.system() == "Darwin":
