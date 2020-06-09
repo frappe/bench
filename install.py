@@ -10,12 +10,14 @@ import shutil
 import platform
 import warnings
 import datetime
+import importlib
 try:
-  import distro
+    importlib.import_module(distro)
 except ImportError:
-  print("Trying to Install required module: distro")
-  os.system('python -m pip install distro')
-import distro
+    import pip
+    pip.main(['install', distro])
+finally:
+    globals()[package] = importlib.import_module(distro)
 
 tmp_bench_repo = os.path.join('/', 'tmp', '.bench')
 tmp_log_folder = os.path.join('/', 'tmp', 'logs')
