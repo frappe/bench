@@ -11,13 +11,18 @@ import platform
 import warnings
 import datetime
 import importlib
-try:
-    importlib.import_module(distro)
-except ImportError:
-    import pip
-    pip.main(['install', distro])
-finally:
-    globals()[package] = importlib.import_module(distro)
+
+def install_and_import(package):
+    import importlib
+    try:
+        importlib.import_module(package)
+    except ImportError:
+        import pip
+        pip.main(['install', package])
+    finally:
+        globals()[package] = importlib.import_module(package)
+
+install_and_import('distro')
 
 tmp_bench_repo = os.path.join('/', 'tmp', '.bench')
 tmp_log_folder = os.path.join('/', 'tmp', 'logs')
