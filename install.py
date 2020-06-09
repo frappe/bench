@@ -67,7 +67,6 @@ def check_system_package_managers():
 			raise Exception('''
 			Please install brew package manager before proceeding with bench setup. Please run following
 			to install brew package manager on your machine,
-
 			/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 			''')
 	if 'Linux' in os.uname():
@@ -98,7 +97,11 @@ def check_distribution_compatibility():
 def get_distribution_info():
 	# return distribution name and major version
 	if platform.system() == "Linux":
-		current_dist = distro.linux_distribution(full_distribution_name=True)
+        if (platform.python_version_tuple()[0] + platform.python_version_tuple()[1]) == '2.7':
+            current_dist = platfor.dist()
+        elif :
+            current_dist = distro.linux_distribution(full_distribution_name=True)
+            
 		return current_dist[0].lower(), current_dist[1].rsplit('.')[0]
 
 	elif platform.system() == "Darwin":
