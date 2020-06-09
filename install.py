@@ -95,18 +95,23 @@ def check_distribution_compatibility():
 
 
 def get_distribution_info():
-	# return distribution name and major version
-	if platform.system() == "Linux":
-        if (platform.python_version_tuple()[0] + platform.python_version_tuple()[1]) == '2.7':
-            current_dist = platfor.dist()
-        elif :
-            current_dist = distro.linux_distribution(full_distribution_name=True)
-            
-		return current_dist[0].lower(), current_dist[1].rsplit('.')[0]
 
-	elif platform.system() == "Darwin":
-		current_dist = platform.mac_ver()
-		return "macos", current_dist[0].rsplit('.', 1)[0]
+    # return distribution name and major version
+
+    if platform.system() == 'Linux':
+        if int(platform.python_version_tuple()[0]
+               + platform.python_version_tuple()[1]) <= 3.7:
+            current_dist = platfor.dist()
+        else:
+            current_dist = \
+                distro.linux_distribution(full_distribution_name=True)
+
+            return (current_dist[0].lower(), current_dist[1].rsplit('.'
+                    )[0])
+    elif platform.system() == 'Darwin':
+
+        current_dist = platform.mac_ver()
+        return ('macos', current_dist[0].rsplit('.', 1)[0])
 
 
 def run_os_command(command_map):
