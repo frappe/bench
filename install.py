@@ -13,7 +13,7 @@ import datetime
 try:
   import distro
 except ImportError:
-  print "Trying to Install required module: requests\n"
+  print("Trying to Install required module: distro")
   os.system('python -m pip install distro')
 import distro
 
