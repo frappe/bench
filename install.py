@@ -8,10 +8,14 @@ import json
 import multiprocessing
 import shutil
 import platform
-import distro
 import warnings
 import datetime
-
+try:
+  import distro
+except ImportError:
+  print "Trying to Install required module: requests\n"
+  os.system('python -m pip install distro')
+import distro
 
 tmp_bench_repo = os.path.join('/', 'tmp', '.bench')
 tmp_log_folder = os.path.join('/', 'tmp', 'logs')
