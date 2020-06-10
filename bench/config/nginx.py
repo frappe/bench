@@ -13,10 +13,10 @@ import bench
 from bench.utils import get_bench_name, get_sites
 
 
-def make_nginx_conf(bench_path, yes=False):
+def make_nginx_conf(bench_path, ignore_existing=False):
 	conf_path = os.path.join(bench_path, "config", "nginx.conf")
 
-	if not yes and os.path.exists(conf_path):
+	if not ignore_existing and os.path.exists(conf_path):
 		if not click.confirm('nginx.conf already exists and this will overwrite it. Do you want to continue?'):
 			return
 
