@@ -110,8 +110,7 @@ def get_distribution_info():
     # return distribution name and major version
 
     if platform.system() == 'Linux':
-        if int(platform.python_version_tuple()[0]
-               + platform.python_version_tuple()[1]) <= 3.7:
+        if sys.version_info < (3, 7):
             current_dist = platfor.dist()
         else:
             return (distro.id(), distro.major_version())
