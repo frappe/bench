@@ -113,7 +113,10 @@ def get_distribution_info():
         if sys.version_info < (3, 7):
             current_dist = platform.dist()
         else:
-            return (distro.id(), distro.major_version())
+            current_dist = (distro.id(), distro.major_version())
+	
+            return (current_dist[0].lower(), current_dist[1].rsplit(".")[0])
+	
     elif platform.system() == 'Darwin':
 
         current_dist = platform.mac_ver()
