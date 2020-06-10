@@ -10,7 +10,6 @@ import json
 import logging
 import multiprocessing
 import os
-import platform
 import pwd
 import re
 import select
@@ -39,7 +38,7 @@ class PatchError(Exception):
 class CommandFailedError(Exception):
 	pass
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(bench.PROJECT_NAME)
 bench_cache_file = '.bench.cmd'
 folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 sudoers_file = '/etc/sudoers.d/frappe'
@@ -139,7 +138,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 			if e.errno == errno.EEXIST:
 				pass
 
-	setup_logging()
+	setup_logging(bench_path=path)
 
 	setup_env(bench_path=path, python=python)
 
@@ -285,7 +284,7 @@ def clone_apps_from(bench_path, clone_from, update_app=True):
 			subprocess.check_output(['git', 'reset', '--hard'], cwd=app_path)
 			subprocess.check_output(['git', 'pull', '--rebase', remote, branch], cwd=app_path)
 
-		install_app(app, bench_path)
+		install_app(app, bench_path, restart_bench=False)
 
 	with open(os.path.join(clone_from, 'sites', 'apps.txt'), 'r') as f:
 		apps = f.read().splitlines()
@@ -297,8 +296,13 @@ def clone_apps_from(bench_path, clone_from, update_app=True):
 def exec_cmd(cmd, cwd='.'):
 	import shlex
 	print("{0}$ {1}{2}".format(color.silver, cmd, color.nc))
+	cwd_info = "cd {0} && ".format(cwd) if cwd != "." else ""
+	cmd_log = "{0}{1}".format(cwd_info, cmd)
+	logger.debug(cmd_log)
 	cmd = shlex.split(cmd)
-	return subprocess.call(cmd, cwd=cwd, universal_newlines=True)
+	return_code = subprocess.call(cmd, cwd=cwd, universal_newlines=True)
+	if return_code:
+		logger.warning("{0} executed with exit code {1}".format(cmd_log, return_code))
 
 
 def which(executable, raise_err = False):
@@ -372,7 +376,7 @@ def get_sites(bench_path='.'):
 
 def setup_backups(bench_path='.'):
 	from bench.config.common_site_config import get_config
-	logger.info('setting up backups')
+	logger.log('setting up backups')
 
 	bench_dir = os.path.abspath(bench_path)
 	user = get_config(bench_path=bench_dir).get('frappe_user')
@@ -424,6 +428,13 @@ def setup_sudoers(user):
 
 
 def setup_logging(bench_path='.'):
+	LOG_LEVEL = 15
+	logging.addLevelName(LOG_LEVEL, "LOG")
+	def logv(self, message, *args, **kws):
+		if self.isEnabledFor(LOG_LEVEL):
+			self._log(LOG_LEVEL, message, args, **kws)
+	logging.Logger.log = logv
+
 	if os.path.exists(os.path.join(bench_path, 'logs')):
 		logger = logging.getLogger(bench.PROJECT_NAME)
 		log_file = os.path.join(bench_path, 'logs', 'bench.log')
@@ -432,6 +443,8 @@ def setup_logging(bench_path='.'):
 		hdlr.setFormatter(formatter)
 		logger.addHandler(hdlr)
 		logger.setLevel(logging.DEBUG)
+
+		return logger
 
 
 def get_process_manager():
@@ -457,14 +470,6 @@ def start(no_dev=False, concurrency=None, procfile=None):
 		command.extend(['-f', procfile])
 
 	os.execv(program, command)
-
-
-def check_cmd(cmd, cwd='.'):
-	try:
-		subprocess.check_call(cmd, cwd=cwd, shell=True)
-		return True
-	except subprocess.CalledProcessError:
-		return False
 
 
 def get_git_version():
@@ -503,15 +508,6 @@ def get_cmd_output(cmd, cwd='.', _raise=True):
 		elif _raise:
 			raise
 	return safe_decode(output)
-
-
-def safe_encode(what, encoding = 'utf-8'):
-	try:
-		what = what.encode(encoding)
-	except Exception:
-		pass
-
-	return what
 
 
 def restart_supervisor_processes(bench_path='.', web_workers=False):
@@ -564,13 +560,24 @@ def update_env_pip(bench_path):
 
 def update_requirements(bench_path='.'):
 	from bench.app import get_apps, install_app
-	print('Updating Python libraries...')
+	print('Installing applications...')
 
-	# update env pip
 	update_env_pip(bench_path)
 
 	for app in get_apps():
-		install_app(app, bench_path=bench_path, skip_assets=True)
+		install_app(app, bench_path=bench_path, skip_assets=True, restart_bench=False)
+
+
+def update_python_packages(bench_path='.'):
+	from bench.app import get_apps
+	pip_path = os.path.join(bench_path, "env", "bin", "pip")
+	print('Updating Python libraries...')
+
+	update_env_pip(bench_path)
+	for app in get_apps():
+		print('\n{0}Installing python dependencies for {1}{2}'.format(color.yellow, app, color.nc))
+		app_path = os.path.join(bench_path, "apps", app)
+		exec_cmd("{0} install -q -U -e {1}".format(pip_path, app_path), cwd=bench_path)
 
 
 def update_node_packages(bench_path='.'):
@@ -632,21 +639,6 @@ def update_npm_packages(bench_path='.'):
 		f.write(json.dumps(package_json, indent=1, sort_keys=True))
 
 	exec_cmd('npm install', cwd=bench_path)
-
-
-def install_requirements(req_file, user=False):
-	if os.path.exists(req_file):
-		if user:
-			python = sys.executable
-		else:
-			python = os.path.join("env", "bin", "python")
-
-		if in_virtual_env():
-			user = False
-
-		user_flag = "--user" if user else ""
-
-		exec_cmd("{python} -m pip install {user_flag} -q -U -r {req_file}".format(python=python, user_flag=user_flag, req_file=req_file))
 
 
 def backup_site(site, bench_path='.'):
@@ -742,19 +734,6 @@ def fix_prod_setup_perms(bench_path='.', frappe_user=None):
 			os.chown(path, uid, gid)
 
 
-def fix_file_perms():
-	for dir_path, dirs, files in os.walk('.'):
-		for _dir in dirs:
-			os.chmod(os.path.join(dir_path, _dir), 0o755)
-		for _file in files:
-			os.chmod(os.path.join(dir_path, _file), 0o644)
-	bin_dir = './env/bin'
-	if os.path.exists(bin_dir):
-		for _file in os.listdir(bin_dir):
-			if not _file.startswith('activate'):
-				os.chmod(os.path.join(bin_dir, _file), 0o755)
-
-
 def get_current_frappe_version(bench_path='.'):
 	from .app import get_current_frappe_version as fv
 	return fv(bench_path=bench_path)
@@ -783,13 +762,6 @@ def run_frappe_cmd(*args, **kwargs):
 
 	if return_code > 0:
 		sys.exit(return_code)
-
-
-def get_frappe_cmd_output(*args, **kwargs):
-	bench_path = kwargs.get('bench_path', '.')
-	f = get_env_cmd('python', bench_path=bench_path)
-	sites_dir = os.path.join(bench_path, 'sites')
-	return subprocess.check_output((f, '-m', 'frappe.utils.bench_helper', 'frappe') + args, cwd=sites_dir)
 
 
 def validate_upgrade(from_ver, to_ver, bench_path='.'):
@@ -901,13 +873,6 @@ def log_line(data, stream):
 	return sys.stdout.write(data)
 
 
-def get_output(*cmd):
-	s = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-	out = s.stdout.read()
-	s.stdout.close()
-	return out
-
-
 def get_bench_name(bench_path):
 	return os.path.basename(os.path.abspath(bench_path))
 
@@ -984,77 +949,9 @@ def find_benches(directory=None):
 	return benches
 
 
-def in_virtual_env():
-	# type: () -> bool
-	"""Returns a boolean, whether running in venv with no system site-packages.
-	pip really does the best job at this: virtualenv_no_global at https://raw.githubusercontent.com/pypa/pip/master/src/pip/_internal/utils/virtualenv.py
-	"""
-
-	def running_under_venv():
-		# handles PEP 405 compliant virtual environments.
-		return sys.prefix != getattr(sys, "base_prefix", sys.prefix)
-
-	def running_under_regular_virtualenv():
-		# pypa/virtualenv case
-		return hasattr(sys, 'real_prefix')
-
-	def _no_global_under_venv():
-		# type: () -> bool
-		"""Check `{sys.prefix}/pyvenv.cfg` for system site-packages inclusion
-		PEP 405 specifies that when system site-packages are not supposed to be
-		visible from a virtual environment, `pyvenv.cfg` must contain the following
-		line:
-			include-system-site-packages = false
-		Additionally, log a warning if accessing the file fails.
-		"""
-		def _get_pyvenv_cfg_lines():
-			pyvenv_cfg_file = os.path.join(sys.prefix, 'pyvenv.cfg')
-			try:
-				with open(pyvenv_cfg_file) as f:
-					return f.read().splitlines()  # avoids trailing newlines
-			except IOError:
-				return None
-
-		_INCLUDE_SYSTEM_SITE_PACKAGES_REGEX = re.compile(
-			r"include-system-site-packages\s*=\s*(?P<value>true|false)"
-		)
-		cfg_lines = _get_pyvenv_cfg_lines()
-		if cfg_lines is None:
-			# We're not in a "sane" venv, so assume there is no system
-			# site-packages access (since that's PEP 405's default state).
-			return True
-
-		for line in cfg_lines:
-			match = _INCLUDE_SYSTEM_SITE_PACKAGES_REGEX.match(line)
-			if match is not None and match.group('value') == 'false':
-				return True
-		return False
-
-	def _no_global_under_regular_virtualenv():
-		# type: () -> bool
-		"""Check if "no-global-site-packages.txt" exists beside site.py
-		This mirrors logic in pypa/virtualenv for determining whether system
-		site-packages are visible in the virtual environment.
-		"""
-		site_mod_dir = os.path.dirname(os.path.abspath(site.__file__))
-		no_global_site_packages_file = os.path.join(site_mod_dir, 'no-global-site-packages.txt')
-		return os.path.exists(no_global_site_packages_file)
-
-	if running_under_regular_virtualenv():
-		return _no_global_under_regular_virtualenv()
-
-	if running_under_venv():
-		return _no_global_under_venv()
-
-	return False
-
-
 def migrate_env(python, backup=False):
 	from bench.config.common_site_config import get_config
 	from bench.app import get_apps
-
-	logger = logging.getLogger(__name__)
-	logger.setLevel(logging.DEBUG)
 
 	nvenv = 'env'
 	path = os.getcwd()
@@ -1070,12 +967,12 @@ def migrate_env(python, backup=False):
 
 		redis  = '{redis} -p {port}'.format(redis=which('redis-cli'), port=rredis.port)
 
-		logger.debug('Clearing Redis Cache...')
+		logger.log('Clearing Redis Cache...')
 		exec_cmd('{redis} FLUSHALL'.format(redis = redis))
-		logger.debug('Clearing Redis DataBase...')
+		logger.log('Clearing Redis DataBase...')
 		exec_cmd('{redis} FLUSHDB'.format(redis = redis))
 	except:
-		logger.warn('Please ensure Redis Connections are running or Daemonized.')
+		logger.warning('Please ensure Redis Connections are running or Daemonized.')
 
 	# Backup venv: restore using `virtualenv --relocatable` if needed
 	if backup:
@@ -1086,7 +983,7 @@ def migrate_env(python, backup=False):
 		source = os.path.join(path, 'env')
 		target = parch
 
-		logger.debug('Backing up Virtual Environment')
+		logger.log('Backing up Virtual Environment')
 		stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 		dest = os.path.join(path, str(stamp))
 
@@ -1094,17 +991,18 @@ def migrate_env(python, backup=False):
 		shutil.move(dest, target)
 
 	# Create virtualenv using specified python
+	venv_creation, packages_setup = 1, 1
 	try:
-		logger.debug('Setting up a New Virtual {} Environment'.format(python))
-		exec_cmd('{virtualenv} --python {python} {pvenv}'.format(virtualenv=virtualenv, python=python, pvenv=pvenv))
+		logger.log('Setting up a New Virtual {} Environment'.format(python))
+		venv_creation = exec_cmd('{virtualenv} --python {python} {pvenv}'.format(virtualenv=virtualenv, python=python, pvenv=pvenv))
 
 		apps = ' '.join(["-e {}".format(os.path.join("apps", app)) for app in get_apps()])
-		exec_cmd('{0} install -q -U {1}'.format(pip, apps))
+		packages_setup = exec_cmd('{0} install -q -U {1}'.format(pip, apps))
 
-		logger.debug('Migration Successful to {}'.format(python))
+		logger.log('Migration Successful to {}'.format(python))
 	except:
-		logger.debug('Migration Error')
-		raise
+		if venv_creation or packages_setup:
+			logger.warning('Migration Error')
 
 
 def is_dist_editable(dist):

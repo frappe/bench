@@ -20,11 +20,10 @@ from six.moves import reload_module
 # imports - module imports
 import bench
 from bench.config.common_site_config import get_config
-from bench.utils import CommandFailedError, build_assets, check_git_for_shallow_clone, exec_cmd, get_cmd_output, get_frappe, restart_supervisor_processes, restart_systemd_processes, run_frappe_cmd
+from bench.utils import color, CommandFailedError, build_assets, check_git_for_shallow_clone, exec_cmd, get_cmd_output, get_frappe, restart_supervisor_processes, restart_systemd_processes, run_frappe_cmd
 
 
-logging.basicConfig(level="INFO")
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(bench.PROJECT_NAME)
 
 
 class InvalidBranchException(Exception): pass
@@ -59,17 +58,10 @@ def write_appstxt(apps, bench_path='.'):
 	with open(os.path.join(bench_path, 'sites', 'apps.txt'), 'w') as f:
 		return f.write('\n'.join(apps))
 
-def check_url(url, raise_err=True):
-	from six.moves.urllib.parse import urlparse
-
-	parsed = urlparse(url)
-	if not parsed.scheme:
-		if raise_err:
-			raise TypeError('{url} Not a valid URL'.format(url=url))
-		else:
-			return False
-
-	return True
+def is_git_url(url):
+	# modified to allow without the tailing .git from https://github.com/jonschlinkert/is-git-url.git
+	pattern = r"(?:git|ssh|https?|git@[-\w.]+):(\/\/)?(.*?)(\.git)?(\/?|\#[-\d\w._]+?)$"
+	return bool(re.match(pattern, url))
 
 def get_excluded_apps(bench_path='.'):
 	try:
@@ -98,9 +90,9 @@ def remove_from_excluded_apps_txt(app, bench_path='.'):
 		apps.remove(app)
 		return write_excluded_apps_txt(apps, bench_path=bench_path)
 
-def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=False, postprocess=True, overwrite=False):
+def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=False, restart_bench=True, overwrite=False):
 	if not os.path.exists(git_url):
-		if not check_url(git_url, raise_err=False):
+		if not is_git_url(git_url):
 			orgs = ['frappe', 'erpnext']
 			for org in orgs:
 				url = 'https://api.github.com/repos/{org}/{app}'.format(org=org, app=git_url)
@@ -135,7 +127,8 @@ Do you want to continue and overwrite it?'''.format(repo_name)):
 			install_app(app=app_name, bench_path=bench_path, verbose=verbose, skip_assets=skip_assets)
 			sys.exit()
 
-	logger.info('Getting app {0}'.format(repo_name))
+	print('\n{0}Getting {1}{2}'.format(color.yellow, repo_name, color.nc))
+	logger.log('Getting app {0}'.format(repo_name))
 	exec_cmd("git clone {git_url} {branch} {shallow_clone} --origin upstream".format(
 		git_url=git_url,
 		shallow_clone=shallow_clone,
@@ -160,7 +153,7 @@ def get_app_name(bench_path, repo_name):
 def new_app(app, bench_path='.'):
 	# For backwards compatibility
 	app = app.lower().replace(" ", "_").replace("-", "_")
-	logger.info('creating new app {}'.format(app))
+	logger.log('creating new app {}'.format(app))
 	apps = os.path.abspath(os.path.join(bench_path, 'apps'))
 	bench.set_frappe_version(bench_path=bench_path)
 
@@ -172,8 +165,9 @@ def new_app(app, bench_path='.'):
 	install_app(app, bench_path=bench_path)
 
 
-def install_app(app, bench_path=".", verbose=False, no_cache=False, postprocess=True, skip_assets=False):
-	logger.info("installing {}".format(app))
+def install_app(app, bench_path=".", verbose=False, no_cache=False, restart_bench=True, skip_assets=False):
+	print('\n{0}Installing {1}{2}'.format(color.yellow, app, color.nc))
+	logger.log("installing {}".format(app))
 
 	pip_path = os.path.join(bench_path, "env", "bin", "pip")
 	quiet_flag = "-q" if not verbose else ""
@@ -187,9 +181,10 @@ def install_app(app, bench_path=".", verbose=False, no_cache=False, postprocess=
 
 	add_to_appstxt(app, bench_path=bench_path)
 
-	if postprocess:
-		if not skip_assets:
-			build_assets(bench_path=bench_path, app=app)
+	if not skip_assets:
+		build_assets(bench_path=bench_path, app=app)
+
+	if restart_bench:
 		conf = get_config(bench_path=bench_path)
 
 		if conf.get('restart_supervisor_on_update'):
@@ -267,7 +262,7 @@ Here are your choices:
 				add_to_excluded_apps_txt(app, bench_path=bench_path)
 				print("Skipping pull for app {}, since remote doesn't exist, and adding it to excluded apps".format(app))
 				continue
-			logger.info('pulling {0}'.format(app))
+			logger.log('pulling {0}'.format(app))
 			if reset:
 				exec_cmd("git fetch --all", cwd=app_dir)
 				exec_cmd("git reset --hard {remote}/{branch}".format(
@@ -359,10 +354,6 @@ def get_upstream_version(app, branch=None, bench_path='.'):
 			raise
 	return get_version_from_string(contents)
 
-def get_upstream_url(app, bench_path='.'):
-	repo_dir = get_repo_dir(app, bench_path=bench_path)
-	return subprocess.check_output(['git', 'config', '--get', 'remote.upstream.url'], cwd=repo_dir).strip()
-
 def get_repo_dir(app, bench_path='.'):
 	return os.path.join(bench_path, 'apps', app)
 
@@ -390,7 +381,7 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 		bench.utils.log("Fetching upstream {0}for {1}".format("unshallow " if unshallow_flag else "", app))
 
 		bench.utils.exec_cmd("git remote set-branches upstream  '*'", cwd=app_dir)
-		bench.utils.exec_cmd("git fetch --all{0}".format(" --unshallow" if unshallow_flag else ""), cwd=app_dir)
+		bench.utils.exec_cmd("git fetch --all{0} --quiet".format(" --unshallow" if unshallow_flag else ""), cwd=app_dir)
 
 		if check_upgrade:
 			version_upgrade = is_version_upgrade(app=app, bench_path=bench_path, branch=branch)
@@ -399,7 +390,7 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 				sys.exit(1)
 
 		print("Switching for "+app)
-		bench.utils.exec_cmd("git checkout {0}".format(branch), cwd=app_dir)
+		bench.utils.exec_cmd("git checkout -f {0}".format(branch), cwd=app_dir)
 
 		if str(repo.active_branch) == branch:
 			switched_apps.append(app)
