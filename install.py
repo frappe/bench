@@ -114,11 +114,7 @@ def get_distribution_info():
                + platform.python_version_tuple()[1]) <= 3.7:
             current_dist = platfor.dist()
         else:
-            current_dist = \
-                distro.linux_distribution(full_distribution_name=True)
-
-            return (current_dist[0].lower(), current_dist[1].rsplit('.'
-                    )[0])
+            return (distro.id(), distro.major_version())
     elif platform.system() == 'Darwin':
 
         current_dist = platform.mac_ver()
