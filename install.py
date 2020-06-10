@@ -111,7 +111,7 @@ def get_distribution_info():
 
     if platform.system() == 'Linux':
         if sys.version_info < (3, 7):
-            current_dist = platfor.dist()
+            current_dist = platform.dist()
         else:
             return (distro.id(), distro.major_version())
     elif platform.system() == 'Darwin':
