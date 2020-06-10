@@ -110,12 +110,12 @@ def get_distribution_info():
     # return distribution name and major version
 
 	if platform.system() == 'Linux':
-		return (distro.id(), distro.major_version())
+            return (distro.id(), distro.major_version())
 	
-    elif platform.system() == 'Darwin':
+        elif platform.system() == 'Darwin':
 
-        current_dist = platform.mac_ver()
-        return ('macos', current_dist[0].rsplit('.', 1)[0])
+            current_dist = platform.mac_ver()
+            return ('macos', current_dist[0].rsplit('.', 1)[0])
 
 
 def run_os_command(command_map):
