@@ -1,13 +1,18 @@
 # imports - standard imports
 import os
+import logging
 import sys
 
 # imports - module imports
+import bench
 from bench.config.common_site_config import get_config
 from bench.config.nginx import make_nginx_conf
 from bench.config.supervisor import generate_supervisor_config, update_supervisord_config
 from bench.config.systemd import generate_systemd_config
-from bench.utils import CommandFailedError, exec_cmd, find_executable, fix_prod_setup_perms, get_bench_name, get_cmd_output
+from bench.utils import CommandFailedError, exec_cmd, find_executable, fix_prod_setup_perms, get_bench_name, get_cmd_output, log
+
+
+logger = logging.getLogger(bench.PROJECT_NAME)
 
 
 def setup_production_prerequisites():
@@ -101,7 +106,7 @@ def service(service_name, service_option):
 			exec_cmd(service_manager_command)
 
 		else:
-			raise Exception('No service manager found')
+			log("No service manager found: '{0} {1}' failed to execute".format(service_name, service_option), level=2)
 
 
 def get_supervisor_confdir():
