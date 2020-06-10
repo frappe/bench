@@ -70,6 +70,9 @@ def update_supervisord_config(user=None, yes=False):
 	"""From bench v5.x, we're moving to supervisor running as user"""
 	from bench.config.production_setup import service
 
+	if not user:
+		user = getpass.getuser()
+
 	supervisord_conf = get_supervisord_conf()
 	section = "unix_http_server"
 	updated_values = {
@@ -79,6 +82,7 @@ def update_supervisord_config(user=None, yes=False):
 	supervisord_conf_changes = ""
 
 	if not supervisord_conf:
+		logger.log("supervisord.conf not found")
 		return
 
 	config = configparser.ConfigParser()
@@ -94,11 +98,12 @@ def update_supervisord_config(user=None, yes=False):
 		current_value = config[section].get(key, "")
 		if current_value.strip() != value:
 			config.set(section, key, value)
-			action = "Updated supervisord config: '{0}' changed from '{1}' to '{2}'".format(key, current_value, value)
+			action = "Updated supervisord.conf: '{0}' changed from '{1}' to '{2}'".format(key, current_value, value)
 			logger.log(action)
 			supervisord_conf_changes += '\n' + action
 
 	if not supervisord_conf_changes:
+		logger.log("supervisord.conf not updated")
 		return
 
 	if not yes:
@@ -107,9 +112,9 @@ def update_supervisord_config(user=None, yes=False):
 	try:
 		with open(supervisord_conf, "w") as f:
 			config.write(f)
-			logger.log("Updated supervisord config at '{0}'".format(supervisord_conf))
+			logger.log("Updated supervisord.conf at '{0}'".format(supervisord_conf))
 	except Exception as e:
-		logger.log("Updating supervisord config failed due to '{0}'".format(e))
+		logger.log("Updating supervisord.conf failed due to '{0}'".format(e))
 
 	# Reread supervisor configuration, reload supervisord and supervisorctl, restart services that were started
 	service('supervisor', 'reload')
