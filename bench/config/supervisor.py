@@ -1,5 +1,6 @@
 # imports - standard imports
 import getpass
+import logging
 import os
 
 # imports - module imports
@@ -13,12 +14,13 @@ import click
 from six.moves import configparser
 
 
+logger = logging.getLogger(bench.PROJECT_NAME)
+
+
 def generate_supervisor_config(bench_path, user=None, yes=False):
 	"""Generate supervisor config for respective bench path"""
 	if not user:
 		user = getpass.getuser()
-
-	update_supervisord_conf(user=user)
 
 	template = bench.config.env.get_template('supervisor.conf')
 	config = get_config(bench_path=bench_path)
@@ -64,12 +66,17 @@ def get_supervisord_conf():
 			return possibility
 
 
-def update_supervisord_conf(user):
-	"""From bench v5.0, we're moving to supervisor running as user"""
+def update_supervisord_config(user=None, yes=False):
+	"""From bench v5.x, we're moving to supervisor running as user"""
 	from bench.config.production_setup import service
 
 	supervisord_conf = get_supervisord_conf()
 	section = "unix_http_server"
+	updated_values = {
+		"chmod": "0760",
+		"chown": "{user}:{user}".format(user=user)
+	}
+	supervisord_conf_updated = False
 
 	if not supervisord_conf:
 		return
@@ -79,12 +86,24 @@ def update_supervisord_conf(user):
 
 	if section not in config.sections():
 		config.add_section(section)
+		supervisord_conf_updated = True
 
-	config.set(section, "chmod", "0760")
-	config.set(section, "chown", "{user}:{user}".format(user=user))
+	for key, value in updated_values.items():
+		current_value = config[section].get(key, "")
+		if current_value.strip() != value:
+			config.set(section, key, value)
+			supervisord_conf_updated = True
+			logger.log("Updated supervisord config: '{0}' changed from '{1}' to '{2}'".format(key, current_value, value))
 
-	with open(supervisord_conf, "w") as f:
-		config.write(f)
+	if not supervisord_conf_updated:
+		return
 
-	# restart supervisor to take new changes into effect
-	service('supervisor', 'restart')
+	try:
+		with open(supervisord_conf, "w") as f:
+			config.write(f)
+			logger.log("Updated supervisord config at '{0}'".format(supervisord_conf))
+	except Exception as e:
+		logger.log("Updating supervisord config failed due to '{0}'".format(e))
+
+	# Reread supervisor configuration, reload supervisord and supervisorctl, restart services that were started
+	service('supervisor', 'reload')

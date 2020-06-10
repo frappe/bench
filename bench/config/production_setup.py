@@ -5,7 +5,7 @@ import sys
 # imports - module imports
 from bench.config.common_site_config import get_config
 from bench.config.nginx import make_nginx_conf
-from bench.config.supervisor import generate_supervisor_config
+from bench.config.supervisor import generate_supervisor_config, update_supervisord_config
 from bench.config.systemd import generate_systemd_config
 from bench.utils import CommandFailedError, exec_cmd, find_executable, fix_prod_setup_perms, get_bench_name, get_cmd_output
 
@@ -30,6 +30,7 @@ def setup_production(user, bench_path='.', yes=False):
 	if get_config(bench_path).get('restart_systemd_on_update'):
 		generate_systemd_config(bench_path=bench_path, user=user, yes=yes)
 	else:
+		update_supervisord_config(user=user, yes=yes)
 		generate_supervisor_config(bench_path=bench_path, user=user, yes=yes)
 	make_nginx_conf(bench_path=bench_path, yes=yes)
 	fix_prod_setup_perms(bench_path, frappe_user=user)
