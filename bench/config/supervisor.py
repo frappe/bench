@@ -76,7 +76,7 @@ def update_supervisord_config(user=None, yes=False):
 		"chmod": "0760",
 		"chown": "{user}:{user}".format(user=user)
 	}
-	supervisord_conf_updated = False
+	supervisord_conf_changes = ""
 
 	if not supervisord_conf:
 		return
@@ -86,17 +86,23 @@ def update_supervisord_config(user=None, yes=False):
 
 	if section not in config.sections():
 		config.add_section(section)
-		supervisord_conf_updated = True
+		action = "Section {0} Added".format(section)
+		logger.log(action)
+		supervisord_conf_changes += '\n' + action
 
 	for key, value in updated_values.items():
 		current_value = config[section].get(key, "")
 		if current_value.strip() != value:
 			config.set(section, key, value)
-			supervisord_conf_updated = True
-			logger.log("Updated supervisord config: '{0}' changed from '{1}' to '{2}'".format(key, current_value, value))
+			action = "Updated supervisord config: '{0}' changed from '{1}' to '{2}'".format(key, current_value, value)
+			logger.log(action)
+			supervisord_conf_changes += '\n' + action
 
-	if not supervisord_conf_updated:
+	if not supervisord_conf_changes:
 		return
+
+	if not yes:
+		click.confirm("{0} will be updated with the following values:\n{1}\nDo you want to continue?".format(supervisord_conf, supervisord_conf_changes), abort=True)
 
 	try:
 		with open(supervisord_conf, "w") as f:
