@@ -55,7 +55,7 @@ def make_nginx_conf(bench_path, ignore_existing=False):
 	with open(conf_path, "w") as f:
 		f.write(nginx_conf)
 
-def make_bench_manager_nginx_conf(bench_path, yes=False, port=23624, domain=None):
+def make_bench_manager_nginx_conf(bench_path, ignore_existing=False, port=23624, domain=None):
 	from bench.config.site_config import get_site_config
 	from bench.config.common_site_config import get_config
 
@@ -85,7 +85,7 @@ def make_bench_manager_nginx_conf(bench_path, yes=False, port=23624, domain=None
 
 	conf_path = os.path.join(bench_path, "config", "nginx.conf")
 
-	if not yes and os.path.exists(conf_path):
+	if not ignore_existing and os.path.exists(conf_path):
 		click.confirm('nginx.conf already exists and bench-manager configuration will be appended to it. Do you want to continue?',
 			abort=True)
 
