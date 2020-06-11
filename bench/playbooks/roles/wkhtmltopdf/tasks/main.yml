@@ -19,7 +19,6 @@
     state: present
     force: yes
   when: ansible_os_family == 'Debian'
-  
 
 - name: download wkthmltox Ubuntu 20
   get_url:
