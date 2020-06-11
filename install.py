@@ -12,7 +12,7 @@ import warnings
 import datetime
 import importlib
 
-def install_and_import(package):
+def install_python_package(package):
     try:
         importlib.import_module(package)
     except ImportError:
@@ -445,7 +445,7 @@ if __name__ == '__main__':
 	with warnings.catch_warnings():
 		warnings.simplefilter("ignore")
 		setup_log_stream(args)
-		install_and_import('distro')
+		install_python_package('distro')
 		check_distribution_compatibility()
 		check_system_package_managers()
 		check_environment()
