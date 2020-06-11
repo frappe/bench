@@ -17,7 +17,7 @@ def install_and_import(package):
         importlib.import_module(package)
     except ImportError:
 	print("Trying to Install required module: " + package)
-	subprocess.check_call('{0} -m pip install {1}'.format(sys.executable, package))
+	subprocess.check_call([sys.executable, "-m", "pip", "install", package])
     finally:
         globals()[package] = importlib.import_module(package)
 
