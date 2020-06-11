@@ -16,7 +16,7 @@ def install_and_import(package):
     try:
         importlib.import_module(package)
     except ImportError:
-		subprocess.check_call('{0} -m pip install {1}'.format(sys.executable, package))
+	subprocess.check_call('{0} -m pip install {1}'.format(sys.executable, package))
     finally:
         globals()[package] = importlib.import_module(package)
 
