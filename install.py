@@ -13,7 +13,6 @@ import datetime
 import importlib
 
 def install_and_import(package):
-    import importlib
     try:
         importlib.import_module(package)
     except ImportError:
