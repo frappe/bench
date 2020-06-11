@@ -21,7 +21,7 @@ def install_and_import(package):
     finally:
         globals()[package] = importlib.import_module(package)
 
-install_and_import('distro')
+
 
 tmp_bench_repo = os.path.join('/', 'tmp', '.bench')
 tmp_log_folder = os.path.join('/', 'tmp', 'logs')
@@ -445,6 +445,7 @@ if __name__ == '__main__':
 	with warnings.catch_warnings():
 		warnings.simplefilter("ignore")
 		setup_log_stream(args)
+		install_and_import('distro')
 		check_distribution_compatibility()
 		check_system_package_managers()
 		check_environment()
