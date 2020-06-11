@@ -20,6 +20,7 @@ def install_and_import(package):
     finally:
         globals()[package] = importlib.import_module(package)
 
+print("Trying to Install required module: distro")
 install_and_import('distro')
 
 tmp_bench_repo = os.path.join('/', 'tmp', '.bench')
