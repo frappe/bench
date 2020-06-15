@@ -136,7 +136,6 @@ def install_prerequisites():
 	# pre-requisites for bench repo cloning
 	run_os_command({
 		'apt-get': [
-			'sudo apt-get update',
 			'sudo apt-get install -y git build-essential python3-setuptools python3-dev libffi-dev'
 		],
 		'yum': [
@@ -183,6 +182,10 @@ def install_package(package, package_name=None):
 
 
 def install_pip():
+	run_os_command({
+		'apt-get': 'sudo apt-get update',
+		'yum': 'sudo yum check-update'
+	})
 	if PY3:
 		install_package('pip3', 'python3-pip')
 	else:
