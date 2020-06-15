@@ -12,16 +12,6 @@ import warnings
 import datetime
 import importlib
 
-def install_python_package(package):
-    try:
-        importlib.import_module(package)
-    except ImportError:
-	print("Trying to Install required module: " + package)
-	subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-    finally:
-        globals()[package] = importlib.import_module(package)
-
-
 
 tmp_bench_repo = os.path.join('/', 'tmp', '.bench')
 tmp_log_folder = os.path.join('/', 'tmp', 'logs')
@@ -31,7 +21,8 @@ execution_time = "{:%H:%M}".format(execution_timestamp)
 log_file_name = "easy-install__{0}__{1}.log".format(execution_day, execution_time.replace(':', '-'))
 log_path = os.path.join(tmp_log_folder, log_file_name)
 log_stream = sys.stdout
-
+PY2 = sys.version[0] == '2'
+PY3 = not PY2
 
 def log(message, level=0):
 	levels = {
@@ -43,6 +34,16 @@ def log(message, level=0):
 	start = levels.get(level) or ''
 	end = '\033[0m'
 	print(start + message + end)
+
+
+def import_python_package(package):
+	try:
+		importlib.import_module(package)
+	except ImportError:
+		log("Installing {0}".format(package))
+		subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+	finally:
+		globals()[package] = importlib.import_module(package)
 
 
 def setup_log_stream(args):
@@ -77,6 +78,7 @@ def check_system_package_managers():
 			raise Exception('''
 			Please install brew package manager before proceeding with bench setup. Please run following
 			to install brew package manager on your machine,
+
 			/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 			''')
 	if 'Linux' in os.uname():
@@ -105,15 +107,13 @@ def check_distribution_compatibility():
 
 
 def get_distribution_info():
-
-    # return distribution name and major version
-
+	# return distribution name and major version
 	if platform.system() == 'Linux':
-            return (distro.id(), distro.major_version())
-	
-        elif platform.system() == 'Darwin':
-            current_dist = platform.mac_ver()
-            return ('macos', current_dist[0].rsplit('.', 1)[0])
+		return (distro.id(), distro.major_version())
+
+	elif platform.system() == 'Darwin':
+		current_dist = platform.mac_ver()
+		return ('macos', current_dist[0].rsplit('.', 1)[0])
 
 
 def run_os_command(command_map):
@@ -148,7 +148,6 @@ def install_prerequisites():
 	install_package('curl')
 	install_package('wget')
 	install_package('git')
-	install_package('pip3', 'python3-pip')
 
 	success = run_os_command({
 		'python3': "sudo -H python3 -m pip install --upgrade setuptools cryptography ansible==2.8.5 pip"
@@ -181,6 +180,13 @@ def install_package(package, package_name=None):
 			log("{0} installed!".format(package), level=1)
 			return success
 		could_not_install(package)
+
+
+def install_pip():
+	if PY3:
+		install_package('pip3', 'python3-pip')
+	else:
+		install_package('pip2', 'python-pip')
 
 
 def install_bench(args):
@@ -419,7 +425,7 @@ def parse_commandline_args():
 	return args
 
 if __name__ == '__main__':
-	if sys.version[0] == '2':
+	if PY2:
 		if not os.environ.get('CI'):
 			if not raw_input("It is recommended to run this script with Python 3\nDo you still wish to continue? [Y/n]: ").lower() == "y":
 				sys.exit()
@@ -444,7 +450,11 @@ if __name__ == '__main__':
 	with warnings.catch_warnings():
 		warnings.simplefilter("ignore")
 		setup_log_stream(args)
-		install_python_package('distro')
+		install_pip()
+		# this could break if pip isnt installed with python to begin with
+		# specifically on Python 2 <=2.7.9 or Python 3 <=3.4
+		# refs: https://pip.pypa.io/en/stable/installing/#do-i-need-to-install-pip
+		import_python_package('distro')
 		check_distribution_compatibility()
 		check_system_package_managers()
 		check_environment()
