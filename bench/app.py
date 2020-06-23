@@ -16,6 +16,7 @@ import git
 import requests
 import semantic_version
 from six.moves import reload_module
+from setuptools.config import read_configuration
 
 # imports - module imports
 import bench
@@ -140,14 +141,23 @@ Do you want to continue and overwrite it?'''.format(repo_name)):
 
 
 def get_app_name(bench_path, repo_name):
-	# retrieves app name from setup.py
-	app_path = os.path.join(bench_path, 'apps', repo_name, 'setup.py')
-	with open(app_path, 'rb') as f:
-		app_name = re.search(r'name\s*=\s*[\'"](.*)[\'"]', f.read().decode('utf-8')).group(1)
-		if repo_name != app_name:
-			apps_path = os.path.join(os.path.abspath(bench_path), 'apps')
-			os.rename(os.path.join(apps_path, repo_name), os.path.join(apps_path, app_name))
-		return app_name
+	app_name = None
+	apps_path = os.path.join(os.path.abspath(bench_path), 'apps')
+	config_path = os.path.join(apps_path, repo_name, 'setup.cfg')
+	if os.path.exists(config_path):
+		config = read_configuration(config_path)
+		app_name = config.get('metadata', {}).get('name')
+
+	if not app_name:
+		# retrieve app name from setup.py as fallback
+		app_path = os.path.join(apps_path, repo_name, 'setup.py')
+		with open(app_path, 'rb') as f:
+			app_name = re.search(r'name\s*=\s*[\'"](.*)[\'"]', f.read().decode('utf-8')).group(1)
+
+	if app_name and repo_name != app_name:
+		os.rename(os.path.join(apps_path, repo_name), os.path.join(apps_path, app_name))
+
+	return app_name
 
 
 def new_app(app, bench_path='.'):
@@ -325,15 +335,23 @@ def fetch_upstream(app, bench_path='.'):
 	return subprocess.call(["git", "fetch", "upstream"], cwd=repo_dir)
 
 def get_current_version(app, bench_path='.'):
+	current_version = None
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	try:
-		with open(os.path.join(repo_dir, os.path.basename(repo_dir), '__init__.py')) as f:
-			return get_version_from_string(f.read())
+		config_path = os.path.join(repo_dir, "setup.cfg")
+		if os.path.exists(config_path):
+			config = read_configuration(config_path)
+			current_version = config.get("metadata", {}).get("version")
+		if not current_version:
+			with open(os.path.join(repo_dir, os.path.basename(repo_dir), '__init__.py')) as f:
+				current_version = get_version_from_string(f.read())
 
 	except AttributeError:
 		# backward compatibility
 		with open(os.path.join(repo_dir, 'setup.py')) as f:
-			return get_version_from_string(f.read(), field='version')
+			current_version = get_version_from_string(f.read(), field='version')
+
+	return current_version
 
 def get_develop_version(app, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
