@@ -58,17 +58,17 @@ matrix:
   - name: "Python 3.6 Easy Install"
     python: 3.6
     env: TEST=easy_install
-    script: sudo python3 $TRAVIS_BUILD_DIR/install.py --user travis --run-travis --production --verbose
+    script: sudo -H python3 $TRAVIS_BUILD_DIR/install.py --user travis --run-travis --production --verbose
 
   - name: "Python 3.7 Easy Install"
     python: 3.7
     env: TEST=easy_install
-    script: sudo python3 $TRAVIS_BUILD_DIR/install.py --user travis --run-travis --production --verbose
+    script: sudo -H python3 $TRAVIS_BUILD_DIR/install.py --user travis --run-travis --production --verbose
 
   - name: "Python 3.8 Easy Install"
     python: 3.8
     env: TEST=easy_install
-    script: sudo python3 $TRAVIS_BUILD_DIR/install.py --user travis --run-travis --production --verbose
+    script: sudo -H python3 $TRAVIS_BUILD_DIR/install.py --user travis --run-travis --production --verbose
 
 install:
   - pip install urllib3 pyOpenSSL ndg-httpsclient pyasn1
