@@ -70,9 +70,16 @@ def log(message, level=0):
 		2: color.red + 'ERROR',			# fail
 		3: color.yellow + 'WARN'		# warn/suggest
 	}
+	loggers = {
+		2: logger.error,
+		3: logger.warning
+	}
+
 	start_line = (levels.get(level) + ': ') if level in levels else ''
+	level_logger = loggers.get(level, logger.info)
 	end_line = '\033[0m'
 
+	level_logger(message)
 	print(start_line + message + end_line)
 
 
