@@ -400,7 +400,7 @@ def setup_backups(bench_path='.'):
 
 	if job_command not in str(system_crontab):
 		job = system_crontab.new(command=job_command, comment="bench auto backups set for every 6 hours")
-		job.hour.every(6)
+		job.every(6).hours()
 		system_crontab.write()
 
 
