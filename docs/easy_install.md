@@ -88,4 +88,4 @@ TLDR; Save the logs!
 
 3. A lot of things can go wrong in setting up the environment due to prior settings, company protocols or even breaking changes in system packages and their dependencies.
 
-4. Sharing your logfile in any issues opened related to this can help us find solutions to it faster and make the sript better!
+4. Sharing your logfile in any issues opened related to this can help us find solutions to it faster and make the script better!
