@@ -32,7 +32,7 @@ def cli():
 	change_dir()
 	change_uid()
 
-	if is_dist_editable(bench.PROJECT_NAME) and len(sys.argv) > 1 and sys.argv[1] != "src":
+	if is_dist_editable(bench.PROJECT_NAME) and len(sys.argv) > 1 and sys.argv[1] != "src" and not get_config(".").get("developer_mode"):
 		log("bench is installed in editable mode!\n\nThis is not the recommended mode of installation for production. Instead, install the package from PyPI with: `pip install frappe-bench`\n", level=3)
 
 	if not is_bench_directory() and not cmd_requires_root() and len(sys.argv) > 1 and sys.argv[1] not in ("init", "find", "src"):
