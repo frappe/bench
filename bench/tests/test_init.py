@@ -34,6 +34,13 @@ class TestBenchInit(TestBenchBase):
 		self.assert_config(bench_name)
 
 
+	def basic(self):
+		try:
+			self.test_init()
+		except Exception:
+			print(self.get_traceback())
+
+
 	def test_multiple_benches(self):
 		for bench_name in ("test-bench-1", "test-bench-2"):
 			self.init_bench(bench_name)

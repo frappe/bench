@@ -33,6 +33,13 @@ class TestSetupProduction(TestBenchBase):
 			bench.utils.exec_cmd("sudo bench disable-production", cwd=bench_path)
 
 
+	def production_setup(self):
+		try:
+			self.test_setup_production()
+		except Exception:
+			print(self.get_traceback())
+
+
 	def assert_nginx_config(self, bench_name):
 		conf_src = os.path.join(os.path.abspath(self.benches_path), bench_name, 'config', 'nginx.conf')
 		conf_dest = "/etc/nginx/conf.d/{bench_name}.conf".format(bench_name=bench_name)

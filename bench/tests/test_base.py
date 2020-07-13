@@ -102,3 +102,9 @@ class TestBenchBase(unittest.TestCase):
 		if os.environ.get("CI"):
 			return not subprocess.call(["sudo", "test", "-f", path])
 		return os.path.isfile(path)
+
+	def get_traceback(self):
+		exc_type, exc_value, exc_tb = sys.exc_info()
+		trace_list = traceback.format_exception(exc_type, exc_value, exc_tb)
+		body = "".join(str(t) for t in trace_list)
+		return body
