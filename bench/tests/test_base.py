@@ -1,19 +1,19 @@
 # imports - standard imports
+import getpass
 import json
 import os
 import shutil
 import subprocess
 import sys
+import traceback
 import unittest
-import getpass
-
-# imports - module imports
-import bench
-import bench.utils
 
 # imports - third party imports
 from six import PY2
 
+# imports - module imports
+import bench
+import bench.utils
 
 if PY2:
 	FRAPPE_BRANCH = "version-12"

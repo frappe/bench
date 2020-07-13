@@ -11,7 +11,7 @@ import git
 import bench
 import bench.utils
 from bench.release import get_bumped_version
-from bench.tests.test_base import TestBenchBase, FRAPPE_BRANCH
+from bench.tests.test_base import FRAPPE_BRANCH, TestBenchBase
 
 
 class TestBenchInit(TestBenchBase):
