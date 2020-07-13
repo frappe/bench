@@ -28,15 +28,20 @@ def setup_production_prerequisites():
 
 
 def setup_production(user, bench_path='.', yes=False):
+	print("Setting Up prerequisites...")
 	setup_production_prerequisites()
 	if get_config(bench_path).get('restart_supervisor_on_update') and get_config(bench_path).get('restart_systemd_on_update'):
 		raise Exception("You cannot use supervisor and systemd at the same time. Modify your common_site_config accordingly." )
 
 	if get_config(bench_path).get('restart_systemd_on_update'):
+		print("Setting Up systemd...")
 		generate_systemd_config(bench_path=bench_path, user=user, yes=yes)
 	else:
+		print("Setting Up supervisor...")
 		update_supervisord_config(user=user, yes=yes)
 		generate_supervisor_config(bench_path=bench_path, user=user, yes=yes)
+
+	print("Setting Up NGINX...")
 	make_nginx_conf(bench_path=bench_path, yes=yes)
 	fix_prod_setup_perms(bench_path, frappe_user=user)
 	remove_default_nginx_configs()
@@ -44,6 +49,7 @@ def setup_production(user, bench_path='.', yes=False):
 	bench_name = get_bench_name(bench_path)
 	nginx_conf = '/etc/nginx/conf.d/{bench_name}.conf'.format(bench_name=bench_name)
 
+	print("Setting Up symlinks and reloading services...")
 	if get_config(bench_path).get('restart_supervisor_on_update'):
 		supervisor_conf_extn = "ini" if is_centos7() else "conf"
 		supervisor_conf = os.path.join(get_supervisor_confdir(), '{bench_name}.{extn}'.format(
