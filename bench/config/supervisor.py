@@ -95,7 +95,11 @@ def update_supervisord_config(user=None, yes=False):
 		supervisord_conf_changes += '\n' + action
 
 	for key, value in updated_values.items():
-		current_value = config[section].get(key, "")
+		try:
+			current_value = config.get(section, key)
+		except configparser.NoOptionError:
+			current_value = ""
+
 		if current_value.strip() != value:
 			config.set(section, key, value)
 			action = "Updated supervisord.conf: '{0}' changed from '{1}' to '{2}'".format(key, current_value, value)
