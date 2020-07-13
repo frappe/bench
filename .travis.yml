@@ -18,42 +18,42 @@ matrix:
   - name: "Python 2.7 Basic Setup"
     python: 2.7
     env: TEST=bench
-    script: python -m unittest -v bench.tests.basic
+    script: python bench/tests/test_init.py TestBenchInit.basic
 
   - name: "Python 3.6 Basic Setup"
     python: 3.6
     env: TEST=bench
-    script: python -m unittest -v bench.tests.basic
+    script: python bench/tests/test_init.py TestBenchInit.basic
 
   - name: "Python 3.7 Basic Setup"
     python: 3.7
     env: TEST=bench
-    script: python -m unittest -v bench.tests.basic
+    script: python bench/tests/test_init.py TestBenchInit.basic
 
   - name: "Python 3.8 Production Setup"
     python: 3.8
     env: TEST=bench
-    script: python -m unittest -v bench.tests.production_setup
+    script: python bench/tests/test_setup_production.py TestSetupProduction.production
 
   - name: "Python 2.7 Production Setup"
     python: 2.7
     env: TEST=bench
-    script: python -m unittest -v bench.tests.production_setup
+    script: python bench/tests/test_setup_production.py TestSetupProduction.production
 
   - name: "Python 3.6 Production Setup"
     python: 3.6
     env: TEST=bench
-    script: python -m unittest -v bench.tests.production_setup
+    script: python bench/tests/test_setup_production.py TestSetupProduction.production
 
   - name: "Python 3.7 Production Setup"
     python: 3.7
     env: TEST=bench
-    script: python -m unittest -v bench.tests.production_setup
+    script: python bench/tests/test_setup_production.py TestSetupProduction.production
 
   - name: "Python 3.8 Production Setup"
     python: 3.8
     env: TEST=bench
-    script: python -m unittest -v bench.tests.production_setup
+    script: python bench/tests/test_setup_production.py TestSetupProduction.production
 
   - name: "Python 3.6 Easy Install"
     python: 3.6

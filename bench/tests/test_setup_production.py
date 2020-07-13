@@ -33,7 +33,7 @@ class TestSetupProduction(TestBenchBase):
 			bench.utils.exec_cmd("sudo bench disable-production", cwd=bench_path)
 
 
-	def production_setup(self):
+	def production(self):
 		try:
 			self.test_setup_production()
 		except Exception:
