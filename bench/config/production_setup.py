@@ -38,15 +38,7 @@ def setup_production(user, bench_path='.', yes=False):
 		generate_systemd_config(bench_path=bench_path, user=user, yes=yes)
 	else:
 		print("Setting Up supervisor...")
-		try:
-			update_supervisord_config(user=user, yes=yes)
-		except Exception:
-			import sys, traceback
-			exc_type, exc_value, exc_tb = sys.exc_info()
-			trace_list = traceback.format_exception(exc_type, exc_value, exc_tb)
-			body = "".join(str(t) for t in trace_list)
-			print(body)
-
+		update_supervisord_config(user=user, yes=yes)
 		generate_supervisor_config(bench_path=bench_path, user=user, yes=yes)
 
 	print("Setting Up NGINX...")
