@@ -461,7 +461,7 @@ def get_process_manager():
 			return proc_man_path
 
 
-def start(no_dev=False, concurrency=None, procfile=None):
+def start(no_dev=False, concurrency=None, procfile=None, no_prefix=False):
 	program = get_process_manager()
 	if not program:
 		raise Exception("No process manager found")
@@ -476,6 +476,9 @@ def start(no_dev=False, concurrency=None, procfile=None):
 	if procfile:
 		command.extend(['-f', procfile])
 
+	if no_prefix:
+		command.extend(['--no-prefix'])
+		
 	os.execv(program, command)
 
 
