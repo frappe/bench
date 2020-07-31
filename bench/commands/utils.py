@@ -8,11 +8,12 @@ import click
 
 @click.command('start', help="Start Frappe development processes")
 @click.option('--no-dev', is_flag=True, default=False)
+@click.option('--no-prefix', is_flag=True, default=False)
 @click.option('--concurrency', '-c', type=str)
 @click.option('--procfile', '-p', type=str)
-def start(no_dev, concurrency, procfile):
+def start(no_dev, concurrency, procfile, no_prefix):
 	from bench.utils import start
-	start(no_dev=no_dev, concurrency=concurrency, procfile=procfile)
+	start(no_dev=no_dev, concurrency=concurrency, procfile=procfile, no_prefix=no_prefix)
 
 
 @click.command('restart', help="Restart supervisor processes or systemd units")
