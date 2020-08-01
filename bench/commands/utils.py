@@ -8,7 +8,7 @@ import click
 
 @click.command('start', help="Start Frappe development processes")
 @click.option('--no-dev', is_flag=True, default=False)
-@click.option('--no-prefix', is_flag=True, default=False)
+@click.option('--no-prefix', is_flag=True, default=False, help="Hide process name from bench start log")
 @click.option('--concurrency', '-c', type=str)
 @click.option('--procfile', '-p', type=str)
 def start(no_dev, concurrency, procfile, no_prefix):
