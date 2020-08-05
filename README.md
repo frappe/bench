@@ -158,7 +158,7 @@ $ pip install frappe-bench
 For more extensive distribution-dependent documentation, check out the following guides:
 
  - [Hitchhiker's Guide to Installing Frappe on Linux](https://github.com/frappe/frappe/wiki/The-Hitchhiker%27s-Guide-to-Installing-Frappe-on-Linux)
- - [Hitchhiker's Guide to Installing Frappe on MacOS](https://github.com/frappe/frappe/wiki/The-Hitchhiker%27s-Guide-to-Installing-Frappe-on-Mac-OS-X)
+ - [Hitchhiker's Guide to Installing Frappe on MacOS](https://github.com/frappe/bench/wiki/Setting-up-a-Mac-for-Frappe-ERPNext-Development)
 
 
 ## Basic Usage
