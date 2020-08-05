@@ -55,6 +55,16 @@ matrix:
     env: TEST=bench
     script: python bench/tests/test_setup_production.py TestSetupProduction.production
 
+  - name: "Python 2.7 Tests"
+    python: 2.7
+    env: TEST=bench
+    script: python -m unittest -v bench.tests.test_init
+
+  - name: "Python 3.7 Tests"
+    python: 3.7
+    env: TEST=bench
+    script: python -m unittest -v bench.tests.test_init
+
   - name: "Python 3.6 Easy Install"
     python: 3.6
     env: TEST=easy_install
