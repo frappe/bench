@@ -74,11 +74,11 @@ def check_system_package_managers():
 			raise Exception('Cannot find any compatible package manager!')
 
 
-def check_distribution_compatibility():
-	dist_name, dist_version = get_distribution_info()
+def check_distribution_compatibility(args):
+	dist_name, dist_version = get_distribution_info(args)
 	supported_dists = {
 		'macos': [10.9, 10.10, 10.11, 10.12],
-		'ubuntu': [14, 15, 16, 18, 19],
+		'ubuntu': [14, 15, 16, 18, 19, 20],
 		'debian': [8, 9],
 		'centos': [7]
 	}
@@ -94,10 +94,26 @@ def check_distribution_compatibility():
 		log("Sorry, the installer doesn't support {0}. Aborting installation!".format(dist_name), level=2)
 
 
-def get_distribution_info():
+def get_distribution_info(args):
 	# return distribution name and major version
 	if platform.system() == "Linux":
-		current_dist = platform.dist()
+		if args.python_version == "3":
+			install_package('pip3', 'python3-pip')
+
+			success = run_os_command({
+				'pip3': "pip3 install distro"
+			})
+
+			if not (success or shutil.which('distro')):
+				could_not_install('Distro')
+			else:
+				log("Distro installed!", level=1)
+
+			import distro
+
+			current_dist = distro.linux_distribution(full_distribution_name=True)
+		else:
+			current_dist = platform.dist()
 		return current_dist[0].lower(), current_dist[1].rsplit('.')[0]
 
 	elif platform.system() == "Darwin":
@@ -403,6 +419,16 @@ def parse_commandline_args():
 	parser.add_argument('--python', dest='python', default='python3', help=argparse.SUPPRESS)
 	# LXC Support
 	parser.add_argument('--container', dest='container', default=False, action='store_true', help='Use if you\'re creating inside LXC')
+
+	# for detecting dist; backward compatible if specify 2
+
+	parser.add_argument(
+		'--python-version',
+		dest='python_version',
+		default='3',
+		help='For detecting dist. Backward compatible if specify 2. Default is 3.'
+	)
+
 	args = parser.parse_args()
 
 	return args
@@ -433,7 +459,7 @@ if __name__ == '__main__':
 	with warnings.catch_warnings():
 		warnings.simplefilter("ignore")
 		setup_log_stream(args)
-		check_distribution_compatibility()
+		check_distribution_compatibility(args)
 		check_system_package_managers()
 		check_environment()
 		install_prerequisites()
