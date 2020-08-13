@@ -207,7 +207,7 @@ def install_bench(args):
 		raise Exception('Please run this script as a non-root user with sudo privileges, but without using sudo or pass --user=USER')
 
 	# Python executable
-	dist_name, dist_version = get_distribution_info()
+	dist_name, dist_version = get_distribution_info(args)
 	if dist_name=='centos':
 		args.python = 'python3.6'
 	else:
