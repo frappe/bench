@@ -429,6 +429,15 @@ def parse_commandline_args():
 		help='For detecting dist. Backward compatible if specify 2. Default is 3.'
 	)
 
+	# node js version; default is 10
+
+	parser.add_argument(
+		'--nodejs-version',
+		dest='nodejs_version',
+		default='10',
+		help='Node js version. Default is 10.'
+	)
+
 	args = parser.parse_args()
 
 	return args
