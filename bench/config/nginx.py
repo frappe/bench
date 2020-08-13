@@ -96,10 +96,8 @@ def prepare_sites(config, bench_path):
 	sites = {
 		"that_use_port": [],
 		"that_use_dns": [],
-		"that_use_dns_with_cors": [],
 		"that_use_ssl": [],
-		"that_use_wildcard_ssl": [],
-		"that_use_wildcard_ssl_with_cors": []
+		"that_use_wildcard_ssl": []
 	}
 
 	domain_map = {}
@@ -110,11 +108,12 @@ def prepare_sites(config, bench_path):
 	shared_port_exception_found = False
 	sites_configs = get_sites_with_config(bench_path=bench_path)
 
-	if config.get("allow_cors"):
-		# copy allow_cors from common_site_config
+	if config.get("cors_config"):
+		# copy cors_config from common_site_config
+		config["cors_config"] = parse_cors_config(config.get("cors_config"))
 		for site in sites_configs:
-			if not site.get("allow_cors"):
-				site["allow_cors"] = config.get("allow_cors")
+			if not site.get("cors_config"):
+				site["cors_config"] = config.get("cors_config")
 
 	# preload all preset site ports to avoid conflicts
 
@@ -133,13 +132,10 @@ def prepare_sites(config, bench_path):
 				# when site's folder name is different than domain name
 				domain_map[domain] = site['name']
 
-			site_name = domain or site['name']
+			site['site_name'] = domain or site['name']
 
 			if site.get('wildcard'):
-				if site.get("allow_cors"):
-					sites["that_use_wildcard_ssl_with_cors"].append(site_name)
-				else:
-					sites["that_use_wildcard_ssl"].append(site_name)
+				sites["that_use_wildcard_ssl"].append(site)
 
 				if not sites.get('wildcard_ssl_certificate'):
 					sites["wildcard_ssl_certificate"] = site['ssl_certificate']
@@ -149,10 +145,7 @@ def prepare_sites(config, bench_path):
 				sites["that_use_ssl"].append(site)
 
 			else:
-				if site.get("allow_cors"):
-					sites["that_use_dns_with_cors"].append(site_name)
-				else:
-					sites["that_use_dns"].append(site_name)
+				sites["that_use_dns"].append(site)
 
 		else:
 			if not site.get("port"):
@@ -190,6 +183,10 @@ def prepare_sites(config, bench_path):
 
 		print(message)
 
+	# Consolidate CORS configs
+	if dns_multitenant:
+		sites["that_use_wildcard_ssl"] = merge_cors_configs(sites["that_use_wildcard_ssl"])
+		sites["that_use_dns"] = merge_cors_configs(sites["that_use_dns"])
 
 	sites['domain_map'] = domain_map
 
@@ -226,7 +223,7 @@ def get_sites_with_config(bench_path):
 			"port": site_config.get('nginx_port'),
 			"ssl_certificate": site_config.get('ssl_certificate'),
 			"ssl_certificate_key": site_config.get('ssl_certificate_key'),
-			"allow_cors": site_config.get("allow_cors", 0)
+			"cors_config": parse_cors_config(site_config.get("cors_config", None))
 		})
 
 		if dns_multitenant and site_config.get('domains'):
@@ -292,3 +289,80 @@ def get_limit_conn_shared_memory():
 	total_vm = (os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')) / (1024 * 1024) # in MB
 
 	return int(0.02 * total_vm)
+
+def parse_cors_config(cors_config):
+	if not cors_config:
+		return cors_config
+
+	parsed_config = {
+		"random_string": "".join(random.choice(string.ascii_lowercase) for i in range(7)),
+		"allow_credentials": {},
+		"headers": {},
+		"methods": {},
+		"max_age": {},
+		"expose_headers": {},
+		"origins": {}
+	}
+
+	for origin, config in cors_config.items():
+		if not config.get("enabled"):
+			continue
+		
+		parsed_config["origins"][origin] = origin
+		for prop in ("allow_credentials", "headers", "methods", "max_age", "expose_headers"):
+			if not config.get(prop):
+				continue
+			v = config.get(prop)
+			if isinstance(v, list):
+				v = ", ".join(v)
+			elif prop == "allow_credentials":
+				v = "true" if v else "false"
+			parsed_config[prop][origin] = v
+
+	return parsed_config
+
+def merge_cors_configs(sites):
+	merged_sites = []
+
+	def _compare(obj1, obj2):
+		"""Custom object deep-value comparison"""
+		if not obj1 and not obj2:
+			return True
+		elif not obj1 or not obj2:
+			return False
+		elif type(obj1) != type(obj2):
+			return False
+		
+		if isinstance(obj1, dict):
+			k1 = obj1.keys()
+			k2 = obj2.keys()
+			if len(k1) != len(k2) or set(k1) != set(k2):
+				return False
+			for k, v in obj1.items():
+				if k == "random_string":
+					continue
+				if not _compare(v, obj2[k]):
+					return False
+			return True
+		elif isinstance(obj1, (list, tuple)):
+			return set(obj1) == set(obj2)
+		else:
+			return obj1 == obj2
+
+	for s in sites:
+		merged = False
+		for _site in merged_sites:
+			if not _compare(s.get("cors_config", None), _site.get("cors_config", None)):
+				continue
+			
+			_site["server_names"].append(s["site_name"])
+			merged = True
+			break
+
+		if not merged:
+			merged_sites.append({
+				"server_names": [s["site_name"]],
+				"cors_config": s.get("cors_config", None)
+			})
+	
+	return merged_sites
