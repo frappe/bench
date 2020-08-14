@@ -101,7 +101,7 @@ def get_distribution_info(args):
 			install_package('pip3', 'python3-pip')
 
 			success = run_os_command({
-				'pip3': "pip3 install distro"
+				'pip3': "sudo pip3 install distro"
 			})
 
 			if not (success or shutil.which('distro')):
