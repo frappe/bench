@@ -74,8 +74,8 @@ def check_system_package_managers():
 			raise Exception('Cannot find any compatible package manager!')
 
 
-def check_distribution_compatibility(args):
-	dist_name, dist_version = get_distribution_info(args)
+def check_distribution_compatibility():
+	dist_name, dist_version = get_distribution_info()
 	supported_dists = {
 		'macos': [10.9, 10.10, 10.11, 10.12],
 		'ubuntu': [14, 15, 16, 18, 19, 20],
@@ -112,10 +112,10 @@ def import_with_install(package):
 		globals()[package] = importlib.import_module(package)
 
 
-def get_distribution_info(args):
+def get_distribution_info():
 	# return distribution name and major version
 	if platform.system() == "Linux":
-		if args.python_version == "3":
+		if sys.version_info.major == 3 and sys.version_info.minor > 7:
 			install_package('pip3', 'python3-pip')
 
 			import_with_install('distro')
@@ -216,7 +216,7 @@ def install_bench(args):
 		raise Exception('Please run this script as a non-root user with sudo privileges, but without using sudo or pass --user=USER')
 
 	# Python executable
-	dist_name, dist_version = get_distribution_info(args)
+	dist_name, dist_version = get_distribution_info()
 	if dist_name=='centos':
 		args.python = 'python3.6'
 	else:
@@ -429,15 +429,6 @@ def parse_commandline_args():
 	# LXC Support
 	parser.add_argument('--container', dest='container', default=False, action='store_true', help='Use if you\'re creating inside LXC')
 
-	# for detecting dist; backward compatible if specify 2
-
-	parser.add_argument(
-		'--python-version',
-		dest='python_version',
-		default='3',
-		help='For detecting dist. Backward compatible if specify 2. Default is 3.'
-	)
-
 	args = parser.parse_args()
 
 	return args
@@ -468,7 +459,7 @@ if __name__ == '__main__':
 	with warnings.catch_warnings():
 		warnings.simplefilter("ignore")
 		setup_log_stream(args)
-		check_distribution_compatibility(args)
+		check_distribution_compatibility()
 		check_system_package_managers()
 		check_environment()
 		install_prerequisites()
