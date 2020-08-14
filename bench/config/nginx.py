@@ -51,7 +51,6 @@ def make_nginx_conf(bench_path, yes=False):
 		})
 
 	nginx_conf = template.render(**template_vars)
-	print("All Good!")
 
 	with open(conf_path, "w") as f:
 		f.write(nginx_conf)
@@ -304,6 +303,7 @@ def parse_cors_config(cors_config):
 		"max_age": {},
 		"expose_headers": {},
 		"origins": {},
+		"wildcard_origin": False
 	}
 
 	for origin, config in cors_config.items():
@@ -311,9 +311,10 @@ def parse_cors_config(cors_config):
 			continue
 
 		if origin == "*":
-			origin = "_wildcard_origin"
-
-		parsed_config["origins"][origin] = origin
+			origin = "default"
+			parsed_config["wildcard_origin"] = True
+		else:
+			parsed_config["origins"][origin] = origin
 		for prop in ("allow_credentials", "headers", "methods", "max_age", "expose_headers"):
 			if not config.get(prop):
 				continue
