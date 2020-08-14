@@ -11,6 +11,15 @@ import platform
 import warnings
 import datetime
 
+def install_and_import(package):
+	import importlib
+	try:
+		importlib.import_module(package)
+	except ImportError:
+		import pip
+		pip.main(['install', package])
+	finally:
+		globals()[package] = importlib.import_module(package)
 
 tmp_bench_repo = os.path.join('/', 'tmp', '.bench')
 tmp_log_folder = os.path.join('/', 'tmp', 'logs')
@@ -99,17 +108,19 @@ def get_distribution_info(args):
 	if platform.system() == "Linux":
 		if args.python_version == "3":
 			install_package('pip3', 'python3-pip')
+			
+			install_and_import('distro')
 
-			success = run_os_command({
-				'pip3': "sudo pip3 install distro"
-			})
+			# success = run_os_command({
+				# 'pip3': "sudo pip3 install distro"
+			# })
 
-			if not (success or shutil.which('distro')):
-				could_not_install('Distro')
-			else:
-				log("Distro installed!", level=1)
+			# if not (success or shutil.which('distro')):
+				# could_not_install('Distro')
+			# else:
+				# log("Distro installed!", level=1)
 
-			import distro
+			# import distro
 
 			current_dist = distro.linux_distribution(full_distribution_name=True)
 		else:
