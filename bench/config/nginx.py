@@ -319,6 +319,9 @@ def parse_cors_config(cors_config):
 				v = "true" if v else "false"
 			parsed_config[prop][origin] = v
 
+		if not parsed_config["max_age"].get(origin):
+			parsed_config["max_age"][origin] = 864000
+
 	return parsed_config
 
 def merge_cors_configs(sites):
