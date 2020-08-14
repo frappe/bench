@@ -50,7 +50,7 @@ def make_nginx_conf(bench_path, yes=False):
 		})
 
 	nginx_conf = template.render(**template_vars)
-
+	print("All Good!")
 
 	with open(conf_path, "w") as f:
 		f.write(nginx_conf)
@@ -314,7 +314,7 @@ def parse_cors_config(cors_config):
 				continue
 			v = config.get(prop)
 			if isinstance(v, list):
-				v = ", ".join(v)
+				v = "\"{}\"".format(", ".join(v))
 			elif prop == "allow_credentials":
 				v = "true" if v else "false"
 			parsed_config[prop][origin] = v
