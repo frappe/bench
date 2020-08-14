@@ -65,13 +65,13 @@ matrix:
     env: TEST=bench
     script: python -m unittest -v bench.tests.test_init
 
-  - name: "Python 3.6 Easy Install"
-    python: 3.6
+  - name: "Python 3.4 Easy Install"
+    python: 3.4
     env: TEST=easy_install
     script: sudo python $TRAVIS_BUILD_DIR/install.py --user travis --run-travis --production --verbose
 
-  - name: "Python 3.7 Easy Install"
-    python: 3.7
+  - name: "Python 3.6 Easy Install"
+    python: 3.6
     env: TEST=easy_install
     script: sudo python $TRAVIS_BUILD_DIR/install.py --user travis --run-travis --production --verbose
 
