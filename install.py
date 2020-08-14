@@ -74,11 +74,11 @@ def check_system_package_managers():
 			raise Exception('Cannot find any compatible package manager!')
 
 
-def check_distribution_compatibility():
-	dist_name, dist_version = get_distribution_info()
+def check_distribution_compatibility(args):
+	dist_name, dist_version = get_distribution_info(args)
 	supported_dists = {
 		'macos': [10.9, 10.10, 10.11, 10.12],
-		'ubuntu': [14, 15, 16, 18, 19],
+		'ubuntu': [14, 15, 16, 18, 19, 20],
 		'debian': [8, 9, 10],
 		'centos': [7]
 	}
@@ -93,11 +93,36 @@ def check_distribution_compatibility():
 	else:
 		log("Sorry, the installer doesn't support {0}. Aborting installation!".format(dist_name), level=2)
 
+def import_with_install(package):
+	# copied from https://discuss.erpnext.com/u/nikunj_patel
+	# https://discuss.erpnext.com/t/easy-install-setup-guide-for-erpnext-installation-on-ubuntu-20-04-lts-with-some-modification-of-course/62375/5
 
-def get_distribution_info():
+	# need to move to top said v13 for fully python3 era
+	import importlib
+
+	try:
+		importlib.import_module(package)
+	except ImportError:
+		# caveat : pip3 must be installed
+
+		import pip
+
+		pip.main(['install', package])
+	finally:
+		globals()[package] = importlib.import_module(package)
+
+
+def get_distribution_info(args):
 	# return distribution name and major version
 	if platform.system() == "Linux":
-		current_dist = platform.dist()
+		if args.python_version == "3":
+			install_package('pip3', 'python3-pip')
+
+			import_with_install('distro')
+
+			current_dist = distro.linux_distribution(full_distribution_name=True)
+		else:
+			current_dist = platform.dist()
 		return current_dist[0].lower(), current_dist[1].rsplit('.')[0]
 
 	elif platform.system() == "Darwin":
@@ -191,7 +216,7 @@ def install_bench(args):
 		raise Exception('Please run this script as a non-root user with sudo privileges, but without using sudo or pass --user=USER')
 
 	# Python executable
-	dist_name, dist_version = get_distribution_info()
+	dist_name, dist_version = get_distribution_info(args)
 	if dist_name=='centos':
 		args.python = 'python3.6'
 	else:
@@ -403,6 +428,16 @@ def parse_commandline_args():
 	parser.add_argument('--python', dest='python', default='python3', help=argparse.SUPPRESS)
 	# LXC Support
 	parser.add_argument('--container', dest='container', default=False, action='store_true', help='Use if you\'re creating inside LXC')
+
+	# for detecting dist; backward compatible if specify 2
+
+	parser.add_argument(
+		'--python-version',
+		dest='python_version',
+		default='3',
+		help='For detecting dist. Backward compatible if specify 2. Default is 3.'
+	)
+
 	args = parser.parse_args()
 
 	return args
@@ -433,10 +468,11 @@ if __name__ == '__main__':
 	with warnings.catch_warnings():
 		warnings.simplefilter("ignore")
 		setup_log_stream(args)
-		check_distribution_compatibility()
+		check_distribution_compatibility(args)
 		check_system_package_managers()
 		check_environment()
 		install_prerequisites()
 		install_bench(args)
 
 	log("Bench + Frappe + ERPNext has been successfully installed!")
+	
