@@ -40,7 +40,8 @@ def make_nginx_conf(bench_path, yes=False):
 		"error_pages": get_error_pages(),
 		"allow_rate_limiting": allow_rate_limiting,
 		# for nginx map variable
-		"random_string": "".join(random.choice(string.ascii_lowercase) for i in range(7))
+		"random_string": "".join(random.choice(string.ascii_lowercase) for i in range(7)),
+		"cors_headers": get_cors_headers_map()
 	}
 
 	if allow_rate_limiting:
@@ -78,7 +79,8 @@ def make_bench_manager_nginx_conf(bench_path, yes=False, port=23624, domain=None
 		"bench_name": bench_name,
 		"error_pages": get_error_pages(),
 		"ssl_certificate": site_config.get('ssl_certificate'),
-		"ssl_certificate_key": site_config.get('ssl_certificate_key')
+		"ssl_certificate_key": site_config.get('ssl_certificate_key'),
+		"cors_headers": get_cors_headers_map()
 	}
 
 	bench_manager_nginx_conf = template.render(**template_vars)
@@ -301,13 +303,16 @@ def parse_cors_config(cors_config):
 		"methods": {},
 		"max_age": {},
 		"expose_headers": {},
-		"origins": {}
+		"origins": {},
 	}
 
 	for origin, config in cors_config.items():
 		if not config.get("enabled"):
 			continue
-		
+
+		if origin == "*":
+			origin = "_wildcard_origin"
+
 		parsed_config["origins"][origin] = origin
 		for prop in ("allow_credentials", "headers", "methods", "max_age", "expose_headers"):
 			if not config.get(prop):
@@ -369,3 +374,13 @@ def merge_cors_configs(sites):
 			})
 	
 	return merged_sites
+
+def get_cors_headers_map():
+	return {
+		"origins": "Access-Control-Allow-Origin",
+		"headers": "Access-Control-Allow-Headers",
+		"methods": "Access-Control-Allow-Methods",
+		"expose_headers": "Access-Control-Expose-Headers",
+		"max_age": "Access-Control-Max-Age",
+		"allow_credentials": "Access-Control-Allow-Credentials"
+	}
