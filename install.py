@@ -20,6 +20,7 @@ execution_time = "{:%H:%M}".format(execution_timestamp)
 log_file_name = "easy-install__{0}__{1}.log".format(execution_day, execution_time.replace(':', '-'))
 log_path = os.path.join(tmp_log_folder, log_file_name)
 log_stream = sys.stdout
+distro_required = not ((sys.version_info.major < 3) or (sys.version_info.major == 3 and sys.version_info.minor < 5))
 
 
 def log(message, level=0):
@@ -93,10 +94,10 @@ def check_distribution_compatibility():
 	else:
 		log("Sorry, the installer doesn't support {0}. Aborting installation!".format(dist_name), level=2)
 
+
 def import_with_install(package):
 	# copied from https://discuss.erpnext.com/u/nikunj_patel
 	# https://discuss.erpnext.com/t/easy-install-setup-guide-for-erpnext-installation-on-ubuntu-20-04-lts-with-some-modification-of-course/62375/5
-
 	# need to move to top said v13 for fully python3 era
 	import importlib
 
@@ -115,14 +116,11 @@ def import_with_install(package):
 def get_distribution_info():
 	# return distribution name and major version
 	if platform.system() == "Linux":
-		if sys.version_info.major == 3 and sys.version_info.minor > 7:
-			install_package('pip3', 'python3-pip')
-
-			import_with_install('distro')
-
+		if distro_required:
 			current_dist = distro.linux_distribution(full_distribution_name=True)
 		else:
 			current_dist = platform.dist()
+
 		return current_dist[0].lower(), current_dist[1].rsplit('.')[0]
 
 	elif platform.system() == "Darwin":
@@ -391,6 +389,12 @@ def run_playbook(playbook_name, sudo=False, extra_vars=None):
 	return success
 
 
+def setup_script_requirements():
+	if distro_required:
+		install_package('pip3', 'python3-pip')
+		import_with_install('distro')
+
+
 def parse_commandline_args():
 	import argparse
 
@@ -433,6 +437,7 @@ def parse_commandline_args():
 
 	return args
 
+
 if __name__ == '__main__':
 	if sys.version[0] == '2':
 		if not os.environ.get('CI'):
@@ -459,6 +464,7 @@ if __name__ == '__main__':
 	with warnings.catch_warnings():
 		warnings.simplefilter("ignore")
 		setup_log_stream(args)
+		setup_script_requirements()
 		check_distribution_compatibility()
 		check_system_package_managers()
 		check_environment()
@@ -466,4 +472,3 @@ if __name__ == '__main__':
 		install_bench(args)
 
 	log("Bench + Frappe + ERPNext has been successfully installed!")
-	
