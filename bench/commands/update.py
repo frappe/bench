@@ -6,7 +6,7 @@ from bench.app import pull_apps
 from bench.utils import post_upgrade, patch_sites, build_assets
 
 
-@click.command('update', help="Updates bench tool and if executed in a bench directory, without any flags will backup, pull, setup requirements, build, run patches and restart bench. Using specific flags will only do certain tasks instead of all")
+@click.command('update', help="Performs an update operation on current bench. Without any flags will backup, pull, setup requirements, build, run patches and restart bench. Using specific flags will only do certain tasks instead of all")
 @click.option('--pull', is_flag=True, help="Pull updates for all the apps in bench")
 @click.option('--apps', type=str)
 @click.option('--patch', is_flag=True, help="Run migrations for all sites in the bench")
