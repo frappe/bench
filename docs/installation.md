@@ -30,9 +30,6 @@ To manually install frappe/erpnext, you can follow this [this wiki](https://gith
 
 #### 2. Install Bench
 
-Install bench as a *non root* user,
+Install the latest bench using pip
 
-	git clone https://github.com/frappe/bench ~/.bench
-	pip3 install --user -e ~/.bench
-
-Note: Please do not remove the bench directory the above commands will create
+	pip3 install frappe-bench

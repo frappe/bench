@@ -70,9 +70,16 @@ def log(message, level=0):
 		2: color.red + 'ERROR',			# fail
 		3: color.yellow + 'WARN'		# warn/suggest
 	}
+	loggers = {
+		2: logger.error,
+		3: logger.warning
+	}
+
 	start_line = (levels.get(level) + ': ') if level in levels else ''
+	level_logger = loggers.get(level, logger.info)
 	end_line = '\033[0m'
 
+	level_logger(message)
 	print(start_line + message + end_line)
 
 
@@ -393,7 +400,7 @@ def setup_backups(bench_path='.'):
 
 	if job_command not in str(system_crontab):
 		job = system_crontab.new(command=job_command, comment="bench auto backups set for every 6 hours")
-		job.hour.every(6)
+		job.every(6).hours()
 		system_crontab.write()
 
 
@@ -454,7 +461,7 @@ def get_process_manager():
 			return proc_man_path
 
 
-def start(no_dev=False, concurrency=None, procfile=None):
+def start(no_dev=False, concurrency=None, procfile=None, no_prefix=False):
 	program = get_process_manager()
 	if not program:
 		raise Exception("No process manager found")
@@ -469,6 +476,9 @@ def start(no_dev=False, concurrency=None, procfile=None):
 	if procfile:
 		command.extend(['-f', procfile])
 
+	if no_prefix:
+		command.extend(['--no-prefix'])
+		
 	os.execv(program, command)
 
 

@@ -6,8 +6,14 @@ labels: bug
 
 Issue: Bug report
 
+Please make sure your issue is reproducible on the latest bench version. The currently supported branches are:
+ - PyPI [latest](https://pypi.org/project/frappe-bench/) 
+ - master         (minor bug fixes)
+ - v5.x           (Merged with develop on every release)
+ - develop        (all updates)
+
 **Do the checklist before filing an issue:**
- - [ ] Can you replicate the issue?
+ - [ ] Can you replicate the issue on the supported bench versions?
  - [ ] Is this something you can debug and fix? Send a pull request! Bug fixes and documentation fixes are welcome
 
 **Describe the bug** :chart_with_downwards_trend:
@@ -34,9 +40,8 @@ If applicable, add screenshots to help explain your problem.
 
 **Version Information**
 
-Can be found out by running `bench version` in your respective bench folder
-
-- Bench Branch: `master` _(Only master is supported)_
+Can be found out by running `bench version` in your respective bench folder.
+- Bench Branch:
 - Frappe Version:
 - ERPNext Version:
 

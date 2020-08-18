@@ -19,7 +19,7 @@ class TestSetupProduction(TestBenchBase):
 		for bench_name in ("test-bench-1", "test-bench-2"):
 			bench_path = os.path.join(os.path.abspath(self.benches_path), bench_name)
 			self.init_bench(bench_name)
-			bench.utils.exec_cmd("sudo bench setup production {0}".format(user), cwd=bench_path)
+			bench.utils.exec_cmd("sudo bench setup production {0} --yes".format(user), cwd=bench_path)
 			self.assert_nginx_config(bench_name)
 			self.assert_supervisor_config(bench_name)
 			self.assert_supervisor_process(bench_name)
@@ -31,6 +31,13 @@ class TestSetupProduction(TestBenchBase):
 		for bench_name in self.benches:
 			bench_path = os.path.join(os.path.abspath(self.benches_path), bench_name)
 			bench.utils.exec_cmd("sudo bench disable-production", cwd=bench_path)
+
+
+	def production(self):
+		try:
+			self.test_setup_production()
+		except Exception:
+			print(self.get_traceback())
 
 
 	def assert_nginx_config(self, bench_name):

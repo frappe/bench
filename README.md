@@ -141,17 +141,24 @@ In case the setup fails, the log file is saved under `/tmp/logs/install_bench.lo
  - Create an Issue in this repository with the log file attached.
  - Search for an existing issue or post the log file on the [Frappe/ERPNext Discuss Forum](https://discuss.erpnext.com/c/bench) with the tag `installation_problem` under "Install/Update" category.
 
-For more information and advanced setup instructions, check out the [Easy Install Documentation](https://github.com/frappe/bench/blob/master/docs/easy_install.md).
+For more information and advanced setup instructions, check out the [Easy Install Documentation](https://github.com/frappe/bench/blob/develop/docs/easy_install.md).
 
 
 ### Manual Installation
 
-Although not recommended, some might want to manually setup a bench instance locally for development. To quickly get started on installing bench the hard way, you can follow [Installing Bench and Frappe](https://frappe.io/docs/user/en/installation).
+Some might want to manually setup a bench instance locally for development. To quickly get started on installing bench the hard way, you can follow the guide on [Installing Bench and the Frappe Framework](https://frappe.io/docs/user/en/installation).
+
+You'll have to set up the system dependencies required for setting up a Frappe Environment. Checkout [docs/installation](https://github.com/frappe/bench/blob/develop/docs/installation.md) for more information on this. If you've already set up, install bench via pip:
+
+
+```sh
+$ pip install frappe-bench
+```
 
 For more extensive distribution-dependent documentation, check out the following guides:
 
  - [Hitchhiker's Guide to Installing Frappe on Linux](https://github.com/frappe/frappe/wiki/The-Hitchhiker%27s-Guide-to-Installing-Frappe-on-Linux)
- - [Hitchhiker's Guide to Installing Frappe on MacOS](https://github.com/frappe/frappe/wiki/The-Hitchhiker%27s-Guide-to-Installing-Frappe-on-Mac-OS-X)
+ - [Hitchhiker's Guide to Installing Frappe on MacOS](https://github.com/frappe/bench/wiki/Setting-up-a-Mac-for-Frappe-ERPNext-Development)
 
 
 ## Basic Usage
@@ -200,12 +207,12 @@ For more extensive distribution-dependent documentation, check out the following
 	```
 
 
-For more in-depth information on commands and their usage, follow [Commands and Usage](https://github.com/frappe/bench/blob/master/docs/commands_and_usage.md). As for a consolidated list of bench commands, check out [Bench Usage](https://github.com/frappe/bench/blob/master/docs/bench_usage.md).
+For more in-depth information on commands and their usage, follow [Commands and Usage](https://github.com/frappe/bench/blob/develop/docs/commands_and_usage.md). As for a consolidated list of bench commands, check out [Bench Usage](https://github.com/frappe/bench/blob/develop/docs/bench_usage.md).
 
 
 ## Custom Bench Commands
 
-If you wish to extend the capabilities of bench with your own custom Frappe Application, you may follow [Adding Custom Bench Commands](https://github.com/frappe/bench/blob/master/docs/bench_custom_cmd.md).
+If you wish to extend the capabilities of bench with your own custom Frappe Application, you may follow [Adding Custom Bench Commands](https://github.com/frappe/bench/blob/develop/docs/bench_custom_cmd.md).
 
 
 ## Bench Manager
