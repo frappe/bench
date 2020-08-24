@@ -164,8 +164,8 @@ def disable_production():
 
 @click.command('src', help="Prints bench source folder path, which can be used as: cd `bench src`")
 def bench_src():
-	import bench
-	print(os.path.dirname(bench.__path__[0]))
+	from bench.cli import src
+	print(os.path.dirname(src))
 
 
 @click.command('find', help="Finds benches recursively from location")
