@@ -464,11 +464,11 @@ if __name__ == '__main__':
 	with warnings.catch_warnings():
 		warnings.simplefilter("ignore")
 		setup_log_stream(args)
+		install_prerequisites()
 		setup_script_requirements()
 		check_distribution_compatibility()
 		check_system_package_managers()
 		check_environment()
-		install_prerequisites()
 		install_bench(args)
 
 	log("Bench + Frappe + ERPNext has been successfully installed!")
