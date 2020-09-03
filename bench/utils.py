@@ -443,15 +443,18 @@ def setup_logging(bench_path='.'):
 	logging.Logger.log = logv
 
 	if os.path.exists(os.path.join(bench_path, 'logs')):
-		logger = logging.getLogger(bench.PROJECT_NAME)
 		log_file = os.path.join(bench_path, 'logs', 'bench.log')
-		formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-		hdlr = logging.FileHandler(log_file)
-		hdlr.setFormatter(formatter)
-		logger.addHandler(hdlr)
-		logger.setLevel(logging.DEBUG)
+	else:
+		log_file = os.path.join(os.path.expanduser("~"), 'bench.log')
 
-		return logger
+	logger = logging.getLogger(bench.PROJECT_NAME)
+	formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+	hdlr = logging.FileHandler(log_file)
+	hdlr.setFormatter(formatter)
+	logger.addHandler(hdlr)
+	logger.setLevel(logging.DEBUG)
+
+	return logger
 
 
 def get_process_manager():

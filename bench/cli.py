@@ -27,7 +27,7 @@ def cli():
 	command = " ".join(sys.argv)
 
 	change_working_directory()
-	logger = setup_logging() or logging.getLogger(bench.PROJECT_NAME)
+	logger = setup_logging()
 	logger.info(command)
 	check_uid()
 	change_dir()
