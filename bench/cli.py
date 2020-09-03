@@ -18,6 +18,7 @@ from bench.utils import PatchError, bench_cache_file, check_latest_version, drop
 
 from_command_line = False
 change_uid_msg = "You should not run this command as root"
+src = os.path.dirname(__file__)
 
 
 def cli():
@@ -72,7 +73,7 @@ def check_uid():
 
 
 def cmd_requires_root():
-	if len(sys.argv) > 2 and sys.argv[2] in ('production', 'sudoers', 'supervisor', 'lets-encrypt', 'fonts',
+	if len(sys.argv) > 2 and sys.argv[2] in ('production', 'sudoers', 'lets-encrypt', 'fonts',
 		'print', 'firewall', 'ssh-port', 'role', 'fail2ban', 'wildcard-ssl'):
 		return True
 	if len(sys.argv) >= 2 and sys.argv[1] in ('patch', 'renew-lets-encrypt', 'disable-production'):
