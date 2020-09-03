@@ -163,7 +163,7 @@ def install_prerequisites():
 	install_package('pip3', 'python3-pip')
 
 	success = run_os_command({
-		'python3': "sudo -H python3 -m pip install --upgrade setuptools cryptography ansible==2.8.5 pip"
+		'python3': "sudo -H python3 -m pip install --upgrade setuptools wheel cryptography ansible==2.8.5 pip"
 	})
 
 	if not (success or shutil.which('ansible')):
