@@ -86,11 +86,11 @@ def run_certbot_and_setup_ssl(site, custom_domain, bench_path, interactive=True)
 
 
 def setup_crontab():
-	job_command = '/opt/certbot-auto renew --force-renewal -a nginx --post-hook "systemctl reload nginx"'
+	job_command = '/opt/certbot-auto renew -a nginx --post-hook "systemctl reload nginx"'
 	system_crontab = CronTab(user='root')
 	if job_command not in str(system_crontab):
 		job = system_crontab.new(command=job_command, comment="Renew lets-encrypt every month")
-		job.setall('0 0 1 * *') # Run at 00:00 on every day-of-month 1
+		job.setall('0 0 */1 * *') # Run at 00:00 every day-of-month
 		system_crontab.write()
 
 
