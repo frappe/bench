@@ -88,6 +88,8 @@ def run_certbot_and_setup_ssl(site, custom_domain, bench_path, interactive=True)
 def setup_crontab():
 	job_command = '/opt/certbot-auto renew -a nginx --post-hook "systemctl reload nginx"'
 	job_comment = 'Renew lets-encrypt every month'
+	print("Setting Up cron job to {0}".format(job_comment))
+
 	system_crontab = CronTab(user='root')
 
 	for job in system_crontab.find_comment(comment=job_comment): # Removes older entries
