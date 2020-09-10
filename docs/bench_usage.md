@@ -72,7 +72,7 @@ These commands belong directly to the bench group so they can be invoked directl
 
  - **init**: Initialize a new bench instance in the specified path. This sets up a complete bench folder with an `apps` folder which contains all the Frappe apps available in the current bench, `sites` folder that stores all site data seperated by individual site folders, `config` folder that contains your redis, NGINX and supervisor configuration files. The `env` folder consists of all python dependencies the current bench and installed Frappe applications have.
  - **restart**: Restart web, supervisor, systemd processes units. Used in production setup.
- - **update**: Updates bench tool and if executed in a bench directory, without any flags will backup, pull, setup requirements, build, run patches and restart bench. Using specific flags will only do certain tasks instead of all.
+ - **update**: If executed in a bench directory, without any flags will backup, pull, setup requirements, build, run patches and restart bench. Using specific flags will only do certain tasks instead of all.
  - **migrate-env**: Migrate Virtual Environment to desired Python version. This regenerates the `env` folder with the specified Python version.
  - **retry-upgrade**: Retry a failed upgrade
  - **disable-production**: Disables production environment for the bench.

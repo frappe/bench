@@ -6,7 +6,7 @@ message="
  Please access ERPNext by going to http://localhost:8080 on the host system.
  The username is \"Administrator\" and password is \"admin\"
 
- Do consider donating at https://frappe.io/buy
+ Consider buying professional support from us at https://erpnext.com/support 
 
  To update, login as
  username: frappe
