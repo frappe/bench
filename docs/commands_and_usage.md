@@ -2,9 +2,14 @@
 
 * Updating
 
-	Currently, `bench update` can be run from any directory however the context of the command changes. If run from a bench directory, the vanilla command itself updates all apps, runs migrations and backs up all sites.
+To update the bench CLI tool, depending on your method of installation, you may use 
 
-		bench update
+	pip3 install -U frappe-bench
+
+
+To backup, update all apps and sites on your bench, you may use
+
+	bench update
 
 
 To manually update the bench, run `bench update` to update all the apps, run

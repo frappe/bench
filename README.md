@@ -18,6 +18,7 @@ Bench is a command-line utility that helps you to install, update, and manage mu
  - [Bench Manager](#bench-manager)
  - [Guides](#guides)
  - [Resources](#resources)
+ - [Development](#development)
  - [License](#license)
 
 
@@ -253,6 +254,36 @@ For an exhaustive list of guides, check out [Bench Guides](https://frappe.io/doc
 
 For an exhaustive list of resources, check out [Bench Resources](https://frappe.io/docs/user/en/bench/resources).
 
+
+## Development
+
+To contribute and develop on the bench CLI tool, clone this repo and create an editable install. In editable mode, you may get the following warning everytime you run a bench command:
+
+	WARN: bench is installed in editable mode!
+
+	This is not the recommended mode of installation for production. Instead, install the package from PyPI with: `pip install frappe-bench`
+
+
+```sh
+$ git clone https://github.com/frappe/bench ~/bench-repo
+$ pip3 install -e ~/bench-repo
+$ bench src
+/Users/frappe/bench-repo
+```
+
+To clear up the editable install and switch to a stable version of bench, uninstall via pip and delete the corresponding egg file from the python path.
+
+
+```sh
+# Delete bench installed in editable install
+$ rm -r $(find ~ -name '*.egg-info')
+$ pip3 uninstall frappe-bench
+
+# Install latest released version of bench
+$ pip3 install -U frappe-bench
+```
+
+To confirm the switch, check the output of `bench src`. It should change from something like `$HOME/bench-repo` to `/usr/local/lib/python3.6/dist-packages` and stop the editable install warnings from getting triggered at every command.
 
 ## License
 

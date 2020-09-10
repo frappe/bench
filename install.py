@@ -163,7 +163,7 @@ def install_prerequisites():
 	install_package('pip3', 'python3-pip')
 
 	success = run_os_command({
-		'python3': "sudo -H python3 -m pip install --upgrade setuptools cryptography ansible==2.8.5 pip"
+		'python3': "sudo -H python3 -m pip install --upgrade setuptools wheel cryptography ansible==2.8.5 pip"
 	})
 
 	if not (success or shutil.which('ansible')):
@@ -269,7 +269,7 @@ def install_bench(args):
 
 def clone_bench_repo(args):
 	'''Clones the bench repository in the user folder'''
-	branch = args.bench_branch or 'master'
+	branch = args.bench_branch or 'develop'
 	repo_url = args.repo_url or 'https://github.com/frappe/bench'
 
 	if os.path.exists(tmp_bench_repo):
@@ -464,11 +464,11 @@ if __name__ == '__main__':
 	with warnings.catch_warnings():
 		warnings.simplefilter("ignore")
 		setup_log_stream(args)
+		install_prerequisites()
 		setup_script_requirements()
 		check_distribution_compatibility()
 		check_system_package_managers()
 		check_environment()
-		install_prerequisites()
 		install_bench(args)
 
 	log("Bench + Frappe + ERPNext has been successfully installed!")
