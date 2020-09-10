@@ -444,12 +444,12 @@ def setup_logging(bench_path='.'):
 
 	if os.path.exists(os.path.join(bench_path, 'logs')):
 		log_file = os.path.join(bench_path, 'logs', 'bench.log')
+		hdlr = logging.FileHandler(log_file)
 	else:
-		log_file = os.path.join(os.path.expanduser("~"), 'bench.log')
+		hdlr = logging.NullHandler()
 
 	logger = logging.getLogger(bench.PROJECT_NAME)
 	formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-	hdlr = logging.FileHandler(log_file)
 	hdlr.setFormatter(formatter)
 	logger.addHandler(hdlr)
 	logger.setLevel(logging.DEBUG)
