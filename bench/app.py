@@ -338,18 +338,21 @@ def fetch_upstream(app, bench_path='.'):
 def get_current_version(app, bench_path='.'):
 	current_version = None
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
+	config_path = os.path.join(repo_dir, "setup.cfg")
+	init_path = os.path.join(repo_dir, os.path.basename(repo_dir), '__init__.py')
+	setup_path = os.path.join(repo_dir, 'setup.py')
+
 	try:
-		config_path = os.path.join(repo_dir, "setup.cfg")
 		if os.path.exists(config_path):
 			config = read_configuration(config_path)
 			current_version = config.get("metadata", {}).get("version")
 		if not current_version:
-			with open(os.path.join(repo_dir, os.path.basename(repo_dir), '__init__.py')) as f:
+			with open(init_path) as f:
 				current_version = get_version_from_string(f.read())
 
 	except AttributeError:
 		# backward compatibility
-		with open(os.path.join(repo_dir, 'setup.py')) as f:
+		with open(setup_path) as f:
 			current_version = get_version_from_string(f.read(), field='version')
 
 	return current_version
