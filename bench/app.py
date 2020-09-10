@@ -156,8 +156,9 @@ def get_app_name(bench_path, repo_name):
 
 	if app_name and repo_name != app_name:
 		os.rename(os.path.join(apps_path, repo_name), os.path.join(apps_path, app_name))
+		return app_name
 
-	return app_name
+	return repo_name
 
 
 def new_app(app, bench_path='.'):
