@@ -8,11 +8,12 @@ import click
 
 @click.command('start', help="Start Frappe development processes")
 @click.option('--no-dev', is_flag=True, default=False)
+@click.option('--no-prefix', is_flag=True, default=False, help="Hide process name from bench start log")
 @click.option('--concurrency', '-c', type=str)
 @click.option('--procfile', '-p', type=str)
-def start(no_dev, concurrency, procfile):
+def start(no_dev, concurrency, procfile, no_prefix):
 	from bench.utils import start
-	start(no_dev=no_dev, concurrency=concurrency, procfile=procfile)
+	start(no_dev=no_dev, concurrency=concurrency, procfile=procfile, no_prefix=no_prefix)
 
 
 @click.command('restart', help="Restart supervisor processes or systemd units")
@@ -110,7 +111,7 @@ def download_translations():
 	download_translations_p()
 
 
-@click.command('renew-lets-encrypt', help="Renew Let's Encrypt certificate")
+@click.command('renew-lets-encrypt', help="Sets Up latest cron and Renew Let's Encrypt certificate")
 def renew_lets_encrypt():
 	from bench.config.lets_encrypt import renew_certs
 	renew_certs()
@@ -163,8 +164,8 @@ def disable_production():
 
 @click.command('src', help="Prints bench source folder path, which can be used as: cd `bench src`")
 def bench_src():
-	import bench
-	print(os.path.dirname(bench.__path__[0]))
+	from bench.cli import src
+	print(os.path.dirname(src))
 
 
 @click.command('find', help="Finds benches recursively from location")

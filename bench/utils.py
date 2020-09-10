@@ -400,7 +400,7 @@ def setup_backups(bench_path='.'):
 
 	if job_command not in str(system_crontab):
 		job = system_crontab.new(command=job_command, comment="bench auto backups set for every 6 hours")
-		job.hour.every(6)
+		job.every(6).hours()
 		system_crontab.write()
 
 
@@ -443,15 +443,18 @@ def setup_logging(bench_path='.'):
 	logging.Logger.log = logv
 
 	if os.path.exists(os.path.join(bench_path, 'logs')):
-		logger = logging.getLogger(bench.PROJECT_NAME)
 		log_file = os.path.join(bench_path, 'logs', 'bench.log')
-		formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 		hdlr = logging.FileHandler(log_file)
-		hdlr.setFormatter(formatter)
-		logger.addHandler(hdlr)
-		logger.setLevel(logging.DEBUG)
+	else:
+		hdlr = logging.NullHandler()
 
-		return logger
+	logger = logging.getLogger(bench.PROJECT_NAME)
+	formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+	hdlr.setFormatter(formatter)
+	logger.addHandler(hdlr)
+	logger.setLevel(logging.DEBUG)
+
+	return logger
 
 
 def get_process_manager():
@@ -461,7 +464,7 @@ def get_process_manager():
 			return proc_man_path
 
 
-def start(no_dev=False, concurrency=None, procfile=None):
+def start(no_dev=False, concurrency=None, procfile=None, no_prefix=False):
 	program = get_process_manager()
 	if not program:
 		raise Exception("No process manager found")
@@ -476,6 +479,9 @@ def start(no_dev=False, concurrency=None, procfile=None):
 	if procfile:
 		command.extend(['-f', procfile])
 
+	if no_prefix:
+		command.extend(['--no-prefix'])
+		
 	os.execv(program, command)
 
 

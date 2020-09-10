@@ -11,7 +11,7 @@ import git
 import bench
 import bench.utils
 from bench.release import get_bumped_version
-from bench.tests.test_base import TestBenchBase, FRAPPE_BRANCH
+from bench.tests.test_base import FRAPPE_BRANCH, TestBenchBase
 
 
 class TestBenchInit(TestBenchBase):
@@ -32,6 +32,13 @@ class TestBenchInit(TestBenchBase):
 		self.assert_folders(bench_name)
 		self.assert_virtual_env(bench_name)
 		self.assert_config(bench_name)
+
+
+	def basic(self):
+		try:
+			self.test_init()
+		except Exception:
+			print(self.get_traceback())
 
 
 	def test_multiple_benches(self):

@@ -18,6 +18,7 @@ from bench.utils import PatchError, bench_cache_file, check_latest_version, drop
 
 from_command_line = False
 change_uid_msg = "You should not run this command as root"
+src = os.path.dirname(__file__)
 
 
 def cli():
@@ -26,11 +27,14 @@ def cli():
 	command = " ".join(sys.argv)
 
 	change_working_directory()
-	logger = setup_logging() or logging.getLogger(bench.PROJECT_NAME)
+	logger = setup_logging()
 	logger.info(command)
-	check_uid()
+
+	if sys.argv[1] not in ("src", ):
+		check_uid()
+		change_uid()
+
 	change_dir()
-	change_uid()
 
 	if is_dist_editable(bench.PROJECT_NAME) and len(sys.argv) > 1 and sys.argv[1] != "src" and not get_config(".").get("developer_mode"):
 		log("bench is installed in editable mode!\n\nThis is not the recommended mode of installation for production. Instead, install the package from PyPI with: `pip install frappe-bench`\n", level=3)
@@ -72,7 +76,7 @@ def check_uid():
 
 
 def cmd_requires_root():
-	if len(sys.argv) > 2 and sys.argv[2] in ('production', 'sudoers', 'supervisor', 'lets-encrypt', 'fonts',
+	if len(sys.argv) > 2 and sys.argv[2] in ('production', 'sudoers', 'lets-encrypt', 'fonts',
 		'print', 'firewall', 'ssh-port', 'role', 'fail2ban', 'wildcard-ssl'):
 		return True
 	if len(sys.argv) >= 2 and sys.argv[1] in ('patch', 'renew-lets-encrypt', 'disable-production'):
