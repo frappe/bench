@@ -30,7 +30,6 @@ class TestBenchInit(TestBenchBase):
 
 	def test_utils(self):
 		self.assertEqual(subprocess.call("bench"), 0)
-		self.assertEqual(os.path.dirname(bench.cli.src), subprocess.check_output(["bench", "src"], cwd=".").decode('utf8'))
 
 
 	def test_init(self, bench_name="test-bench", **kwargs):
