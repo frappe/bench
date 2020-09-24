@@ -27,6 +27,11 @@ class TestBenchInit(TestBenchBase):
 		self.assertEqual( get_bumped_version('11.0.5-beta.22', 'prerelease'), '11.0.5-beta.23' )
 
 
+	def test_utils(self):
+		self.assertEqual(subprocess.call("bench"), 0)
+		self.assertEqual(os.path.dirname(bench.cli.src), subprocess.check_output(["bench", "src"], cwd=".").decode('utf8'))
+
+
 	def test_init(self, bench_name="test-bench", **kwargs):
 		self.init_bench(bench_name, **kwargs)
 		self.assert_folders(bench_name)
