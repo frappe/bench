@@ -247,12 +247,11 @@ def install_bench(args):
 		else:
 			frappe_branch = "version-{0}".format(args.version)
 			erpnext_branch = "version-{0}".format(args.version)
-	else:
-		if args.frappe_branch:
-			frappe_branch = args.frappe_branch
-
-		if args.erpnext_branch:
-			erpnext_branch = args.erpnext_branch
+	# Allow override of frappe_branch and erpnext_branch, regardless of args.version (which always has a default set)
+	if args.frappe_branch:
+		frappe_branch = args.frappe_branch
+	if args.erpnext_branch:
+		erpnext_branch = args.erpnext_branch
 
 	extra_vars.update(frappe_branch=frappe_branch)
 	extra_vars.update(erpnext_branch=erpnext_branch)
@@ -261,6 +260,7 @@ def install_bench(args):
 	extra_vars.update(bench_name=bench_name)
 
 	# Will install ERPNext production setup by default
+	log("Initializing bench using bench_name=%s frappe_branch=%s erpnext_branch=%s ..." % (bench_name, frappe_branch, erpnext_branch))
 	run_playbook('site.yml', sudo=True, extra_vars=extra_vars)
 
 	if os.path.exists(tmp_bench_repo):
