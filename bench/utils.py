@@ -1053,14 +1053,18 @@ def generate_command_cache(bench_path='.'):
 		os.remove(bench_cache_file)
 
 	try:
-		output = get_cmd_output("{0} -m frappe.utils.bench_helper get-frappe-commands".format(python), cwd=sites_path)
+		command = "{0} -m frappe.utils.bench_helper get-frappe-commands".format(python)
+		logger.debug('generate_command_cache(\'%s\') executing: %s', bench_path, command)
+		output = get_cmd_output(command, cwd=sites_path)
 		with open(bench_cache_file, 'w') as f:
 			json.dump(eval(output), f)
 		return json.loads(output)
 
 	except subprocess.CalledProcessError as e:
+		logger.error('generate_command_cache(\'%s\') failed executing: %s', bench_path, command, exc_info=e)
 		if hasattr(e, "stderr"):
 			print(e.stderr.decode('utf-8'))
+		raise e
 
 
 def clear_command_cache(bench_path='.'):
