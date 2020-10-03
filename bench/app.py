@@ -174,7 +174,10 @@ def install_app(app, bench_path=".", verbose=False, no_cache=False, restart_benc
 	app_path = os.path.join(bench_path, "apps", app)
 	cache_flag = "--no-cache-dir" if no_cache else ""
 
-	exec_cmd("{pip} install {quiet} -U -e {app} {no_cache}".format(pip=pip_path, quiet=quiet_flag, app=app_path, no_cache=cache_flag))
+	pip_install_code = exec_cmd("{pip} install {quiet} -U -e {app} {no_cache}".format(
+		pip=pip_path, quiet=quiet_flag, app=app_path, no_cache=cache_flag))
+	if pip_install_code:
+		sys.exit(pip_install_code)
 
 	if os.path.exists(os.path.join(app_path, 'package.json')):
 		exec_cmd("yarn install", cwd=app_path)

@@ -301,7 +301,9 @@ def clone_apps_from(bench_path, clone_from, update_app=True):
 
 
 def exec_cmd(cmd, cwd='.'):
-	import shlex
+	"""Executes 'cmd' as subprocess, then returns the return code.
+	If subprocess is successful, the return code is 0."""
+  import shlex
 	print("{0}$ {1}{2}".format(color.silver, cmd, color.nc))
 	cwd_info = "cd {0} && ".format(cwd) if cwd != "." else ""
 	cmd_log = "{0}{1}".format(cwd_info, cmd)
@@ -310,6 +312,7 @@ def exec_cmd(cmd, cwd='.'):
 	return_code = subprocess.call(cmd, cwd=cwd, universal_newlines=True)
 	if return_code:
 		logger.warning("{0} executed with exit code {1}".format(cmd_log, return_code))
+	return return_code
 
 
 def which(executable, raise_err = False):
