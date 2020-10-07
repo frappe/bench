@@ -13,6 +13,7 @@ import os
 import pwd
 import re
 import select
+import shlex
 import shutil
 import site
 import subprocess
@@ -44,13 +45,20 @@ folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 sudoers_file = '/etc/sudoers.d/frappe'
 
 
-class color:
+class color(dict):
 	nc = '\033[0m'
 	blue = '\033[94m'
 	green = '\033[92m'
 	yellow = '\033[93m'
 	red = '\033[91m'
 	silver = '\033[90m'
+
+	def __getattr__(self, key):
+		if bench.COLORED_OUTPUT:
+			ret = self.get(key)
+		else:
+			ret = ""
+		return ret
 
 
 def is_bench_directory(directory=os.path.curdir):
@@ -301,7 +309,6 @@ def clone_apps_from(bench_path, clone_from, update_app=True):
 
 
 def exec_cmd(cmd, cwd='.'):
-	import shlex
 	print("{0}$ {1}{2}".format(color.silver, cmd, color.nc))
 	cwd_info = "cd {0} && ".format(cwd) if cwd != "." else ""
 	cmd_log = "{0}{1}".format(cwd_info, cmd)
@@ -481,7 +488,7 @@ def start(no_dev=False, concurrency=None, procfile=None, no_prefix=False):
 
 	if no_prefix:
 		command.extend(['--no-prefix'])
-		
+
 	os.execv(program, command)
 
 
