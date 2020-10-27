@@ -1061,7 +1061,7 @@ def generate_command_cache(bench_path='.'):
 		return json.loads(output)
 
 	except subprocess.CalledProcessError as e:
-		logger.error('generate_command_cache(\'%s\') failed executing: %s', bench_path, command, exc_info=e)
+		logger.error("generate_command_cache('%s') failed executing: %s", bench_path, command, exc_info=e)
 		if hasattr(e, "stderr"):
 			print(e.stderr.decode('utf-8'))
 		raise e
