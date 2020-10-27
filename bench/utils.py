@@ -1054,7 +1054,7 @@ def generate_command_cache(bench_path='.'):
 
 	try:
 		command = "{0} -m frappe.utils.bench_helper get-frappe-commands".format(python)
-		logger.debug('generate_command_cache(\'%s\') executing: %s', bench_path, command)
+		logger.debug("generate_command_cache('%s') executing: %s", bench_path, command)
 		output = get_cmd_output(command, cwd=sites_path)
 		with open(bench_cache_file, 'w') as f:
 			json.dump(eval(output), f)
