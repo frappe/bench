@@ -327,8 +327,8 @@ def get_passwords(args):
 					mysql_root_password = ''
 					continue
 
-			# admin password
-			if not admin_password:
+			# admin password, only needed if we're also creating a site
+			if not admin_password and not args.without_site:
 				admin_password = getpass.unix_getpass(prompt='Please enter the default Administrator user password: ')
 				conf_admin_passswd = getpass.unix_getpass(prompt='Re-enter Administrator password: ')
 

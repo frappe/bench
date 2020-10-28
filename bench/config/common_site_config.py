@@ -55,7 +55,7 @@ def get_gunicorn_workers():
 	'''This function will return the maximum workers that can be started depending upon
 	number of cpu's present on the machine'''
 	return {
-		"gunicorn_workers": multiprocessing.cpu_count()
+		"gunicorn_workers": multiprocessing.cpu_count() * 2 + 1
 	}
 
 def update_config_for_frappe(config, bench_path):
