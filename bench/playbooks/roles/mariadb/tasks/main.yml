@@ -48,6 +48,10 @@
       [mysqld]
       pid-file        = /var/run/mysqld/mysqld.pid
       socket          = /var/run/mysqld/mysqld.sock
+
+      # setting appeared inside mysql but overwritten by mariadb inside mariadb.conf.d/xx-server.cnf valued as utf8mb4_general_ci
+
+      collation-server = utf8mb4_unicode_ci
     create: yes
   become: yes
   become_user: root
