@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # imports - standard imports
+import compileall
 import errno
 import glob
 import grp
@@ -183,8 +184,8 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	copy_patches_txt(path)
 
 
-def update(pull=False, apps=None, patch=False, build=False, requirements=False, backup=True, force=False, reset=False,
-	restart_supervisor=False, restart_systemd=False):
+def update(pull=False, apps=None, patch=False, build=False, requirements=False, backup=True, compile=True,
+	force=False, reset=False, restart_supervisor=False, restart_systemd=False):
 	"""command: bench update"""
 	from bench import patches
 	from bench.app import is_version_upgrade, pull_apps, validate_branch
@@ -218,7 +219,6 @@ def update(pull=False, apps=None, patch=False, build=False, requirements=False, 
 
 	if version_upgrade[0] or (not version_upgrade[0] and force):
 		validate_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
-
 	conf.update({ "maintenance_mode": 1, "pause_scheduler": 1 })
 	update_config(conf, bench_path=bench_path)
 
@@ -245,6 +245,10 @@ def update(pull=False, apps=None, patch=False, build=False, requirements=False, 
 
 	if version_upgrade[0] or (not version_upgrade[0] and force):
 		post_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
+
+	if pull and compile:
+		print("Compiling Python files...")
+		compileall.compile_dir('../apps', quiet=1, rx=re.compile('.*node_modules.*'))
 
 	if restart_supervisor or conf.get('restart_supervisor_on_update'):
 		restart_supervisor_processes(bench_path=bench_path)
@@ -481,7 +485,7 @@ def start(no_dev=False, concurrency=None, procfile=None, no_prefix=False):
 
 	if no_prefix:
 		command.extend(['--no-prefix'])
-		
+
 	os.execv(program, command)
 
 
