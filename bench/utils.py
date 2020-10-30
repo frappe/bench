@@ -80,7 +80,7 @@ def log(message, level=0):
 	end_line = '\033[0m'
 
 	level_logger(message)
-	print(start_line + message + end_line)
+	print("{}{}{}".format(start_line, message, end_line))
 
 
 def safe_decode(string, encoding = 'utf-8'):

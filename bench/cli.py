@@ -62,9 +62,10 @@ def cli():
 	try:
 		bench_command()
 	except BaseException as e:
+		log(e, level=2)
 		return_code = getattr(e, "code", 0)
 		if return_code:
-			logger.warning("{0} executed with exit code {1}".format(command, return_code))
+			logger.warning("{0} executed with exit code {1}: {2}".format(command, return_code, bench.get_traceback()))
 		sys.exit(return_code)
 
 
