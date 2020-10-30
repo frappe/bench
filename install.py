@@ -171,7 +171,7 @@ def install_prerequisites():
 	install_package('pip3', 'python3-pip')
 
 	success = run_os_command({
-		'python3': "sudo -H python3 -m pip install --upgrade setuptools wheel cryptography ansible==2.8.5 pip"
+		'python3': "sudo -H python3 -m pip install --upgrade setuptools wheel cryptography ansible~=2.8.15 pip"
 	})
 
 	if not (success or shutil.which('ansible')):
@@ -335,8 +335,8 @@ def get_passwords(args):
 					mysql_root_password = ''
 					continue
 
-			# admin password
-			if not admin_password:
+			# admin password, only needed if we're also creating a site
+			if not admin_password and not args.without_site:
 				admin_password = getpass.unix_getpass(prompt='Please enter the default Administrator user password: ')
 				conf_admin_passswd = getpass.unix_getpass(prompt='Re-enter Administrator password: ')
 
