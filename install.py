@@ -260,7 +260,10 @@ def install_bench(args):
 	extra_vars.update(bench_name=bench_name)
 
 	# Will install ERPNext production setup by default
-	log("Initializing bench using bench_name=%s frappe_branch=%s erpnext_branch=%s ..." % (bench_name, frappe_branch, erpnext_branch))
+	if args.without_erpnext:
+		log("Initializing bench {bench_name}:\n\tFrappe Branch: {frappe_branch}\n\tERPNext will not be installed due to --without-erpnext".format(bench_name=bench_name, frappe_branch=frappe_branch))
+	else:
+		log("Initializing bench {bench_name}:\n\tFrappe Branch: {frappe_branch}\n\tERPNext Branch: {erpnext_branch}".format(bench_name=bench_name, frappe_branch=frappe_branch, erpnext_branch=erpnext_branch))
 	run_playbook('site.yml', sudo=True, extra_vars=extra_vars)
 
 	if os.path.exists(tmp_bench_repo):
@@ -273,11 +276,15 @@ def clone_bench_repo(args):
 	repo_url = args.repo_url or 'https://github.com/frappe/bench'
 
 	if os.path.exists(tmp_bench_repo):
+		log('Not cloning already existing Bench repository at {tmp_bench_repo}'.format(tmp_bench_repo=tmp_bench_repo))
 		return 0
 	elif args.without_bench_setup:
 		clone_path = os.path.join(os.path.expanduser('~'), 'bench')
+		log('--without-bench-setup specified, clone path is: {clone_path}'.format(clone_path=clone_path))
 	else:
 		clone_path = tmp_bench_repo
+		# Not logging repo_url to avoid accidental credential leak in case credential is embedded in URL
+		log('Cloning bench repository branch {branch} into {clone_path}'.format(branch=branch, clone_path=clone_path))
 
 	success = run_os_command(
 		{'git': 'git clone --quiet {repo_url} {bench_repo} --depth 1 --branch {branch}'.format(
@@ -336,6 +343,8 @@ def get_passwords(args):
 					passwords_didnt_match("Administrator")
 					admin_password = ''
 					continue
+			elif args.without_site:
+				log("Not creating a new site due to --without-site")
 
 			pass_set = False
 	else:
@@ -405,8 +414,8 @@ def parse_commandline_args():
 
 	args_group.add_argument('--develop', dest='develop', action='store_true', default=False, help='Install developer setup')
 	args_group.add_argument('--production', dest='production', action='store_true', default=False, help='Setup Production environment for bench')
-	parser.add_argument('--site', dest='site', action='store', default='site1.local', help='Specifiy name for your first ERPNext site')
-	parser.add_argument('--without-site', dest='without_site', action='store_true', default=False)
+	parser.add_argument('--site', dest='site', action='store', default='site1.local', help='Specify name for your first ERPNext site')
+	parser.add_argument('--without-site', dest='without_site', action='store_true', default=False, help='Do not create a new site')
 	parser.add_argument('--verbose', dest='verbose', action='store_true', default=False, help='Run the script in verbose mode')
 	parser.add_argument('--user', dest='user', help='Install frappe-bench for this user')
 	parser.add_argument('--bench-branch', dest='bench_branch', help='Clone a particular branch of bench repository')
