@@ -24,7 +24,14 @@
   get_url:
     url: https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.focal_amd64.deb
     dest: /tmp/wkhtmltox.deb
-  when: ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20'
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and ansible_architecture != 'aarch64'
+
+- name: download wkthmltox Ubuntu 20 arm64
+  get_url:
+    # wkhtmltox supports arm64 starting from 0.12.6
+    url: https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_arm64.deb
+    dest: /tmp/wkhtmltox.deb
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20' and ansible_architecture == 'aarch64'
     
 - name: download wkthmltox Ubuntu 18
   get_url:
