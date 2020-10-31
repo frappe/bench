@@ -15,5 +15,6 @@ def get_traceback():
 
 	exc_type, exc_value, exc_tb = sys.exc_info()
 	trace_list = traceback.format_exception(exc_type, exc_value, exc_tb)
-	body = "".join(cstr(t) for t in trace_list)
+	body = "".join(str(t) for t in trace_list)
+
 	return body

@@ -99,7 +99,7 @@ def check_latest_version():
 		# ignore checking on all Exceptions
 		return
 
-	if pypi_request.status_code == 200:
+	if pypi_request.ok:
 		pypi_version_str = pypi_request.json().get('info').get('version')
 		pypi_version = Version(pypi_version_str)
 		local_version = Version(bench.VERSION)
@@ -481,7 +481,7 @@ def start(no_dev=False, concurrency=None, procfile=None, no_prefix=False):
 
 	if no_prefix:
 		command.extend(['--no-prefix'])
-		
+
 	os.execv(program, command)
 
 

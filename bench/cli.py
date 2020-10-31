@@ -62,15 +62,17 @@ def cli():
 	try:
 		bench_command()
 	except BaseException as e:
-		log(e, level=2)
 		traceback = bench.get_traceback()
-		return_code = getattr(e, "code", 0)
+		return_code = e or (1 if traceback else 0)
 
-		if "--verbose" in sys.argv:
-			print("Traceback: \n{}".format(traceback))
+		if traceback and return_code in (0, 1):
+			log(e, level=2)
+
+		if any([x for x in ["--verbose", "-v"] if x in sys.argv]):
+			print(traceback)
 
 		if return_code:
-			logger.warning("{0} executed with exit code {1}: {2}".format(command, return_code, traceback))
+			logger.error("{0} executed with exit code {1}: {2}".format(command, return_code, traceback))
 
 		sys.exit(return_code)
 
