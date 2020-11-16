@@ -292,6 +292,23 @@ def get_limit_conn_shared_memory():
 	return int(0.02 * total_vm)
 
 def parse_cors_config(cors_config):
+	"""
+	This will take in cors_config in the format:
+	"cors_config": {
+		"*": { 
+			"enabled": 1,
+			"allow_credentials": 1,
+			"headers": ["X-Frappe-SiteName"],
+			"methods": ["GET", "POST"],
+			"max_age": 864000,
+			"expose_headers": []
+		},
+		"http://localhost": {
+			"enabled": 1,
+			"methods": ["GET"]
+		}
+	}
+	"""
 	if not cors_config:
 		return cors_config
 
@@ -326,6 +343,7 @@ def parse_cors_config(cors_config):
 			parsed_config[prop][origin] = v
 
 		if not parsed_config["max_age"].get(origin):
+			# Set default max_age to 10 Days
 			parsed_config["max_age"][origin] = 864000
 
 	return parsed_config
@@ -333,47 +351,32 @@ def parse_cors_config(cors_config):
 def merge_cors_configs(sites):
 	merged_sites = []
 
-	def _compare(obj1, obj2):
-		"""Custom object deep-value comparison"""
-		if not obj1 and not obj2:
-			return True
-		elif not obj1 or not obj2:
-			return False
-		elif type(obj1) != type(obj2):
-			return False
-		
-		if isinstance(obj1, dict):
-			k1 = obj1.keys()
-			k2 = obj2.keys()
-			if len(k1) != len(k2) or set(k1) != set(k2):
-				return False
-			for k, v in obj1.items():
-				if k == "random_string":
-					continue
-				if not _compare(v, obj2[k]):
-					return False
-			return True
-		elif isinstance(obj1, (list, tuple)):
-			return set(obj1) == set(obj2)
-		else:
-			return obj1 == obj2
-
-	for s in sites:
+	for site in sites:
 		merged = False
-		for _site in merged_sites:
-			if not _compare(s.get("cors_config", None), _site.get("cors_config", None)):
+		site_cors_config = site.get("cors_config", None)
+
+		if site_cors_config:
+			del site_cors_config["random_string"]
+
+		for merged_site in merged_sites:
+			if site_cors_config != merged_site.get("cors_config", None):
 				continue
 			
-			_site["server_names"].append(s["site_name"])
+			merged_site["server_names"].append(site["site_name"])
 			merged = True
 			break
 
 		if not merged:
 			merged_sites.append({
-				"server_names": [s["site_name"]],
-				"cors_config": s.get("cors_config", None)
+				"server_names": [site["site_name"]],
+				"cors_config": site_cors_config
 			})
 	
+	for merged_site in merged_sites:
+		if not merged_site.get("cors_config", None):
+			continue
+		merged_site["cors_config"]["random_string"] = "".join(random.choice(string.ascii_lowercase) for i in range(7))
+
 	return merged_sites
 
 def get_cors_headers_map():
