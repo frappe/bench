@@ -156,7 +156,7 @@ def install_prerequisites():
 			'sudo yum install -y epel-release redhat-lsb-core git python-setuptools python-devel openssl-devel libffi-devel'
 		]
 	})
-	
+
 	# until psycopg2-binary is available for aarch64 (Arm 64-bit), we'll need libpq and libssl dev packages to build psycopg2 from source
 	if platform.machine() == 'aarch64':
 		log("Installing libpq and libssl dev packages to build psycopg2 for aarch64...")
