@@ -15,11 +15,12 @@ from bench.utils import post_upgrade, patch_sites, build_assets
 @click.option('--restart-supervisor', is_flag=True, help="Restart supervisor processes after update")
 @click.option('--restart-systemd', is_flag=True, help="Restart systemd units after update")
 @click.option('--no-backup', is_flag=True, help="If this flag is set, sites won't be backed up prior to updates. Note: This is not recommended in production.")
+@click.option('--no-compile', is_flag=True, help="If set, Python bytecode won't be compiled before restarting the processes")
 @click.option('--force', is_flag=True, help="Forces major version upgrades")
 @click.option('--reset', is_flag=True, help="Hard resets git branch's to their new states overriding any changes and overriding rebase on pull")
-def update(pull, apps, patch, build, requirements, restart_supervisor, restart_systemd, no_backup, force, reset):
+def update(pull, apps, patch, build, requirements, restart_supervisor, restart_systemd, no_backup, no_compile, force, reset):
 	from bench.utils import update
-	update(pull=pull, apps=apps, patch=patch, build=build, requirements=requirements, restart_supervisor=restart_supervisor, restart_systemd=restart_systemd, backup=not no_backup, force=force, reset=reset)
+	update(pull=pull, apps=apps, patch=patch, build=build, requirements=requirements, restart_supervisor=restart_supervisor, restart_systemd=restart_systemd, backup=not no_backup, compile=not no_compile, force=force, reset=reset)
 
 
 @click.command('retry-upgrade', help="Retry a failed upgrade")
