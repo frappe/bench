@@ -12,7 +12,7 @@ import click
 @click.option('--clone-from', default=None, help="copy repos from path")
 @click.option('--clone-without-update', is_flag=True, help="copy repos from path without update")
 @click.option('--no-procfile', is_flag=True, help="Do not create a Procfile")
-@click.option('--no-backups',is_flag=True, help="Do not set up automatic backup creation for every (new) site")
+@click.option('--no-backups',is_flag=True, help="Do not set up automatic periodic backups for all sites on this bench")
 @click.option('--skip-redis-config-generation', is_flag=True, help="Skip redis config generation if already specifying the common-site-config file")
 @click.option('--skip-assets',is_flag=True, default=False, help="Do not build assets")
 @click.option('--verbose',is_flag=True, help="Verbose output during install")
