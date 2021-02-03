@@ -1,0 +1,28 @@
+name: Release
+on:
+  push:
+    branches:
+      - v5.x
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - name: Set-up semantic-release plugins
+        run: npm install  @semantic-release/git @semantic-release/exec --no-save 
+      - name: Set-up python build env
+        run: pip install wheel twine
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TEST_PYPI_PASSWORD: ${{ secrets.TEST_PYPI_PASSWORD }} 
+          TEST_PYPI_USERNAME: ${{ secrets.TEST_PYPI_USERNAME }} 
+        run: npx semantic-release
