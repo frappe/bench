@@ -87,11 +87,17 @@ def run_certbot_and_setup_ssl(site, custom_domain, bench_path, interactive=True)
 
 def setup_crontab():
 	job_command = '/opt/certbot-auto renew -a nginx --post-hook "systemctl reload nginx"'
+	job_comment = 'Renew lets-encrypt every month'
+	print("Setting Up cron job to {0}".format(job_comment))
+
 	system_crontab = CronTab(user='root')
-	if job_command not in str(system_crontab):
-		job = system_crontab.new(command=job_command, comment="Renew lets-encrypt every month")
-		job.day.on(1)
-		system_crontab.write()
+
+	for job in system_crontab.find_comment(comment=job_comment): # Removes older entries
+		system_crontab.remove(job)
+
+	job = system_crontab.new(command=job_command, comment=job_comment)
+	job.setall('0 0 */1 * *') # Run at 00:00 every day-of-month
+	system_crontab.write()
 
 
 def create_dir_if_missing(path):
@@ -113,9 +119,12 @@ def get_certbot_path():
 
 
 def renew_certs():
+	# Needs to be run with sudo
 	click.confirm('Running this will stop the nginx service temporarily causing your sites to go offline\n'
 		'Do you want to continue?',
 		abort=True)
+
+	setup_crontab()
 
 	service('nginx', 'stop')
 	exec_cmd("{path} renew".format(path=get_certbot_path()))

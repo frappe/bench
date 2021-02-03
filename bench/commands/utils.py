@@ -111,7 +111,7 @@ def download_translations():
 	download_translations_p()
 
 
-@click.command('renew-lets-encrypt', help="Renew Let's Encrypt certificate")
+@click.command('renew-lets-encrypt', help="Sets Up latest cron and Renew Let's Encrypt certificate")
 def renew_lets_encrypt():
 	from bench.config.lets_encrypt import renew_certs
 	renew_certs()
