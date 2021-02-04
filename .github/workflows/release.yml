@@ -23,6 +23,6 @@ jobs:
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TEST_PYPI_PASSWORD: ${{ secrets.TEST_PYPI_PASSWORD }} 
-          TEST_PYPI_USERNAME: ${{ secrets.TEST_PYPI_USERNAME }} 
+          TEST_PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }} 
+          TEST_PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }} 
         run: npx semantic-release

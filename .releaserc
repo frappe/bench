@@ -19,7 +19,7 @@
 			]
 		}],
 		["@semantic-release/exec", {
-			"publishCmd": "python -m twine upload -r testpypi dist/* -u $TEST_PYPI_USERNAME -p $TEST_PYPI_PASSWORD"
+			"publishCmd": "python -m twine upload dist/* -u $PYPI_USERNAME -p $PYPI_PASSWORD"
 		}]
     	]
 }
