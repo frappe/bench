@@ -157,13 +157,21 @@ def install_prerequisites():
 		]
 	})
 
+	# until psycopg2-binary is available for aarch64 (Arm 64-bit), we'll need libpq and libssl dev packages to build psycopg2 from source
+	if platform.machine() == 'aarch64':
+		log("Installing libpq and libssl dev packages to build psycopg2 for aarch64...")
+		run_os_command({
+			'apt-get': ['sudo apt-get install -y libpq-dev libssl-dev'],
+			'yum': ['sudo yum install -y libpq-devel openssl-devel']
+		})
+
 	install_package('curl')
 	install_package('wget')
 	install_package('git')
 	install_package('pip3', 'python3-pip')
 
 	success = run_os_command({
-		'python3': "sudo -H python3 -m pip install --upgrade setuptools cryptography ansible==2.8.5 pip"
+		'python3': "sudo -H python3 -m pip install --upgrade setuptools wheel cryptography ansible~=2.8.15 pip"
 	})
 
 	if not (success or shutil.which('ansible')):
@@ -247,12 +255,11 @@ def install_bench(args):
 		else:
 			frappe_branch = "version-{0}".format(args.version)
 			erpnext_branch = "version-{0}".format(args.version)
-	else:
-		if args.frappe_branch:
-			frappe_branch = args.frappe_branch
-
-		if args.erpnext_branch:
-			erpnext_branch = args.erpnext_branch
+	# Allow override of frappe_branch and erpnext_branch, regardless of args.version (which always has a default set)
+	if args.frappe_branch:
+		frappe_branch = args.frappe_branch
+	if args.erpnext_branch:
+		erpnext_branch = args.erpnext_branch
 
 	extra_vars.update(frappe_branch=frappe_branch)
 	extra_vars.update(erpnext_branch=erpnext_branch)
@@ -261,6 +268,10 @@ def install_bench(args):
 	extra_vars.update(bench_name=bench_name)
 
 	# Will install ERPNext production setup by default
+	if args.without_erpnext:
+		log("Initializing bench {bench_name}:\n\tFrappe Branch: {frappe_branch}\n\tERPNext will not be installed due to --without-erpnext".format(bench_name=bench_name, frappe_branch=frappe_branch))
+	else:
+		log("Initializing bench {bench_name}:\n\tFrappe Branch: {frappe_branch}\n\tERPNext Branch: {erpnext_branch}".format(bench_name=bench_name, frappe_branch=frappe_branch, erpnext_branch=erpnext_branch))
 	run_playbook('site.yml', sudo=True, extra_vars=extra_vars)
 
 	if os.path.exists(tmp_bench_repo):
@@ -269,15 +280,19 @@ def install_bench(args):
 
 def clone_bench_repo(args):
 	'''Clones the bench repository in the user folder'''
-	branch = args.bench_branch or 'master'
+	branch = args.bench_branch or 'develop'
 	repo_url = args.repo_url or 'https://github.com/frappe/bench'
 
 	if os.path.exists(tmp_bench_repo):
+		log('Not cloning already existing Bench repository at {tmp_bench_repo}'.format(tmp_bench_repo=tmp_bench_repo))
 		return 0
 	elif args.without_bench_setup:
 		clone_path = os.path.join(os.path.expanduser('~'), 'bench')
+		log('--without-bench-setup specified, clone path is: {clone_path}'.format(clone_path=clone_path))
 	else:
 		clone_path = tmp_bench_repo
+		# Not logging repo_url to avoid accidental credential leak in case credential is embedded in URL
+		log('Cloning bench repository branch {branch} into {clone_path}'.format(branch=branch, clone_path=clone_path))
 
 	success = run_os_command(
 		{'git': 'git clone --quiet {repo_url} {bench_repo} --depth 1 --branch {branch}'.format(
@@ -327,8 +342,8 @@ def get_passwords(args):
 					mysql_root_password = ''
 					continue
 
-			# admin password
-			if not admin_password:
+			# admin password, only needed if we're also creating a site
+			if not admin_password and not args.without_site:
 				admin_password = getpass.unix_getpass(prompt='Please enter the default Administrator user password: ')
 				conf_admin_passswd = getpass.unix_getpass(prompt='Re-enter Administrator password: ')
 
@@ -336,6 +351,8 @@ def get_passwords(args):
 					passwords_didnt_match("Administrator")
 					admin_password = ''
 					continue
+			elif args.without_site:
+				log("Not creating a new site due to --without-site")
 
 			pass_set = False
 	else:
@@ -405,8 +422,8 @@ def parse_commandline_args():
 
 	args_group.add_argument('--develop', dest='develop', action='store_true', default=False, help='Install developer setup')
 	args_group.add_argument('--production', dest='production', action='store_true', default=False, help='Setup Production environment for bench')
-	parser.add_argument('--site', dest='site', action='store', default='site1.local', help='Specifiy name for your first ERPNext site')
-	parser.add_argument('--without-site', dest='without_site', action='store_true', default=False)
+	parser.add_argument('--site', dest='site', action='store', default='site1.local', help='Specify name for your first ERPNext site')
+	parser.add_argument('--without-site', dest='without_site', action='store_true', default=False, help='Do not create a new site')
 	parser.add_argument('--verbose', dest='verbose', action='store_true', default=False, help='Run the script in verbose mode')
 	parser.add_argument('--user', dest='user', help='Install frappe-bench for this user')
 	parser.add_argument('--bench-branch', dest='bench_branch', help='Clone a particular branch of bench repository')
@@ -464,11 +481,11 @@ if __name__ == '__main__':
 	with warnings.catch_warnings():
 		warnings.simplefilter("ignore")
 		setup_log_stream(args)
+		install_prerequisites()
 		setup_script_requirements()
 		check_distribution_compatibility()
 		check_system_package_managers()
 		check_environment()
-		install_prerequisites()
 		install_bench(args)
 
 	log("Bench + Frappe + ERPNext has been successfully installed!")

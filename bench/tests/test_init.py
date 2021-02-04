@@ -9,6 +9,7 @@ import git
 
 # imports - module imports
 import bench
+import bench.cli
 import bench.utils
 from bench.release import get_bumped_version
 from bench.tests.test_base import FRAPPE_BRANCH, TestBenchBase
@@ -25,6 +26,10 @@ class TestBenchInit(TestBenchBase):
 		self.assertEqual( get_bumped_version('11.0.5-beta.22', 'minor'), '11.1.0' )
 		self.assertEqual( get_bumped_version('11.0.5-beta.22', 'patch'), '11.0.5' )
 		self.assertEqual( get_bumped_version('11.0.5-beta.22', 'prerelease'), '11.0.5-beta.23' )
+
+
+	def test_utils(self):
+		self.assertEqual(subprocess.call("bench"), 0)
 
 
 	def test_init(self, bench_name="test-bench", **kwargs):
