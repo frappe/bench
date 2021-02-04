@@ -1,0 +1,35 @@
+{
+	"branches": ["v5.x"],
+	"plugins": [
+		"@semantic-release/commit-analyzer",
+		"@semantic-release/release-notes-generator",
+		[
+			"@semantic-release/exec", {
+				"prepareCmd": 'sed -ir "s/[0-9]*\.[0-9]*\.[0-9]*/${nextRelease.version}/" bench/__init__.py'
+			}
+		],
+		[
+			"@semantic-release/exec", {
+				"prepareCmd": "python setup.py bdist_wheel --universal"
+			}
+		],
+		[
+			"@semantic-release/git", {
+				"assets": ["bench/__init__.py"],
+				"message": "chore(release): Bumped to Version ${nextRelease.version}\n\n${nextRelease.notes}"
+			}
+		],
+		[
+			"@semantic-release/github", {
+				"assets": [
+					{"path": "dist/*"},
+				]
+			}
+		],
+		[
+			"@semantic-release/exec", {
+				"publishCmd": "python -m twine upload dist/* -u $PYPI_USERNAME -p $PYPI_PASSWORD"
+			}
+		]
+	]
+}
