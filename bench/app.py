@@ -109,7 +109,7 @@ def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=Fal
 
 		# Gets repo name from URL
 		repo_name = git_url.rstrip('/').rsplit('/', 1)[1].rsplit('.', 1)[0]
-		shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
+		shallow_clone = '--depth 1' if check_git_for_shallow_clone(bench_path) else ''
 		branch = '--branch {branch}'.format(branch=branch) if branch else ''
 	else:
 		repo_name = git_url.split(os.sep)[-1]

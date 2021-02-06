@@ -19,12 +19,15 @@ default_config = {
 	'background_workers': 1
 }
 
-def make_config(bench_path):
+def make_config(bench_path, extra_config=None):
 	make_pid_folder(bench_path)
 	bench_config = get_config(bench_path)
 	bench_config.update(default_config)
 	bench_config.update(get_gunicorn_workers())
 	update_config_for_frappe(bench_config, bench_path)
+
+	if extra_config:
+		bench_config.update(extra_config)
 
 	put_config(bench_config, bench_path)
 

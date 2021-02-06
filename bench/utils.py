@@ -123,7 +123,8 @@ def get_env_cmd(cmd, bench_path='.'):
 
 def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		frappe_path=None, frappe_branch=None, verbose=False, clone_from=None,
-		skip_redis_config_generation=False, clone_without_update=False, ignore_exist=False, skip_assets=False,
+		skip_redis_config_generation=False, clone_without_update=False, clone_full=False,
+		ignore_exist=False, skip_assets=False,
 		python='python3'):
 	"""Initialize a new bench directory"""
 	from bench.app import get_app, install_apps_from_path
@@ -150,7 +151,13 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	setup_env(bench_path=path, python=python)
 
-	make_config(path)
+	extra_config = None
+	if clone_full:
+		extra_config = {
+			'shallow_clone': False
+		}
+
+	make_config(path, extra_config)
 
 	if clone_from:
 		clone_apps_from(bench_path=path, clone_from=clone_from, update_app=not clone_without_update)
@@ -499,9 +506,9 @@ def get_git_version():
 	return float(version)
 
 
-def check_git_for_shallow_clone():
+def check_git_for_shallow_clone(bench_path='.'):
 	from .config.common_site_config import get_config
-	config = get_config('.')
+	config = get_config(bench_path)
 
 	if config:
 		if config.get('release_bench'):
