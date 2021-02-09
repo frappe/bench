@@ -1,0 +1,28 @@
+name: Generate Semantic Release and publish on PyPI
+on:
+  push:
+    branches:
+      - v5.x
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout Entire Repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js v12
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - name: Setup dependencies
+        run: |
+          npm install @semantic-release/git @semantic-release/exec --no-save
+          pip install wheel twine
+      - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+          PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        run: npx semantic-release
