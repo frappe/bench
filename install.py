@@ -170,6 +170,10 @@ def install_prerequisites():
 	install_package('git')
 	install_package('pip3', 'python3-pip')
 
+	if not shutil.which('setuptools-rust'):
+		run_os_command({
+			'python3': "sudo -H python3 -m pip install setuptools-rust"
+		})
 	success = run_os_command({
 		'python3': "sudo -H python3 -m pip install --upgrade pip setuptools setuptools-rust wheel cryptography ansible~=2.8.15"
 	})
