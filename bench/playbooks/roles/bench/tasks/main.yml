@@ -33,7 +33,7 @@
 
   - name: Fix permissions
     become_user: root
-    command: chown {{ frappe_user }} -R /home/{{ frappe_user }}
+    command: chown {{ frappe_user }} -R {{ user_directory }}
 
   - name:  python3 bench init for develop
     command: bench init {{ bench_path }} --frappe-path {{ frappe_repo_url }} --frappe-branch {{ frappe_branch }} --python {{ python }}
@@ -77,6 +77,6 @@
   # Setup Bench for production environment
   - include_tasks: setup_bench_production.yml
     vars:
-      bench_path: "/home/{{ frappe_user }}/{{ bench_name }}"
+      bench_path: "{{ user_directory }}/{{ bench_name }}"
     when: not run_travis and production
 ...

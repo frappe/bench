@@ -231,10 +231,11 @@ def install_bench(args):
 	# create user if not exists
 	extra_vars = vars(args)
 	extra_vars.update(frappe_user=args.user)
+	
+	extra_vars.update(user_directory=get_user_home_directory(args.user))
 
 	if os.path.exists(tmp_bench_repo):
 		repo_path = tmp_bench_repo
-
 	else:
 		repo_path = os.path.join(os.path.expanduser('~'), 'bench')
 
@@ -382,6 +383,11 @@ def get_extra_vars_json(extra_args):
 		json.dump(extra_vars, j, indent=1, sort_keys=True)
 
 	return ('@' + json_path)
+
+def get_user_home_directory(user):
+	# Return home directory /home/USERNAME or anything else defined as home directory in
+	# passwd for user.
+	return os.path.expanduser('~'+user)
 
 
 def run_playbook(playbook_name, sudo=False, extra_vars=None):
