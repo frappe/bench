@@ -113,6 +113,7 @@ You need to install the following packages for the script to run:
 
 	```sh
 	$ apt install python3-minimal build-essential python3-setuptools
+	$ pip install setuptools-rust
 	```
 
  - ##### CentOS and other RPM Distributions:
