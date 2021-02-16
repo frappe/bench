@@ -171,7 +171,7 @@ def install_prerequisites():
 	install_package('pip3', 'python3-pip')
 
 	run_os_command({
-		'python3': "sudo -H python3 -m pip install --upgrade pip"
+		'python3': "sudo -H python3 -m pip install --upgrade pip setuptools-rust"
 	})
 	success = run_os_command({
 		'python3': "sudo -H python3 -m pip install --upgrade setuptools wheel cryptography ansible~=2.8.15"
