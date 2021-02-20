@@ -52,7 +52,7 @@ def generate_config(bench_path):
 		os.makedirs(pid_path)
 
 def write_redis_config(template_name, context, bench_path):
-	template = bench.config.env.get_template(template_name)
+	template = bench.config.env().get_template(template_name)
 
 	if "pid_path" not in context:
 		context["pid_path"] = os.path.abspath(os.path.join(bench_path, "config", "pids"))

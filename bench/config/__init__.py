@@ -1,6 +1,7 @@
 """Module for setting up system and respective bench configurations"""
 
 # imports - third party imports
-from jinja2 import Environment, PackageLoader
 
-env = Environment(loader=PackageLoader('bench.config'))
+def env():
+	from jinja2 import Environment, PackageLoader
+	return Environment(loader=PackageLoader('bench.config'))

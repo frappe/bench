@@ -48,7 +48,7 @@ def setup_letsencrypt(site, custom_domain, bench_path, interactive):
 
 
 def create_config(site, custom_domain):
-	config = bench.config.env.get_template('letsencrypt.cfg').render(domain=custom_domain or site)
+	config = bench.config.env().get_template('letsencrypt.cfg').render(domain=custom_domain or site)
 	config_path = '/etc/letsencrypt/configs/{site}.cfg'.format(site=custom_domain or site)
 	create_dir_if_missing(config_path)
 
