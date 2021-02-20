@@ -13,7 +13,6 @@ import sys
 # imports - third party imports
 import click
 import git
-import requests
 import semantic_version
 from six.moves import reload_module
 
@@ -91,6 +90,8 @@ def remove_from_excluded_apps_txt(app, bench_path='.'):
 		return write_excluded_apps_txt(apps, bench_path=bench_path)
 
 def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=False, restart_bench=True, overwrite=False):
+	import requests
+
 	if not os.path.exists(git_url):
 		if not is_git_url(git_url):
 			orgs = ['frappe', 'erpnext']
@@ -433,6 +434,8 @@ def install_apps_from_path(path, bench_path='.'):
 		get_app(app['url'], branch=app.get('branch'), bench_path=bench_path, skip_assets=True)
 
 def get_apps_json(path):
+	import requests
+
 	if path.startswith('http'):
 		r = requests.get(path)
 		return r.json()

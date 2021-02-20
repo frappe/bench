@@ -24,7 +24,6 @@ from distutils.spawn import find_executable
 # imports - third party imports
 import click
 from crontab import CronTab
-import requests
 from semantic_version import Version
 from six import iteritems
 from six.moves.urllib.parse import urlparse
@@ -93,6 +92,8 @@ def safe_decode(string, encoding = 'utf-8'):
 
 
 def check_latest_version():
+	import requests
+
 	try:
 		pypi_request = requests.get("https://pypi.org/pypi/frappe-bench/json")
 	except Exception:
@@ -815,6 +816,8 @@ sudo supervisorctl reload
 
 
 def update_translations_p(args):
+	import requests
+
 	try:
 		update_translations(*args)
 	except requests.exceptions.HTTPError:
@@ -846,6 +849,8 @@ def get_langs():
 
 
 def update_translations(app, lang):
+	import requests
+
 	translations_dir = os.path.join('apps', app, app, 'translations')
 	csv_file = os.path.join(translations_dir, lang + '.csv')
 	url = "https://translate.erpnext.com/files/{}-{}.csv".format(app, lang)
