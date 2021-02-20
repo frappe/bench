@@ -12,7 +12,6 @@ import sys
 
 # imports - third party imports
 import click
-import git
 import semantic_version
 from six.moves import reload_module
 
@@ -359,6 +358,7 @@ def get_repo_dir(app, bench_path='.'):
 	return os.path.join(bench_path, 'apps', app)
 
 def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrade=True):
+	import git
 	from bench.utils import update_requirements, update_node_packages, backup_all_sites, patch_sites, build_assets, post_upgrade
 	apps_dir = os.path.join(bench_path, 'apps')
 	version_upgrade = (False,)
