@@ -19,7 +19,7 @@ default_config = {
 	'background_workers': 1
 }
 
-def make_config(bench_path, extra_config=None):
+def make_config(bench_path, **extra_config):
 	make_pid_folder(bench_path)
 	bench_config = get_config(bench_path)
 	bench_config.update(default_config)

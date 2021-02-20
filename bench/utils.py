@@ -151,13 +151,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	setup_env(bench_path=path, python=python)
 
-	extra_config = None
-	if clone_full:
-		extra_config = {
-			'shallow_clone': False
-		}
-
-	make_config(path, extra_config)
+	make_config(path, shallow_clone=not clone_full)
 
 	if clone_from:
 		clone_apps_from(bench_path=path, clone_from=clone_from, update_app=not clone_without_update)
