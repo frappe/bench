@@ -3,7 +3,6 @@ import os
 
 # imports - third party imports
 import click
-from crontab import CronTab
 from six.moves.urllib.request import urlretrieve
 
 # imports - module imports
@@ -86,6 +85,8 @@ def run_certbot_and_setup_ssl(site, custom_domain, bench_path, interactive=True)
 
 
 def setup_crontab():
+	from crontab import CronTab
+
 	job_command = '/opt/certbot-auto renew -a nginx --post-hook "systemctl reload nginx"'
 	job_comment = 'Renew lets-encrypt every month'
 	print("Setting Up cron job to {0}".format(job_comment))
