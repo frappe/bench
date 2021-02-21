@@ -24,7 +24,6 @@ from distutils.spawn import find_executable
 import click
 from semantic_version import Version
 from six import iteritems
-from six.moves.urllib.parse import urlparse
 
 # imports - module imports
 import bench
@@ -973,6 +972,7 @@ def find_benches(directory=None):
 
 
 def migrate_env(python, backup=False):
+	from six.moves.urllib.parse import urlparse
 	from bench.config.common_site_config import get_config
 	from bench.app import get_apps
 

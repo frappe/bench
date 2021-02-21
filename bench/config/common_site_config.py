@@ -4,7 +4,6 @@ import json
 import os
 
 # imports - third party imports
-from six.moves.urllib.parse import urlparse
 
 
 default_config = {
@@ -74,6 +73,8 @@ def update_config_for_frappe(config, bench_path):
 	# TODO Optionally we need to add the host or domain name in case dns_multitenant is false
 
 def make_ports(bench_path):
+	from six.moves.urllib.parse import urlparse
+
 	benches_path = os.path.dirname(os.path.abspath(bench_path))
 
 	default_ports = {
