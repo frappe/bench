@@ -9,7 +9,6 @@ import grp
 import itertools
 import json
 import logging
-import multiprocessing
 import os
 import pwd
 import re
@@ -825,6 +824,8 @@ def update_translations_p(args):
 
 
 def download_translations_p():
+	import multiprocessing
+
 	pool = multiprocessing.Pool(multiprocessing.cpu_count())
 
 	langs = get_langs()
