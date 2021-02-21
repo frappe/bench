@@ -6,9 +6,7 @@ import sys
 import click
 
 # imports - module imports
-import bench.config.lets_encrypt
 import bench.config.procfile
-import bench.config.production_setup
 import bench.config.redis
 import bench.config.site_config
 import bench.config.supervisor
@@ -37,6 +35,8 @@ def setup_nginx(yes=False):
 
 @click.command("reload-nginx", help="Checks NGINX config file and reloads service")
 def reload_nginx():
+	import bench.config.production_setup
+
 	bench.config.production_setup.reload_nginx()
 
 
@@ -62,6 +62,8 @@ def setup_fonts():
 @click.argument("user")
 @click.option("--yes", help="Yes to regeneration config", is_flag=True, default=False)
 def setup_production(user, yes=False):
+	import bench.config.production_setup
+
 	bench.config.production_setup.setup_production(user=user, yes=yes)
 
 
@@ -104,6 +106,8 @@ def set_ssh_port(port, force=False):
 @click.option("--custom-domain")
 @click.option('-n', '--non-interactive', default=False, is_flag=True, help="Run command non-interactively. This flag restarts nginx and runs certbot non interactively. Shouldn't be used on 1'st attempt")
 def setup_letsencrypt(site, custom_domain, non_interactive):
+	import bench.config.lets_encrypt
+
 	bench.config.lets_encrypt.setup_letsencrypt(site, custom_domain, bench_path=".", interactive=not non_interactive)
 
 
@@ -112,6 +116,8 @@ def setup_letsencrypt(site, custom_domain, non_interactive):
 @click.option("--email")
 @click.option("--exclude-base-domain", default=False, is_flag=True, help="SSL Certificate not applicable for base domain")
 def setup_wildcard_ssl(domain, email, exclude_base_domain):
+	import bench.config.lets_encrypt
+
 	bench.config.lets_encrypt.setup_wildcard_ssl(domain, email, bench_path=".", exclude_base_domain=exclude_base_domain)
 
 
