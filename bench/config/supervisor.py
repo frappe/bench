@@ -11,7 +11,6 @@ from bench.config.common_site_config import get_config, update_config, get_gunic
 
 # imports - third party imports
 import click
-from six.moves import configparser
 
 
 logger = logging.getLogger(bench.PROJECT_NAME)
@@ -68,6 +67,8 @@ def get_supervisord_conf():
 
 def update_supervisord_config(user=None, yes=False):
 	"""From bench v5.x, we're moving to supervisor running as user"""
+	from six.moves import configparser
+
 	from bench.config.production_setup import service
 
 	if not user:
