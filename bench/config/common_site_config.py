@@ -1,7 +1,6 @@
 # imports - standard imports
 import getpass
 import json
-import multiprocessing
 import os
 
 # imports - third party imports
@@ -54,6 +53,8 @@ def get_config_path(bench_path):
 def get_gunicorn_workers():
 	'''This function will return the maximum workers that can be started depending upon
 	number of cpu's present on the machine'''
+	import multiprocessing
+
 	return {
 		"gunicorn_workers": multiprocessing.cpu_count() * 2 + 1
 	}
