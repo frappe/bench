@@ -22,7 +22,6 @@ from distutils.spawn import find_executable
 
 # imports - third party imports
 import click
-from crontab import CronTab
 from semantic_version import Version
 from six import iteritems
 from six.moves.urllib.parse import urlparse
@@ -386,6 +385,7 @@ def get_sites(bench_path='.'):
 
 
 def setup_backups(bench_path='.'):
+	from crontab import CronTab
 	from bench.config.common_site_config import get_config
 	logger.log('setting up backups')
 
