@@ -3,7 +3,6 @@ import os
 
 # imports - third party imports
 import click
-from six.moves.urllib.request import urlretrieve
 
 # imports - module imports
 import bench
@@ -107,6 +106,8 @@ def create_dir_if_missing(path):
 
 
 def get_certbot():
+	from six.moves.urllib.request import urlretrieve
+
 	certbot_path = get_certbot_path()
 	create_dir_if_missing(certbot_path)
 
