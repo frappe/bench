@@ -17,7 +17,6 @@ from six.moves import reload_module
 
 # imports - module imports
 import bench
-from bench.config.common_site_config import get_config
 from bench.utils import color, CommandFailedError, build_assets, check_git_for_shallow_clone, exec_cmd, get_cmd_output, get_frappe, restart_supervisor_processes, restart_systemd_processes, run_frappe_cmd
 
 
@@ -166,6 +165,8 @@ def new_app(app, bench_path='.'):
 
 
 def install_app(app, bench_path=".", verbose=False, no_cache=False, restart_bench=True, skip_assets=False):
+	from bench.config.common_site_config import get_config
+
 	print('\n{0}Installing {1}{2}'.format(color.yellow, app, color.nc))
 	logger.log("installing {}".format(app))
 
@@ -194,6 +195,8 @@ def install_app(app, bench_path=".", verbose=False, no_cache=False, restart_benc
 
 
 def remove_app(app, bench_path='.'):
+	from bench.config.common_site_config import get_config
+
 	if app not in get_apps(bench_path):
 		print("No app named {0}".format(app))
 		sys.exit(1)
@@ -221,6 +224,8 @@ def remove_app(app, bench_path='.'):
 
 def pull_apps(apps=None, bench_path='.', reset=False):
 	'''Check all apps if there no local changes, pull'''
+	from bench.config.common_site_config import get_config
+
 	rebase = '--rebase' if get_config(bench_path).get('rebase_on_pull') else ''
 
 	apps = apps or get_apps(bench_path=bench_path)
