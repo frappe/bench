@@ -3,7 +3,6 @@ import getpass
 import json
 import os
 
-# imports - third party imports
 
 
 default_config = {

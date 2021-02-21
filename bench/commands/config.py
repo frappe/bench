@@ -1,5 +1,3 @@
-# imports - standard imports
-
 # imports - module imports
 from bench.config.common_site_config import update_config, get_config, put_config
 
