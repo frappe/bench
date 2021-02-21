@@ -13,7 +13,6 @@ import os
 import pwd
 import re
 import select
-import shutil
 import site
 import subprocess
 import sys
@@ -261,6 +260,8 @@ def update(pull=False, apps=None, patch=False, build=False, requirements=False, 
 
 
 def copy_patches_txt(bench_path):
+	import shutil
+
 	shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'patches', 'patches.txt'),
 		os.path.join(bench_path, 'patches.txt'))
 
@@ -900,6 +901,8 @@ def get_bench_name(bench_path):
 
 
 def setup_fonts():
+	import shutil
+
 	fonts_path = os.path.join('/tmp', 'fonts')
 
 	if os.path.exists('/etc/fonts_backup'):
@@ -972,6 +975,7 @@ def find_benches(directory=None):
 
 
 def migrate_env(python, backup=False):
+	import shutil
 	from six.moves.urllib.parse import urlparse
 	from bench.config.common_site_config import get_config
 	from bench.app import get_apps

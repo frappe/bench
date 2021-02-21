@@ -6,7 +6,6 @@ import json
 import logging
 import os
 import re
-import shutil
 import subprocess
 import sys
 
@@ -89,6 +88,7 @@ def remove_from_excluded_apps_txt(app, bench_path='.'):
 
 def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=False, restart_bench=True, overwrite=False):
 	import requests
+	import shutil
 
 	if not os.path.exists(git_url):
 		if not is_git_url(git_url):
@@ -195,6 +195,7 @@ def install_app(app, bench_path=".", verbose=False, no_cache=False, restart_benc
 
 
 def remove_app(app, bench_path='.'):
+	import shutil
 	from bench.config.common_site_config import get_config
 
 	if app not in get_apps(bench_path):
