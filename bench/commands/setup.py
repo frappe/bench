@@ -7,7 +7,6 @@ import click
 
 # imports - module imports
 import bench.config.lets_encrypt
-import bench.config.nginx
 import bench.config.procfile
 import bench.config.production_setup
 import bench.config.redis
@@ -31,6 +30,8 @@ def setup_sudoers(user):
 @click.command("nginx", help="Generate configuration files for NGINX")
 @click.option("--yes", help="Yes to regeneration of nginx config file", default=False, is_flag=True)
 def setup_nginx(yes=False):
+	import bench.config.nginx
+
 	bench.config.nginx.make_nginx_conf(bench_path=".", yes=yes)
 
 
