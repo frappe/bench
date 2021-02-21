@@ -3,9 +3,6 @@ import os
 import re
 import subprocess
 
-# imports - third party imports
-import semantic_version
-
 # imports - module imports
 import bench
 from bench.config.common_site_config import get_config
@@ -62,6 +59,8 @@ def write_redis_config(template_name, context, bench_path):
 		f.write(template.render(**context))
 
 def get_redis_version():
+	import semantic_version
+
 	version_string = subprocess.check_output('redis-server --version', shell=True)
 	version_string = version_string.decode('utf-8').strip()
 	# extract version number from string

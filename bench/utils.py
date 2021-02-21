@@ -21,7 +21,6 @@ from distutils.spawn import find_executable
 
 # imports - third party imports
 import click
-from semantic_version import Version
 from six import iteritems
 
 # imports - module imports
@@ -89,6 +88,7 @@ def safe_decode(string, encoding = 'utf-8'):
 
 def check_latest_version():
 	import requests
+	from semantic_version import Version
 
 	try:
 		pypi_request = requests.get("https://pypi.org/pypi/frappe-bench/json")

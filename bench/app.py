@@ -11,7 +11,6 @@ import sys
 
 # imports - third party imports
 import click
-import semantic_version
 from six.moves import reload_module
 
 # imports - module imports
@@ -432,6 +431,8 @@ def get_version_from_string(contents, field='__version__'):
 	return match.group(2)
 
 def get_major_version(version):
+	import semantic_version
+
 	return semantic_version.Version(version).major
 
 def install_apps_from_path(path, bench_path='.'):
