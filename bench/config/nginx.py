@@ -20,7 +20,7 @@ def make_nginx_conf(bench_path, yes=False):
 		if not click.confirm('nginx.conf already exists and this will overwrite it. Do you want to continue?'):
 			return
 
-	template = bench.config.env.get_template('nginx.conf')
+	template = bench.config.env().get_template('nginx.conf')
 	bench_path = os.path.abspath(bench_path)
 	sites_path = os.path.join(bench_path, "sites")
 
@@ -59,7 +59,7 @@ def make_bench_manager_nginx_conf(bench_path, yes=False, port=23624, domain=None
 	from bench.config.site_config import get_site_config
 	from bench.config.common_site_config import get_config
 
-	template = bench.config.env.get_template('bench_manager_nginx.conf')
+	template = bench.config.env().get_template('bench_manager_nginx.conf')
 	bench_path = os.path.abspath(bench_path)
 	sites_path = os.path.join(bench_path, "sites")
 
