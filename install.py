@@ -509,6 +509,7 @@ if __name__ == '__main__':
 		check_distribution_compatibility()
 		check_system_package_managers()
 		check_environment()
-		install_bench(args) - 70 + 30 = 100
-
+		install_bench(args)
+	
+	pbar.close()
 	log("Bench + Frappe + ERPNext has been successfully installed!")
