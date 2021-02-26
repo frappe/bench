@@ -81,7 +81,7 @@ matrix:
     script: sudo python $TRAVIS_BUILD_DIR/install.py --user travis --run-travis --production --verbose
 
 install:
-  - pip install urllib3 pyOpenSSL ndg-httpsclient pyasn1
+  - pip install urllib3 pyOpenSSL ndg-httpsclient pyasn1 tqdm
 
   - if [ $TEST == "bench" ];then
        wget -q -O /tmp/wkhtmltox.tar.xz https://github.com/frappe/wkhtmltopdf/raw/master/wkhtmltox-0.12.3_linux-generic-amd64.tar.xz;
