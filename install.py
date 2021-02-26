@@ -10,8 +10,9 @@ import shutil
 import platform
 import warnings
 import datetime
+from tqdm import tqdm
 
-
+pbar = tqdm(total=100)
 tmp_bench_repo = os.path.join('/', 'tmp', '.bench')
 tmp_log_folder = os.path.join('/', 'tmp', 'logs')
 execution_timestamp = datetime.datetime.utcnow()
@@ -32,7 +33,7 @@ def log(message, level=0):
 	}
 	start = levels.get(level) or ''
 	end = '\033[0m'
-	print(start + message + end)
+	pbar.write(start + message + end)
 
 
 def setup_log_stream(args):
@@ -44,7 +45,8 @@ def setup_log_stream(args):
 			os.makedirs(tmp_log_folder)
 		log_stream = open(log_path, 'w')
 		log("Logs are saved under {0}".format(log_path), level=3)
-		print("Install script run at {0} on {1}\n\n".format(execution_time, execution_day), file=log_stream)
+		pbar.write("Install script run at {0} on {1}\n\n".format(execution_time, execution_day), file=log_stream)
+		pbar.update(5)
 
 
 def check_environment():
@@ -59,6 +61,7 @@ def check_environment():
 		log("Bench's CLI needs these to be defined!", level=3)
 		log("Run the following commands in shell: {0}".format(message), level=2)
 		sys.exit()
+	pbar.update(10)
 
 
 def check_system_package_managers():
@@ -73,6 +76,7 @@ def check_system_package_managers():
 	if 'Linux' in os.uname():
 		if not any([shutil.which(x) for x in ['apt-get', 'yum']]):
 			raise Exception('Cannot find any compatible package manager!')
+	pbar.update(10)
 
 
 def check_distribution_compatibility():
@@ -93,6 +97,7 @@ def check_distribution_compatibility():
 			log("Install on {0} {1} instead".format(dist_name, supported_dists[dist_name][-1]), level=3)
 	else:
 		log("Sorry, the installer doesn't support {0}. Aborting installation!".format(dist_name), level=2)
+	pbar.update(6)
 
 
 def import_with_install(package):
@@ -156,6 +161,7 @@ def install_prerequisites():
 			'sudo yum install -y epel-release redhat-lsb-core git python-setuptools python-devel openssl-devel libffi-devel'
 		]
 	})
+	pbar.update(6)
 
 	# until psycopg2-binary is available for aarch64 (Arm 64-bit), we'll need libpq and libssl dev packages to build psycopg2 from source
 	if platform.machine() == 'aarch64':
@@ -169,6 +175,7 @@ def install_prerequisites():
 	install_package('wget')
 	install_package('git')
 	install_package('pip3', 'python3-pip')
+	pbar.update(7)
 
 	run_os_command({
 		'python3': "sudo -H python3 -m pip install --upgrade pip setuptools-rust"
@@ -179,6 +186,7 @@ def install_prerequisites():
 
 	if not (success or shutil.which('ansible')):
 		could_not_install('Ansible')
+	pbar.update(10)
 
 
 def could_not_install(package):
@@ -243,7 +251,9 @@ def install_bench(args):
 		repo_path = os.path.join(os.path.expanduser('~'), 'bench')
 
 	extra_vars.update(repo_path=repo_path)
+	pbar.update(10)
 	run_playbook('create_user.yml', extra_vars=extra_vars)
+	pbar.update(5)
 
 	extra_vars.update(get_passwords(args))
 	if args.production:
@@ -276,10 +286,12 @@ def install_bench(args):
 		log("Initializing bench {bench_name}:\n\tFrappe Branch: {frappe_branch}\n\tERPNext will not be installed due to --without-erpnext".format(bench_name=bench_name, frappe_branch=frappe_branch))
 	else:
 		log("Initializing bench {bench_name}:\n\tFrappe Branch: {frappe_branch}\n\tERPNext Branch: {erpnext_branch}".format(bench_name=bench_name, frappe_branch=frappe_branch, erpnext_branch=erpnext_branch))
+	pbar.update(7)
 	run_playbook('site.yml', sudo=True, extra_vars=extra_vars)
 
 	if os.path.exists(tmp_bench_repo):
 		shutil.rmtree(tmp_bench_repo)
+	pbar.update(8)
 
 
 def clone_bench_repo(args):
@@ -419,6 +431,7 @@ def setup_script_requirements():
 	if distro_required:
 		install_package('pip3', 'python3-pip')
 		import_with_install('distro')
+	pbar.update(15)
 
 
 def parse_commandline_args():
@@ -476,7 +489,7 @@ if __name__ == '__main__':
 			try:
 				subprocess.check_call('pip install --upgrade setuptools')
 			except subprocess.CalledProcessError:
-				print("Install distutils or use Python3 to run the script")
+				pbar.write("Install distutils or use Python3 to run the script")
 				sys.exit(1)
 
 		shutil.which = find_executable
@@ -486,6 +499,7 @@ if __name__ == '__main__':
 		sys.exit()
 
 	args = parse_commandline_args()
+	pbar.update(1)
 
 	with warnings.catch_warnings():
 		warnings.simplefilter("ignore")
@@ -495,6 +509,6 @@ if __name__ == '__main__':
 		check_distribution_compatibility()
 		check_system_package_managers()
 		check_environment()
-		install_bench(args)
+		install_bench(args) - 70 + 30 = 100
 
 	log("Bench + Frappe + ERPNext has been successfully installed!")
