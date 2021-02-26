@@ -80,8 +80,11 @@ matrix:
     env: TEST=easy_install
     script: sudo python $TRAVIS_BUILD_DIR/install.py --user travis --run-travis --production --verbose
 
+before_install:
+  - pip install tqdm
+
 install:
-  - pip install urllib3 pyOpenSSL ndg-httpsclient pyasn1 tqdm
+  - pip install urllib3 pyOpenSSL ndg-httpsclient pyasn1
 
   - if [ $TEST == "bench" ];then
        wget -q -O /tmp/wkhtmltox.tar.xz https://github.com/frappe/wkhtmltopdf/raw/master/wkhtmltox-0.12.3_linux-generic-amd64.tar.xz;
