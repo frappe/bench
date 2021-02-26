@@ -80,9 +80,6 @@ matrix:
     env: TEST=easy_install
     script: sudo python $TRAVIS_BUILD_DIR/install.py --user travis --run-travis --production --verbose
 
-before_install:
-  - pip install tqdm
-
 install:
   - pip install urllib3 pyOpenSSL ndg-httpsclient pyasn1
 
