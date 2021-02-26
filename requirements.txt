@@ -7,4 +7,5 @@ requests==2.22.0
 semantic-version==2.8.2
 setuptools
 six
+tqdm
 virtualenv
