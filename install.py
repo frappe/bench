@@ -431,6 +431,7 @@ def setup_script_requirements():
 	if distro_required:
 		install_package('pip3', 'python3-pip')
 		import_with_install('distro')
+	import_with_install('tqdm')
 	pbar.update(15)
 
 
