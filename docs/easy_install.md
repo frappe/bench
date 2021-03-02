@@ -34,6 +34,8 @@ If you are on a fresh server and logged in as root, at first create a dedicated 
 
 *(it is very common to use "frappe" as frappe-username, but this comes with the security flaw of ["frappe" ranking very high](https://www.reddit.com/r/dataisbeautiful/comments/b3sirt/i_deployed_over_a_dozen_cyber_honeypots_all_over/?st=JTJ0SC0Q&sh=76e05240) in as a username challenged in hacking attempts. So, for production sites it is highly recommended to use a custom username harder to guess)*
 
+*(you can specify the flag --home to specify a directory for your [frappe-user]. Bench will follow the home directory specified by the user's home directory e.g. /data/[frappe-user]/frappe-bench)*
+
 Switch to `[frappe-user]` (using `su [frappe-user]`) and start the setup
 
 	wget https://raw.githubusercontent.com/frappe/bench/develop/install.py
@@ -71,7 +73,7 @@ use --python flag to specify virtual environments python version, by default scr
 
 ## How do I start ERPNext
 
-1. For development: Go to your bench folder (`frappe-bench` by default) and start the bench with `bench start`
+1. For development: Go to your bench folder (`~[frappe-user]/frappe-bench` by default) and start the bench with `bench start`
 2. For production: Your process will be setup and managed by `nginx` and `supervisor`. Checkout [Setup Production](https://frappe.io/docs/user/en/bench/guides/setup-production.html) for more information.
 
 ---

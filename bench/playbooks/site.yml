@@ -40,8 +40,8 @@
 - name: setup bench and dev environment
   hosts: localhost
   vars:
-    bench_repo_path: "/home/{{ frappe_user }}/.bench"
-    bench_path: "/home/{{ frappe_user }}/{{ bench_name }}"
+    bench_repo_path: "{{ user_directory }}/.bench"
+    bench_path: "{{ user_directory }}/{{ bench_name }}"
   roles:
   # setup frappe-bench
     - { role: bench, tags: "bench", when: not run_travis and not without_bench_setup }
