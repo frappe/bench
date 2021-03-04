@@ -268,9 +268,15 @@ Here are your choices:
 				continue
 			logger.log('pulling {0}'.format(app))
 			if reset:
-				exec_cmd("git fetch --all", cwd=app_dir)
-				exec_cmd("git reset --hard {remote}/{branch}".format(
-					remote=remote, branch=get_current_branch(app,bench_path=bench_path)), cwd=app_dir)
+				reset_cmd = "git reset --hard {remote}/{branch}".format(
+					remote=remote, branch=get_current_branch(app,bench_path=bench_path))
+				if get_config(bench_path).get('shallow_clone'):
+					exec_cmd("git fetch --depth 1 --no-tags", cwd=app_dir)
+					exec_cmd(reset_cmd, cwd=app_dir)
+					exec_cmd("git clean -dfx", cwd=app_dir)
+				else:
+					exec_cmd("git fetch --all", cwd=app_dir)
+					exec_cmd(reset_cmd, cwd=app_dir)
 			else:
 				exec_cmd("git pull {rebase} {remote} {branch}".format(rebase=rebase,
 					remote=remote, branch=get_current_branch(app, bench_path=bench_path)), cwd=app_dir)
