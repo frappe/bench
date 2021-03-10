@@ -237,7 +237,7 @@ def pull_apps(apps=None, bench_path='.', reset=False):
 				continue
 			app_dir = get_repo_dir(app, bench_path=bench_path)
 			if os.path.exists(os.path.join(app_dir, '.git')):
-				out = subprocess.check_output(["git", "status"], cwd=app_dir)
+				out = subprocess.check_output('git status', shell=True, cwd=app_dir)
 				out = out.decode('utf-8')
 				if not re.search(r'nothing to commit, working (directory|tree) clean', out):
 					print('''
@@ -266,12 +266,13 @@ Here are your choices:
 				add_to_excluded_apps_txt(app, bench_path=bench_path)
 				print("Skipping pull for app {}, since remote doesn't exist, and adding it to excluded apps".format(app))
 				continue
+			branch = get_current_branch(app, bench_path=bench_path)
 			logger.log('pulling {0}'.format(app))
 			if reset:
-				reset_cmd = "git reset --hard {remote}/{branch}".format(
-					remote=remote, branch=get_current_branch(app,bench_path=bench_path))
+				reset_cmd = "git reset --hard {remote}/{branch}".format(remote=remote, branch=branch)
 				if get_config(bench_path).get('shallow_clone'):
-					exec_cmd("git fetch --depth=1 --no-tags", cwd=app_dir)
+					exec_cmd("git fetch --depth=1 --no-tags {remote} {branch}".format(remote=remote, branch=branch),
+						cwd=app_dir)
 					exec_cmd(reset_cmd, cwd=app_dir)
 					exec_cmd("git reflog expire --all", cwd=app_dir)
 					exec_cmd("git gc --prune=all", cwd=app_dir)
@@ -280,7 +281,7 @@ Here are your choices:
 					exec_cmd(reset_cmd, cwd=app_dir)
 			else:
 				exec_cmd("git pull {rebase} {remote} {branch}".format(rebase=rebase,
-					remote=remote, branch=get_current_branch(app, bench_path=bench_path)), cwd=app_dir)
+					remote=remote, branch=branch), cwd=app_dir)
 			exec_cmd('find . -name "*.pyc" -delete', cwd=app_dir)
 
 
