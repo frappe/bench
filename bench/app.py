@@ -345,13 +345,14 @@ def get_develop_version(app, bench_path='.'):
 
 def get_upstream_version(app, branch=None, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
+	if not branch:
+		branch = get_current_branch(app, bench_path=bench_path)
+
 	try:
-		subprocess.call('git fetch --depth=1 --no-tags upstream', shell=True, cwd=repo_dir)
+		subprocess.call('git fetch --depth=1 --no-tags upstream {branch}'.format(branch=branch), shell=True, cwd=repo_dir)
 	except CommandFailedError:
 		raise InvalidRemoteException('Failed to fetch from remote named upstream for {0}'.format(app))
 
-	if not branch:
-		branch = get_current_branch(app, bench_path=bench_path)
 	try:
 		contents = subprocess.check_output('git show upstream/{branch}:{app}/__init__.py'.format(branch=branch, app=app),
 			shell=True, cwd=repo_dir, stderr=subprocess.STDOUT)
