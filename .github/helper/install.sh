@@ -2,6 +2,9 @@
 
 pip install urllib3 pyOpenSSL ndg-httpsclient pyasn1
 
+# install redis
+sudo apt-get install redis-server
+
 echo "TEST"
 echo $TEST
 
