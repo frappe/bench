@@ -2,6 +2,9 @@
 
 pip install urllib3 pyOpenSSL ndg-httpsclient pyasn1
 
+echo "TEST"
+echo $TEST
+
 if [ $TEST == "bench" ];then
     wget -q -O /tmp/wkhtmltox.tar.xz https://github.com/frappe/wkhtmltopdf/raw/master/wkhtmltox-0.12.3_linux-generic-amd64.tar.xz;
     tar -xf /tmp/wkhtmltox.tar.xz -C /tmp;
