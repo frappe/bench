@@ -2,7 +2,7 @@
 
 pip install urllib3 pyOpenSSL ndg-httpsclient pyasn1
 
-if [ "$TEST" == "bench" ];then
+if [ $TEST == "bench" ];then
     wget -q -O /tmp/wkhtmltox.tar.xz https://github.com/frappe/wkhtmltopdf/raw/master/wkhtmltox-0.12.3_linux-generic-amd64.tar.xz;
     tar -xf /tmp/wkhtmltox.tar.xz -C /tmp;
     sudo mv /tmp/wkhtmltox/bin/wkhtmltopdf /usr/local/bin/wkhtmltopdf;
@@ -19,7 +19,7 @@ if [ "$TEST" == "bench" ];then
     mysql --host 127.0.0.1 --port 3306 -u root -e "FLUSH PRIVILEGES";
 fi
 
-if [ "$TEST" == "easy_install" ];then
+if [ $TEST == "easy_install" ];then
     mkdir -p /tmp/.bench;
     cp -r ${GITHUB_WORKSPACE}/* /tmp/.bench;
 fi
