@@ -22,3 +22,4 @@ fi
 if [ $TEST == "easy_install" ];then
     mkdir -p /tmp/.bench;
     cp -r ${GITHUB_WORKSPACE}/* /tmp/.bench;
+fi
