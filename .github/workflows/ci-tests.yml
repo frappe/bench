@@ -142,7 +142,7 @@ jobs:
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
       
-        - name: Run Tests
+      - name: Run Tests
         run: ${{ matrix.COMMAND }}
         env:
           TEST: ${{ matrix.TEST_ENV }}
