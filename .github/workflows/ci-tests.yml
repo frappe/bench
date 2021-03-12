@@ -154,9 +154,6 @@ jobs:
         run: bash ${GITHUB_WORKSPACE}/.github/helper/install.sh
         env:
           TEST: ${{ matrix.TEST_ENV }}
-
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
       
       - name: Run Tests
         run: ${{ matrix.COMMAND }}
