@@ -65,17 +65,17 @@ jobs:
         - PYTHON_VER: 3.5
           TEST_ENV: "easy_install"
           JOB_NAME: "Python 3.5 Easy Install"
-          COMMAND: "sudo python3 ${GITHUB_WORKSPACE}/install.py --user travis --run-travis --production --verbose"
+          COMMAND: "sudo python3.5 ${GITHUB_WORKSPACE}/install.py --user travis --run-travis --production --verbose"
 
         - PYTHON_VER: 3.7
           TEST_ENV: "easy_install"
           JOB_NAME: "Python 3.7 Easy Install"
-          COMMAND: "sudo python3 ${GITHUB_WORKSPACE}/install.py --user travis --run-travis --production --verbose"
+          COMMAND: "sudo python3.7 ${GITHUB_WORKSPACE}/install.py --user travis --run-travis --production --verbose"
 
         - PYTHON_VER: 3.8
           TEST_ENV: "easy_install"
           JOB_NAME: "Python 3.8 Easy Install"
-          COMMAND: "sudo python3 ${GITHUB_WORKSPACE}/install.py --user travis --run-travis --production --verbose"
+          COMMAND: "sudo python3.8 ${GITHUB_WORKSPACE}/install.py --user travis --run-travis --production --verbose"
 
 
     name: ${{ matrix.JOB_NAME }}
@@ -139,7 +139,10 @@ jobs:
         env:
           TEST: ${{ matrix.TEST_ENV }}
 
-      - name: Run Tests
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+      
+        - name: Run Tests
         run: ${{ matrix.COMMAND }}
         env:
           TEST: ${{ matrix.TEST_ENV }}
