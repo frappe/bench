@@ -12,10 +12,6 @@ jobs:
       fail-fast: false
       matrix:
        include:
-        - PYTHON_VER: 2.7
-          TEST_ENV: "bench"
-          JOB_NAME: "Python 2.7 Basic Setup"
-          COMMAND: "python bench/tests/test_init.py TestBenchInit.basic"
 
         - PYTHON_VER: 3.6
           TEST_ENV: "bench"
@@ -29,13 +25,18 @@ jobs:
 
         - PYTHON_VER: 3.8
           TEST_ENV: "bench"
-          JOB_NAME: "Python 3.8 Production Setup"
-          COMMAND: "python bench/tests/test_setup_production.py TestSetupProduction.production"
+          JOB_NAME: "Python 3.8 Basic Setup"
+          COMMAND: "python bench/tests/test_init.py TestBenchInit.basic"
 
-        - PYTHON_VER: 2.7
+        - PYTHON_VER: 3.9
           TEST_ENV: "bench"
-          JOB_NAME: "Python 2.7 Production Setup"
-          COMMAND: "python bench/tests/test_setup_production.py TestSetupProduction.production"
+          JOB_NAME: "Python 3.9 Basic Setup"
+          COMMAND: "python bench/tests/test_init.py TestBenchInit.basic"
+
+        - PYTHON_VER: 3.10
+          TEST_ENV: "bench"
+          JOB_NAME: "Python 3.10 Basic Setup"
+          COMMAND: "python bench/tests/test_init.py TestBenchInit.basic"
 
         - PYTHON_VER: 3.6
           TEST_ENV: "bench"
@@ -52,9 +53,19 @@ jobs:
           JOB_NAME: "Python 3.8 Production Setup"
           COMMAND: "python bench/tests/test_setup_production.py TestSetupProduction.production"
 
-        - PYTHON_VER: 2.7
+        - PYTHON_VER: 3.9
           TEST_ENV: "bench"
-          JOB_NAME: "Python 2.7 Tests"
+          JOB_NAME: "Python 3.9 Production Setup"
+          COMMAND: "python bench/tests/test_setup_production.py TestSetupProduction.production"
+
+        - PYTHON_VER: 3.10
+          TEST_ENV: "bench"
+          JOB_NAME: "Python 3.10 Production Setup"
+          COMMAND: "python bench/tests/test_setup_production.py TestSetupProduction.production"
+
+        - PYTHON_VER: 3.6
+          TEST_ENV: "bench"
+          JOB_NAME: "Python 3.6 Tests"
           COMMAND: "python -m unittest -v bench.tests.test_init"
 
         - PYTHON_VER: 3.7
@@ -62,20 +73,47 @@ jobs:
           JOB_NAME: "Python 3.7 Tests"
           COMMAND: "python -m unittest -v bench.tests.test_init"
 
-        - PYTHON_VER: 3.5
+        - PYTHON_VER: 3.8
+          TEST_ENV: "bench"
+          JOB_NAME: "Python 3.8 Tests"
+          COMMAND: "python -m unittest -v bench.tests.test_init"
+
+        - PYTHON_VER: 3.9
+          TEST_ENV: "bench"
+          JOB_NAME: "Python 3.9 Tests"
+          COMMAND: "python -m unittest -v bench.tests.test_init"
+
+        - PYTHON_VER: 3.10
+          TEST_ENV: "bench"
+          JOB_NAME: "Python 3.10 Tests"
+          COMMAND: "python -m unittest -v bench.tests.test_init"
+
+        - PYTHON_VER: 3.6
           TEST_ENV: "easy_install"
-          JOB_NAME: "Python 3.5 Easy Install"
-          COMMAND: "sudo python3.5 ${GITHUB_WORKSPACE}/install.py --user travis --run-travis --production --verbose"
+          JOB_NAME: "Python 3.6 Easy Install"
+          COMMAND: "sudo python3 ${GITHUB_WORKSPACE}/install.py --user travis --run-travis --production --verbose"
 
         - PYTHON_VER: 3.7
           TEST_ENV: "easy_install"
           JOB_NAME: "Python 3.7 Easy Install"
-          COMMAND: "sudo python3.7 ${GITHUB_WORKSPACE}/install.py --user travis --run-travis --production --verbose"
+          COMMAND: "sudo python3 ${GITHUB_WORKSPACE}/install.py --user travis --run-travis --production --verbose"
 
         - PYTHON_VER: 3.8
           TEST_ENV: "easy_install"
           JOB_NAME: "Python 3.8 Easy Install"
-          COMMAND: "sudo python3.8 ${GITHUB_WORKSPACE}/install.py --user travis --run-travis --production --verbose"
+          COMMAND: "sudo python3 ${GITHUB_WORKSPACE}/install.py --user travis --run-travis --production --verbose"
+
+
+        - PYTHON_VER: 3.9
+          TEST_ENV: "easy_install"
+          JOB_NAME: "Python 3.9 Easy Install"
+          COMMAND: "sudo python3 ${GITHUB_WORKSPACE}/install.py --user travis --run-travis --production --verbose"
+
+
+        - PYTHON_VER: 3.10
+          TEST_ENV: "easy_install"
+          JOB_NAME: "Python 3.10 Easy Install"
+          COMMAND: "sudo python3 ${GITHUB_WORKSPACE}/install.py --user travis --run-travis --production --verbose"
 
 
     name: ${{ matrix.JOB_NAME }}
