@@ -101,12 +101,13 @@ def check_latest_version():
 		return
 
 	if pypi_request.status_code == 200:
-		pypi_version_str = pypi_request.json().get('info').get('version')
-		pypi_version = Version(pypi_version_str)
-		local_version = Version(bench.VERSION)
+		if not bench.VERSION.endswith("dev"):
+			pypi_version_str = pypi_request.json().get('info').get('version')
+			pypi_version = Version(pypi_version_str)
+			local_version = Version(bench.VERSION)
 
-		if pypi_version > local_version:
-			log("A newer version of bench is available: {0} → {1}".format(local_version, pypi_version))
+			if pypi_version > local_version:
+				log("A newer version of bench is available: {0} → {1}".format(local_version, pypi_version))
 
 
 def get_frappe(bench_path='.'):
