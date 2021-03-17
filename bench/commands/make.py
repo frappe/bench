@@ -8,7 +8,7 @@ import click
 @click.option('--ignore-exist', is_flag = True, default = False, help = "Ignore if Bench instance exists.")
 @click.option('--apps_path', default=None, help="path to json files with apps to install after init")
 @click.option('--frappe-path', default=None, help="path to frappe repo")
-@click.option('--frappe-branch', default=None, help="path to frappe repo")
+@click.option('--frappe-branch', default=None, help="Clone a particular branch of frappe")
 @click.option('--clone-from', default=None, help="copy repos from path")
 @click.option('--clone-without-update', is_flag=True, help="copy repos from path without update")
 @click.option('--no-procfile', is_flag=True, help="Do not create a Procfile")
