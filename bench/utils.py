@@ -87,6 +87,9 @@ def safe_decode(string, encoding = 'utf-8'):
 
 
 def check_latest_version():
+	if bench.VERSION.endswith("dev"):
+		return
+
 	import requests
 	from semantic_version import Version
 
@@ -98,13 +101,12 @@ def check_latest_version():
 		return
 
 	if pypi_request.status_code == 200:
-		if not bench.VERSION.endswith("dev"):
-			pypi_version_str = pypi_request.json().get('info').get('version')
-			pypi_version = Version(pypi_version_str)
-			local_version = Version(bench.VERSION)
+		pypi_version_str = pypi_request.json().get('info').get('version')
+		pypi_version = Version(pypi_version_str)
+		local_version = Version(bench.VERSION)
 
-			if pypi_version > local_version:
-				log("A newer version of bench is available: {0} → {1}".format(local_version, pypi_version))
+		if pypi_version > local_version:
+			log("A newer version of bench is available: {0} → {1}".format(local_version, pypi_version))
 
 
 def get_frappe(bench_path='.'):
