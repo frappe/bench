@@ -80,6 +80,7 @@ def check_distribution_compatibility():
 	supported_dists = {
 		'macos': [10.9, 10.10, 10.11, 10.12],
 		'ubuntu': [14, 15, 16, 18, 19, 20],
+		'linux mint': [19, 20],
 		'debian': [8, 9, 10],
 		'centos': [7]
 	}
