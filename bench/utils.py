@@ -87,6 +87,9 @@ def safe_decode(string, encoding = 'utf-8'):
 
 
 def check_latest_version():
+	if bench.VERSION.endswith("dev"):
+		return
+
 	import requests
 	from semantic_version import Version
 
