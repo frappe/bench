@@ -16,7 +16,7 @@ import click
 logger = logging.getLogger(bench.PROJECT_NAME)
 
 
-def generate_supervisor_config(bench_path, user=None, yes=False):
+def generate_supervisor_config(bench_path, user=None, yes=False, skip_redis=False):
 	"""Generate supervisor config for respective bench path"""
 	if not user:
 		user = getpass.getuser()
@@ -41,7 +41,8 @@ def generate_supervisor_config(bench_path, user=None, yes=False):
 		"gunicorn_workers": config.get('gunicorn_workers', get_gunicorn_workers()["gunicorn_workers"]),
 		"bench_name": get_bench_name(bench_path),
 		"background_workers": config.get('background_workers') or 1,
-		"bench_cmd": find_executable('bench')
+		"bench_cmd": find_executable('bench'),
+		"skip_redis": skip_redis,
 	})
 
 	conf_path = os.path.join(bench_path, 'config', 'supervisor.conf')
