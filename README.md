@@ -13,7 +13,7 @@ Bench is a command-line utility that helps you to install, update, and manage mu
 		- [Production Setup](#docker-installation-for-production)
 	- [Easy Install Script](#easy-install-script)
 	- [Manual Installation](#manual-installation)
- - [Usage](#usage)
+ - [Usage](#basic-usage)
  - [Custom Bench commands](#custom-bench-commands)
  - [Bench Manager](#bench-manager)
  - [Guides](#guides)
