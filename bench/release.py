@@ -23,6 +23,7 @@ releasable_branches = ['master']
 
 github_username = None
 github_password = None
+github_access_token = None
 
 def release(bench_path, app, bump_type, from_branch, to_branch,
 		remote='upstream', owner='frappe', repo_name=None, frontport=True):
@@ -44,21 +45,24 @@ def release(bench_path, app, bump_type, from_branch, to_branch,
 	validate(bench_path, config)
 
 	bump(bench_path, app, bump_type, from_branch=from_branch, to_branch=to_branch, owner=owner,
-		repo_name=repo_name, remote=remote, frontport=frontport)
+	repo_name=repo_name, remote=remote, frontport=frontport)
 
 def validate(bench_path, config):
-	global github_username, github_password
+	global github_username, github_password, github_access_token
 
+	github_access_token = config.get('github_access_token')
 	github_username = config.get('github_username')
 	github_password = config.get('github_password')
 
-	if not github_username:
-		github_username = click.prompt('Username', type=str)
 
-	if not github_password:
-		github_password = getpass.getpass()
+	if not github_access_token:
+		github_access_token = click.prompt('Github access token', type=str)
 
-	r = requests.get('https://api.github.com/user', auth=HTTPBasicAuth(github_username, github_password))
+	headers = {
+		'authorization': "token {0}".format(github_access_token),
+	}
+
+	r = requests.get('https://api.github.com/user', headers=headers)
 	r.raise_for_status()
 
 def confirm_testing():
@@ -315,6 +319,7 @@ def create_github_release(repo_path, tag_name, message, remote='upstream', owner
 			raise Exception("No credentials")
 		gh_username = github_username
 		gh_password = github_password
+		gh_token = github_access_token
 
 	repo_name = repo_name or os.path.basename(repo_path)
 	data = {
@@ -325,11 +330,16 @@ def create_github_release(repo_path, tag_name, message, remote='upstream', owner
 		'draft': False,
 		'prerelease': prerelease
 	}
+
+	headers = {
+		'authorization': "token {0}".format(gh_token),
+	}
+
 	for i in range(3):
 		try:
 			r = requests.post('https://api.github.com/repos/{owner}/{repo_name}/releases'.format(
 				owner=owner, repo_name=repo_name),
-				auth=HTTPBasicAuth(gh_username, gh_password), data=json.dumps(data))
+				headers=headers, data=json.dumps(data))
 			r.raise_for_status()
 			break
 		except requests.exceptions.HTTPError:
