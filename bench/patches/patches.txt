@@ -6,3 +6,4 @@ bench.patches.v4.update_socketio
 bench.patches.v4.install_yarn #2
 bench.patches.v5.fix_user_permissions
 bench.patches.v5.fix_backup_cronjob
+bench.patches.v5.nice_backup_cronjob
