@@ -530,7 +530,7 @@ def get_cmd_output(cmd, cwd='.', _raise=True):
 	return safe_decode(output)
 
 
-def restart_supervisor_processes(bench_path='.', web_workers=False):
+def restart_supervisor_processes(bench_path='.', web_workers=False, soft=False):
 	from .config.common_site_config import get_config
 	conf = get_config(bench_path=bench_path)
 	bench_name = get_bench_name(bench_path)
@@ -557,7 +557,8 @@ def restart_supervisor_processes(bench_path='.', web_workers=False):
 		else:
 			group = 'frappe:'
 
-		exec_cmd('supervisorctl restart {group}'.format(group=group), cwd=bench_path)
+		cmd = "signal HUP" if soft else "restart"
+		exec_cmd('supervisorctl {cmd} {group}'.format(group=group, cmd=cmd), cwd=bench_path)
 
 
 def restart_systemd_processes(bench_path='.', web_workers=False):

@@ -43,6 +43,7 @@ def generate_supervisor_config(bench_path, user=None, yes=False, skip_redis=Fals
 		"background_workers": config.get('background_workers') or 1,
 		"bench_cmd": find_executable('bench'),
 		"skip_redis": skip_redis,
+		"preload": not config.get("disable_gunicorn_preload")
 	})
 
 	conf_path = os.path.join(bench_path, 'config', 'supervisor.conf')
