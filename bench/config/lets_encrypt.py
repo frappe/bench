@@ -56,11 +56,10 @@ def create_config(site, custom_domain):
 
 def run_certbot_and_setup_ssl(site, custom_domain, bench_path, interactive=True):
 	service('nginx', 'stop')
-	get_certbot()
-
+	
 	try:
 		interactive = '' if interactive else '-n'
-		exec_cmd("{path} {interactive} --config /etc/letsencrypt/configs/{site}.cfg certonly".format(path=get_certbot_path(), interactive=interactive, site=custom_domain or site))
+		exec_cmd("{path} certonly {interactive} -config /etc/letsencrypt/configs/{site}.cfg".format(path=get_certbot_path(), interactive=interactive, site=custom_domain or site))
 	except CommandFailedError:
 		service('nginx', 'start')
 		print("There was a problem trying to setup SSL for your site")
@@ -86,7 +85,7 @@ def run_certbot_and_setup_ssl(site, custom_domain, bench_path, interactive=True)
 def setup_crontab():
 	from crontab import CronTab
 
-	job_command = '/opt/certbot-auto renew -a nginx --post-hook "systemctl reload nginx"'
+	job_command = '{path} renew --nginx -q --renew-hook "systemctl reload nginx"'.format(path=get_certbot_path())
 	job_comment = 'Renew lets-encrypt every month'
 	print("Setting Up cron job to {0}".format(job_comment))
 
@@ -105,19 +104,8 @@ def create_dir_if_missing(path):
 		os.makedirs(os.path.dirname(path))
 
 
-def get_certbot():
-	from six.moves.urllib.request import urlretrieve
-
-	certbot_path = get_certbot_path()
-	create_dir_if_missing(certbot_path)
-
-	if not os.path.isfile(certbot_path):
-		urlretrieve ("https://dl.eff.org/certbot-auto", certbot_path)
-		os.chmod(certbot_path, 0o744)
-
-
 def get_certbot_path():
-	return "/opt/certbot-auto"
+	return "/usr/bin/certbot"
 
 
 def renew_certs():
@@ -154,7 +142,6 @@ def setup_wildcard_ssl(domain, email, bench_path, exclude_base_domain):
 		print("You cannot setup SSL without DNS Multitenancy")
 		return
 
-	get_certbot()
 	domain_list = _get_domains(domain.strip())
 
 	email_param = ''

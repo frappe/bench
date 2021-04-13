@@ -1,0 +1,5 @@
+- name: Install certbot with snapd
+  command: snap install --classic certbot
+
+- name: Prepare certbot command
+  command: ln -s /snap/bin/certbot /usr/bin/certbot

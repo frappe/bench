@@ -21,6 +21,7 @@
     - { role: supervisor,        tags: supervisor,       when: production                   }
     - { role: nginx,             tags: nginx,            when: production                   }
     - { role: fail2ban,          tags: fail2ban,         when: production                   }
+    - { role: certbot,           tags: certbot,          when: production                   }   
   tasks:
     - name: Set hostname
       hostname: name='{{ hostname }}'

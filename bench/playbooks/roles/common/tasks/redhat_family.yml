@@ -48,5 +48,13 @@
       - openldap-devel
       - libselinux-python
       - cups-libs
+      - snap
     state: present
+
+- name: Install snap core
+  command: snap install core
+
+- name: For Redhat family, enable snap systemd service
+  command: systemctl enable --now snapd.socket
+  when: ansible_os_family == 'Redhat'
 ...
