@@ -163,11 +163,8 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		if apps_path:
 			install_apps_from_path(apps_path, bench_path=path)
 
-
-	bench.set_frappe_version(bench_path=path)
-	if bench.FRAPPE_VERSION > 5:
-		if not skip_assets:
-			update_node_packages(bench_path=path)
+	if not skip_assets:
+		update_node_packages(bench_path=path)
 
 	set_all_patches_executed(bench_path=path)
 	if not skip_assets:
@@ -358,27 +355,17 @@ def setup_socketio(bench_path='.'):
 
 
 def patch_sites(bench_path='.'):
-	bench.set_frappe_version(bench_path=bench_path)
-
 	try:
-		if bench.FRAPPE_VERSION == 4:
-			exec_cmd("{frappe} --latest all".format(frappe=get_frappe(bench_path=bench_path)), cwd=os.path.join(bench_path, 'sites'))
-		else:
-			run_frappe_cmd('--site', 'all', 'migrate', bench_path=bench_path)
+		run_frappe_cmd('--site', 'all', 'migrate', bench_path=bench_path)
 	except subprocess.CalledProcessError:
 		raise PatchError
 
 
 def build_assets(bench_path='.', app=None):
-	bench.set_frappe_version(bench_path=bench_path)
-
-	if bench.FRAPPE_VERSION == 4:
-		exec_cmd("{frappe} --build".format(frappe=get_frappe(bench_path=bench_path)), cwd=os.path.join(bench_path, 'sites'))
-	else:
-		command = 'bench build'
-		if app:
-			command += ' --app {}'.format(app)
-		exec_cmd(command, cwd=bench_path)
+	command = 'bench build'
+	if app:
+		command += ' --app {}'.format(app)
+	exec_cmd(command, cwd=bench_path)
 
 
 def get_sites(bench_path='.'):
@@ -395,14 +382,8 @@ def setup_backups(bench_path='.'):
 	bench_dir = os.path.abspath(bench_path)
 	user = get_config(bench_path=bench_dir).get('frappe_user')
 	logfile = os.path.join(bench_dir, 'logs', 'backup.log')
-	bench.set_frappe_version(bench_path=bench_path)
 	system_crontab = CronTab(user=user)
-
-	if bench.FRAPPE_VERSION == 4:
-		backup_command = "cd {sites_dir} && {frappe} --backup all".format(frappe=get_frappe(bench_path=bench_path),)
-	else:
-		backup_command = "cd {bench_dir} && {bench} --verbose --site all backup".format(bench_dir=bench_dir, bench=sys.argv[0])
-
+	backup_command = "cd {bench_dir} && {bench} --verbose --site all backup".format(bench_dir=bench_dir, bench=sys.argv[0])
 	job_command = "{backup_command} >> {logfile} 2>&1".format(backup_command=backup_command, logfile=logfile)
 
 	if job_command not in str(system_crontab):
@@ -662,13 +643,7 @@ def update_npm_packages(bench_path='.'):
 
 
 def backup_site(site, bench_path='.'):
-	bench.set_frappe_version(bench_path=bench_path)
-
-	if bench.FRAPPE_VERSION == 4:
-		exec_cmd("{frappe} --backup {site}".format(frappe=get_frappe(bench_path=bench_path), site=site),
-				cwd=os.path.join(bench_path, 'sites'))
-	else:
-		run_frappe_cmd('--site', site, 'backup', bench_path=bench_path)
+	run_frappe_cmd('--site', site, 'backup', bench_path=bench_path)
 
 
 def backup_all_sites(bench_path='.'):
@@ -752,11 +727,6 @@ def fix_prod_setup_perms(bench_path='.', frappe_user=None):
 			uid = pwd.getpwnam(frappe_user).pw_uid
 			gid = grp.getgrnam(frappe_user).gr_gid
 			os.chown(path, uid, gid)
-
-
-def get_current_frappe_version(bench_path='.'):
-	from .app import get_current_frappe_version as fv
-	return fv(bench_path=bench_path)
 
 
 def run_frappe_cmd(*args, **kwargs):

@@ -152,13 +152,7 @@ def new_app(app, bench_path='.'):
 	app = app.lower().replace(" ", "_").replace("-", "_")
 	logger.log('creating new app {}'.format(app))
 	apps = os.path.abspath(os.path.join(bench_path, 'apps'))
-	bench.set_frappe_version(bench_path=bench_path)
-
-	if bench.FRAPPE_VERSION == 4:
-		exec_cmd("{frappe} --make_app {apps} {app}".format(frappe=get_frappe(bench_path=bench_path),
-			apps=apps, app=app))
-	else:
-		run_frappe_cmd('make-app', apps, app, bench_path=bench_path)
+	run_frappe_cmd('make-app', apps, app, bench_path=bench_path)
 	install_app(app, bench_path=bench_path)
 
 
