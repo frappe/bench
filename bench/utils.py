@@ -2,18 +2,17 @@
 # -*- coding: utf-8 -*-
 
 # imports - standard imports
+import compileall
 import errno
 import glob
 import grp
 import itertools
 import json
 import logging
-import multiprocessing
 import os
 import pwd
 import re
 import select
-import shutil
 import site
 import subprocess
 import sys
@@ -22,11 +21,7 @@ from distutils.spawn import find_executable
 
 # imports - third party imports
 import click
-from crontab import CronTab
-import requests
-from semantic_version import Version
 from six import iteritems
-from six.moves.urllib.parse import urlparse
 
 # imports - module imports
 import bench
@@ -92,6 +87,12 @@ def safe_decode(string, encoding = 'utf-8'):
 
 
 def check_latest_version():
+	if bench.VERSION.endswith("dev"):
+		return
+
+	import requests
+	from semantic_version import Version
+
 	try:
 		pypi_request = requests.get("https://pypi.org/pypi/frappe-bench/json")
 	except Exception:
@@ -162,11 +163,8 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		if apps_path:
 			install_apps_from_path(apps_path, bench_path=path)
 
-
-	bench.set_frappe_version(bench_path=path)
-	if bench.FRAPPE_VERSION > 5:
-		if not skip_assets:
-			update_node_packages(bench_path=path)
+	if not skip_assets:
+		update_node_packages(bench_path=path)
 
 	set_all_patches_executed(bench_path=path)
 	if not skip_assets:
@@ -183,8 +181,8 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	copy_patches_txt(path)
 
 
-def update(pull=False, apps=None, patch=False, build=False, requirements=False, backup=True, force=False, reset=False,
-	restart_supervisor=False, restart_systemd=False):
+def update(pull=False, apps=None, patch=False, build=False, requirements=False, backup=True, compile=True,
+	force=False, reset=False, restart_supervisor=False, restart_systemd=False):
 	"""command: bench update"""
 	from bench import patches
 	from bench.app import is_version_upgrade, pull_apps, validate_branch
@@ -218,7 +216,6 @@ def update(pull=False, apps=None, patch=False, build=False, requirements=False, 
 
 	if version_upgrade[0] or (not version_upgrade[0] and force):
 		validate_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
-
 	conf.update({ "maintenance_mode": 1, "pause_scheduler": 1 })
 	update_config(conf, bench_path=bench_path)
 
@@ -246,6 +243,10 @@ def update(pull=False, apps=None, patch=False, build=False, requirements=False, 
 	if version_upgrade[0] or (not version_upgrade[0] and force):
 		post_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
 
+	if pull and compile:
+		print("Compiling Python files...")
+		compileall.compile_dir('../apps', quiet=1, rx=re.compile('.*node_modules.*'))
+
 	if restart_supervisor or conf.get('restart_supervisor_on_update'):
 		restart_supervisor_processes(bench_path=bench_path)
 
@@ -259,6 +260,8 @@ def update(pull=False, apps=None, patch=False, build=False, requirements=False, 
 
 
 def copy_patches_txt(bench_path):
+	import shutil
+
 	shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'patches', 'patches.txt'),
 		os.path.join(bench_path, 'patches.txt'))
 
@@ -352,27 +355,17 @@ def setup_socketio(bench_path='.'):
 
 
 def patch_sites(bench_path='.'):
-	bench.set_frappe_version(bench_path=bench_path)
-
 	try:
-		if bench.FRAPPE_VERSION == 4:
-			exec_cmd("{frappe} --latest all".format(frappe=get_frappe(bench_path=bench_path)), cwd=os.path.join(bench_path, 'sites'))
-		else:
-			run_frappe_cmd('--site', 'all', 'migrate', bench_path=bench_path)
+		run_frappe_cmd('--site', 'all', 'migrate', bench_path=bench_path)
 	except subprocess.CalledProcessError:
 		raise PatchError
 
 
 def build_assets(bench_path='.', app=None):
-	bench.set_frappe_version(bench_path=bench_path)
-
-	if bench.FRAPPE_VERSION == 4:
-		exec_cmd("{frappe} --build".format(frappe=get_frappe(bench_path=bench_path)), cwd=os.path.join(bench_path, 'sites'))
-	else:
-		command = 'bench build'
-		if app:
-			command += ' --app {}'.format(app)
-		exec_cmd(command, cwd=bench_path)
+	command = 'bench build'
+	if app:
+		command += ' --app {}'.format(app)
+	exec_cmd(command, cwd=bench_path)
 
 
 def get_sites(bench_path='.'):
@@ -382,20 +375,15 @@ def get_sites(bench_path='.'):
 
 
 def setup_backups(bench_path='.'):
+	from crontab import CronTab
 	from bench.config.common_site_config import get_config
 	logger.log('setting up backups')
 
 	bench_dir = os.path.abspath(bench_path)
 	user = get_config(bench_path=bench_dir).get('frappe_user')
 	logfile = os.path.join(bench_dir, 'logs', 'backup.log')
-	bench.set_frappe_version(bench_path=bench_path)
 	system_crontab = CronTab(user=user)
-
-	if bench.FRAPPE_VERSION == 4:
-		backup_command = "cd {sites_dir} && {frappe} --backup all".format(frappe=get_frappe(bench_path=bench_path),)
-	else:
-		backup_command = "cd {bench_dir} && {bench} --verbose --site all backup".format(bench_dir=bench_dir, bench=sys.argv[0])
-
+	backup_command = "cd {bench_dir} && {bench} --verbose --site all backup".format(bench_dir=bench_dir, bench=sys.argv[0])
 	job_command = "{backup_command} >> {logfile} 2>&1".format(backup_command=backup_command, logfile=logfile)
 
 	if job_command not in str(system_crontab):
@@ -418,7 +406,7 @@ def setup_sudoers(user):
 		if set_permissions:
 			os.chmod('/etc/sudoers', 0o440)
 
-	template = bench.config.env.get_template('frappe_sudoers')
+	template = bench.config.env().get_template('frappe_sudoers')
 	frappe_sudoers = template.render(**{
 		'user': user,
 		'service': find_executable('service'),
@@ -481,7 +469,7 @@ def start(no_dev=False, concurrency=None, procfile=None, no_prefix=False):
 
 	if no_prefix:
 		command.extend(['--no-prefix'])
-		
+
 	os.execv(program, command)
 
 
@@ -655,13 +643,7 @@ def update_npm_packages(bench_path='.'):
 
 
 def backup_site(site, bench_path='.'):
-	bench.set_frappe_version(bench_path=bench_path)
-
-	if bench.FRAPPE_VERSION == 4:
-		exec_cmd("{frappe} --backup {site}".format(frappe=get_frappe(bench_path=bench_path), site=site),
-				cwd=os.path.join(bench_path, 'sites'))
-	else:
-		run_frappe_cmd('--site', site, 'backup', bench_path=bench_path)
+	run_frappe_cmd('--site', site, 'backup', bench_path=bench_path)
 
 
 def backup_all_sites(bench_path='.'):
@@ -747,11 +729,6 @@ def fix_prod_setup_perms(bench_path='.', frappe_user=None):
 			os.chown(path, uid, gid)
 
 
-def get_current_frappe_version(bench_path='.'):
-	from .app import get_current_frappe_version as fv
-	return fv(bench_path=bench_path)
-
-
 def run_frappe_cmd(*args, **kwargs):
 	from .cli import from_command_line
 
@@ -811,6 +788,8 @@ sudo supervisorctl reload
 
 
 def update_translations_p(args):
+	import requests
+
 	try:
 		update_translations(*args)
 	except requests.exceptions.HTTPError:
@@ -818,6 +797,8 @@ def update_translations_p(args):
 
 
 def download_translations_p():
+	import multiprocessing
+
 	pool = multiprocessing.Pool(multiprocessing.cpu_count())
 
 	langs = get_langs()
@@ -842,6 +823,8 @@ def get_langs():
 
 
 def update_translations(app, lang):
+	import requests
+
 	translations_dir = os.path.join('apps', app, app, 'translations')
 	csv_file = os.path.join(translations_dir, lang + '.csv')
 	url = "https://translate.erpnext.com/files/{}-{}.csv".format(app, lang)
@@ -891,6 +874,8 @@ def get_bench_name(bench_path):
 
 
 def setup_fonts():
+	import shutil
+
 	fonts_path = os.path.join('/tmp', 'fonts')
 
 	if os.path.exists('/etc/fonts_backup'):
@@ -963,6 +948,8 @@ def find_benches(directory=None):
 
 
 def migrate_env(python, backup=False):
+	import shutil
+	from six.moves.urllib.parse import urlparse
 	from bench.config.common_site_config import get_config
 	from bench.app import get_apps
 

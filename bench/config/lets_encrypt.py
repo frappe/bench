@@ -3,8 +3,6 @@ import os
 
 # imports - third party imports
 import click
-from crontab import CronTab
-from six.moves.urllib.request import urlretrieve
 
 # imports - module imports
 import bench
@@ -48,7 +46,7 @@ def setup_letsencrypt(site, custom_domain, bench_path, interactive):
 
 
 def create_config(site, custom_domain):
-	config = bench.config.env.get_template('letsencrypt.cfg').render(domain=custom_domain or site)
+	config = bench.config.env().get_template('letsencrypt.cfg').render(domain=custom_domain or site)
 	config_path = '/etc/letsencrypt/configs/{site}.cfg'.format(site=custom_domain or site)
 	create_dir_if_missing(config_path)
 
@@ -86,6 +84,8 @@ def run_certbot_and_setup_ssl(site, custom_domain, bench_path, interactive=True)
 
 
 def setup_crontab():
+	from crontab import CronTab
+
 	job_command = '/opt/certbot-auto renew -a nginx --post-hook "systemctl reload nginx"'
 	job_comment = 'Renew lets-encrypt every month'
 	print("Setting Up cron job to {0}".format(job_comment))
@@ -106,6 +106,8 @@ def create_dir_if_missing(path):
 
 
 def get_certbot():
+	from six.moves.urllib.request import urlretrieve
+
 	certbot_path = get_certbot_path()
 	create_dir_if_missing(certbot_path)
 

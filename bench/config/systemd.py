@@ -7,7 +7,7 @@ import click
 
 # imports - module imports
 import bench
-from bench.app import get_current_frappe_version, use_rq
+from bench.app import use_rq
 from bench.config.common_site_config import get_config, get_gunicorn_workers, update_config
 from bench.utils import exec_cmd, find_executable, get_bench_name
 
@@ -51,7 +51,6 @@ def generate_systemd_config(bench_path, user=None, yes=False,
 		"bench_dir": bench_dir,
 		"sites_dir": os.path.join(bench_dir, 'sites'),
 		"user": user,
-		"frappe_version": get_current_frappe_version(bench_path),
 		"use_rq": use_rq(bench_path),
 		"http_timeout": config.get("http_timeout", 120),
 		"redis_server": find_executable('redis-server'),
@@ -85,7 +84,7 @@ def setup_systemd_directory(bench_path):
 
 def setup_main_config(bench_info, bench_path):
 	# Main config
-	bench_template = bench.config.env.get_template('systemd/frappe-bench.target')
+	bench_template = bench.config.env().get_template('systemd/frappe-bench.target')
 	bench_config = bench_template.render(**bench_info)
 	bench_config_path = os.path.join(bench_path, 'config', 'systemd' , bench_info.get("bench_name") + '.target')
 
@@ -94,11 +93,11 @@ def setup_main_config(bench_info, bench_path):
 
 def setup_workers_config(bench_info, bench_path):
 	# Worker Group
-	bench_workers_target_template = bench.config.env.get_template('systemd/frappe-bench-workers.target')
-	bench_default_worker_template = bench.config.env.get_template('systemd/frappe-bench-frappe-default-worker.service')
-	bench_short_worker_template = bench.config.env.get_template('systemd/frappe-bench-frappe-short-worker.service')
-	bench_long_worker_template = bench.config.env.get_template('systemd/frappe-bench-frappe-long-worker.service')
-	bench_schedule_worker_template = bench.config.env.get_template('systemd/frappe-bench-frappe-schedule.service')
+	bench_workers_target_template = bench.config.env().get_template('systemd/frappe-bench-workers.target')
+	bench_default_worker_template = bench.config.env().get_template('systemd/frappe-bench-frappe-default-worker.service')
+	bench_short_worker_template = bench.config.env().get_template('systemd/frappe-bench-frappe-short-worker.service')
+	bench_long_worker_template = bench.config.env().get_template('systemd/frappe-bench-frappe-long-worker.service')
+	bench_schedule_worker_template = bench.config.env().get_template('systemd/frappe-bench-frappe-schedule.service')
 
 	bench_workers_target_config = bench_workers_target_template.render(**bench_info)
 	bench_default_worker_config = bench_default_worker_template.render(**bench_info)
@@ -129,9 +128,9 @@ def setup_workers_config(bench_info, bench_path):
 
 def setup_web_config(bench_info, bench_path):
 	# Web Group
-	bench_web_target_template = bench.config.env.get_template('systemd/frappe-bench-web.target')
-	bench_web_service_template = bench.config.env.get_template('systemd/frappe-bench-frappe-web.service')
-	bench_node_socketio_template = bench.config.env.get_template('systemd/frappe-bench-node-socketio.service')
+	bench_web_target_template = bench.config.env().get_template('systemd/frappe-bench-web.target')
+	bench_web_service_template = bench.config.env().get_template('systemd/frappe-bench-frappe-web.service')
+	bench_node_socketio_template = bench.config.env().get_template('systemd/frappe-bench-node-socketio.service')
 
 	bench_web_target_config = bench_web_target_template.render(**bench_info)
 	bench_web_service_config = bench_web_service_template.render(**bench_info)
@@ -152,10 +151,10 @@ def setup_web_config(bench_info, bench_path):
 
 def setup_redis_config(bench_info, bench_path):
 	# Redis Group
-	bench_redis_target_template = bench.config.env.get_template('systemd/frappe-bench-redis.target')
-	bench_redis_cache_template = bench.config.env.get_template('systemd/frappe-bench-redis-cache.service')
-	bench_redis_queue_template = bench.config.env.get_template('systemd/frappe-bench-redis-queue.service')
-	bench_redis_socketio_template = bench.config.env.get_template('systemd/frappe-bench-redis-socketio.service')
+	bench_redis_target_template = bench.config.env().get_template('systemd/frappe-bench-redis.target')
+	bench_redis_cache_template = bench.config.env().get_template('systemd/frappe-bench-redis-cache.service')
+	bench_redis_queue_template = bench.config.env().get_template('systemd/frappe-bench-redis-queue.service')
+	bench_redis_socketio_template = bench.config.env().get_template('systemd/frappe-bench-redis-socketio.service')
 
 	bench_redis_target_config = bench_redis_target_template.render(**bench_info)
 	bench_redis_cache_config = bench_redis_cache_template.render(**bench_info)

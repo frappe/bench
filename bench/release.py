@@ -4,11 +4,8 @@ import os
 import sys
 import semantic_version
 import git
-import requests
 import getpass
 import re
-from requests.auth import HTTPBasicAuth
-import requests.exceptions
 from time import sleep
 from .config.common_site_config import get_config
 import click
@@ -47,6 +44,9 @@ def release(bench_path, app, bump_type, from_branch, to_branch,
 		repo_name=repo_name, remote=remote, frontport=frontport)
 
 def validate(bench_path, config):
+	import requests
+	from requests.auth import HTTPBasicAuth
+
 	global github_username, github_password
 
 	github_username = config.get('github_username')
@@ -306,6 +306,9 @@ def push_release(repo_path, from_branch, to_branch, remote='upstream'):
 
 def create_github_release(repo_path, tag_name, message, remote='upstream', owner='frappe', repo_name=None,
 		gh_username=None, gh_password=None, prerelease=False):
+	import requests
+	import requests.exceptions
+	from requests.auth import HTTPBasicAuth
 
 	print('creating release on github')
 

@@ -11,7 +11,7 @@
 
     - name: Set home folder perms
       file:
-        path: '/home/{{ frappe_user }}'
+        path: '{{ user_directory }}'
         mode: 'o+rx'
         owner: '{{ frappe_user }}'
         group: '{{ frappe_user }}'
