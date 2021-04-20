@@ -306,16 +306,23 @@ def clone_apps_from(bench_path, clone_from, update_app=True):
 		setup_app(app)
 
 
-def exec_cmd(cmd, cwd='.'):
+def exec_cmd(cmd, cwd='.', _raise=False):
 	import shlex
+
 	print("{0}$ {1}{2}".format(color.silver, cmd, color.nc))
+
 	cwd_info = "cd {0} && ".format(cwd) if cwd != "." else ""
 	cmd_log = "{0}{1}".format(cwd_info, cmd)
 	logger.debug(cmd_log)
 	cmd = shlex.split(cmd)
+
 	return_code = subprocess.call(cmd, cwd=cwd, universal_newlines=True)
+
 	if return_code:
 		logger.warning("{0} executed with exit code {1}".format(cmd_log, return_code))
+
+	if _raise and return_code:
+		raise CommandFailedError
 
 
 def which(executable, raise_err = False):
@@ -341,16 +348,18 @@ def get_venv_path():
 
 	return venv or log("virtualenv cannot be found", level=2)
 
-def setup_env(bench_path='.', python='python3'):
+def setup_env(bench_path='.', python='python3', quiet=False):
 	frappe = os.path.join(bench_path, "apps", "frappe")
 	pip = os.path.join(bench_path, "env", "bin", "pip")
+	quiet_flag = " -q" if quiet else ""
 	virtualenv = get_venv_path()
 
-	exec_cmd('{} -q env -p {}'.format(virtualenv, python), cwd=bench_path)
+	exec_cmd('{}{} env -p {}'.format(virtualenv, quiet_flag, python), cwd=bench_path)
 
 	if os.path.exists(frappe):
-		exec_cmd('{} install -q -U -e {}'.format(pip, frappe), cwd=bench_path)
-
+		exec_cmd('{} install{} -U -e {}'.format(pip, quiet_flag, frappe), cwd=bench_path)
+	else:
+		log("Frappe does not exist in the apps folder!", level=2)
 
 def setup_socketio(bench_path='.'):
 	exec_cmd("npm install socket.io redis express superagent cookie babel-core less chokidar \
@@ -573,19 +582,24 @@ def set_default_site(site, bench_path='.'):
 			cwd=os.path.join(bench_path, 'sites'))
 
 
-def update_env_pip(bench_path):
+def update_env_pip(bench_path, quiet=False):
 	env_pip = os.path.join(bench_path, 'env', 'bin', 'pip')
-	exec_cmd("{pip} install -q -U pip".format(pip=env_pip))
+
+	if os.path.exists(env_pip):
+		exec_cmd("{pip} install{quiet} -U pip".format(pip=env_pip, quiet=" -q" if quiet else ""))
+	else:
+		setup_env(quiet=quiet)
+		update_env_pip(bench_path=bench_path, quiet=quiet)
 
 
-def update_requirements(bench_path='.'):
+def update_requirements(bench_path='.', quiet=True):
 	from bench.app import get_apps, install_app
+
+	update_env_pip(bench_path, quiet=quiet)
+
 	print('Installing applications...')
-
-	update_env_pip(bench_path)
-
 	for app in get_apps():
-		install_app(app, bench_path=bench_path, skip_assets=True, restart_bench=False)
+		install_app(app, bench_path=bench_path, skip_assets=True, restart_bench=False, verbose=not quiet)
 
 
 def update_python_packages(bench_path='.'):

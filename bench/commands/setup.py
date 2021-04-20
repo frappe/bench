@@ -135,14 +135,18 @@ def setup_socketio():
 @click.command("requirements", help="Setup Python and Node dependencies")
 @click.option("--node", help="Update only Node packages", default=False, is_flag=True)
 @click.option("--python", help="Update only Python packages", default=False, is_flag=True)
-def setup_requirements(node=False, python=False):
+@click.option("--quiet", "-q", help="Quieten output for all triggered subprocesses", default=False, is_flag=True)
+@click.option("--verbose", "-v", help="Increase verbosity in output for all triggered subprocesses", default=True, is_flag=True)
+def setup_requirements(node=False, python=False, quiet=False, verbose=True):
+	quiet = quiet or not verbose
+
 	if not (node or python):
 		from bench.utils import update_requirements
-		update_requirements()
+		update_requirements(quiet=quiet)
 
 	elif not node:
 		from bench.utils import update_python_packages
-		update_python_packages()
+		update_python_packages(quiet=quiet)
 
 	elif not python:
 		from bench.utils import update_node_packages
