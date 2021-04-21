@@ -244,8 +244,9 @@ def update(pull=False, apps=None, patch=False, build=False, requirements=False, 
 		post_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
 
 	if pull and compile:
-		print("Compiling Python files...")
-		compileall.compile_dir('../apps', quiet=1, rx=re.compile('.*node_modules.*'))
+		print('Compiling Python files...')
+		apps_dir = os.path.join(bench_path, 'apps')
+		compileall.compile_dir(apps_dir, quiet=1, rx=re.compile('.*node_modules.*'))
 
 	if restart_supervisor or conf.get('restart_supervisor_on_update'):
 		restart_supervisor_processes(bench_path=bench_path)
