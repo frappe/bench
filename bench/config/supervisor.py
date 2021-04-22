@@ -5,7 +5,7 @@ import os
 
 # imports - module imports
 import bench
-from bench.app import get_current_frappe_version, use_rq
+from bench.app import use_rq
 from bench.utils import get_bench_name, find_executable
 from bench.config.common_site_config import get_config, update_config, get_gunicorn_workers
 
@@ -29,7 +29,6 @@ def generate_supervisor_config(bench_path, user=None, yes=False, skip_redis=Fals
 		"bench_dir": bench_dir,
 		"sites_dir": os.path.join(bench_dir, 'sites'),
 		"user": user,
-		"frappe_version": get_current_frappe_version(bench_path),
 		"use_rq": use_rq(bench_path),
 		"http_timeout": config.get("http_timeout", 120),
 		"redis_server": find_executable('redis-server'),
