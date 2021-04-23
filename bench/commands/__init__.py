@@ -27,11 +27,10 @@ bench_command.add_command(include_app_for_update)
 bench_command.add_command(pip)
 
 
-from bench.commands.update import update, retry_upgrade, switch_to_branch, switch_to_master, switch_to_develop
+from bench.commands.update import update, retry_upgrade, switch_to_branch, switch_to_develop
 bench_command.add_command(update)
 bench_command.add_command(retry_upgrade)
 bench_command.add_command(switch_to_branch)
-bench_command.add_command(switch_to_master)
 bench_command.add_command(switch_to_develop)
 
 

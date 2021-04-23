@@ -8,7 +8,7 @@ import click
 import bench
 from bench.app import use_rq
 from bench.config.common_site_config import get_config
-from bench.utils import find_executable
+from bench.utils import which
 
 
 def setup_procfile(bench_path, yes=False, skip_redis=False):
@@ -19,7 +19,7 @@ def setup_procfile(bench_path, yes=False, skip_redis=False):
 			abort=True)
 
 	procfile = bench.config.env().get_template('Procfile').render(
-		node=find_executable("node") or find_executable("nodejs"),
+		node=which("node") or which("nodejs"),
 		use_rq=use_rq(bench_path),
 		webserver_port=config.get('webserver_port'),
 		CI=os.environ.get('CI'),
