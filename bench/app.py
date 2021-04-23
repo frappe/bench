@@ -443,9 +443,6 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 def switch_to_branch(branch=None, apps=None, bench_path='.', upgrade=False):
 	switch_branch(branch, apps=apps, bench_path=bench_path, upgrade=upgrade)
 
-def switch_to_master(apps=None, bench_path='.', upgrade=True):
-	switch_branch('master', apps=apps, bench_path=bench_path, upgrade=upgrade)
-
 def switch_to_develop(apps=None, bench_path='.', upgrade=True):
 	switch_branch('develop', apps=apps, bench_path=bench_path, upgrade=upgrade)
 
