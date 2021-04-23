@@ -356,10 +356,11 @@ def setup_socketio(bench_path='.'):
 
 
 def patch_sites(bench_path='.'):
-	try:
-		run_frappe_cmd('--site', 'all', 'migrate', bench_path=bench_path)
-	except subprocess.CalledProcessError:
-		raise PatchError
+	for site in get_sites(bench_path=bench_path):
+		try:
+			migrate_site(site, bench_path=bench_path)
+		except subprocess.CalledProcessError:
+			raise PatchError
 
 
 def build_assets(bench_path='.', app=None):
@@ -641,6 +642,10 @@ def update_npm_packages(bench_path='.'):
 		f.write(json.dumps(package_json, indent=1, sort_keys=True))
 
 	exec_cmd('npm install', cwd=bench_path)
+
+
+def migrate_site(site, bench_path='.'):
+	run_frappe_cmd('--site', site, 'migrate', bench_path=bench_path)
 
 
 def backup_site(site, bench_path='.'):
