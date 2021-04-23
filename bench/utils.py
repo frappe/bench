@@ -453,12 +453,15 @@ def get_process_manager():
 
 
 def start(no_dev=False, concurrency=None, procfile=None, no_prefix=False):
+	env = os.environ
 	program = get_process_manager()
+
 	if not program:
 		raise Exception("No process manager found")
-	os.environ['PYTHONUNBUFFERED'] = "true"
+
+	env['PYTHONUNBUFFERED'] = "true"
 	if not no_dev:
-		os.environ['DEV_SERVER'] = "true"
+		env['DEV_SERVER'] = "true"
 
 	command = [program, 'start']
 	if concurrency:
@@ -470,7 +473,7 @@ def start(no_dev=False, concurrency=None, procfile=None, no_prefix=False):
 	if no_prefix:
 		command.extend(['--no-prefix'])
 
-	os.execv(program, command)
+	os.execve(program, command, env=env)
 
 
 def get_git_version():
