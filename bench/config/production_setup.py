@@ -9,7 +9,7 @@ from bench.config.common_site_config import get_config
 from bench.config.nginx import make_nginx_conf
 from bench.config.supervisor import generate_supervisor_config, update_supervisord_config
 from bench.config.systemd import generate_systemd_config
-from bench.utils import CommandFailedError, exec_cmd, find_executable, fix_prod_setup_perms, get_bench_name, get_cmd_output, log
+from bench.utils import CommandFailedError, exec_cmd, which, fix_prod_setup_perms, get_bench_name, get_cmd_output, log
 
 
 logger = logging.getLogger(bench.PROJECT_NAME)
@@ -17,13 +17,13 @@ logger = logging.getLogger(bench.PROJECT_NAME)
 
 def setup_production_prerequisites():
 	"""Installs ansible, fail2banc, NGINX and supervisor"""
-	if not find_executable("ansible"):
+	if not which("ansible"):
 		exec_cmd("sudo {0} -m pip install ansible".format(sys.executable))
-	if not find_executable("fail2ban-client"):
+	if not which("fail2ban-client"):
 		exec_cmd("bench setup role fail2ban")
-	if not find_executable("nginx"):
+	if not which("nginx"):
 		exec_cmd("bench setup role nginx")
-	if not find_executable("supervisord"):
+	if not which("supervisord"):
 		exec_cmd("bench setup role supervisor")
 
 
@@ -95,11 +95,11 @@ def disable_production(bench_path='.'):
 
 
 def service(service_name, service_option):
-	if os.path.basename(find_executable('systemctl') or '') == 'systemctl' and is_running_systemd():
+	if os.path.basename(which('systemctl') or '') == 'systemctl' and is_running_systemd():
 		systemctl_cmd = "sudo {service_manager} {service_option} {service_name}"
 		exec_cmd(systemctl_cmd.format(service_manager='systemctl', service_option=service_option, service_name=service_name))
 
-	elif os.path.basename(find_executable('service') or '') == 'service':
+	elif os.path.basename(which('service') or '') == 'service':
 		service_cmd = "sudo {service_manager} {service_name} {service_option}"
 		exec_cmd(service_cmd.format(service_manager='service', service_name=service_name, service_option=service_option))
 
@@ -145,7 +145,7 @@ def is_running_systemd():
 
 
 def reload_supervisor():
-	supervisorctl = find_executable('supervisorctl')
+	supervisorctl = which('supervisorctl')
 
 	try:
 		# first try reread/update
@@ -178,7 +178,7 @@ def reload_supervisor():
 
 def reload_nginx():
 	try:
-		exec_cmd('sudo {0} -t'.format(find_executable('nginx')))
+		exec_cmd('sudo {0} -t'.format(which('nginx')))
 	except:
 		raise
 

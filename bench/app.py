@@ -110,7 +110,8 @@ def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=Fal
 		shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
 		branch = '--branch {branch}'.format(branch=branch) if branch else ''
 	else:
-		repo_name = git_url.split(os.sep)[-1]
+		git_url = os.path.abspath(git_url)
+		_, repo_name = os.path.split(git_url)
 		shallow_clone = ''
 		branch = '--branch {branch}'.format(branch=branch) if branch else ''
 
@@ -173,12 +174,12 @@ def install_app(app, bench_path=".", verbose=False, no_cache=False, restart_benc
 	print('\n{0}Installing {1}{2}'.format(color.yellow, app, color.nc))
 	logger.log("installing {}".format(app))
 
-	pip_path = os.path.join(bench_path, "env", "bin", "pip")
+	python_path = os.path.join(bench_path, "env", "bin", "python")
 	quiet_flag = "-q" if not verbose else ""
 	app_path = os.path.join(bench_path, "apps", app)
 	cache_flag = "--no-cache-dir" if no_cache else ""
 
-	exec_cmd("{pip} install {quiet} -U -e {app} {no_cache}".format(pip=pip_path, quiet=quiet_flag, app=app_path, no_cache=cache_flag))
+	exec_cmd("{py_path} -m pip install {quiet} -U -e {app} {no_cache}".format(py_path=python_path, quiet=quiet_flag, app=app_path, no_cache=cache_flag))
 
 	if os.path.exists(os.path.join(app_path, 'package.json')):
 		exec_cmd("yarn install", cwd=app_path)
@@ -207,7 +208,7 @@ def remove_app(app, bench_path='.'):
 
 	app_path = os.path.join(bench_path, 'apps', app)
 	site_path = os.path.join(bench_path, 'sites')
-	pip = os.path.join(bench_path, 'env', 'bin', 'pip')
+	py = os.path.join(bench_path, 'env', 'bin', 'python')
 
 	for site in os.listdir(site_path):
 		req_file = os.path.join(site_path, site, 'site_config.json')
@@ -217,7 +218,7 @@ def remove_app(app, bench_path='.'):
 				print("Cannot remove, app is installed on site: {0}".format(site))
 				sys.exit(1)
 
-	exec_cmd("{0} uninstall -y {1}".format(pip, app), cwd=bench_path)
+	exec_cmd("{0} -m pip uninstall -y {1}".format(py, app), cwd=bench_path)
 	remove_from_appstxt(app, bench_path)
 	shutil.rmtree(app_path)
 	run_frappe_cmd("build", bench_path=bench_path)
@@ -233,7 +234,7 @@ def pull_apps(apps=None, bench_path='.', reset=False):
 	rebase = '--rebase' if get_config(bench_path).get('rebase_on_pull') else ''
 
 	apps = apps or get_apps(bench_path=bench_path)
-	# chech for local changes
+	# check for local changes
 	if not reset:
 		for app in apps:
 			excluded_apps = get_excluded_apps()
@@ -242,7 +243,7 @@ def pull_apps(apps=None, bench_path='.', reset=False):
 				continue
 			app_dir = get_repo_dir(app, bench_path=bench_path)
 			if os.path.exists(os.path.join(app_dir, '.git')):
-				out = subprocess.check_output(["git", "status"], cwd=app_dir)
+				out = subprocess.check_output('git status', shell=True, cwd=app_dir)
 				out = out.decode('utf-8')
 				if not re.search(r'nothing to commit, working (directory|tree) clean', out):
 					print('''
@@ -271,32 +272,35 @@ Here are your choices:
 				add_to_excluded_apps_txt(app, bench_path=bench_path)
 				print("Skipping pull for app {}, since remote doesn't exist, and adding it to excluded apps".format(app))
 				continue
+			branch = get_current_branch(app, bench_path=bench_path)
 			logger.log('pulling {0}'.format(app))
 			if reset:
-				exec_cmd("git fetch --all", cwd=app_dir)
-				exec_cmd("git reset --hard {remote}/{branch}".format(
-					remote=remote, branch=get_current_branch(app,bench_path=bench_path)), cwd=app_dir)
+				reset_cmd = "git reset --hard {remote}/{branch}".format(remote=remote, branch=branch)
+				if get_config(bench_path).get('shallow_clone'):
+					exec_cmd("git fetch --depth=1 --no-tags {remote} {branch}".format(remote=remote, branch=branch),
+						cwd=app_dir)
+					exec_cmd(reset_cmd, cwd=app_dir)
+					exec_cmd("git reflog expire --all", cwd=app_dir)
+					exec_cmd("git gc --prune=all", cwd=app_dir)
+				else:
+					exec_cmd("git fetch --all", cwd=app_dir)
+					exec_cmd(reset_cmd, cwd=app_dir)
 			else:
 				exec_cmd("git pull {rebase} {remote} {branch}".format(rebase=rebase,
-					remote=remote, branch=get_current_branch(app, bench_path=bench_path)), cwd=app_dir)
+					remote=remote, branch=branch), cwd=app_dir)
 			exec_cmd('find . -name "*.pyc" -delete', cwd=app_dir)
 
 
 def is_version_upgrade(app='frappe', bench_path='.', branch=None):
-	try:
-		fetch_upstream(app, bench_path=bench_path)
-	except CommandFailedError:
-		raise InvalidRemoteException("No remote named upstream for {0}".format(app))
-
 	upstream_version = get_upstream_version(app=app, branch=branch, bench_path=bench_path)
 
 	if not upstream_version:
-		raise InvalidBranchException("Specified branch of app {0} is not in upstream".format(app))
+		raise InvalidBranchException('Specified branch of app {0} is not in upstream remote'.format(app))
 
 	local_version = get_major_version(get_current_version(app, bench_path=bench_path))
 	upstream_version = get_major_version(upstream_version)
 
-	if upstream_version - local_version > 0:
+	if upstream_version > local_version:
 		return (True, local_version, upstream_version)
 
 	return (False, local_version, upstream_version)
@@ -329,10 +333,6 @@ def use_rq(bench_path):
 	celery_app = os.path.join(bench_path, 'apps', 'frappe', 'frappe', 'celery_app.py')
 	return not os.path.exists(celery_app)
 
-def fetch_upstream(app, bench_path='.'):
-	repo_dir = get_repo_dir(app, bench_path=bench_path)
-	return subprocess.call(["git", "fetch", "upstream"], cwd=repo_dir)
-
 def get_current_version(app, bench_path='.'):
 	current_version = None
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
@@ -364,8 +364,15 @@ def get_upstream_version(app, branch=None, bench_path='.'):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	if not branch:
 		branch = get_current_branch(app, bench_path=bench_path)
+
 	try:
-		contents = subprocess.check_output(['git', 'show', 'upstream/{branch}:{app}/__init__.py'.format(branch=branch, app=app)], cwd=repo_dir, stderr=subprocess.STDOUT)
+		subprocess.call('git fetch --depth=1 --no-tags upstream {branch}'.format(branch=branch), shell=True, cwd=repo_dir)
+	except CommandFailedError:
+		raise InvalidRemoteException('Failed to fetch from remote named upstream for {0}'.format(app))
+
+	try:
+		contents = subprocess.check_output('git show upstream/{branch}:{app}/__init__.py'.format(branch=branch, app=app),
+			shell=True, cwd=repo_dir, stderr=subprocess.STDOUT)
 		contents = contents.decode('utf-8')
 	except subprocess.CalledProcessError as e:
 		if b"Invalid object" in e.output:
@@ -435,9 +442,6 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 
 def switch_to_branch(branch=None, apps=None, bench_path='.', upgrade=False):
 	switch_branch(branch, apps=apps, bench_path=bench_path, upgrade=upgrade)
-
-def switch_to_master(apps=None, bench_path='.', upgrade=True):
-	switch_branch('master', apps=apps, bench_path=bench_path, upgrade=upgrade)
 
 def switch_to_develop(apps=None, bench_path='.', upgrade=True):
 	switch_branch('develop', apps=apps, bench_path=bench_path, upgrade=upgrade)
