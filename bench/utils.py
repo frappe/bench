@@ -339,13 +339,13 @@ def get_venv_path():
 
 def setup_env(bench_path='.', python='python3'):
 	frappe = os.path.join(bench_path, "apps", "frappe")
-	pip = os.path.join(bench_path, "env", "bin", "pip")
+	py = os.path.join(bench_path, "env", "bin", "python")
 	virtualenv = get_venv_path()
 
 	exec_cmd('{} -q env -p {}'.format(virtualenv, python), cwd=bench_path)
 
 	if os.path.exists(frappe):
-		exec_cmd('{} install -q -U -e {}'.format(pip, frappe), cwd=bench_path)
+		exec_cmd('{} -m pip install -q -U -e {}'.format(py, frappe), cwd=bench_path)
 
 
 def setup_socketio(bench_path='.'):
@@ -555,8 +555,8 @@ def set_default_site(site, bench_path='.'):
 
 
 def update_env_pip(bench_path):
-	env_pip = os.path.join(bench_path, 'env', 'bin', 'pip')
-	exec_cmd("{pip} install -q -U pip".format(pip=env_pip))
+	env_py = os.path.join(bench_path, 'env', 'bin', 'python')
+	exec_cmd("{env_py} -m pip install -q -U pip".format(env_py=env_py))
 
 
 def update_requirements(bench_path='.'):
@@ -571,14 +571,14 @@ def update_requirements(bench_path='.'):
 
 def update_python_packages(bench_path='.'):
 	from bench.app import get_apps
-	pip_path = os.path.join(bench_path, "env", "bin", "pip")
+	env_py = os.path.join(bench_path, "env", "bin", "python")
 	print('Updating Python libraries...')
 
 	update_env_pip(bench_path)
 	for app in get_apps():
 		print('\n{0}Installing python dependencies for {1}{2}'.format(color.yellow, app, color.nc))
 		app_path = os.path.join(bench_path, "apps", app)
-		exec_cmd("{0} install -q -U -e {1}".format(pip_path, app_path), cwd=bench_path)
+		exec_cmd("{0} -m pip install -q -U -e {1}".format(env_py, app_path), cwd=bench_path)
 
 
 def update_node_packages(bench_path='.'):
@@ -965,7 +965,6 @@ def migrate_env(python, backup=False):
 	python = which(python)
 	virtualenv = which('virtualenv')
 	pvenv = os.path.join(path, nvenv)
-	pip = os.path.join(pvenv, 'bin', 'pip')
 
 	# Clear Cache before Bench Dies.
 	try:
@@ -1006,7 +1005,7 @@ def migrate_env(python, backup=False):
 		venv_creation = exec_cmd('{virtualenv} --python {python} {pvenv}'.format(virtualenv=virtualenv, python=python, pvenv=pvenv))
 
 		apps = ' '.join(["-e {}".format(os.path.join("apps", app)) for app in get_apps()])
-		packages_setup = exec_cmd('{0} install -q -U {1}'.format(pip, apps))
+		packages_setup = exec_cmd('{0} -m pip install -q -U {1}'.format(pvenv, apps))
 
 		logger.log('Migration Successful to {}'.format(python))
 	except:

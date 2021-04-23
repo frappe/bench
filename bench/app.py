@@ -174,12 +174,12 @@ def install_app(app, bench_path=".", verbose=False, no_cache=False, restart_benc
 	print('\n{0}Installing {1}{2}'.format(color.yellow, app, color.nc))
 	logger.log("installing {}".format(app))
 
-	pip_path = os.path.join(bench_path, "env", "bin", "pip")
+	python_path = os.path.join(bench_path, "env", "bin", "python")
 	quiet_flag = "-q" if not verbose else ""
 	app_path = os.path.join(bench_path, "apps", app)
 	cache_flag = "--no-cache-dir" if no_cache else ""
 
-	exec_cmd("{pip} install {quiet} -U -e {app} {no_cache}".format(pip=pip_path, quiet=quiet_flag, app=app_path, no_cache=cache_flag))
+	exec_cmd("{py_path} -m pip install {quiet} -U -e {app} {no_cache}".format(py_path=python_path, quiet=quiet_flag, app=app_path, no_cache=cache_flag))
 
 	if os.path.exists(os.path.join(app_path, 'package.json')):
 		exec_cmd("yarn install", cwd=app_path)
@@ -208,7 +208,7 @@ def remove_app(app, bench_path='.'):
 
 	app_path = os.path.join(bench_path, 'apps', app)
 	site_path = os.path.join(bench_path, 'sites')
-	pip = os.path.join(bench_path, 'env', 'bin', 'pip')
+	py = os.path.join(bench_path, 'env', 'bin', 'python')
 
 	for site in os.listdir(site_path):
 		req_file = os.path.join(site_path, site, 'site_config.json')
@@ -218,7 +218,7 @@ def remove_app(app, bench_path='.'):
 				print("Cannot remove, app is installed on site: {0}".format(site))
 				sys.exit(1)
 
-	exec_cmd("{0} uninstall -y {1}".format(pip, app), cwd=bench_path)
+	exec_cmd("{0} -m pip uninstall -y {1}".format(py, app), cwd=bench_path)
 	remove_from_appstxt(app, bench_path)
 	shutil.rmtree(app_path)
 	run_frappe_cmd("build", bench_path=bench_path)
