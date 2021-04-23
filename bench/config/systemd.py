@@ -7,9 +7,9 @@ import click
 
 # imports - module imports
 import bench
-from bench.app import get_current_frappe_version, use_rq
+from bench.app import use_rq
 from bench.config.common_site_config import get_config, get_gunicorn_workers, update_config
-from bench.utils import exec_cmd, find_executable, get_bench_name
+from bench.utils import exec_cmd, which, get_bench_name
 
 
 def generate_systemd_config(bench_path, user=None, yes=False,
@@ -51,11 +51,10 @@ def generate_systemd_config(bench_path, user=None, yes=False,
 		"bench_dir": bench_dir,
 		"sites_dir": os.path.join(bench_dir, 'sites'),
 		"user": user,
-		"frappe_version": get_current_frappe_version(bench_path),
 		"use_rq": use_rq(bench_path),
 		"http_timeout": config.get("http_timeout", 120),
-		"redis_server": find_executable('redis-server'),
-		"node": find_executable('node') or find_executable('nodejs'),
+		"redis_server": which('redis-server'),
+		"node": which('node') or which('nodejs'),
 		"redis_cache_config": os.path.join(bench_dir, 'config', 'redis_cache.conf'),
 		"redis_socketio_config": os.path.join(bench_dir, 'config', 'redis_socketio.conf'),
 		"redis_queue_config": os.path.join(bench_dir, 'config', 'redis_queue.conf'),
@@ -63,7 +62,7 @@ def generate_systemd_config(bench_path, user=None, yes=False,
 		"gunicorn_workers": config.get('gunicorn_workers', get_gunicorn_workers()["gunicorn_workers"]),
 		"bench_name": get_bench_name(bench_path),
 		"worker_target_wants": " ".join(background_workers),
-		"bench_cmd": find_executable('bench')
+		"bench_cmd": which('bench')
 	}
 
 	if not yes:

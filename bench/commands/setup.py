@@ -43,9 +43,10 @@ def reload_nginx():
 @click.command("supervisor", help="Generate configuration for supervisor")
 @click.option("--user", help="optional user argument")
 @click.option("--yes", help="Yes to regeneration of supervisor config", is_flag=True, default=False)
-def setup_supervisor(user=None, yes=False):
+@click.option("--skip-redis", help="Skip redis configuration", is_flag=True, default=False)
+def setup_supervisor(user=None, yes=False, skip_redis=False):
 	bench.config.supervisor.update_supervisord_config(user=user, yes=yes)
-	bench.config.supervisor.generate_supervisor_config(bench_path=".", user=user, yes=yes)
+	bench.config.supervisor.generate_supervisor_config(bench_path=".", user=user, yes=yes, skip_redis=skip_redis)
 
 
 @click.command("redis", help="Generates configuration for Redis")

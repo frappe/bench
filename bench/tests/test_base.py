@@ -90,7 +90,6 @@ class TestBenchBase(unittest.TestCase):
 			python=sys.executable,
 			no_procfile=True,
 			no_backups=True,
-			skip_assets=True,
 			frappe_path=frappe_tmp_path
 		))
 
