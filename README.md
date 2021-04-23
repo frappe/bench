@@ -8,9 +8,7 @@ Bench is a command-line utility that helps you to install, update, and manage mu
 ## Table of Contents
 
  - [Installation](#installation)
-	- [Docker Installation](#docker-installation)
-		- [Development Setup](#docker-installation-for-development)
-		- [Production Setup](#docker-installation-for-production)
+	- [Containerized Installation](#docker-installation)
 	- [Easy Install Script](#easy-install-script)
 	- [Manual Installation](#manual-installation)
  - [Usage](#basic-usage)
@@ -28,7 +26,7 @@ A typical bench setup provides two types of environments &mdash; Development and
 
 The setup for each of these installations can be achieved in multiple ways:
 
- - [Docker Installation](#docker-installation)
+ - [Containerized Installation](#containerized-installation)
  - [Easy Install Script](#easy-install-script)
  - [Manual Installation](#manual-installation)
 
@@ -37,7 +35,7 @@ We recommend using either the Docker Installation or the Easy Install Script to 
 Otherwise, if you are looking to evaluate ERPNext, you can also download the [Virtual Machine Image](https://erpnext.com/download) or register for [a free trial on erpnext.com](https://erpnext.com/pricing).
 
 
-### Docker Installation
+### Containerized Installation
 
 A Frappe/ERPNext instance can be setup and replicated easily using [Docker](https://docker.com). The officially supported Docker installation can be used to setup either of both Development and Production environments.
 
@@ -48,56 +46,7 @@ $ git clone https://github.com/frappe/frappe_docker.git
 $ cd frappe_docker
 ```
 
-A quick setup guide for both the envionments can be found below. For more details, check out the [Frappe/ERPNext Docker Repository](https://github.com/frappe/frappe_docker).
-
-#### Docker Installation for Development
-
-To setup a development environment for Docker, follow the [Frappe/ERPNext Docker for Development Guide](https://github.com/frappe/frappe_docker/blob/develop/development/README.md).
-
-#### Docker Installation for Production
-
-Copy the `env-example` file to `.env`
-
-```sh
-$ cp env-example .env
-```
-
-Optionally, you may also setup an [NGINX Proxy for SSL Certificates](https://github.com/evertramos/docker-compose-letsencrypt-nginx-proxy-companion) with auto-renewal for your Production instance. We recommend this for instances being accessed over the internet. For this to work, the DNS needs to be configured correctly so that [LetsEncrypt](https://letsencrypt.org) can verify the domain. To setup the proxy, run the following commands:
-
-```sh
-$ git clone https://github.com/evertramos/docker-compose-letsencrypt-nginx-proxy-companion.git
-$ cd docker-compose-letsencrypt-nginx-proxy-companion
-$ cp .env.sample .env
-$ ./start.sh
-```
-
-To get the Production instance running, run the following command:
-
-```sh
-$ docker-compose \
-    --project-name <project-name> \
-    -f installation/docker-compose-common.yml \
-    -f installation/docker-compose-erpnext.yml \
-    -f installation/docker-compose-networks.yml \
-    --project-directory installation up -d
-```
-
-Make sure to replace `<project-name>` with whatever you wish to call it. This should get the instance running through docker. Now, to create a new site on the instance you may run:
-
-```sh
-docker exec -it \
-    -e "SITE_NAME=$SITE_NAME" \
-    -e "DB_ROOT_USER=$DB_ROOT_USER" \
-    -e "MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD" \
-    -e "ADMIN_PASSWORD=$ADMIN_PASSWORD" \
-    -e "INSTALL_APPS=erpnext" \ # optional, if you want to install any other apps
-    <project-name>_erpnext-python_1 docker-entrypoint.sh new
-```
-
-Once this is done, you may access the instance at `$SITE_NAME`.
-
-**Note:** The Production setup does not contain, require, or use bench. For a list of substitute commands, check out the [Frappe/ERPNext Docker Site Operations](https://github.com/frappe/frappe_docker/#site-operations).
-
+A quick setup guide for both the environments can be found below. For more details, check out the [Frappe/ERPNext Docker Repository](https://github.com/frappe/frappe_docker).
 
 ### Easy Install Script
 
