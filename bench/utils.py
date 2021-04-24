@@ -515,7 +515,7 @@ def get_cmd_output(cmd, cwd='.', _raise=True):
 
 
 def restart_supervisor_processes(bench_path='.', web_workers=False, soft=False):
-	from .config.common_site_config import get_config
+	from bench.config.common_site_config import get_config
 
 	conf = get_config(bench_path=bench_path)
 	bench_name = get_bench_name(bench_path)

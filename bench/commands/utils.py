@@ -27,9 +27,7 @@ def restart(hard, soft, web, supervisor, systemd):
 	from bench.config.common_site_config import get_config
 
 	conf = get_config('.')
-
-	if not (hard or soft) and conf.get("default_to_soft_restart"):
-		soft = True
+	soft = soft or not hard and conf.get("soft_restart")
 
 	if conf.get('restart_supervisor_on_update') or supervisor:
 		restart_supervisor_processes(bench_path='.', web_workers=web, soft=soft)
