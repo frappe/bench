@@ -15,35 +15,20 @@ addons:
 
 matrix:
   include:
-  - name: "Python 2.7 Basic Setup"
-    python: 2.7
-    env: TEST=bench
-    script: python bench/tests/test_init.py TestBenchInit.basic
-
-  - name: "Python 3.6 Basic Setup"
-    python: 3.6
-    env: TEST=bench
-    script: python bench/tests/test_init.py TestBenchInit.basic
-
   - name: "Python 3.7 Basic Setup"
     python: 3.7
     env: TEST=bench
     script: python bench/tests/test_init.py TestBenchInit.basic
 
-  - name: "Python 3.8 Production Setup"
+  - name: "Python 3.8 Basic Setup"
     python: 3.8
     env: TEST=bench
-    script: python bench/tests/test_setup_production.py TestSetupProduction.production
+    script: python bench/tests/test_init.py TestBenchInit.basic
 
-  - name: "Python 2.7 Production Setup"
-    python: 2.7
+  - name: "Python 3.9 Basic Setup"
+    python: 3.9
     env: TEST=bench
-    script: python bench/tests/test_setup_production.py TestSetupProduction.production
-
-  - name: "Python 3.6 Production Setup"
-    python: 3.6
-    env: TEST=bench
-    script: python bench/tests/test_setup_production.py TestSetupProduction.production
+    script: python bench/tests/test_init.py TestBenchInit.basic
 
   - name: "Python 3.7 Production Setup"
     python: 3.7
@@ -55,20 +40,25 @@ matrix:
     env: TEST=bench
     script: python bench/tests/test_setup_production.py TestSetupProduction.production
 
-  - name: "Python 2.7 Tests"
-    python: 2.7
+  - name: "Python 3.9 Production Setup"
+    python: 3.9
     env: TEST=bench
-    script: python -m unittest -v bench.tests.test_init
+    script: python bench/tests/test_setup_production.py TestSetupProduction.production
 
   - name: "Python 3.7 Tests"
     python: 3.7
     env: TEST=bench
     script: python -m unittest -v bench.tests.test_init
 
-  - name: "Python 3.5 Easy Install"
-    python: 3.5
-    env: TEST=easy_install
-    script: sudo python $TRAVIS_BUILD_DIR/install.py --user travis --run-travis --production --verbose
+  - name: "Python 3.8 Tests"
+    python: 3.8
+    env: TEST=bench
+    script: python -m unittest -v bench.tests.test_init
+
+  - name: "Python 3.9 Tests"
+    python: 3.9
+    env: TEST=bench
+    script: python -m unittest -v bench.tests.test_init
 
   - name: "Python 3.7 Easy Install"
     python: 3.7
@@ -77,6 +67,11 @@ matrix:
 
   - name: "Python 3.8 Easy Install"
     python: 3.8
+    env: TEST=easy_install
+    script: sudo python $TRAVIS_BUILD_DIR/install.py --user travis --run-travis --production --verbose
+
+  - name: "Python 3.9 Easy Install"
+    python: 3.9
     env: TEST=easy_install
     script: sudo python $TRAVIS_BUILD_DIR/install.py --user travis --run-travis --production --verbose
 

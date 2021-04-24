@@ -41,12 +41,6 @@ def switch_to_branch(branch, apps, upgrade=False):
 	switch_to_branch(branch=branch, apps=list(apps), upgrade=upgrade)
 
 
-@click.command('switch-to-master', help="[DEPRECATED]: Switch frappe and erpnext to master branch")
-def switch_to_master():
-	from bench.utils import log
-	log("`switch-to-master` has been deprecated as master branches were renamed to version-11")
-
-
 @click.command('switch-to-develop')
 def switch_to_develop(upgrade=False):
 	"Switch frappe and erpnext to develop branch"

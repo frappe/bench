@@ -2,26 +2,17 @@
 # -*- coding: utf-8 -*-
 
 # imports - standard imports
-import compileall
-import errno
-import glob
 import grp
 import itertools
 import json
 import logging
 import os
 import pwd
-import re
-import select
-import site
 import subprocess
 import sys
-from datetime import datetime
-from distutils.spawn import find_executable
 
 # imports - third party imports
 import click
-from six import iteritems
 
 # imports - module imports
 import bench
@@ -143,6 +134,8 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		try:
 			os.makedirs(os.path.join(path, dirname))
 		except OSError as e:
+			import errno
+
 			if e.errno == errno.EEXIST:
 				pass
 
@@ -163,11 +156,8 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		if apps_path:
 			install_apps_from_path(apps_path, bench_path=path)
 
-
-	bench.set_frappe_version(bench_path=path)
-	if bench.FRAPPE_VERSION > 5:
-		if not skip_assets:
-			update_node_packages(bench_path=path)
+	if not skip_assets:
+		update_node_packages(bench_path=path)
 
 	set_all_patches_executed(bench_path=path)
 	if not skip_assets:
@@ -187,6 +177,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 def update(pull=False, apps=None, patch=False, build=False, requirements=False, backup=True, compile=True,
 	force=False, reset=False, restart_supervisor=False, restart_systemd=False):
 	"""command: bench update"""
+	import re
 	from bench import patches
 	from bench.app import is_version_upgrade, pull_apps, validate_branch
 	from bench.config.common_site_config import get_config, update_config
@@ -247,8 +238,11 @@ def update(pull=False, apps=None, patch=False, build=False, requirements=False, 
 		post_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
 
 	if pull and compile:
-		print("Compiling Python files...")
-		compileall.compile_dir('../apps', quiet=1, rx=re.compile('.*node_modules.*'))
+		from compileall import compile_dir
+
+		print('Compiling Python files...')
+		apps_dir = os.path.join(bench_path, 'apps')
+		compile_dir(apps_dir, quiet=1, rx=re.compile('.*node_modules.*'))
 
 	if restart_supervisor or conf.get('restart_supervisor_on_update'):
 		restart_supervisor_processes(bench_path=bench_path)
@@ -270,7 +264,7 @@ def copy_patches_txt(bench_path):
 
 
 def clone_apps_from(bench_path, clone_from, update_app=True):
-	from .app import install_app
+	from bench.app import install_app
 	print('Copying apps from {0}...'.format(clone_from))
 	subprocess.check_output(['cp', '-R', os.path.join(clone_from, 'apps'), bench_path])
 
@@ -318,7 +312,9 @@ def exec_cmd(cmd, cwd='.'):
 		logger.warning("{0} executed with exit code {1}".format(cmd_log, return_code))
 
 
-def which(executable, raise_err = False):
+def which(executable, raise_err=False):
+	from distutils.spawn import find_executable
+
 	exec_ = find_executable(executable)
 
 	if not exec_ and raise_err:
@@ -343,13 +339,13 @@ def get_venv_path():
 
 def setup_env(bench_path='.', python='python3'):
 	frappe = os.path.join(bench_path, "apps", "frappe")
-	pip = os.path.join(bench_path, "env", "bin", "pip")
+	py = os.path.join(bench_path, "env", "bin", "python")
 	virtualenv = get_venv_path()
 
 	exec_cmd('{} -q env -p {}'.format(virtualenv, python), cwd=bench_path)
 
 	if os.path.exists(frappe):
-		exec_cmd('{} install -q -U -e {}'.format(pip, frappe), cwd=bench_path)
+		exec_cmd('{} -m pip install -q -U -e {}'.format(py, frappe), cwd=bench_path)
 
 
 def setup_socketio(bench_path='.'):
@@ -358,27 +354,18 @@ def setup_socketio(bench_path='.'):
 
 
 def patch_sites(bench_path='.'):
-	bench.set_frappe_version(bench_path=bench_path)
-
-	try:
-		if bench.FRAPPE_VERSION == 4:
-			exec_cmd("{frappe} --latest all".format(frappe=get_frappe(bench_path=bench_path)), cwd=os.path.join(bench_path, 'sites'))
-		else:
-			run_frappe_cmd('--site', 'all', 'migrate', bench_path=bench_path)
-	except subprocess.CalledProcessError:
-		raise PatchError
+	for site in get_sites(bench_path=bench_path):
+		try:
+			migrate_site(site, bench_path=bench_path)
+		except subprocess.CalledProcessError:
+			raise PatchError
 
 
 def build_assets(bench_path='.', app=None):
-	bench.set_frappe_version(bench_path=bench_path)
-
-	if bench.FRAPPE_VERSION == 4:
-		exec_cmd("{frappe} --build".format(frappe=get_frappe(bench_path=bench_path)), cwd=os.path.join(bench_path, 'sites'))
-	else:
-		command = 'bench build'
-		if app:
-			command += ' --app {}'.format(app)
-		exec_cmd(command, cwd=bench_path)
+	command = 'bench build'
+	if app:
+		command += ' --app {}'.format(app)
+	exec_cmd(command, cwd=bench_path)
 
 
 def get_sites(bench_path='.'):
@@ -395,14 +382,8 @@ def setup_backups(bench_path='.'):
 	bench_dir = os.path.abspath(bench_path)
 	user = get_config(bench_path=bench_dir).get('frappe_user')
 	logfile = os.path.join(bench_dir, 'logs', 'backup.log')
-	bench.set_frappe_version(bench_path=bench_path)
 	system_crontab = CronTab(user=user)
-
-	if bench.FRAPPE_VERSION == 4:
-		backup_command = "cd {sites_dir} && {frappe} --backup all".format(frappe=get_frappe(bench_path=bench_path),)
-	else:
-		backup_command = "cd {bench_dir} && {bench} --verbose --site all backup".format(bench_dir=bench_dir, bench=sys.argv[0])
-
+	backup_command = "cd {bench_dir} && {bench} --verbose --site all backup".format(bench_dir=bench_dir, bench=sys.argv[0])
 	job_command = "{backup_command} >> {logfile} 2>&1".format(backup_command=backup_command, logfile=logfile)
 
 	if job_command not in str(system_crontab):
@@ -428,9 +409,9 @@ def setup_sudoers(user):
 	template = bench.config.env().get_template('frappe_sudoers')
 	frappe_sudoers = template.render(**{
 		'user': user,
-		'service': find_executable('service'),
-		'systemctl': find_executable('systemctl'),
-		'nginx': find_executable('nginx'),
+		'service': which('service'),
+		'systemctl': which('systemctl'),
+		'nginx': which('nginx'),
 	})
 	frappe_sudoers = safe_decode(frappe_sudoers)
 
@@ -466,18 +447,21 @@ def setup_logging(bench_path='.'):
 
 def get_process_manager():
 	for proc_man in ['honcho', 'foreman', 'forego']:
-		proc_man_path = find_executable(proc_man)
+		proc_man_path = which(proc_man)
 		if proc_man_path:
 			return proc_man_path
 
 
 def start(no_dev=False, concurrency=None, procfile=None, no_prefix=False):
+	env = os.environ
 	program = get_process_manager()
+
 	if not program:
 		raise Exception("No process manager found")
-	os.environ['PYTHONUNBUFFERED'] = "true"
+
+	env['PYTHONUNBUFFERED'] = "true"
 	if not no_dev:
-		os.environ['DEV_SERVER'] = "true"
+		env['DEV_SERVER'] = "true"
 
 	command = [program, 'start']
 	if concurrency:
@@ -489,7 +473,7 @@ def start(no_dev=False, concurrency=None, procfile=None, no_prefix=False):
 	if no_prefix:
 		command.extend(['--no-prefix'])
 
-	os.execv(program, command)
+	os.execve(program, command, env=env)
 
 
 def get_git_version():
@@ -503,7 +487,7 @@ def get_git_version():
 
 
 def check_git_for_shallow_clone():
-	from .config.common_site_config import get_config
+	from bench.config.common_site_config import get_config
 	config = get_config('.')
 
 	if config:
@@ -532,6 +516,7 @@ def get_cmd_output(cmd, cwd='.', _raise=True):
 
 def restart_supervisor_processes(bench_path='.', web_workers=False, soft=False):
 	from .config.common_site_config import get_config
+
 	conf = get_config(bench_path=bench_path)
 	bench_name = get_bench_name(bench_path)
 
@@ -575,8 +560,8 @@ def set_default_site(site, bench_path='.'):
 
 
 def update_env_pip(bench_path):
-	env_pip = os.path.join(bench_path, 'env', 'bin', 'pip')
-	exec_cmd("{pip} install -q -U pip".format(pip=env_pip))
+	env_py = os.path.join(bench_path, 'env', 'bin', 'python')
+	exec_cmd("{env_py} -m pip install -q -U pip".format(env_py=env_py))
 
 
 def update_requirements(bench_path='.'):
@@ -591,14 +576,14 @@ def update_requirements(bench_path='.'):
 
 def update_python_packages(bench_path='.'):
 	from bench.app import get_apps
-	pip_path = os.path.join(bench_path, "env", "bin", "pip")
+	env_py = os.path.join(bench_path, "env", "bin", "python")
 	print('Updating Python libraries...')
 
 	update_env_pip(bench_path)
 	for app in get_apps():
 		print('\n{0}Installing python dependencies for {1}{2}'.format(color.yellow, app, color.nc))
 		app_path = os.path.join(bench_path, "apps", app)
-		exec_cmd("{0} install -q -U -e {1}".format(pip_path, app_path), cwd=bench_path)
+		exec_cmd("{0} -m pip install -q -U -e {1}".format(env_py, app_path), cwd=bench_path)
 
 
 def update_node_packages(bench_path='.'):
@@ -618,7 +603,7 @@ def update_node_packages(bench_path='.'):
 def update_yarn_packages(bench_path='.'):
 	apps_dir = os.path.join(bench_path, 'apps')
 
-	if not find_executable('yarn'):
+	if not which('yarn'):
 		print("Please install yarn using below command and try again.")
 		print("`npm install -g yarn`")
 		return
@@ -639,6 +624,8 @@ def update_npm_packages(bench_path='.'):
 
 		if os.path.exists(package_json_path):
 			with open(package_json_path, "r") as f:
+				from six import iteritems
+
 				app_package_json = json.loads(f.read())
 				# package.json is usually a dict in a dict
 				for key, value in iteritems(app_package_json):
@@ -662,14 +649,12 @@ def update_npm_packages(bench_path='.'):
 	exec_cmd('npm install', cwd=bench_path)
 
 
-def backup_site(site, bench_path='.'):
-	bench.set_frappe_version(bench_path=bench_path)
+def migrate_site(site, bench_path='.'):
+	run_frappe_cmd('--site', site, 'migrate', bench_path=bench_path)
 
-	if bench.FRAPPE_VERSION == 4:
-		exec_cmd("{frappe} --backup {site}".format(frappe=get_frappe(bench_path=bench_path), site=site),
-				cwd=os.path.join(bench_path, 'sites'))
-	else:
-		run_frappe_cmd('--site', site, 'backup', bench_path=bench_path)
+
+def backup_site(site, bench_path='.'):
+	run_frappe_cmd('--site', site, 'backup', bench_path=bench_path)
 
 
 def backup_all_sites(bench_path='.'):
@@ -678,9 +663,7 @@ def backup_all_sites(bench_path='.'):
 
 
 def is_root():
-	if os.getuid() == 0:
-		return True
-	return False
+	return os.getuid() == 0
 
 
 def set_mariadb_host(host, bench_path='.'):
@@ -738,7 +721,8 @@ def drop_privileges(uid_name='nobody', gid_name='nogroup'):
 
 
 def fix_prod_setup_perms(bench_path='.', frappe_user=None):
-	from .config.common_site_config import get_config
+	from glob import glob
+	from bench.config.common_site_config import get_config
 
 	if not frappe_user:
 		frappe_user = get_config(bench_path).get('frappe_user')
@@ -749,19 +733,14 @@ def fix_prod_setup_perms(bench_path='.', frappe_user=None):
 
 	globs = ["logs/*", "config/*"]
 	for glob_name in globs:
-		for path in glob.glob(glob_name):
+		for path in glob(glob_name):
 			uid = pwd.getpwnam(frappe_user).pw_uid
 			gid = grp.getgrnam(frappe_user).gr_gid
 			os.chown(path, uid, gid)
 
 
-def get_current_frappe_version(bench_path='.'):
-	from .app import get_current_frappe_version as fv
-	return fv(bench_path=bench_path)
-
-
 def run_frappe_cmd(*args, **kwargs):
-	from .cli import from_command_line
+	from bench.cli import from_command_line
 
 	bench_path = kwargs.get('bench_path', '.')
 	f = get_env_cmd('python', bench_path=bench_path)
@@ -787,15 +766,15 @@ def run_frappe_cmd(*args, **kwargs):
 
 def validate_upgrade(from_ver, to_ver, bench_path='.'):
 	if to_ver >= 6:
-		if not find_executable('npm') and not (find_executable('node') or find_executable('nodejs')):
+		if not which('npm') and not (which('node') or which('nodejs')):
 			raise Exception("Please install nodejs and npm")
 
 
 def post_upgrade(from_ver, to_ver, bench_path='.'):
-	from .config.common_site_config import get_config
-	from .config import redis
-	from .config.supervisor import generate_supervisor_config
-	from .config.nginx import make_nginx_conf
+	from bench.config.common_site_config import get_config
+	from bench.config import redis
+	from bench.config.supervisor import generate_supervisor_config
+	from bench.config.nginx import make_nginx_conf
 	conf = get_config(bench_path=bench_path)
 	print("-" * 80 + "Your bench was upgraded to version {0}".format(to_ver))
 
@@ -873,8 +852,10 @@ def update_translations(app, lang):
 
 
 def print_output(p):
+	from select import select
+
 	while p.poll() is None:
-		readx = select.select([p.stdout.fileno(), p.stderr.fileno()], [], [])[0]
+		readx = select([p.stdout.fileno(), p.stderr.fileno()], [], [])[0]
 		send_buffer = []
 		for fd in readx:
 			if fd == p.stdout.fileno():
@@ -935,7 +916,7 @@ def set_git_remote_url(git_url, bench_path='.'):
 
 
 def run_playbook(playbook_name, extra_vars=None, tag=None):
-	if not find_executable('ansible'):
+	if not which('ansible'):
 		print("Ansible is needed to run this command, please install it using 'pip install ansible'")
 		sys.exit(1)
 	args = ['ansible-playbook', '-c', 'local', playbook_name, '-vvvv']
@@ -989,7 +970,6 @@ def migrate_env(python, backup=False):
 	python = which(python)
 	virtualenv = which('virtualenv')
 	pvenv = os.path.join(path, nvenv)
-	pip = os.path.join(pvenv, 'bin', 'pip')
 
 	# Clear Cache before Bench Dies.
 	try:
@@ -1007,6 +987,8 @@ def migrate_env(python, backup=False):
 
 	# Backup venv: restore using `virtualenv --relocatable` if needed
 	if backup:
+		from datetime import datetime
+
 		parch = os.path.join(path, 'archived_envs')
 		if not os.path.exists(parch):
 			os.mkdir(parch)
@@ -1028,7 +1010,7 @@ def migrate_env(python, backup=False):
 		venv_creation = exec_cmd('{virtualenv} --python {python} {pvenv}'.format(virtualenv=virtualenv, python=python, pvenv=pvenv))
 
 		apps = ' '.join(["-e {}".format(os.path.join("apps", app)) for app in get_apps()])
-		packages_setup = exec_cmd('{0} install -q -U {1}'.format(pip, apps))
+		packages_setup = exec_cmd('{0} -m pip install -q -U {1}'.format(pvenv, apps))
 
 		logger.log('Migration Successful to {}'.format(python))
 	except:

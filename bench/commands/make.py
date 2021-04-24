@@ -98,5 +98,5 @@ def pip(ctx, args):
 	"Run pip commands in bench env"
 	import os
 	from bench.utils import get_env_cmd
-	env_pip = get_env_cmd('pip')
-	os.execv(env_pip, (env_pip,) + args)
+	env_py = get_env_cmd('python')
+	os.execv(env_py, (env_py, '-m', 'pip') + args)
