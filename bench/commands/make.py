@@ -8,7 +8,7 @@ import click
 @click.option('--ignore-exist', is_flag = True, default = False, help = "Ignore if Bench instance exists.")
 @click.option('--apps_path', default=None, help="path to json files with apps to install after init")
 @click.option('--frappe-path', default=None, help="path to frappe repo")
-@click.option('--frappe-branch', default=None, help="path to frappe repo")
+@click.option('--frappe-branch', default=None, help="Clone a particular branch of frappe")
 @click.option('--clone-from', default=None, help="copy repos from path")
 @click.option('--clone-without-update', is_flag=True, help="copy repos from path without update")
 @click.option('--clone-full', is_flag=True, help="make a full (deep) clone of the repositories")
@@ -100,5 +100,5 @@ def pip(ctx, args):
 	"Run pip commands in bench env"
 	import os
 	from bench.utils import get_env_cmd
-	env_pip = get_env_cmd('pip')
-	os.execv(env_pip, (env_pip,) + args)
+	env_py = get_env_cmd('python')
+	os.execv(env_py, (env_py, '-m', 'pip') + args)

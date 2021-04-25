@@ -1,6 +1,3 @@
-# imports - standard imports
-import ast
-
 # imports - module imports
 from bench.config.common_site_config import update_config, get_config, put_config
 
@@ -52,6 +49,8 @@ def config_http_timeout(seconds):
 @click.command('set-common-config', help='Set value in common config')
 @click.option('configs', '-c', '--config', multiple=True, type=(str, str))
 def set_common_config(configs):
+	import ast
+
 	common_site_config = {}
 	for key, value in configs:
 		if value in ('true', 'false'):

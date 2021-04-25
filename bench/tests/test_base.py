@@ -44,7 +44,7 @@ class TestBenchBase(unittest.TestCase):
 		bench_path = os.path.abspath(bench_name)
 		python_path = os.path.abspath(os.path.join(bench_path, "env", "bin", "python"))
 		self.assertTrue(python_path.startswith(bench_path))
-		for subdir in ("bin", "include", "lib", "share"):
+		for subdir in ("bin", "lib", "share"):
 			self.assert_exists(bench_name, "env", subdir)
 
 	def assert_config(self, bench_name):
@@ -90,7 +90,6 @@ class TestBenchBase(unittest.TestCase):
 			python=sys.executable,
 			no_procfile=True,
 			no_backups=True,
-			skip_assets=True,
 			frappe_path=frappe_tmp_path
 		))
 

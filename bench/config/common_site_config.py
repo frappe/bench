@@ -1,11 +1,8 @@
 # imports - standard imports
 import getpass
 import json
-import multiprocessing
 import os
 
-# imports - third party imports
-from six.moves.urllib.parse import urlparse
 
 
 default_config = {
@@ -57,6 +54,8 @@ def get_config_path(bench_path):
 def get_gunicorn_workers():
 	'''This function will return the maximum workers that can be started depending upon
 	number of cpu's present on the machine'''
+	import multiprocessing
+
 	return {
 		"gunicorn_workers": multiprocessing.cpu_count() * 2 + 1
 	}
@@ -76,6 +75,8 @@ def update_config_for_frappe(config, bench_path):
 	# TODO Optionally we need to add the host or domain name in case dns_multitenant is false
 
 def make_ports(bench_path):
+	from six.moves.urllib.parse import urlparse
+
 	benches_path = os.path.dirname(os.path.abspath(bench_path))
 
 	default_ports = {

@@ -3,16 +3,14 @@ import os
 import re
 import subprocess
 
-# imports - third party imports
-import semantic_version
-from six.moves.urllib.parse import urlparse
-
 # imports - module imports
 import bench
 from bench.config.common_site_config import get_config
 
 
 def generate_config(bench_path):
+	from six.moves.urllib.parse import urlparse
+
 	config = get_config(bench_path)
 
 	ports = {}
@@ -52,7 +50,7 @@ def generate_config(bench_path):
 		os.makedirs(pid_path)
 
 def write_redis_config(template_name, context, bench_path):
-	template = bench.config.env.get_template(template_name)
+	template = bench.config.env().get_template(template_name)
 
 	if "pid_path" not in context:
 		context["pid_path"] = os.path.abspath(os.path.join(bench_path, "config", "pids"))
@@ -61,6 +59,8 @@ def write_redis_config(template_name, context, bench_path):
 		f.write(template.render(**context))
 
 def get_redis_version():
+	import semantic_version
+
 	version_string = subprocess.check_output('redis-server --version', shell=True)
 	version_string = version_string.decode('utf-8').strip()
 	# extract version number from string
