@@ -114,7 +114,7 @@ def get_env_cmd(cmd, bench_path='.'):
 
 def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		frappe_path=None, frappe_branch=None, verbose=False, clone_from=None,
-		skip_redis_config_generation=False, clone_without_update=False, clone_full=False,
+		skip_redis_config_generation=False, clone_without_update=False, deep_clone=False,
 		ignore_exist=False, skip_assets=False,
 		python='python3'):
 	"""Initialize a new bench directory"""
@@ -144,7 +144,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	setup_env(bench_path=path, python=python)
 
-	make_config(path, shallow_clone=not clone_full)
+	make_config(path, shallow_clone=not deep_clone)
 
 	if clone_from:
 		clone_apps_from(bench_path=path, clone_from=clone_from, update_app=not clone_without_update)

@@ -11,13 +11,13 @@ import click
 @click.option('--frappe-branch', default=None, help="Clone a particular branch of frappe")
 @click.option('--clone-from', default=None, help="copy repos from path")
 @click.option('--clone-without-update', is_flag=True, help="copy repos from path without update")
-@click.option('--clone-full', is_flag=True, help="make a full (deep) clone of the repositories")
+@click.option('--deep-clone', is_flag=True, help="Make a deep clone of the app repositories")
 @click.option('--no-procfile', is_flag=True, help="Do not create a Procfile")
 @click.option('--no-backups',is_flag=True, help="Do not set up automatic periodic backups for all sites on this bench")
 @click.option('--skip-redis-config-generation', is_flag=True, help="Skip redis config generation if already specifying the common-site-config file")
 @click.option('--skip-assets',is_flag=True, default=False, help="Do not build assets")
 @click.option('--verbose',is_flag=True, help="Verbose output during install")
-def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups, clone_from, verbose, skip_redis_config_generation, clone_without_update, clone_full, ignore_exist=False, skip_assets=False, python='python3'):
+def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups, clone_from, verbose, skip_redis_config_generation, clone_without_update, deep_clone=False, ignore_exist=False, skip_assets=False, python='python3'):
 	from bench.utils import init, log
 
 	try:
@@ -32,7 +32,7 @@ def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups, c
 			clone_from=clone_from,
 			skip_redis_config_generation=skip_redis_config_generation,
 			clone_without_update=clone_without_update,
-			clone_full=clone_full,
+			deep_clone=deep_clone,
 			ignore_exist=ignore_exist,
 			skip_assets=skip_assets,
 			python=python,
