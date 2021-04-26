@@ -98,12 +98,6 @@ def set_redis_socketio_host(host):
 	set_redis_socketio_host(host)
 
 
-@click.command('set-default-site', help="Set default site for bench")
-@click.argument('site')
-def set_default_site(site):
-	from bench.utils import set_default_site
-	set_default_site(site)
-
 
 @click.command('download-translations', help="Download latest translations")
 def download_translations():
