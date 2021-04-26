@@ -109,19 +109,19 @@ def change_uid():
 def old_frappe_cli(bench_path='.'):
 	f = get_frappe(bench_path=bench_path)
 	os.chdir(os.path.join(bench_path, 'sites'))
-	os.execve(f, [f] + sys.argv[2:], {})
+	os.execv(f, [f] + sys.argv[2:])
 
 
 def app_cmd(bench_path='.'):
 	f = get_env_cmd('python', bench_path=bench_path)
 	os.chdir(os.path.join(bench_path, 'sites'))
-	os.execve(f, [f] + ['-m', 'frappe.utils.bench_helper'] + sys.argv[1:], {})
+	os.execv(f, [f] + ['-m', 'frappe.utils.bench_helper'] + sys.argv[1:])
 
 
 def frappe_cmd(bench_path='.'):
 	f = get_env_cmd('python', bench_path=bench_path)
 	os.chdir(os.path.join(bench_path, 'sites'))
-	os.execve(f, [f] + ['-m', 'frappe.utils.bench_helper', 'frappe'] + sys.argv[1:], {})
+	os.execv(f, [f] + ['-m', 'frappe.utils.bench_helper', 'frappe'] + sys.argv[1:])
 
 
 def get_frappe_commands():
