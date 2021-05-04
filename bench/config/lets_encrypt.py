@@ -11,6 +11,7 @@ from bench.config.nginx import make_nginx_conf
 from bench.config.production_setup import service
 from bench.config.site_config import get_domains, remove_domain, update_site_config
 from bench.utils import CommandFailedError, exec_cmd, update_common_site_config
+from distutils.spawn import find_executable
 
 
 def setup_letsencrypt(site, custom_domain, bench_path, interactive):
@@ -105,8 +106,9 @@ def create_dir_if_missing(path):
 
 
 def get_certbot_path():
-	return "/usr/bin/certbot"
-
+	if find_executable("certbot"):
+		return find_executable("certbot")
+	raise Exception("Please install certbot")
 
 def renew_certs():
 	# Needs to be run with sudo
