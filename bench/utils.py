@@ -300,14 +300,19 @@ def clone_apps_from(bench_path, clone_from, update_app=True):
 		setup_app(app)
 
 
-def exec_cmd(cmd, cwd='.'):
+def exec_cmd(cmd, cwd='.', fail_on_non_zero_return=False):
 	import shlex
 	print("{0}$ {1}{2}".format(color.silver, cmd, color.nc))
 	cwd_info = "cd {0} && ".format(cwd) if cwd != "." else ""
 	cmd_log = "{0}{1}".format(cwd_info, cmd)
 	logger.debug(cmd_log)
 	cmd = shlex.split(cmd)
-	return_code = subprocess.call(cmd, cwd=cwd, universal_newlines=True)
+
+	if fail_on_non_zero_return:
+		return_code = subprocess.check_call(cmd, cwd=cwd, universal_newlines=True)
+	else:
+		return_code = subprocess.call(cmd, cwd=cwd, universal_newlines=True)
+
 	if return_code:
 		logger.warning("{0} executed with exit code {1}".format(cmd_log, return_code))
 
