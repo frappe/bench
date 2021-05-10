@@ -277,7 +277,7 @@ Here are your choices:
 			if reset:
 				reset_cmd = "git reset --hard {remote}/{branch}".format(remote=remote, branch=branch)
 				if get_config(bench_path).get('shallow_clone'):
-					exec_cmd("git fetch --depth=1 --no-tags {remote} {branch}".format(remote=remote, branch=branch),
+					exec_cmd("git fetch {remote} {branch}".format(remote=remote, branch=branch),
 						cwd=app_dir)
 					exec_cmd(reset_cmd, cwd=app_dir)
 					exec_cmd("git reflog expire --all", cwd=app_dir)
