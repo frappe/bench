@@ -112,6 +112,16 @@ def get_env_cmd(cmd, bench_path='.'):
 	return os.path.abspath(os.path.join(bench_path, 'env', 'bin', cmd))
 
 
+def pause_exec(seconds=10):
+	from time import sleep
+
+	for i in range(seconds, 0, -1):
+		print(f"Will continue execution in {i} seconds...", end="\r")
+		sleep(1)
+
+	print(" " * 40, end="\r")
+
+
 def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		frappe_path=None, frappe_branch=None, verbose=False, clone_from=None,
 		skip_redis_config_generation=False, clone_without_update=False, ignore_exist=False, skip_assets=False,
@@ -207,6 +217,16 @@ def update(pull=False, apps=None, patch=False, build=False, requirements=False, 
 		else:
 			print("This update will cause a major version change in Frappe/ERPNext from {0} to {1}. \nThis would take significant time to migrate and might break custom apps.".format(*version_upgrade[1:]))
 			click.confirm('Do you want to continue?', abort=True)
+
+	if not reset and conf.get('shallow_clone'):
+		log("""shallow_clone is set in your bench config.
+However without passing the --reset flag, your repositories will be unshallowed.
+To avoid this, cancel this operation and run `bench update --reset`.
+
+Consider the consequences of `git reset --hard` on your apps before you run that.
+To avoid seeing this warning, set shallow_clone to false in your common_site_config.json
+		""", level=3)
+		pause_exec(seconds=10)
 
 	if version_upgrade[0] or (not version_upgrade[0] and force):
 		validate_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
