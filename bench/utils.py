@@ -221,9 +221,11 @@ def update(pull=False, apps=None, patch=False, build=False, requirements=False, 
 		apps = [app.strip() for app in re.split(",| ", apps) if app]
 
 	if pull:
+		print('Updating apps source...')
 		pull_apps(apps=apps, bench_path=bench_path, reset=reset)
 
 	if requirements:
+		print('Setting up requirements...')
 		update_requirements(bench_path=bench_path)
 		update_node_packages(bench_path=bench_path)
 
@@ -232,6 +234,7 @@ def update(pull=False, apps=None, patch=False, build=False, requirements=False, 
 		patch_sites(bench_path=bench_path)
 
 	if build:
+		print('Building assets...')
 		build_assets(bench_path=bench_path)
 
 	if version_upgrade[0] or (not version_upgrade[0] and force):
