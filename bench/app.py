@@ -1,6 +1,3 @@
-# imports - compatibility imports
-from __future__ import print_function
-
 # imports - standard imports
 import json
 from json.decoder import JSONDecodeError
@@ -237,10 +234,16 @@ def validate_app_installed_on_sites(app, bench_path="."):
 
 
 def check_app_installed(app, bench_path="."):
-	out = subprocess.check_output(["bench", "--site", "all", "list-apps", "--format", "json"], cwd=bench_path).decode('utf-8')
+	try:
+		out = subprocess.check_output(
+			["bench", "--site", "all", "list-apps", "--format", "json"],
+			stderr=open(os.devnull, "wb"),
+			cwd=bench_path,
+		).decode('utf-8')
+	except subprocess.CalledProcessError:
+		return None
 
 	try:
-		import json
 		apps_sites_dict = json.loads(out)
 	except JSONDecodeError:
 		return None
