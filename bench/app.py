@@ -272,6 +272,14 @@ Here are your choices:
 				add_to_excluded_apps_txt(app, bench_path=bench_path)
 				print("Skipping pull for app {}, since remote doesn't exist, and adding it to excluded apps".format(app))
 				continue
+
+			if not get_config(bench_path).get('shallow_clone') or not reset:
+				is_shallow = os.path.exists(os.path.join(app_dir, ".git", "shallow"))
+				if is_shallow:
+					s = " to safely pull remote changes." if not reset else ""
+					print(f"Unshallowing {app}{s}")
+					exec_cmd(f"git fetch {remote} --unshallow", cwd=app_dir)
+
 			branch = get_current_branch(app, bench_path=bench_path)
 			logger.log('pulling {0}'.format(app))
 			if reset:
