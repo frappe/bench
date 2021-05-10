@@ -287,7 +287,7 @@ Here are your choices:
 					exec_cmd(reset_cmd, cwd=app_dir)
 			else:
 				exec_cmd("git pull {rebase} {remote} {branch}".format(rebase=rebase,
-					remote=remote, branch=branch), cwd=app_dir)
+					remote=remote, branch=branch), cwd=app_dir, fail_on_non_zero_return=True)
 			exec_cmd('find . -name "*.pyc" -delete', cwd=app_dir)
 
 
