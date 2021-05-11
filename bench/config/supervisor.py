@@ -67,8 +67,7 @@ def get_supervisord_conf():
 
 def update_supervisord_config(user=None, yes=False):
 	"""From bench v5.x, we're moving to supervisor running as user"""
-	from six.moves import configparser
-
+	import configparser
 	from bench.config.production_setup import service
 
 	if not user:

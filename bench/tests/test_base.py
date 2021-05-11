@@ -8,14 +8,11 @@ import sys
 import traceback
 import unittest
 
-# imports - third party imports
-from six import PY2
-
 # imports - module imports
 import bench
 import bench.utils
 
-if PY2:
+if sys.version_info.major == 2:
 	FRAPPE_BRANCH = "version-12"
 else:
 	FRAPPE_BRANCH = "develop"

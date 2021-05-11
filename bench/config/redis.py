@@ -9,7 +9,7 @@ from bench.config.common_site_config import get_config
 
 
 def generate_config(bench_path):
-	from six.moves.urllib.parse import urlparse
+	from urllib.parse import urlparse
 
 	config = get_config(bench_path)
 

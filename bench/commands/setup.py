@@ -154,7 +154,6 @@ def setup_requirements(node=False, python=False):
 @click.option("--port", help="Port on which you want to run bench manager", default=23624)
 @click.option("--domain", help="Domain on which you want to run bench manager")
 def setup_manager(yes=False, port=23624, domain=None):
-	from six.moves import input
 	from bench.utils import get_sites
 	from bench.config.common_site_config import get_config
 	from bench.config.nginx import make_bench_manager_nginx_conf
@@ -162,11 +161,7 @@ def setup_manager(yes=False, port=23624, domain=None):
 	create_new_site = True
 
 	if "bench-manager.local" in os.listdir("sites"):
-		ans = input("Site already exists. Overwrite existing site? [Y/n]: ").lower()
-		while ans not in ("y", "n", ""):
-			ans = input("Please enter 'y' or 'n'. Site already exists. Overwrite existing site? [Y/n]: ").lower()
-		if ans == "n":
-			create_new_site = False
+		create_new_site = click.confirm("Site already exists. Overwrite existing site?")
 
 	if create_new_site:
 		exec_cmd("bench new-site --force bench-manager.local")

@@ -641,11 +641,9 @@ def update_npm_packages(bench_path='.'):
 
 		if os.path.exists(package_json_path):
 			with open(package_json_path, "r") as f:
-				from six import iteritems
-
 				app_package_json = json.loads(f.read())
 				# package.json is usually a dict in a dict
-				for key, value in iteritems(app_package_json):
+				for key, value in app_package_json.items():
 					if not key in package_json:
 						package_json[key] = value
 					else:
@@ -978,7 +976,7 @@ def find_benches(directory=None):
 
 def migrate_env(python, backup=False):
 	import shutil
-	from six.moves.urllib.parse import urlparse
+	from urllib.parse import urlparse
 	from bench.config.common_site_config import get_config
 	from bench.app import get_apps
 

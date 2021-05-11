@@ -39,12 +39,12 @@ def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups, c
 	except SystemExit:
 		pass
 	except Exception as e:
-		import os, shutil, time, six
+		import os, shutil, time
 		# add a sleep here so that the traceback of other processes doesnt overlap with the prompts
 		time.sleep(1)
 		print(e)
 		log(f"There was a problem while creating {path}", level=2)
-		if six.moves.input("Do you want to rollback these changes? [Y/n]: ").lower() == "y":
+		if click.confirm("Do you want to rollback these changes?"):
 			print(f'Rolling back Bench "{path}"')
 			if os.path.exists(path):
 				shutil.rmtree(path)

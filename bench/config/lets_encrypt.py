@@ -106,13 +106,13 @@ def create_dir_if_missing(path):
 
 
 def get_certbot():
-	from six.moves.urllib.request import urlretrieve
+	from urllib.request import urlretrieve
 
 	certbot_path = get_certbot_path()
 	create_dir_if_missing(certbot_path)
 
 	if not os.path.isfile(certbot_path):
-		urlretrieve ("https://dl.eff.org/certbot-auto", certbot_path)
+		urlretrieve("https://dl.eff.org/certbot-auto", certbot_path)
 		os.chmod(certbot_path, 0o744)
 
 
