@@ -84,7 +84,7 @@ class TestBenchBase(unittest.TestCase):
 		frappe_tmp_path = "/tmp/frappe"
 
 		if not os.path.exists(frappe_tmp_path):
-			bench.utils.exec_cmd("git clone https://github.com/frappe/frappe -b {branch} --depth 1 --origin upstream {location}".format(branch=FRAPPE_BRANCH, location=frappe_tmp_path))
+			bench.utils.exec_cmd(f"git clone https://github.com/frappe/frappe -b {FRAPPE_BRANCH} --depth 1 --origin upstream {frappe_tmp_path}")
 
 		kwargs.update(dict(
 			python=sys.executable,

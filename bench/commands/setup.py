@@ -84,7 +84,7 @@ def setup_env(python="python3"):
 @click.option("--force")
 def setup_firewall(ssh_port=None, force=False):
 	if not force:
-		click.confirm("Setting up the firewall will block all ports except 80, 443 and {0}\nDo you want to continue?".format(ssh_port), abort=True)
+		click.confirm(f"Setting up the firewall will block all ports except 80, 443 and {ssh_port}\nDo you want to continue?", abort=True)
 
 	if not ssh_port:
 		ssh_port = 22
@@ -97,7 +97,7 @@ def setup_firewall(ssh_port=None, force=False):
 @click.option("--force")
 def set_ssh_port(port, force=False):
 	if not force:
-		click.confirm("This will change your SSH Port to {}\nDo you want to continue?".format(port), abort=True)
+		click.confirm(f"This will change your SSH Port to {port}\nDo you want to continue?", abort=True)
 
 	run_playbook("roles/bench/tasks/change_ssh_port.yml", {"ssh_port": port})
 

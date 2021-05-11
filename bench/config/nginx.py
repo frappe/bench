@@ -165,15 +165,15 @@ def prepare_sites(config, bench_path):
 		for port_number in ports_in_use:
 			if len(ports_in_use[port_number]) > 1:
 				port_conflict_index += 1
-				message += "\n{0} - Port {1} is shared among sites:".format(port_conflict_index,port_number)
+				message += f"\n{port_conflict_index} - Port {port_number} is shared among sites:"
 				for site_name in ports_in_use[port_number]:
-					message += " {0}".format(site_name)
+					message += f" {site_name}"
 		raise Exception(message)
 
 	if not dns_multitenant:
 		message = "Port configuration list:"
 		for site in sites_configs:
-			message += "\n\nSite {0} assigned port: {1}".format(site["name"], site["port"])
+			message += f"\n\nSite {site['name']} assigned port: {site['port']}"
 
 		print(message)
 
@@ -196,13 +196,13 @@ def get_sites_with_config(bench_path):
 		except Exception as e:
 			strict_nginx = get_config(bench_path).get('strict_nginx')
 			if strict_nginx:
-				print("\n\nERROR: The site config for the site {} is broken.".format(site),
+				print(f"\n\nERROR: The site config for the site {site} is broken.",
 					"If you want this command to pass, instead of just throwing an error,",
 					"You may remove the 'strict_nginx' flag from common_site_config.json or set it to 0",
 					"\n\n")
 				raise (e)
 			else:
-				print("\n\nWARNING: The site config for the site {} is broken.".format(site),
+				print(f"\n\nWARNING: The site config for the site {site} is broken.",
 					"If you want this command to fail, instead of just showing a warning,",
 					"You may add the 'strict_nginx' flag to common_site_config.json and set it to 1",
 					"\n\n")
