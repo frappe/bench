@@ -116,7 +116,7 @@ def renew_lets_encrypt():
 def backup_site(site):
 	from bench.utils import get_sites, backup_site
 	if site not in get_sites(bench_path='.'):
-		print('Site `{0}` not found'.format(site))
+		print(f'Site `{site}` not found')
 		sys.exit(1)
 	backup_site(site, bench_path='.')
 

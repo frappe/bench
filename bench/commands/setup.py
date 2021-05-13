@@ -84,7 +84,7 @@ def setup_env(python="python3"):
 @click.option("--force")
 def setup_firewall(ssh_port=None, force=False):
 	if not force:
-		click.confirm("Setting up the firewall will block all ports except 80, 443 and {0}\nDo you want to continue?".format(ssh_port), abort=True)
+		click.confirm(f"Setting up the firewall will block all ports except 80, 443 and {ssh_port}\nDo you want to continue?", abort=True)
 
 	if not ssh_port:
 		ssh_port = 22
@@ -97,7 +97,7 @@ def setup_firewall(ssh_port=None, force=False):
 @click.option("--force")
 def set_ssh_port(port, force=False):
 	if not force:
-		click.confirm("This will change your SSH Port to {}\nDo you want to continue?".format(port), abort=True)
+		click.confirm(f"This will change your SSH Port to {port}\nDo you want to continue?", abort=True)
 
 	run_playbook("roles/bench/tasks/change_ssh_port.yml", {"ssh_port": port})
 
@@ -154,7 +154,6 @@ def setup_requirements(node=False, python=False):
 @click.option("--port", help="Port on which you want to run bench manager", default=23624)
 @click.option("--domain", help="Domain on which you want to run bench manager")
 def setup_manager(yes=False, port=23624, domain=None):
-	from six.moves import input
 	from bench.utils import get_sites
 	from bench.config.common_site_config import get_config
 	from bench.config.nginx import make_bench_manager_nginx_conf
@@ -162,11 +161,7 @@ def setup_manager(yes=False, port=23624, domain=None):
 	create_new_site = True
 
 	if "bench-manager.local" in os.listdir("sites"):
-		ans = input("Site already exists. Overwrite existing site? [Y/n]: ").lower()
-		while ans not in ("y", "n", ""):
-			ans = input("Please enter 'y' or 'n'. Site already exists. Overwrite existing site? [Y/n]: ").lower()
-		if ans == "n":
-			create_new_site = False
+		create_new_site = click.confirm("Site already exists. Overwrite existing site?")
 
 	if create_new_site:
 		exec_cmd("bench new-site --force bench-manager.local")
