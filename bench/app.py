@@ -1,5 +1,6 @@
 # imports - standard imports
 import json
+from json.decoder import JSONDecodeError
 import logging
 import os
 import re
@@ -196,13 +197,62 @@ def remove_app(app, bench_path='.'):
 	import shutil
 	from bench.config.common_site_config import get_config
 
+	app_path = os.path.join(bench_path, 'apps', app)
+	py = os.path.join(bench_path, 'env', 'bin', 'python')
+
+	# validate app removal
 	if app not in get_apps(bench_path):
 		print(f"No app named {app}")
 		sys.exit(1)
 
-	app_path = os.path.join(bench_path, 'apps', app)
+	validate_app_installed_on_sites(app, bench_path=bench_path)
+
+	# remove app from bench
+	exec_cmd("{0} -m pip uninstall -y {1}".format(py, app), cwd=bench_path)
+	remove_from_appstxt(app, bench_path)
+	shutil.rmtree(app_path)
+
+	# re-build assets and restart processes
+	run_frappe_cmd("build", bench_path=bench_path)
+	if get_config(bench_path).get('restart_supervisor_on_update'):
+		restart_supervisor_processes(bench_path=bench_path)
+	if get_config(bench_path).get('restart_systemd_on_update'):
+		restart_systemd_processes(bench_path=bench_path)
+
+
+def validate_app_installed_on_sites(app, bench_path="."):
+	print("Checking if app installed on active sites...")
+	ret = check_app_installed(app, bench_path=bench_path)
+
+	if ret is None:
+		check_app_installed_legacy(app, bench_path=bench_path)
+	else:
+		return ret
+
+
+def check_app_installed(app, bench_path="."):
+	try:
+		out = subprocess.check_output(
+			["bench", "--site", "all", "list-apps", "--format", "json"],
+			stderr=open(os.devnull, "wb"),
+			cwd=bench_path,
+		).decode('utf-8')
+	except subprocess.CalledProcessError:
+		return None
+
+	try:
+		apps_sites_dict = json.loads(out)
+	except JSONDecodeError:
+		return None
+
+	for site, apps in apps_sites_dict.items():
+		if app in apps:
+			print("Cannot remove, app is installed on site: {0}".format(site))
+			sys.exit(1)
+
+
+def check_app_installed_legacy(app, bench_path="."):
 	site_path = os.path.join(bench_path, 'sites')
-	py = os.path.join(bench_path, 'env', 'bin', 'python')
 
 	for site in os.listdir(site_path):
 		req_file = os.path.join(site_path, site, 'site_config.json')
@@ -212,14 +262,6 @@ def remove_app(app, bench_path='.'):
 				print(f"Cannot remove, app is installed on site: {site}")
 				sys.exit(1)
 
-	exec_cmd(f"{py} -m pip uninstall -y {app}", cwd=bench_path)
-	remove_from_appstxt(app, bench_path)
-	shutil.rmtree(app_path)
-	run_frappe_cmd("build", bench_path=bench_path)
-	if get_config(bench_path).get('restart_supervisor_on_update'):
-		restart_supervisor_processes(bench_path=bench_path)
-	if get_config(bench_path).get('restart_systemd_on_update'):
-		restart_systemd_processes(bench_path=bench_path)
 
 def pull_apps(apps=None, bench_path='.', reset=False):
 	'''Check all apps if there no local changes, pull'''
