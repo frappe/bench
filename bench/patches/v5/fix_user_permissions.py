@@ -34,13 +34,13 @@ def is_production_set(bench_path):
 	bench_name = get_bench_name(bench_path)
 
 	supervisor_conf_extn = "ini" if is_centos7() else "conf"
-	supervisor_conf_file_name = '{bench_name}.{extn}'.format(bench_name=bench_name, extn=supervisor_conf_extn)
+	supervisor_conf_file_name = f'{bench_name}.{supervisor_conf_extn}'
 	supervisor_conf = os.path.join(get_supervisor_confdir(), supervisor_conf_file_name)
 
 	if os.path.exists(supervisor_conf):
 		production_setup = production_setup or True
 
-	nginx_conf = '/etc/nginx/conf.d/{bench_name}.conf'.format(bench_name=bench_name)
+	nginx_conf = f'/etc/nginx/conf.d/{bench_name}.conf'
 
 	if os.path.exists(nginx_conf):
 		production_setup = production_setup or True
@@ -54,7 +54,7 @@ def execute(bench_path):
 
 	if is_sudoers_set():
 		if is_production_set(bench_path):
-			exec_cmd("sudo bench setup supervisor --yes --user {user}".format(user=user))
+			exec_cmd(f"sudo bench setup supervisor --yes --user {user}")
 			service("supervisord", "restart")
 
-		exec_cmd("sudo bench setup sudoers {user}".format(user=user))
+		exec_cmd(f"sudo bench setup sudoers {user}")
