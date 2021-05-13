@@ -93,7 +93,7 @@ def bump(bench_path, app, bump_type, from_branch, to_branch, remote, owner, repo
 	push_release(repo_path, from_branch=from_branch, to_branch=to_branch, remote=remote)
 	prerelease = True if 'beta' in new_version else False
 	create_github_release(repo_path, tag_name, message, remote=remote, owner=owner, repo_name=repo_name, prerelease=prerelease)
-	print('Released {tag} for {repo_path}'.format(tag=tag_name, repo_path=repo_path))
+	print(f'Released {tag_name} for {repo_path}')
 
 def update_branches_and_check_for_changelog(repo_path, from_branch, to_branch, remote='upstream'):
 
@@ -125,8 +125,7 @@ def get_release_message(repo_path, from_branch, to_branch, remote='upstream'):
 
 	repo = git.Repo(repo_path)
 	g = repo.git
-	log = g.log('{remote}/{to_branch}..{remote}/{from_branch}'.format(
-		remote=remote, to_branch=to_branch, from_branch=from_branch), '--format=format:%s', '--no-merges')
+	log = g.log(f'{remote}/{to_branch}..{remote}/{from_branch}', '--format=format:%s', '--no-merges')
 
 	if log:
 		return "* " + log.replace('\n', '\n* ')
@@ -246,7 +245,7 @@ def commit_changes(repo_path, new_version, to_branch):
 	else:
 		repo.index.add([os.path.join(app_name, 'hooks.py')])
 
-	repo.index.commit('bumped to version {}'.format(new_version))
+	repo.index.commit(f'bumped to version {new_version}')
 
 def create_release(repo_path, new_version, from_branch, to_branch, frontport=True):
 	print('creating release for version', new_version)
@@ -259,7 +258,7 @@ def create_release(repo_path, new_version, from_branch, to_branch, frontport=Tru
 		handle_merge_error(e, source=from_branch, target=to_branch)
 
 	tag_name = 'v' + new_version
-	repo.create_tag(tag_name, message='Release {}'.format(new_version))
+	repo.create_tag(tag_name, message=f'Release {new_version}')
 	g.checkout(from_branch)
 
 	try:
@@ -269,8 +268,8 @@ def create_release(repo_path, new_version, from_branch, to_branch, frontport=Tru
 
 	if frontport:
 		for branch in branches_to_update[from_branch]:
-			print ("Front porting changes to {}".format(branch))
-			print('merging {0} into'.format(to_branch), branch)
+			print (f"Front porting changes to {branch}")
+			print(f'merging {to_branch} into', branch)
 			g.checkout(branch)
 			try:
 				g.merge(to_branch)
@@ -281,7 +280,7 @@ def create_release(repo_path, new_version, from_branch, to_branch, frontport=Tru
 
 def handle_merge_error(e, source, target):
 	print('-'*80)
-	print('Error when merging {source} into {target}'.format(source=source, target=target))
+	print(f'Error when merging {source} into {target}')
 	print(e)
 	print('You can open a new terminal, try to manually resolve the conflict/error and continue')
 	print('-'*80)
@@ -292,13 +291,13 @@ def push_release(repo_path, from_branch, to_branch, remote='upstream'):
 	repo = git.Repo(repo_path)
 	g = repo.git
 	args = [
-		'{to_branch}:{to_branch}'.format(to_branch=to_branch),
-		'{from_branch}:{from_branch}'.format(from_branch=from_branch)
+		f'{to_branch}:{to_branch}',
+		f'{from_branch}:{from_branch}'
 	]
 
 	for branch in branches_to_update[from_branch]:
-		print('pushing {0} branch of'.format(branch), repo_path)
-		args.append('{branch}:{branch}'.format(branch=branch))
+		print(f'pushing {branch} branch of', repo_path)
+		args.append(f'{branch}:{branch}')
 
 	args.append('--tags')
 
@@ -330,8 +329,7 @@ def create_github_release(repo_path, tag_name, message, remote='upstream', owner
 	}
 	for i in range(3):
 		try:
-			r = requests.post('https://api.github.com/repos/{owner}/{repo_name}/releases'.format(
-				owner=owner, repo_name=repo_name),
+			r = requests.post(f'https://api.github.com/repos/{owner}/{repo_name}/releases',
 				auth=HTTPBasicAuth(gh_username, gh_password), data=json.dumps(data))
 			r.raise_for_status()
 			break
@@ -350,9 +348,9 @@ def push_branch_for_old_major_version(bench_path, bump_type, app, repo_path, fro
 		return
 
 	current_version = get_current_version(repo_path)
-	old_major_version_branch = "v{major}.x.x".format(major=current_version.split('.')[0])
+	old_major_version_branch = f"v{current_version.split('.')[0]}.x.x"
 
-	click.confirm('Do you want to push {branch}?'.format(branch=old_major_version_branch), abort=True)
+	click.confirm(f'Do you want to push {old_major_version_branch}?', abort=True)
 
 	update_branch(repo_path, to_branch, remote=remote)
 
@@ -360,8 +358,8 @@ def push_branch_for_old_major_version(bench_path, bump_type, app, repo_path, fro
 	g.checkout(b=old_major_version_branch)
 
 	args = [
-		'{old_major_version_branch}:{old_major_version_branch}'.format(old_major_version_branch=old_major_version_branch),
+		f'{old_major_version_branch}:{old_major_version_branch}',
 	]
 
-	print("Pushing {old_major_version_branch} ".format(old_major_version_branch=old_major_version_branch))
+	print(f"Pushing {old_major_version_branch} ")
 	print(g.push(remote, *args))

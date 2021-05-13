@@ -64,7 +64,7 @@ def cli():
 	except BaseException as e:
 		return_code = getattr(e, "code", 0)
 		if return_code:
-			logger.warning("{0} executed with exit code {1}".format(command, return_code))
+			logger.warning(f"{command} executed with exit code {return_code}")
 		sys.exit(return_code)
 
 
@@ -109,19 +109,19 @@ def change_uid():
 def old_frappe_cli(bench_path='.'):
 	f = get_frappe(bench_path=bench_path)
 	os.chdir(os.path.join(bench_path, 'sites'))
-	os.execve(f, [f] + sys.argv[2:], {})
+	os.execv(f, [f] + sys.argv[2:])
 
 
 def app_cmd(bench_path='.'):
 	f = get_env_cmd('python', bench_path=bench_path)
 	os.chdir(os.path.join(bench_path, 'sites'))
-	os.execve(f, [f] + ['-m', 'frappe.utils.bench_helper'] + sys.argv[1:], {})
+	os.execv(f, [f] + ['-m', 'frappe.utils.bench_helper'] + sys.argv[1:])
 
 
 def frappe_cmd(bench_path='.'):
 	f = get_env_cmd('python', bench_path=bench_path)
 	os.chdir(os.path.join(bench_path, 'sites'))
-	os.execve(f, [f] + ['-m', 'frappe.utils.bench_helper', 'frappe'] + sys.argv[1:], {})
+	os.execv(f, [f] + ['-m', 'frappe.utils.bench_helper', 'frappe'] + sys.argv[1:])
 
 
 def get_frappe_commands():
@@ -140,7 +140,7 @@ def get_frappe_help(bench_path='.'):
 	python = get_env_cmd('python', bench_path=bench_path)
 	sites_path = os.path.join(bench_path, 'sites')
 	try:
-		out = get_cmd_output("{python} -m frappe.utils.bench_helper get-frappe-help".format(python=python), cwd=sites_path)
+		out = get_cmd_output(f"{python} -m frappe.utils.bench_helper get-frappe-help", cwd=sites_path)
 		return "\n\nFramework commands:\n" + out.split('Commands:')[1]
 	except:
 		return ""

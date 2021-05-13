@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
+
 from __future__ import print_function
+
 import os
 import sys
 import subprocess
@@ -234,7 +236,7 @@ def install_bench(args):
 	# create user if not exists
 	extra_vars = vars(args)
 	extra_vars.update(frappe_user=args.user)
-	
+
 	extra_vars.update(user_directory=get_user_home_directory(args.user))
 
 	if os.path.exists(tmp_bench_repo):

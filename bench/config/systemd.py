@@ -25,7 +25,7 @@ def generate_systemd_config(bench_path, user=None, yes=False,
 	bench_name = get_bench_name(bench_path)
 
 	if stop:
-		exec_cmd('sudo systemctl stop -- $(systemctl show -p Requires {bench_name}.target | cut -d= -f2)'.format(bench_name=bench_name))
+		exec_cmd(f'sudo systemctl stop -- $(systemctl show -p Requires {bench_name}.target | cut -d= -f2)')
 		return
 
 	if create_symlinks:
@@ -185,25 +185,15 @@ def _create_symlinks(bench_path):
 	unit_files = get_unit_files(bench_dir)
 	for unit_file in unit_files:
 		filename = "".join(unit_file)
-		exec_cmd('sudo ln -s {config_path}/{unit_file} {etc_systemd_system}/{unit_file_init}'.format(
-			config_path=config_path,
-			etc_systemd_system=etc_systemd_system,
-			unit_file=filename,
-			unit_file_init="".join(unit_file)
-		))
+		exec_cmd(f'sudo ln -s {config_path}/{filename} {etc_systemd_system}/{"".join(unit_file)}')
 	exec_cmd('sudo systemctl daemon-reload')
 
 def _delete_symlinks(bench_path):
 	bench_dir = os.path.abspath(bench_path)
 	etc_systemd_system = os.path.join('/', 'etc', 'systemd', 'system')
-	config_path = os.path.join(bench_dir, 'config', 'systemd')
 	unit_files = get_unit_files(bench_dir)
 	for unit_file in unit_files:
-		exec_cmd('sudo rm {etc_systemd_system}/{unit_file_init}'.format(
-			config_path=config_path,
-			etc_systemd_system=etc_systemd_system,
-			unit_file_init="".join(unit_file)
-		))
+		exec_cmd(f'sudo rm {etc_systemd_system}/{"".join(unit_file)}')
 	exec_cmd('sudo systemctl daemon-reload')
 
 def get_unit_files(bench_path):
