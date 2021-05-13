@@ -613,7 +613,7 @@ def update_python_packages(bench_path='.', quiet=False):
 	quiet_flag = " -q" if quiet else ""
 	print('Updating Python libraries...')
 
-	update_env_pip(bench_path)
+	update_env_pip(bench_path, quiet=quiet)
 	for app in get_apps():
 		print(f'\n{color.yellow}Installing python dependencies for {app}{color.nc}')
 		app_path = os.path.join(bench_path, "apps", app)
