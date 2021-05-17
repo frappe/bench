@@ -15,7 +15,7 @@ def prepare_beta_release(bench_path, app, owner='frappe', remote='upstream'):
 	beta_master = click.prompt('Branch name for beta release', type=str)
 
 	if click.confirm("Do you want to setup hotfix for beta ?"):
-		beta_hotfix = click.prompt('Branch name for beta hotfix ({}_hotifx)'.format(beta_master), type=str)
+		beta_hotfix = click.prompt(f'Branch name for beta hotfix ({beta_master}_hotifx)', type=str)
 
 	validate(bench_path)
 	repo_path = os.path.join(bench_path, 'apps', app)
@@ -26,7 +26,7 @@ def prepare_beta_release(bench_path, app, owner='frappe', remote='upstream'):
 
 	if beta_hotfix:
 		prepare_beta_hotfix(repo_path, beta_hotfix, remote)
-	
+
 	tag_name = merge_beta_release_to_develop(repo_path, beta_master, remote, version)
 	push_branches(repo_path, beta_master, beta_hotfix, remote)
 	create_github_release(repo_path, tag_name, '', owner, remote)
@@ -68,8 +68,8 @@ def set_beta_version(repo_path, version):
 	repo = git.Repo(repo_path)
 	app_name = os.path.basename(repo_path)
 	repo.index.add([os.path.join(app_name, 'hooks.py')])
-	repo.index.commit('bumped to version {}'.format(version))
-	
+	repo.index.commit(f'bumped to version {version}')
+
 
 def prepare_beta_hotfix(repo_path, beta_hotfix, remote):
 	g = git.Repo(repo_path).git
@@ -83,7 +83,7 @@ def merge_beta_release_to_develop(repo_path, beta_master, remote, version):
 	g = repo.git
 
 	tag_name = 'v' + version
-	repo.create_tag(tag_name, message='Release {}'.format(version))
+	repo.create_tag(tag_name, message=f'Release {version}')
 
 	g.checkout('develop')
 
@@ -100,12 +100,12 @@ def push_branches(repo_path, beta_master, beta_hotfix, remote):
 
 	args = [
 		'develop:develop',
-		'{beta_master}:{beta_master}'.format(beta_master=beta_master),
+		f'{beta_master}:{beta_master}',
 	]
 
 	if beta_hotfix:
-		args.append('{beta_hotfix}:{beta_hotfix}'.format(beta_hotfix=beta_hotfix))
-	
+		args.append(f'{beta_hotfix}:{beta_hotfix}')
+
 	args.append('--tags')
 
 	print("Pushing branches")
@@ -114,5 +114,5 @@ def push_branches(repo_path, beta_master, beta_hotfix, remote):
 def create_github_release(repo_path, tag_name, message, owner, remote):
 	from .release import create_github_release
 
-	create_github_release(repo_path, tag_name, message, remote=remote, owner=owner, 
+	create_github_release(repo_path, tag_name, message, remote=remote, owner=owner,
 		repo_name=None, gh_username=github_username, gh_password=github_password)

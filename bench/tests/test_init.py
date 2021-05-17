@@ -121,7 +121,7 @@ class TestBenchInit(TestBenchBase):
 
 		# create and install app on site
 		self.new_site(site_name, bench_name)
-		installed_app = not bench.utils.exec_cmd("bench --site {0} install-app frappe_theme".format(site_name), cwd=bench_path)
+		installed_app = not bench.utils.exec_cmd(f"bench --site {site_name} install-app frappe_theme", cwd=bench_path)
 
 		app_installed_on_site = subprocess.check_output(["bench", "--site", site_name, "list-apps"], cwd=bench_path).decode('utf8')
 

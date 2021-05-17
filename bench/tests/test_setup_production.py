@@ -19,13 +19,13 @@ class TestSetupProduction(TestBenchBase):
 		for bench_name in ("test-bench-1", "test-bench-2"):
 			bench_path = os.path.join(os.path.abspath(self.benches_path), bench_name)
 			self.init_bench(bench_name)
-			bench.utils.exec_cmd("sudo bench setup production {0} --yes".format(user), cwd=bench_path)
+			bench.utils.exec_cmd(f"sudo bench setup production {user} --yes", cwd=bench_path)
 			self.assert_nginx_config(bench_name)
 			self.assert_supervisor_config(bench_name)
 			self.assert_supervisor_process(bench_name)
 
 		self.assert_nginx_process()
-		bench.utils.exec_cmd("sudo bench setup sudoers {0}".format(user))
+		bench.utils.exec_cmd(f"sudo bench setup sudoers {user}")
 		self.assert_sudoers(user)
 
 		for bench_name in self.benches:
@@ -42,7 +42,7 @@ class TestSetupProduction(TestBenchBase):
 
 	def assert_nginx_config(self, bench_name):
 		conf_src = os.path.join(os.path.abspath(self.benches_path), bench_name, 'config', 'nginx.conf')
-		conf_dest = "/etc/nginx/conf.d/{bench_name}.conf".format(bench_name=bench_name)
+		conf_dest = f"/etc/nginx/conf.d/{bench_name}.conf"
 
 		self.assertTrue(self.file_exists(conf_src))
 		self.assertTrue(self.file_exists(conf_dest))
@@ -55,10 +55,10 @@ class TestSetupProduction(TestBenchBase):
 			f = f.read()
 
 			for key in (
-					"upstream {bench_name}-frappe",
-					"upstream {bench_name}-socketio-server"
+					f"upstream {bench_name}-frappe",
+					f"upstream {bench_name}-socketio-server"
 				):
-				self.assertTrue(key.format(bench_name=bench_name) in f)
+				self.assertTrue(key in f)
 
 
 	def assert_nginx_process(self):
@@ -79,15 +79,15 @@ class TestSetupProduction(TestBenchBase):
 			with open(sudoers_file, 'r') as f:
 				sudoers = f.read()
 
-		self.assertTrue('{user} ALL = (root) NOPASSWD: {service} nginx *'.format(service=service, user=user) in sudoers)
-		self.assertTrue('{user} ALL = (root) NOPASSWD: {nginx}'.format(nginx=nginx, user=user) in sudoers)
+		self.assertTrue(f'{user} ALL = (root) NOPASSWD: {service} nginx *' in sudoers)
+		self.assertTrue(f'{user} ALL = (root) NOPASSWD: {nginx}' in sudoers)
 
 
 	def assert_supervisor_config(self, bench_name, use_rq=True):
 		conf_src = os.path.join(os.path.abspath(self.benches_path), bench_name, 'config', 'supervisor.conf')
 
 		supervisor_conf_dir = get_supervisor_confdir()
-		conf_dest = "{supervisor_conf_dir}/{bench_name}.conf".format(supervisor_conf_dir=supervisor_conf_dir, bench_name=bench_name)
+		conf_dest = f"{supervisor_conf_dir}/{bench_name}.conf"
 
 		self.assertTrue(self.file_exists(conf_src))
 		self.assertTrue(self.file_exists(conf_dest))
@@ -100,38 +100,36 @@ class TestSetupProduction(TestBenchBase):
 			f = f.read()
 
 			tests = [
-				"program:{bench_name}-frappe-web",
-				"program:{bench_name}-redis-cache",
-				"program:{bench_name}-redis-queue",
-				"program:{bench_name}-redis-socketio",
-				"group:{bench_name}-web",
-				"group:{bench_name}-workers",
-				"group:{bench_name}-redis"
+				f"program:{bench_name}-frappe-web",
+				f"program:{bench_name}-redis-cache",
+				f"program:{bench_name}-redis-queue",
+				f"program:{bench_name}-redis-socketio",
+				f"group:{bench_name}-web",
+				f"group:{bench_name}-workers",
+				f"group:{bench_name}-redis"
 			]
 
 			if not os.environ.get("CI"):
-				tests.append("program:{bench_name}-node-socketio")
+				tests.append(f"program:{bench_name}-node-socketio")
 
 			if use_rq:
 				tests.extend([
-					"program:{bench_name}-frappe-schedule",
-					"program:{bench_name}-frappe-default-worker",
-					"program:{bench_name}-frappe-short-worker",
-					"program:{bench_name}-frappe-long-worker"
+					f"program:{bench_name}-frappe-schedule",
+					f"program:{bench_name}-frappe-default-worker",
+					f"program:{bench_name}-frappe-short-worker",
+					f"program:{bench_name}-frappe-long-worker"
 				])
 
 			else:
 				tests.extend([
-					"program:{bench_name}-frappe-workerbeat",
-					"program:{bench_name}-frappe-worker",
-					"program:{bench_name}-frappe-longjob-worker",
-					"program:{bench_name}-frappe-async-worker"
+					f"program:{bench_name}-frappe-workerbeat",
+					f"program:{bench_name}-frappe-worker",
+					f"program:{bench_name}-frappe-longjob-worker",
+					f"program:{bench_name}-frappe-async-worker"
 				])
 
 			for key in tests:
-				if key.format(bench_name=bench_name) not in f:
-					print(key.format(bench_name=bench_name))
-				self.assertTrue(key.format(bench_name=bench_name) in f)
+				self.assertTrue(key in f)
 
 
 	def assert_supervisor_process(self, bench_name, use_rq=True, disable_production=False):
@@ -170,9 +168,9 @@ class TestSetupProduction(TestBenchBase):
 
 		for key in tests:
 			if disable_production:
-				self.assertFalse(re.search(key.format(bench_name=bench_name), out))
+				self.assertFalse(re.search(key, out))
 			else:
-				self.assertTrue(re.search(key.format(bench_name=bench_name), out))
+				self.assertTrue(re.search(key, out))
 
 
 if __name__ == '__main__':

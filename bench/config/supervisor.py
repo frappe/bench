@@ -67,8 +67,7 @@ def get_supervisord_conf():
 
 def update_supervisord_config(user=None, yes=False):
 	"""From bench v5.x, we're moving to supervisor running as user"""
-	from six.moves import configparser
-
+	import configparser
 	from bench.config.production_setup import service
 
 	if not user:
@@ -78,7 +77,7 @@ def update_supervisord_config(user=None, yes=False):
 	section = "unix_http_server"
 	updated_values = {
 		"chmod": "0760",
-		"chown": "{user}:{user}".format(user=user)
+		"chown": f"{user}:{user}"
 	}
 	supervisord_conf_changes = ""
 
@@ -91,7 +90,7 @@ def update_supervisord_config(user=None, yes=False):
 
 	if section not in config.sections():
 		config.add_section(section)
-		action = "Section {0} Added".format(section)
+		action = f"Section {section} Added"
 		logger.log(action)
 		supervisord_conf_changes += '\n' + action
 
@@ -103,7 +102,7 @@ def update_supervisord_config(user=None, yes=False):
 
 		if current_value.strip() != value:
 			config.set(section, key, value)
-			action = "Updated supervisord.conf: '{0}' changed from '{1}' to '{2}'".format(key, current_value, value)
+			action = f"Updated supervisord.conf: '{key}' changed from '{current_value}' to '{value}'"
 			logger.log(action)
 			supervisord_conf_changes += '\n' + action
 
@@ -112,14 +111,14 @@ def update_supervisord_config(user=None, yes=False):
 		return
 
 	if not yes:
-		click.confirm("{0} will be updated with the following values:\n{1}\nDo you want to continue?".format(supervisord_conf, supervisord_conf_changes), abort=True)
+		click.confirm(f"{supervisord_conf} will be updated with the following values:\n{supervisord_conf_changes}\nDo you want to continue?", abort=True)
 
 	try:
 		with open(supervisord_conf, "w") as f:
 			config.write(f)
-			logger.log("Updated supervisord.conf at '{0}'".format(supervisord_conf))
+			logger.log(f"Updated supervisord.conf at '{supervisord_conf}'")
 	except Exception as e:
-		logger.log("Updating supervisord.conf failed due to '{0}'".format(e))
+		logger.log(f"Updating supervisord.conf failed due to '{e}'")
 
 	# Reread supervisor configuration, reload supervisord and supervisorctl, restart services that were started
 	service('supervisor', 'reload')
