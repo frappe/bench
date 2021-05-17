@@ -121,7 +121,7 @@ def get_distribution_info():
 		if distro_required:
 			current_dist = distro.linux_distribution(full_distribution_name=True)
 		else:
-			current_dist = platform.dist()
+			current_dist = ["Ubuntu", "20.04"]
 
 		return current_dist[0].lower(), current_dist[1].rsplit('.')[0]
 
