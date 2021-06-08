@@ -825,8 +825,8 @@ def download_translations_p():
 	from concurrent.futures import ThreadPoolExecutor
 
 	executor = ThreadPoolExecutor()
-
 	langs = get_langs()
+
 	apps = ('frappe', 'erpnext')
 	args = list(itertools.product(apps, langs))
 
