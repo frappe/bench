@@ -9,7 +9,7 @@ from bench.config.common_site_config import get_config
 from bench.config.nginx import make_nginx_conf
 from bench.config.supervisor import generate_supervisor_config, update_supervisord_config
 from bench.config.systemd import generate_systemd_config
-from bench.utils import CommandFailedError, exec_cmd, find_executable, fix_prod_setup_perms, get_bench_name, get_cmd_output, log
+from bench.utils import CommandFailedError, exec_cmd, which, fix_prod_setup_perms, get_bench_name, get_cmd_output, log
 
 
 logger = logging.getLogger(bench.PROJECT_NAME)
@@ -17,13 +17,13 @@ logger = logging.getLogger(bench.PROJECT_NAME)
 
 def setup_production_prerequisites():
 	"""Installs ansible, fail2banc, NGINX and supervisor"""
-	if not find_executable("ansible"):
-		exec_cmd("sudo {0} -m pip install ansible".format(sys.executable))
-	if not find_executable("fail2ban-client"):
+	if not which("ansible"):
+		exec_cmd(f"sudo {sys.executable} -m pip install ansible")
+	if not which("fail2ban-client"):
 		exec_cmd("bench setup role fail2ban")
-	if not find_executable("nginx"):
+	if not which("nginx"):
 		exec_cmd("bench setup role nginx")
-	if not find_executable("supervisord"):
+	if not which("supervisord"):
 		exec_cmd("bench setup role supervisor")
 
 
@@ -47,13 +47,12 @@ def setup_production(user, bench_path='.', yes=False):
 	remove_default_nginx_configs()
 
 	bench_name = get_bench_name(bench_path)
-	nginx_conf = '/etc/nginx/conf.d/{bench_name}.conf'.format(bench_name=bench_name)
+	nginx_conf = f'/etc/nginx/conf.d/{bench_name}.conf'
 
 	print("Setting Up symlinks and reloading services...")
 	if get_config(bench_path).get('restart_supervisor_on_update'):
 		supervisor_conf_extn = "ini" if is_centos7() else "conf"
-		supervisor_conf = os.path.join(get_supervisor_confdir(), '{bench_name}.{extn}'.format(
-			bench_name=bench_name, extn=supervisor_conf_extn))
+		supervisor_conf = os.path.join(get_supervisor_confdir(), f'{bench_name}.{supervisor_conf_extn}')
 
 		# Check if symlink exists, If not then create it.
 		if not os.path.islink(supervisor_conf):
@@ -76,8 +75,7 @@ def disable_production(bench_path='.'):
 
 	# supervisorctl
 	supervisor_conf_extn = "ini" if is_centos7() else "conf"
-	supervisor_conf = os.path.join(get_supervisor_confdir(), '{bench_name}.{extn}'.format(
-		bench_name=bench_name, extn=supervisor_conf_extn))
+	supervisor_conf = os.path.join(get_supervisor_confdir(), f'{bench_name}.{supervisor_conf_extn}')
 
 	if os.path.islink(supervisor_conf):
 		os.unlink(supervisor_conf)
@@ -86,7 +84,7 @@ def disable_production(bench_path='.'):
 		reload_supervisor()
 
 	# nginx
-	nginx_conf = '/etc/nginx/conf.d/{bench_name}.conf'.format(bench_name=bench_name)
+	nginx_conf = f'/etc/nginx/conf.d/{bench_name}.conf'
 
 	if os.path.islink(nginx_conf):
 		os.unlink(nginx_conf)
@@ -95,24 +93,24 @@ def disable_production(bench_path='.'):
 
 
 def service(service_name, service_option):
-	if os.path.basename(find_executable('systemctl') or '') == 'systemctl' and is_running_systemd():
-		systemctl_cmd = "sudo {service_manager} {service_option} {service_name}"
-		exec_cmd(systemctl_cmd.format(service_manager='systemctl', service_option=service_option, service_name=service_name))
+	if os.path.basename(which('systemctl') or '') == 'systemctl' and is_running_systemd():
+		exec_cmd(f"sudo systemctl {service_option} {service_name}")
 
-	elif os.path.basename(find_executable('service') or '') == 'service':
-		service_cmd = "sudo {service_manager} {service_name} {service_option}"
-		exec_cmd(service_cmd.format(service_manager='service', service_name=service_name, service_option=service_option))
+	elif os.path.basename(which('service') or '') == 'service':
+		exec_cmd(f"sudo service {service_name} {service_option}")
 
 	else:
 		# look for 'service_manager' and 'service_manager_command' in environment
 		service_manager = os.environ.get("BENCH_SERVICE_MANAGER")
 		if service_manager:
-			service_manager_command = (os.environ.get("BENCH_SERVICE_MANAGER_COMMAND")
-				or "{service_manager} {service_option} {service}").format(service_manager=service_manager, service=service, service_option=service_option)
+			service_manager_command = (
+				os.environ.get("BENCH_SERVICE_MANAGER_COMMAND")
+				or f"{service_manager} {service_option} {service}"
+			)
 			exec_cmd(service_manager_command)
 
 		else:
-			log("No service manager found: '{0} {1}' failed to execute".format(service_name, service_option), level=2)
+			log(f"No service manager found: '{service_name} {service_option}' failed to execute", level=2)
 
 
 def get_supervisor_confdir():
@@ -145,19 +143,19 @@ def is_running_systemd():
 
 
 def reload_supervisor():
-	supervisorctl = find_executable('supervisorctl')
+	supervisorctl = which('supervisorctl')
 
 	try:
 		# first try reread/update
-		exec_cmd('{0} reread'.format(supervisorctl))
-		exec_cmd('{0} update'.format(supervisorctl))
+		exec_cmd(f'{supervisorctl} reread')
+		exec_cmd(f'{supervisorctl} update')
 		return
 	except CommandFailedError:
 		pass
 
 	try:
 		# something is wrong, so try reloading
-		exec_cmd('{0} reload'.format(supervisorctl))
+		exec_cmd(f'{supervisorctl} reload')
 		return
 	except CommandFailedError:
 		pass
@@ -178,7 +176,7 @@ def reload_supervisor():
 
 def reload_nginx():
 	try:
-		exec_cmd('sudo {0} -t'.format(find_executable('nginx')))
+		exec_cmd(f"sudo {which('nginx')} -t")
 	except:
 		raise
 

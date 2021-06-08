@@ -8,14 +8,11 @@ import sys
 import traceback
 import unittest
 
-# imports - third party imports
-from six import PY2
-
 # imports - module imports
 import bench
 import bench.utils
 
-if PY2:
+if sys.version_info.major == 2:
 	FRAPPE_BRANCH = "version-12"
 else:
 	FRAPPE_BRANCH = "develop"
@@ -44,7 +41,7 @@ class TestBenchBase(unittest.TestCase):
 		bench_path = os.path.abspath(bench_name)
 		python_path = os.path.abspath(os.path.join(bench_path, "env", "bin", "python"))
 		self.assertTrue(python_path.startswith(bench_path))
-		for subdir in ("bin", "include", "lib", "share"):
+		for subdir in ("bin", "lib", "share"):
 			self.assert_exists(bench_name, "env", subdir)
 
 	def assert_config(self, bench_name):
@@ -84,13 +81,12 @@ class TestBenchBase(unittest.TestCase):
 		frappe_tmp_path = "/tmp/frappe"
 
 		if not os.path.exists(frappe_tmp_path):
-			bench.utils.exec_cmd("git clone https://github.com/frappe/frappe -b {branch} --depth 1 --origin upstream {location}".format(branch=FRAPPE_BRANCH, location=frappe_tmp_path))
+			bench.utils.exec_cmd(f"git clone https://github.com/frappe/frappe -b {FRAPPE_BRANCH} --depth 1 --origin upstream {frappe_tmp_path}")
 
 		kwargs.update(dict(
 			python=sys.executable,
 			no_procfile=True,
 			no_backups=True,
-			skip_assets=True,
 			frappe_path=frappe_tmp_path
 		))
 

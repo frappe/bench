@@ -8,7 +8,6 @@ import os
 default_config = {
 	'restart_supervisor_on_update': False,
 	'restart_systemd_on_update': False,
-	'auto_update': False,
 	'serve_default_site': True,
 	'rebase_on_pull': False,
 	'frappe_user': getpass.getuser(),
@@ -62,7 +61,7 @@ def update_config_for_frappe(config, bench_path):
 
 	for key in ('redis_cache', 'redis_queue', 'redis_socketio'):
 		if key not in config:
-			config[key] = "redis://localhost:{0}".format(ports[key])
+			config[key] = f"redis://localhost:{ports[key]}"
 
 	for key in ('webserver_port', 'socketio_port', 'file_watcher_port'):
 		if key not in config:
@@ -72,7 +71,7 @@ def update_config_for_frappe(config, bench_path):
 	# TODO Optionally we need to add the host or domain name in case dns_multitenant is false
 
 def make_ports(bench_path):
-	from six.moves.urllib.parse import urlparse
+	from urllib.parse import urlparse
 
 	benches_path = os.path.dirname(os.path.abspath(bench_path))
 
