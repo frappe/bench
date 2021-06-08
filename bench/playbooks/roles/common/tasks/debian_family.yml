@@ -32,12 +32,8 @@
       - libldap2-dev
       - libcups2-dev
       - pv                      # Show progress during database restore
-      - snap                    # For certbot
     state: present
     force: yes
-
-- name: Install snap core
-  command: snap install core
 
 - include_tasks: debian.yml
   when: ansible_distribution == 'Debian'
