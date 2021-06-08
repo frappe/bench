@@ -822,15 +822,15 @@ def update_translations_p(args):
 
 
 def download_translations_p():
-	import multiprocessing
+	from concurrent.futures import ThreadPoolExecutor
 
-	pool = multiprocessing.Pool(multiprocessing.cpu_count())
+	executor = ThreadPoolExecutor()
 
 	langs = get_langs()
 	apps = ('frappe', 'erpnext')
 	args = list(itertools.product(apps, langs))
 
-	pool.map(update_translations_p, args)
+	executor.map(update_translations_p, args)
 
 
 def download_translations():
