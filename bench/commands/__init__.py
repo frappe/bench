@@ -1,19 +1,9 @@
 import click
-
-
-def print_bench_version(ctx, param, value):
-	"""Prints current bench version"""
-	if not value or ctx.resilient_parsing:
-		return
-
-	import bench
-	click.echo(bench.VERSION)
-	ctx.exit()
+import bench
 
 @click.group()
-@click.option('--version', is_flag=True, is_eager=True, callback=print_bench_version, expose_value=False)
+@click.version_option(version = bench.VERSION)
 def bench_command(bench_path='.'):
-	import bench
 	bench.set_frappe_version(bench_path=bench_path)
 
 
