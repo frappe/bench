@@ -13,9 +13,9 @@ import bench
 import bench.utils
 
 if sys.version_info.major == 2:
-	FRAPPE_BRANCH = "version-13"
+	FRAPPE_BRANCH = "version-12"
 else:
-	FRAPPE_BRANCH = "develop"
+	FRAPPE_BRANCH = "version-13"
 
 class TestBenchBase(unittest.TestCase):
 	def setUp(self):
