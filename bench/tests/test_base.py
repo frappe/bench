@@ -13,7 +13,7 @@ import bench
 import bench.utils
 
 if sys.version_info.major == 2:
-	FRAPPE_BRANCH = "version-12"
+	FRAPPE_BRANCH = "version-13"
 else:
 	FRAPPE_BRANCH = "develop"
 
