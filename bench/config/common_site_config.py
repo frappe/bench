@@ -12,7 +12,8 @@ default_config = {
 	'rebase_on_pull': False,
 	'frappe_user': getpass.getuser(),
 	'shallow_clone': True,
-	'background_workers': 1
+	'background_workers': 1,
+	'use_redis_auth': False
 }
 
 def make_config(bench_path):
