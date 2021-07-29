@@ -54,6 +54,8 @@ The Easy Install script should get you going with a Frappe/ERPNext setup with mi
 
 **Note:** This script works only on GNU/Linux based server distributions, and has been designed and tested to work on Ubuntu 16.04+, CentOS 7+, and Debian-based systems.
 
+> This script installs Version 12 by default. It is untested with Version 13 and above. Containerized or manual installs are recommended for newer setups.
+
 #### Prerequisites
 
 You need to install the following packages for the script to run:
