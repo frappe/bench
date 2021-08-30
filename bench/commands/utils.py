@@ -98,12 +98,6 @@ def set_redis_socketio_host(host):
 	set_redis_socketio_host(host)
 
 
-@click.command('set-default-site', help="Set default site for bench")
-@click.argument('site')
-def set_default_site(site):
-	from bench.utils import set_default_site
-	set_default_site(site)
-
 
 @click.command('download-translations', help="Download latest translations")
 def download_translations():
@@ -111,7 +105,7 @@ def download_translations():
 	download_translations_p()
 
 
-@click.command('renew-lets-encrypt', help="Renew Let's Encrypt certificate")
+@click.command('renew-lets-encrypt', help="Sets Up latest cron and Renew Let's Encrypt certificate")
 def renew_lets_encrypt():
 	from bench.config.lets_encrypt import renew_certs
 	renew_certs()
@@ -122,7 +116,7 @@ def renew_lets_encrypt():
 def backup_site(site):
 	from bench.utils import get_sites, backup_site
 	if site not in get_sites(bench_path='.'):
-		print('Site `{0}` not found'.format(site))
+		print(f'Site `{site}` not found')
 		sys.exit(1)
 	backup_site(site, bench_path='.')
 

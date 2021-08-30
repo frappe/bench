@@ -27,11 +27,13 @@ def cli():
 	command = " ".join(sys.argv)
 
 	change_working_directory()
-	logger = setup_logging() or logging.getLogger(bench.PROJECT_NAME)
+	logger = setup_logging()
 	logger.info(command)
-	check_uid()
-	change_dir()
-	change_uid()
+
+	if len(sys.argv) > 1 and sys.argv[1] not in ("src", ):
+		check_uid()
+		change_uid()
+		change_dir()
 
 	if is_dist_editable(bench.PROJECT_NAME) and len(sys.argv) > 1 and sys.argv[1] != "src" and not get_config(".").get("developer_mode"):
 		log("bench is installed in editable mode!\n\nThis is not the recommended mode of installation for production. Instead, install the package from PyPI with: `pip install frappe-bench`\n", level=3)
@@ -62,7 +64,7 @@ def cli():
 	except BaseException as e:
 		return_code = getattr(e, "code", 0)
 		if return_code:
-			logger.warning("{0} executed with exit code {1}".format(command, return_code))
+			logger.warning(f"{command} executed with exit code {return_code}")
 		sys.exit(return_code)
 
 
@@ -138,7 +140,7 @@ def get_frappe_help(bench_path='.'):
 	python = get_env_cmd('python', bench_path=bench_path)
 	sites_path = os.path.join(bench_path, 'sites')
 	try:
-		out = get_cmd_output("{python} -m frappe.utils.bench_helper get-frappe-help".format(python=python), cwd=sites_path)
+		out = get_cmd_output(f"{python} -m frappe.utils.bench_helper get-frappe-help", cwd=sites_path)
 		return "\n\nFramework commands:\n" + out.split('Commands:')[1]
 	except:
 		return ""

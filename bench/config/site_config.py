@@ -4,7 +4,6 @@ import os
 from collections import defaultdict
 
 # imports - module imports
-from bench.config.nginx import make_nginx_conf
 from bench.utils import get_sites
 
 
@@ -35,6 +34,8 @@ def set_ssl_certificate_key(site, ssl_certificate_key, bench_path='.', gen_confi
 	set_site_config_nginx_property(site, {"ssl_certificate_key": ssl_certificate_key}, bench_path=bench_path, gen_config=gen_config)
 
 def set_site_config_nginx_property(site, config, bench_path='.', gen_config=True):
+	from bench.config.nginx import make_nginx_conf
+
 	if site not in get_sites(bench_path=bench_path):
 		raise Exception("No such site")
 	update_site_config(site, config, bench_path=bench_path)
@@ -48,7 +49,7 @@ def add_domain(site, domain, ssl_certificate, ssl_certificate_key, bench_path='.
 	domains = get_domains(site, bench_path)
 	for d in domains:
 		if (isinstance(d, dict) and d['domain']==domain) or d==domain:
-			print("Domain {0} already exists".format(domain))
+			print(f"Domain {domain} already exists")
 			return
 
 	if ssl_certificate_key and ssl_certificate:

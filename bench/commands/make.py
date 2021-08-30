@@ -8,11 +8,11 @@ import click
 @click.option('--ignore-exist', is_flag = True, default = False, help = "Ignore if Bench instance exists.")
 @click.option('--apps_path', default=None, help="path to json files with apps to install after init")
 @click.option('--frappe-path', default=None, help="path to frappe repo")
-@click.option('--frappe-branch', default=None, help="path to frappe repo")
+@click.option('--frappe-branch', default=None, help="Clone a particular branch of frappe")
 @click.option('--clone-from', default=None, help="copy repos from path")
 @click.option('--clone-without-update', is_flag=True, help="copy repos from path without update")
-@click.option('--no-procfile', is_flag=True, help="Pull changes in all the apps in bench")
-@click.option('--no-backups',is_flag=True, help="Run migrations for all sites in the bench")
+@click.option('--no-procfile', is_flag=True, help="Do not create a Procfile")
+@click.option('--no-backups',is_flag=True, help="Do not set up automatic periodic backups for all sites on this bench")
 @click.option('--skip-redis-config-generation', is_flag=True, help="Skip redis config generation if already specifying the common-site-config file")
 @click.option('--skip-assets',is_flag=True, default=False, help="Do not build assets")
 @click.option('--verbose',is_flag=True, help="Verbose output during install")
@@ -35,17 +35,17 @@ def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups, c
 			skip_assets=skip_assets,
 			python=python,
 		)
-		log('Bench {} initialized'.format(path), level=1)
+		log(f'Bench {path} initialized', level=1)
 	except SystemExit:
 		pass
 	except Exception as e:
-		import os, shutil, time, six
+		import os, shutil, time
 		# add a sleep here so that the traceback of other processes doesnt overlap with the prompts
 		time.sleep(1)
 		print(e)
-		log("There was a problem while creating {}".format(path), level=2)
-		if six.moves.input("Do you want to rollback these changes? [Y/n]: ").lower() == "y":
-			print('Rolling back Bench "{}"'.format(path))
+		log(f"There was a problem while creating {path}", level=2)
+		if click.confirm("Do you want to rollback these changes?"):
+			print(f'Rolling back Bench "{path}"')
 			if os.path.exists(path):
 				shutil.rmtree(path)
 
@@ -98,5 +98,5 @@ def pip(ctx, args):
 	"Run pip commands in bench env"
 	import os
 	from bench.utils import get_env_cmd
-	env_pip = get_env_cmd('pip')
-	os.execv(env_pip, (env_pip,) + args)
+	env_py = get_env_cmd('python')
+	os.execv(env_py, (env_py, '-m', 'pip') + args)

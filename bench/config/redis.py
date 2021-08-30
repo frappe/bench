@@ -3,17 +3,16 @@ import os
 import re
 import subprocess
 
-# imports - third party imports
-import semantic_version
-from six.moves.urllib.parse import urlparse
-
 # imports - module imports
 import bench
 from bench.config.common_site_config import get_config
 
 
 def generate_config(bench_path):
+	from urllib.parse import urlparse
+
 	config = get_config(bench_path)
+	redis_version = get_redis_version()
 
 	ports = {}
 	for key in ('redis_cache', 'redis_queue', 'redis_socketio'):
@@ -24,6 +23,7 @@ def generate_config(bench_path):
 		context={
 			"port": ports['redis_queue'],
 			"bench_path": os.path.abspath(bench_path),
+			"redis_version": redis_version
 		},
 		bench_path=bench_path
 	)
@@ -32,6 +32,7 @@ def generate_config(bench_path):
 		template_name='redis_socketio.conf',
 		context={
 			"port": ports['redis_socketio'],
+			"redis_version": redis_version
 		},
 		bench_path=bench_path
 	)
@@ -41,7 +42,7 @@ def generate_config(bench_path):
 		context={
 			"maxmemory": config.get('cache_maxmemory', get_max_redis_memory()),
 			"port": ports['redis_cache'],
-			"redis_version": get_redis_version(),
+			"redis_version": redis_version
 		},
 		bench_path=bench_path
 	)
@@ -51,16 +52,33 @@ def generate_config(bench_path):
 	if not os.path.exists(pid_path):
 		os.makedirs(pid_path)
 
+	# ACL feature is introduced in Redis 6.0
+	if redis_version < 6.0:
+		return
+
+	# make ACL files
+	acl_rq_path = os.path.join(bench_path, "config", "redis_queue.acl")
+	acl_redis_cache_path = os.path.join(bench_path, "config", "redis_cache.acl")
+	acl_redis_socketio_path = os.path.join(bench_path, "config", "redis_socketio.acl")
+	open(acl_rq_path, 'a').close()
+	open(acl_redis_cache_path, 'a').close()
+	open(acl_redis_socketio_path, 'a').close()
+
 def write_redis_config(template_name, context, bench_path):
-	template = bench.config.env.get_template(template_name)
+	template = bench.config.env().get_template(template_name)
+
+	if "config_path" not in context:
+		context["config_path"] = os.path.abspath(os.path.join(bench_path, "config"))
 
 	if "pid_path" not in context:
-		context["pid_path"] = os.path.abspath(os.path.join(bench_path, "config", "pids"))
+		context["pid_path"] = os.path.join(context["config_path"], "pids")
 
 	with open(os.path.join(bench_path, 'config', template_name), 'w') as f:
 		f.write(template.render(**context))
 
 def get_redis_version():
+	import semantic_version
+
 	version_string = subprocess.check_output('redis-server --version', shell=True)
 	version_string = version_string.decode('utf-8').strip()
 	# extract version number from string
@@ -69,7 +87,7 @@ def get_redis_version():
 		return None
 
 	version = semantic_version.Version(version[0], partial=True)
-	return float('{major}.{minor}'.format(major=version.major, minor=version.minor))
+	return float(f'{version.major}.{version.minor}')
 
 def get_max_redis_memory():
 	try:

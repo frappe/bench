@@ -27,16 +27,15 @@ bench_command.add_command(include_app_for_update)
 bench_command.add_command(pip)
 
 
-from bench.commands.update import update, retry_upgrade, switch_to_branch, switch_to_master, switch_to_develop
+from bench.commands.update import update, retry_upgrade, switch_to_branch, switch_to_develop
 bench_command.add_command(update)
 bench_command.add_command(retry_upgrade)
 bench_command.add_command(switch_to_branch)
-bench_command.add_command(switch_to_master)
 bench_command.add_command(switch_to_develop)
 
 
 from bench.commands.utils import (start, restart, set_nginx_port, set_ssl_certificate, set_ssl_certificate_key, set_url_root,
-	set_mariadb_host, set_default_site, download_translations, backup_site, backup_all_sites, release, renew_lets_encrypt,
+	set_mariadb_host, download_translations, backup_site, backup_all_sites, release, renew_lets_encrypt,
 	disable_production, bench_src, prepare_beta_release, set_redis_cache_host, set_redis_queue_host, set_redis_socketio_host, find_benches, migrate_env,
 	generate_command_cache, clear_command_cache)
 bench_command.add_command(start)
@@ -49,7 +48,6 @@ bench_command.add_command(set_mariadb_host)
 bench_command.add_command(set_redis_cache_host)
 bench_command.add_command(set_redis_queue_host)
 bench_command.add_command(set_redis_socketio_host)
-bench_command.add_command(set_default_site)
 bench_command.add_command(download_translations)
 bench_command.add_command(backup_site)
 bench_command.add_command(backup_all_sites)

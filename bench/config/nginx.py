@@ -6,7 +6,6 @@ import string
 
 # imports - third party imports
 import click
-from six import string_types
 
 # imports - module imports
 import bench
@@ -20,7 +19,7 @@ def make_nginx_conf(bench_path, yes=False):
 		if not click.confirm('nginx.conf already exists and this will overwrite it. Do you want to continue?'):
 			return
 
-	template = bench.config.env.get_template('nginx.conf')
+	template = bench.config.env().get_template('nginx.conf')
 	bench_path = os.path.abspath(bench_path)
 	sites_path = os.path.join(bench_path, "sites")
 
@@ -59,7 +58,7 @@ def make_bench_manager_nginx_conf(bench_path, yes=False, port=23624, domain=None
 	from bench.config.site_config import get_site_config
 	from bench.config.common_site_config import get_config
 
-	template = bench.config.env.get_template('bench_manager_nginx.conf')
+	template = bench.config.env().get_template('bench_manager_nginx.conf')
 	bench_path = os.path.abspath(bench_path)
 	sites_path = os.path.join(bench_path, "sites")
 
@@ -165,15 +164,15 @@ def prepare_sites(config, bench_path):
 		for port_number in ports_in_use:
 			if len(ports_in_use[port_number]) > 1:
 				port_conflict_index += 1
-				message += "\n{0} - Port {1} is shared among sites:".format(port_conflict_index,port_number)
+				message += f"\n{port_conflict_index} - Port {port_number} is shared among sites:"
 				for site_name in ports_in_use[port_number]:
-					message += " {0}".format(site_name)
+					message += f" {site_name}"
 		raise Exception(message)
 
 	if not dns_multitenant:
 		message = "Port configuration list:"
 		for site in sites_configs:
-			message += "\n\nSite {0} assigned port: {1}".format(site["name"], site["port"])
+			message += f"\n\nSite {site['name']} assigned port: {site['port']}"
 
 		print(message)
 
@@ -196,13 +195,13 @@ def get_sites_with_config(bench_path):
 		except Exception as e:
 			strict_nginx = get_config(bench_path).get('strict_nginx')
 			if strict_nginx:
-				print("\n\nERROR: The site config for the site {} is broken.".format(site),
+				print(f"\n\nERROR: The site config for the site {site} is broken.",
 					"If you want this command to pass, instead of just throwing an error,",
 					"You may remove the 'strict_nginx' flag from common_site_config.json or set it to 0",
 					"\n\n")
 				raise (e)
 			else:
-				print("\n\nWARNING: The site config for the site {} is broken.".format(site),
+				print(f"\n\nWARNING: The site config for the site {site} is broken.",
 					"If you want this command to fail, instead of just showing a warning,",
 					"You may add the 'strict_nginx' flag to common_site_config.json and set it to 1",
 					"\n\n")
@@ -218,7 +217,7 @@ def get_sites_with_config(bench_path):
 		if dns_multitenant and site_config.get('domains'):
 			for domain in site_config.get('domains'):
 				# domain can be a string or a dict with 'domain', 'ssl_certificate', 'ssl_certificate_key'
-				if isinstance(domain, string_types):
+				if isinstance(domain, str):
 					domain = { 'domain': domain }
 
 				domain['name'] = site

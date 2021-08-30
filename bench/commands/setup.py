@@ -6,10 +6,7 @@ import sys
 import click
 
 # imports - module imports
-import bench.config.lets_encrypt
-import bench.config.nginx
 import bench.config.procfile
-import bench.config.production_setup
 import bench.config.redis
 import bench.config.site_config
 import bench.config.supervisor
@@ -31,20 +28,25 @@ def setup_sudoers(user):
 @click.command("nginx", help="Generate configuration files for NGINX")
 @click.option("--yes", help="Yes to regeneration of nginx config file", default=False, is_flag=True)
 def setup_nginx(yes=False):
+	import bench.config.nginx
+
 	bench.config.nginx.make_nginx_conf(bench_path=".", yes=yes)
 
 
 @click.command("reload-nginx", help="Checks NGINX config file and reloads service")
 def reload_nginx():
+	import bench.config.production_setup
+
 	bench.config.production_setup.reload_nginx()
 
 
 @click.command("supervisor", help="Generate configuration for supervisor")
 @click.option("--user", help="optional user argument")
 @click.option("--yes", help="Yes to regeneration of supervisor config", is_flag=True, default=False)
-def setup_supervisor(user=None, yes=False):
+@click.option("--skip-redis", help="Skip redis configuration", is_flag=True, default=False)
+def setup_supervisor(user=None, yes=False, skip_redis=False):
 	bench.config.supervisor.update_supervisord_config(user=user, yes=yes)
-	bench.config.supervisor.generate_supervisor_config(bench_path=".", user=user, yes=yes)
+	bench.config.supervisor.generate_supervisor_config(bench_path=".", user=user, yes=yes, skip_redis=skip_redis)
 
 
 @click.command("redis", help="Generates configuration for Redis")
@@ -61,6 +63,8 @@ def setup_fonts():
 @click.argument("user")
 @click.option("--yes", help="Yes to regeneration config", is_flag=True, default=False)
 def setup_production(user, yes=False):
+	import bench.config.production_setup
+
 	bench.config.production_setup.setup_production(user=user, yes=yes)
 
 
@@ -80,7 +84,7 @@ def setup_env(python="python3"):
 @click.option("--force")
 def setup_firewall(ssh_port=None, force=False):
 	if not force:
-		click.confirm("Setting up the firewall will block all ports except 80, 443 and {0}\nDo you want to continue?".format(ssh_port), abort=True)
+		click.confirm(f"Setting up the firewall will block all ports except 80, 443 and {ssh_port}\nDo you want to continue?", abort=True)
 
 	if not ssh_port:
 		ssh_port = 22
@@ -93,7 +97,7 @@ def setup_firewall(ssh_port=None, force=False):
 @click.option("--force")
 def set_ssh_port(port, force=False):
 	if not force:
-		click.confirm("This will change your SSH Port to {}\nDo you want to continue?".format(port), abort=True)
+		click.confirm(f"This will change your SSH Port to {port}\nDo you want to continue?", abort=True)
 
 	run_playbook("roles/bench/tasks/change_ssh_port.yml", {"ssh_port": port})
 
@@ -103,6 +107,8 @@ def set_ssh_port(port, force=False):
 @click.option("--custom-domain")
 @click.option('-n', '--non-interactive', default=False, is_flag=True, help="Run command non-interactively. This flag restarts nginx and runs certbot non interactively. Shouldn't be used on 1'st attempt")
 def setup_letsencrypt(site, custom_domain, non_interactive):
+	import bench.config.lets_encrypt
+
 	bench.config.lets_encrypt.setup_letsencrypt(site, custom_domain, bench_path=".", interactive=not non_interactive)
 
 
@@ -111,6 +117,8 @@ def setup_letsencrypt(site, custom_domain, non_interactive):
 @click.option("--email")
 @click.option("--exclude-base-domain", default=False, is_flag=True, help="SSL Certificate not applicable for base domain")
 def setup_wildcard_ssl(domain, email, exclude_base_domain):
+	import bench.config.lets_encrypt
+
 	bench.config.lets_encrypt.setup_wildcard_ssl(domain, email, bench_path=".", exclude_base_domain=exclude_base_domain)
 
 
@@ -146,7 +154,6 @@ def setup_requirements(node=False, python=False):
 @click.option("--port", help="Port on which you want to run bench manager", default=23624)
 @click.option("--domain", help="Domain on which you want to run bench manager")
 def setup_manager(yes=False, port=23624, domain=None):
-	from six.moves import input
 	from bench.utils import get_sites
 	from bench.config.common_site_config import get_config
 	from bench.config.nginx import make_bench_manager_nginx_conf
@@ -154,11 +161,7 @@ def setup_manager(yes=False, port=23624, domain=None):
 	create_new_site = True
 
 	if "bench-manager.local" in os.listdir("sites"):
-		ans = input("Site already exists. Overwrite existing site? [Y/n]: ").lower()
-		while ans not in ("y", "n", ""):
-			ans = input("Please enter 'y' or 'n'. Site already exists. Overwrite existing site? [Y/n]: ").lower()
-		if ans == "n":
-			create_new_site = False
+		create_new_site = click.confirm("Site already exists. Overwrite existing site?")
 
 	if create_new_site:
 		exec_cmd("bench new-site --force bench-manager.local")
@@ -253,8 +256,8 @@ def setup_roles(role, **kwargs):
 
 @click.command("fail2ban", help="Setup fail2ban, an intrusion prevention software framework that protects computer servers from brute-force attacks")
 @click.option("--maxretry", default=6, help="Number of matches (i.e. value of the counter) which triggers ban action on the IP. Default is 6 seconds" )
-@click.option("--bantime", default=600, help="The counter is set to zero if no match is found within 'findtime' seconds. Default is 600 seconds")
-@click.option("--findtime", default=600, help="Duration (in seconds) for IP to be banned for. Negative number for 'permanent' ban. Default is 600 seconds")
+@click.option("--bantime", default=600, help="Duration (in seconds) for IP to be banned for. Negative number for 'permanent' ban. Default is 600 seconds")
+@click.option("--findtime", default=600, help="The counter is set to zero if match found within 'findtime' seconds doesn't exceed 'maxretry'. Default is 600 seconds")
 def setup_nginx_proxy_jail(**kwargs):
 	run_playbook("roles/fail2ban/tasks/configure_nginx_jail.yml", extra_vars=kwargs)
 
