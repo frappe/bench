@@ -148,6 +148,11 @@ def setup_requirements(node=False, python=False):
 		from bench.utils import update_node_packages
 		update_node_packages()
 
+@click.command("dev-requirements", help="Setup optional development dependencies")
+def setup_dev_requirements():
+	from bench.utils import install_python_dev_dependencies
+	install_python_dev_dependencies()
+
 
 @click.command("manager", help="Setup bench-manager.local site with the bench_manager app installed on it")
 @click.option("--yes", help="Yes to regeneration of nginx config file", default=False, is_flag=True)
@@ -287,6 +292,7 @@ setup.add_command(setup_env)
 setup.add_command(setup_procfile)
 setup.add_command(setup_socketio)
 setup.add_command(setup_requirements)
+setup.add_command(setup_dev_requirements)
 setup.add_command(setup_manager)
 setup.add_command(setup_config)
 setup.add_command(setup_fonts)
