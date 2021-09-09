@@ -69,6 +69,13 @@ def cli():
 		return_code = getattr(e, "code", 0)
 		if return_code:
 			logger.warning(f"{command} executed with exit code {return_code}")
+		if isinstance(e, Exception):
+			raise e
+	finally:
+		try:
+			return_code
+		except NameError:
+			return_code = 0
 		sys.exit(return_code)
 
 
