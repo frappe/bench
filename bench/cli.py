@@ -45,7 +45,11 @@ def cli():
 		return old_frappe_cli()
 
 	elif len(sys.argv) > 1:
-		if sys.argv[1] in get_frappe_commands() + ["--site", "--verbose", "--force", "--profile"]:
+		if sys.argv[1] in ["--site", "--verbose", "--force", "--profile"]:
+			return frappe_cmd()
+		if sys.argv[1] in get_cached_frappe_commands():
+			return frappe_cmd()
+		if sys.argv[1] in get_frappe_commands():
 			return frappe_cmd()
 
 		elif sys.argv[1] == "--help":
@@ -124,16 +128,16 @@ def frappe_cmd(bench_path='.'):
 	os.execv(f, [f] + ['-m', 'frappe.utils.bench_helper', 'frappe'] + sys.argv[1:])
 
 
-def get_frappe_commands():
-	if not is_bench_directory():
-		return []
-
+def get_cached_frappe_commands():
 	if os.path.exists(bench_cache_file):
 		command_dump = open(bench_cache_file, 'r').read() or '[]'
 		return json.loads(command_dump)
 
-	else:
-		return generate_command_cache()
+def get_frappe_commands():
+	if not is_bench_directory():
+		return []
+
+	return generate_command_cache()
 
 
 def get_frappe_help(bench_path='.'):
