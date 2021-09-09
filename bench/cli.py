@@ -181,6 +181,7 @@ def get_cached_frappe_commands():
 	if os.path.exists(bench_cache_file):
 		command_dump = open(bench_cache_file, "r").read() or "[]"
 		return json.loads(command_dump)
+	return []
 
 
 def get_frappe_commands():
