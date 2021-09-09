@@ -70,23 +70,25 @@ def cli():
 		log("Command not being executed in bench directory", level=3)
 
 	if len(sys.argv) > 2 and sys.argv[1] == "frappe":
-		return old_frappe_cli()
+		old_frappe_cli()
 
 	elif len(sys.argv) > 1:
-		if sys.argv[1] in ["--site", "--verbose", "--force", "--profile"]:
-			return frappe_cmd()
-		if sys.argv[1] in get_cached_frappe_commands():
-			return frappe_cmd()
-		if sys.argv[1] in get_frappe_commands():
-			return frappe_cmd()
-
-		elif sys.argv[1] == "--help":
+		if sys.argv[1] == "--help":
 			print(click.Context(bench_command).get_help())
 			print(get_frappe_help())
 			return
 
-		elif sys.argv[1] in get_apps():
-			return app_cmd()
+		if sys.argv[1] in ["--site", "--verbose", "--force", "--profile"]:
+			frappe_cmd()
+
+		if sys.argv[1] in get_cached_frappe_commands():
+			frappe_cmd()
+
+		if sys.argv[1] in get_frappe_commands():
+			frappe_cmd()
+
+		if sys.argv[1] in get_apps():
+			app_cmd()
 
 	if not (len(sys.argv) > 1 and sys.argv[1] == "src"):
 		atexit.register(check_latest_version)
@@ -199,7 +201,7 @@ def get_frappe_help(bench_path="."):
 			f"{python} -m frappe.utils.bench_helper get-frappe-help", cwd=sites_path
 		)
 		return "\n\nFramework commands:\n" + out.split("Commands:")[1]
-	except:
+	except Exception:
 		return ""
 
 
