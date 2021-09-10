@@ -135,7 +135,8 @@ def setup_socketio():
 @click.command("requirements", help="Setup Python and Node dependencies")
 @click.option("--node", help="Update only Node packages", default=False, is_flag=True)
 @click.option("--python", help="Update only Python packages", default=False, is_flag=True)
-def setup_requirements(node=False, python=False):
+@click.option("--dev", help="Install optional development dependencies", default=False, is_flag=True)
+def setup_requirements(node=False, python=False, dev=False):
 	if not (node or python):
 		from bench.utils import update_requirements
 		update_requirements()
@@ -148,10 +149,9 @@ def setup_requirements(node=False, python=False):
 		from bench.utils import update_node_packages
 		update_node_packages()
 
-@click.command("dev-requirements", help="Setup optional development dependencies")
-def setup_dev_requirements():
-	from bench.utils import install_python_dev_dependencies
-	install_python_dev_dependencies()
+	if dev:
+		from bench.utils import install_python_dev_dependencies
+		install_python_dev_dependencies()
 
 
 @click.command("manager", help="Setup bench-manager.local site with the bench_manager app installed on it")
@@ -292,7 +292,6 @@ setup.add_command(setup_env)
 setup.add_command(setup_procfile)
 setup.add_command(setup_socketio)
 setup.add_command(setup_requirements)
-setup.add_command(setup_dev_requirements)
 setup.add_command(setup_manager)
 setup.add_command(setup_config)
 setup.add_command(setup_fonts)
