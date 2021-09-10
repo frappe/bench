@@ -617,13 +617,16 @@ def update_node_packages(bench_path='.'):
 		update_yarn_packages(bench_path)
 
 
-def install_python_dev_dependencies(bench_path='.'):
+def install_python_dev_dependencies(bench_path='.', apps=None):
 	from bench.app import get_apps
 
-	log("Installing development dependencies")
+	if isinstance(apps, str):
+		apps = [apps]
+	elif apps is None:
+		apps = get_apps()
 
 	env_py = get_env_cmd("python")
-	for app in get_apps():
+	for app in apps:
 		app_path = os.path.join(bench_path, "apps", app)
 		dev_requirements_path = os.path.join(app_path, "dev-requirements.txt")
 
