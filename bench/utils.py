@@ -577,7 +577,7 @@ def set_default_site(site, bench_path='.'):
 
 
 def update_env_pip(bench_path):
-	env_py = _get_venv_python(bench_path)
+	env_py = get_env_cmd("python")
 	exec_cmd(f"{env_py} -m pip install -q -U pip")
 
 
@@ -593,7 +593,7 @@ def update_requirements(bench_path='.'):
 
 def update_python_packages(bench_path='.'):
 	from bench.app import get_apps
-	env_py = _get_venv_python(bench_path)
+	env_py = get_env_cmd("python")
 	print('Updating Python libraries...')
 
 	update_env_pip(bench_path)
@@ -622,7 +622,7 @@ def install_python_dev_dependencies(bench_path='.'):
 
 	print("Installing development dependencies")
 
-	env_py = _get_venv_python(bench_path)
+	env_py = get_env_cmd("python")
 	for app in get_apps():
 		app_path = os.path.join(bench_path, "apps", app)
 		dev_requirements_path = os.path.join(app_path, "dev-requirements.txt")
@@ -633,9 +633,6 @@ def install_python_dev_dependencies(bench_path='.'):
 		else:
 			print(f'\n{color.red} dev-requirements.txt not found in {app}{color.nc}')
 
-
-def _get_venv_python(bench_path="."):
-	return os.path.join(bench_path, "env", "bin", "python")
 
 def update_yarn_packages(bench_path='.'):
 	apps_dir = os.path.join(bench_path, 'apps')
