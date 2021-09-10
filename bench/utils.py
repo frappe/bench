@@ -620,7 +620,7 @@ def update_node_packages(bench_path='.'):
 def install_python_dev_dependencies(bench_path='.'):
 	from bench.app import get_apps
 
-	print("Installing development dependencies")
+	log("Installing development dependencies")
 
 	env_py = get_env_cmd("python")
 	for app in get_apps():
@@ -628,10 +628,10 @@ def install_python_dev_dependencies(bench_path='.'):
 		dev_requirements_path = os.path.join(app_path, "dev-requirements.txt")
 
 		if os.path.exists(dev_requirements_path):
-			print(f'\n{color.yellow}Installing development dependencies for {app}{color.nc}')
+			log(f'Installing development dependencies for {app}')
 			exec_cmd(f"{env_py} -m pip install -q -r {dev_requirements_path}", cwd=bench_path)
 		else:
-			print(f'\n{color.red} dev-requirements.txt not found in {app}{color.nc}')
+			log(f'dev-requirements.txt not found in {app}', level=3)
 
 
 def update_yarn_packages(bench_path='.'):
