@@ -181,12 +181,16 @@ def install_app(app, bench_path=".", verbose=False, no_cache=False, restart_benc
 
 	add_to_appstxt(app, bench_path=bench_path)
 
+	conf = get_config(bench_path=bench_path)
+
+	if conf.get("developer_mode"):
+		from bench.utils import install_python_dev_dependencies
+		install_python_dev_dependencies(apps=app)
+
 	if not skip_assets:
 		build_assets(bench_path=bench_path, app=app)
 
 	if restart_bench:
-		conf = get_config(bench_path=bench_path)
-
 		if conf.get('restart_supervisor_on_update'):
 			restart_supervisor_processes(bench_path=bench_path)
 		if conf.get('restart_systemd_on_update'):
@@ -528,7 +532,8 @@ As of January 2020, the following branches are
 version		Frappe			ERPNext
 11		version-11		version-11
 12		version-12		version-12
-13		develop			develop
+13		version-13		version-13
+14		develop			develop
 
 Please switch to new branches to get future updates.
 To switch to your required branch, run the following commands: bench switch-to-branch [branch-name]""")
