@@ -7,7 +7,7 @@ bench utilizes `frappe.utils.bench_manager` to get the framework's as well as th
 
 Along with the framework commands, Frappe's `bench_manager` module also searches for any commands in your custom applications. Thereby, bench communicates with the respective bench's Frappe which in turn checks for available commands in all of the applications.
 
-To make your custom command available to bench, just create a `commands` module under your parent module and write the command with a click wrapper and a variable commands which contains a list of click functions, which are your own commands. The directory strcuture may be visualized as:
+To make your custom command available to bench, just create a `commands` module under your parent module and write the command with a click wrapper and a variable commands which contains a list of click functions, which are your own commands. The directory structure may be visualized as:
 
 ```
 frappe-bench
