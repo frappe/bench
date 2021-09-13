@@ -1076,6 +1076,8 @@ def generate_command_cache(bench_path='.'):
 		if hasattr(e, "stderr"):
 			print(e.stderr.decode('utf-8'))
 
+	return []
+
 
 def clear_command_cache(bench_path='.'):
 	"""Clears commands cached
