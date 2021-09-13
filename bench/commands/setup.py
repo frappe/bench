@@ -135,7 +135,7 @@ def setup_socketio():
 @click.command("requirements", help="Setup Python and Node dependencies")
 @click.option("--node", help="Update only Node packages", default=False, is_flag=True)
 @click.option("--python", help="Update only Python packages", default=False, is_flag=True)
-@click.option("--dev", help="Install optional development dependencies", default=False, is_flag=True)
+@click.option("--dev", help="Install optional python development dependencies", default=False, is_flag=True)
 def setup_requirements(node=False, python=False, dev=False):
 	if not (node or python):
 		from bench.utils import update_requirements
@@ -152,6 +152,9 @@ def setup_requirements(node=False, python=False, dev=False):
 	if dev:
 		from bench.utils import install_python_dev_dependencies
 		install_python_dev_dependencies()
+
+		if node:
+			click.secho("--dev flag only supports python dependencies. All node development dependencies are installed by default.", fg="yellow")
 
 
 @click.command("manager", help="Setup bench-manager.local site with the bench_manager app installed on it")

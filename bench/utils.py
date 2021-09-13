@@ -631,7 +631,7 @@ def install_python_dev_dependencies(bench_path='.', apps=None):
 		dev_requirements_path = os.path.join(app_path, "dev-requirements.txt")
 
 		if os.path.exists(dev_requirements_path):
-			log(f'Installing development dependencies for {app}')
+			log(f'Installing python development dependencies for {app}')
 			exec_cmd(f"{env_py} -m pip install -q -r {dev_requirements_path}", cwd=bench_path)
 		else:
 			log(f'dev-requirements.txt not found in {app}', level=3)
