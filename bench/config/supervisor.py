@@ -42,7 +42,7 @@ def generate_supervisor_config(bench_path, user=None, yes=False, skip_redis=Fals
 		"background_workers": config.get('background_workers') or 1,
 		"bench_cmd": which('bench'),
 		"skip_redis": skip_redis,
-		"custom_queues": config.get("custom_queues", {}),
+		"workers": config.get("workers", {}),
 	})
 
 	conf_path = os.path.join(bench_path, 'config', 'supervisor.conf')
