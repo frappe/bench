@@ -53,7 +53,7 @@ def write_appstxt(apps, bench_path='.'):
 
 def is_git_url(url):
 	# modified to allow without the tailing .git from https://github.com/jonschlinkert/is-git-url.git
-	pattern = r"(?:git|ssh|https?|git@[-\w.]+):(\/\/)?(.*?)(\.git)?(\/?|\#[-\d\w._]+?)$"
+	pattern = r"(?:git|ssh|https?|\w*@[-\w.]+):(\/\/)?(.*?)(\.git)?(\/?|\#[-\d\w._]+?)$"
 	return bool(re.match(pattern, url))
 
 def get_excluded_apps(bench_path='.'):
