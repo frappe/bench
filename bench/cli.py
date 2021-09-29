@@ -47,7 +47,7 @@ def cli():
 		change_uid()
 		change_dir()
 
-	if (
+	if not os.environ.get("BENCH_DEVELOPER") and (
 		is_dist_editable(bench.PROJECT_NAME)
 		and len(sys.argv) > 1
 		and sys.argv[1] != "src"
@@ -60,18 +60,17 @@ def cli():
 			level=3,
 		)
 
+	in_bench = is_bench_directory()
+
 	if (
-		not is_bench_directory()
+		not in_bench
 		and not cmd_requires_root()
 		and len(sys.argv) > 1
 		and sys.argv[1] not in ("init", "find", "src", "drop", "get", "get-app")
 	):
 		log("Command not being executed in bench directory", level=3)
 
-	if len(sys.argv) > 2 and sys.argv[1] == "frappe":
-		old_frappe_cli()
-
-	elif len(sys.argv) > 1:
+	if in_bench and len(sys.argv) > 1:
 		if sys.argv[1] == "--help":
 			print(click.Context(bench_command).get_help())
 			print(get_frappe_help())
