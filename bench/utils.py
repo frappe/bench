@@ -22,15 +22,6 @@ folders_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
 sudoers_file = '/etc/sudoers.d/frappe'
 
 
-class color:
-	nc = '\033[0m'
-	blue = '\033[94m'
-	green = '\033[92m'
-	yellow = '\033[93m'
-	red = '\033[91m'
-	silver = '\033[90m'
-
-
 def is_bench_directory(directory=os.path.curdir):
 	is_bench = True
 
@@ -43,22 +34,20 @@ def is_bench_directory(directory=os.path.curdir):
 
 def log(message, level=0):
 	levels = {
-		0: color.blue + 'INFO',			# normal
-		1: color.green + 'SUCCESS',		# success
-		2: color.red + 'ERROR',			# fail
-		3: color.yellow + 'WARN'		# warn/suggest
+		0: ("blue", "INFO"),			# normal
+		1: ("green", "SUCCESS"),		# success
+		2: ("red", "ERROR"),			# fail
+		3: ("yellow", "WARN")		# warn/suggest
 	}
 	loggers = {
 		2: logger.error,
 		3: logger.warning
 	}
-
-	start_line = (levels.get(level) + ': ') if level in levels else ''
+	color, prefix = levels.get(level, levels[0])
 	level_logger = loggers.get(level, logger.info)
-	end_line = '\033[0m'
 
 	level_logger(message)
-	print(start_line + message + end_line)
+	click.secho(f"{prefix}: {message}", fg=color)
 
 
 def safe_decode(string, encoding = 'utf-8'):
