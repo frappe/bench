@@ -23,7 +23,8 @@ def setup_procfile(bench_path, yes=False, skip_redis=False):
 		use_rq=use_rq(bench_path),
 		webserver_port=config.get('webserver_port'),
 		CI=os.environ.get('CI'),
-		skip_redis=skip_redis)
+		skip_redis=skip_redis,
+		workers=config.get("workers", {}))
 
 	with open(procfile_path, 'w') as f:
 		f.write(procfile)
