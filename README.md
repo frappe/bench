@@ -5,6 +5,13 @@
 
 Bench is a command-line utility that helps you to install, update, and manage multiple sites for Frappe/ERPNext applications on [*nix systems](https://en.wikipedia.org/wiki/Unix-like) for development and production.
 
+<div align="center">
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ffrappe%2Fbench.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Ffrappe%2Fbench?ref=badge_shield)
+[![CI Status](https://app.travis-ci.com/frappe/bench.svg?branch=develop)](https://app.travis-ci.com/github/frappe/bench)
+
+</div>
+
 ## Table of Contents
 
  - [Installation](#installation)
