@@ -6,7 +6,7 @@ with open('requirements.txt') as f:
 
 setup(
 	name=PROJECT_NAME,
-	description='Metadata driven, full-stack web framework',
+	description='CLI to manage Multi-tenant deployments for Frappe apps',
 	author='Frappe Technologies',
 	author_email='info@frappe.io',
 	version=VERSION,
