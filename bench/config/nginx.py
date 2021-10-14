@@ -9,7 +9,8 @@ import click
 
 # imports - module imports
 import bench
-from bench.utils import get_bench_name, get_sites
+from bench.bench import Bench
+from bench.utils import get_bench_name
 
 
 def make_nginx_conf(bench_path, yes=False):
@@ -23,7 +24,7 @@ def make_nginx_conf(bench_path, yes=False):
 	bench_path = os.path.abspath(bench_path)
 	sites_path = os.path.join(bench_path, "sites")
 
-	config = bench.config.common_site_config.get_config(bench_path)
+	config = Bench(bench_path).conf
 	sites = prepare_sites(config, bench_path)
 	bench_name = get_bench_name(bench_path)
 
@@ -56,13 +57,12 @@ def make_nginx_conf(bench_path, yes=False):
 
 def make_bench_manager_nginx_conf(bench_path, yes=False, port=23624, domain=None):
 	from bench.config.site_config import get_site_config
-	from bench.config.common_site_config import get_config
 
 	template = bench.config.env().get_template('bench_manager_nginx.conf')
 	bench_path = os.path.abspath(bench_path)
 	sites_path = os.path.join(bench_path, "sites")
 
-	config = get_config(bench_path)
+	config = Bench(bench_path).conf
 	site_config = get_site_config(domain, bench_path=bench_path)
 	bench_name = get_bench_name(bench_path)
 
@@ -182,18 +182,20 @@ def prepare_sites(config, bench_path):
 	return sites
 
 def get_sites_with_config(bench_path):
-	from bench.config.common_site_config import get_config
+	from bench.bench import Bench
 	from bench.config.site_config import get_site_config
 
-	sites = get_sites(bench_path=bench_path)
-	dns_multitenant = get_config(bench_path).get('dns_multitenant')
+	bench = Bench(bench_path)
+	sites = bench.sites
+	conf = bench.conf
+	dns_multitenant = conf.get('dns_multitenant')
 
 	ret = []
 	for site in sites:
 		try:
 			site_config = get_site_config(site, bench_path=bench_path)
 		except Exception as e:
-			strict_nginx = get_config(bench_path).get('strict_nginx')
+			strict_nginx = conf.get('strict_nginx')
 			if strict_nginx:
 				print(f"\n\nERROR: The site config for the site {site} is broken.",
 					"If you want this command to pass, instead of just throwing an error,",
@@ -236,8 +238,8 @@ def use_wildcard_certificate(bench_path, ret):
 			"ssl_certificate_key": "/path/to/erpnext.com.key"
 		}
 	'''
-	from bench.config.common_site_config import get_config
-	config = get_config(bench_path=bench_path)
+	from bench.bench import Bench
+	config = Bench(bench_path).conf
 	wildcard = config.get('wildcard')
 
 	if not wildcard:

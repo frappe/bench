@@ -6,10 +6,10 @@ import click
 
 # imports - module imports
 import bench
-from bench.config.common_site_config import get_config
 from bench.config.nginx import make_nginx_conf
 from bench.config.production_setup import service
 from bench.config.site_config import get_domains, remove_domain, update_site_config
+from bench.bench import Bench
 from bench.utils import exec_cmd, update_common_site_config
 from bench.exceptions import CommandFailedError
 
@@ -37,7 +37,7 @@ def setup_letsencrypt(site, custom_domain, bench_path, interactive):
 			'Do you want to continue?',
 			abort=True)
 
-	if not get_config(bench_path).get("dns_multitenant"):
+	if not Bench(bench_path).conf.get("dns_multitenant"):
 		print("You cannot setup SSL without DNS Multitenancy")
 		return
 
@@ -151,7 +151,7 @@ def setup_wildcard_ssl(domain, email, bench_path, exclude_base_domain):
 
 		return domain_list
 
-	if not get_config(bench_path).get("dns_multitenant"):
+	if not Bench(bench_path).conf.get("dns_multitenant"):
 		print("You cannot setup SSL without DNS Multitenancy")
 		return
 

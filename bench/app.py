@@ -102,13 +102,15 @@ class App(AppMeta):
 
 
 def add_to_appstxt(app, bench_path='.'):
-	apps = get_apps(bench_path=bench_path)
+	apps = Bench(bench_path).apps
+
 	if app not in apps:
 		apps.append(app)
 		return write_appstxt(apps, bench_path=bench_path)
 
 def remove_from_appstxt(app, bench_path='.'):
-	apps = get_apps(bench_path=bench_path)
+	apps = Bench(bench_path).apps
+
 	if app in apps:
 		apps.remove(app)
 		return write_appstxt(apps, bench_path=bench_path)
@@ -189,7 +191,7 @@ def setup_app_dependencies(repo_name, bench_path='.', branch=None):
 			required_apps = eval(lines[0].strip('required_apps').strip().lstrip('=').strip())
 			# TODO: when the time comes, add version check here
 			for app in required_apps:
-				if app not in get_apps(bench_path=bench_path):
+				if app not in Bench(bench_path).apps:
 					get_app(app, bench_path=bench_path, branch=branch)
 
 def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=False, overwrite=False):
@@ -219,12 +221,14 @@ def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=Fal
 	if dir_already_exists:
 		# application directory already exists
 		# prompt user to overwrite it
-		if overwrite or click.confirm(f'''A directory for the application "{repo_name}" already exists.
-Do you want to continue and overwrite it?'''):
+		if overwrite or click.confirm(
+			f"A directory for the application '{repo_name}' already exists."
+			"Do you want to continue and overwrite it?"
+		):
 			import shutil
 			shutil.rmtree(cloned_path)
 			to_clone = True
-		elif click.confirm('''Do you want to reinstall the existing application?''', abort=True):
+		elif click.confirm("Do you want to reinstall the existing application?", abort=True):
 			pass
 
 	if to_clone:
@@ -282,7 +286,6 @@ def new_app(app, bench_path='.'):
 
 def install_app(app, bench_path=".", verbose=False, no_cache=False, restart_bench=True, skip_assets=False):
 	from bench.utils import get_env_cmd
-	from bench.config.common_site_config import get_config
 
 	install_text = f'Installing {app}'
 	click.secho(install_text, fg="yellow")
@@ -300,7 +303,7 @@ def install_app(app, bench_path=".", verbose=False, no_cache=False, restart_benc
 
 	add_to_appstxt(app, bench_path=bench_path)
 
-	conf = get_config(bench_path=bench_path)
+	conf = Bench(bench_path).conf
 
 	if conf.get("developer_mode"):
 		from bench.utils import install_python_dev_dependencies
@@ -318,13 +321,13 @@ def install_app(app, bench_path=".", verbose=False, no_cache=False, restart_benc
 
 def remove_app(app, bench_path='.'):
 	import shutil
-	from bench.config.common_site_config import get_config
 
+	bench = Bench(bench_path)
 	app_path = os.path.join(bench_path, 'apps', app)
 	py = os.path.join(bench_path, 'env', 'bin', 'python')
 
 	# validate app removal
-	if app not in get_apps(bench_path):
+	if app not in bench.apps:
 		print(f"No app named {app}")
 		sys.exit(1)
 
@@ -337,9 +340,10 @@ def remove_app(app, bench_path='.'):
 
 	# re-build assets and restart processes
 	run_frappe_cmd("build", bench_path=bench_path)
-	if get_config(bench_path).get('restart_supervisor_on_update'):
+
+	if bench.conf.get('restart_supervisor_on_update'):
 		restart_supervisor_processes(bench_path=bench_path)
-	if get_config(bench_path).get('restart_systemd_on_update'):
+	if bench.conf.get('restart_systemd_on_update'):
 		restart_systemd_processes(bench_path=bench_path)
 
 
@@ -388,11 +392,10 @@ def check_app_installed_legacy(app, bench_path="."):
 
 def pull_apps(apps=None, bench_path='.', reset=False):
 	'''Check all apps if there no local changes, pull'''
-	from bench.config.common_site_config import get_config
+	bench = Bench(bench_path)
+	rebase = '--rebase' if bench.conf.get('rebase_on_pull') else ''
+	apps = apps or bench.apps
 
-	rebase = '--rebase' if get_config(bench_path).get('rebase_on_pull') else ''
-
-	apps = apps or get_apps(bench_path=bench_path)
 	# check for local changes
 	if not reset:
 		for app in apps:
@@ -432,7 +435,7 @@ Here are your choices:
 				print(f"Skipping pull for app {app}, since remote doesn't exist, and adding it to excluded apps")
 				continue
 
-			if not get_config(bench_path).get('shallow_clone') or not reset:
+			if not bench.conf.get('shallow_clone') or not reset:
 				is_shallow = os.path.exists(os.path.join(app_dir, ".git", "shallow"))
 				if is_shallow:
 					s = " to safely pull remote changes." if not reset else ""
@@ -443,7 +446,7 @@ Here are your choices:
 			logger.log(f'pulling {app}')
 			if reset:
 				reset_cmd = f"git reset --hard {remote}/{branch}"
-				if get_config(bench_path).get('shallow_clone'):
+				if bench.conf.get('shallow_clone'):
 					exec_cmd(f"git fetch --depth=1 --no-tags {remote} {branch}",
 						cwd=app_dir)
 					exec_cmd(reset_cmd, cwd=app_dir)
@@ -638,7 +641,9 @@ def get_apps_json(path):
 		return json.load(f)
 
 def validate_branch():
-	installed_apps = set(get_apps())
+	apps = Bench(".").apps
+
+	installed_apps = set(apps)
 	check_apps = set(['frappe', 'erpnext'])
 	intersection_apps = installed_apps.intersection(check_apps)
 

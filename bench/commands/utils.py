@@ -22,10 +22,13 @@ def start(no_dev, concurrency, procfile, no_prefix):
 @click.option('--systemd', is_flag=True, default=False)
 def restart(web, supervisor, systemd):
 	from bench.utils import restart_supervisor_processes, restart_systemd_processes
-	from bench.config.common_site_config import get_config
-	if get_config('.').get('restart_supervisor_on_update') or supervisor:
+	from bench.bench import Bench
+
+	bench = Bench(".")
+
+	if bench.conf.get('restart_supervisor_on_update') or supervisor:
 		restart_supervisor_processes(bench_path='.', web_workers=web)
-	if get_config('.').get('restart_systemd_on_update') or systemd:
+	if bench.conf.get('restart_systemd_on_update') or systemd:
 		restart_systemd_processes(bench_path='.', web_workers=web)
 
 
@@ -114,8 +117,9 @@ def renew_lets_encrypt():
 @click.command('backup', help="Backup single site")
 @click.argument('site')
 def backup_site(site):
-	from bench.utils import get_sites, backup_site
-	if site not in get_sites(bench_path='.'):
+	from bench.bench import Bench
+	from bench.utils import backup_site
+	if site not in Bench(".").sites:
 		print(f'Site `{site}` not found')
 		sys.exit(1)
 	backup_site(site, bench_path='.')

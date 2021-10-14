@@ -10,7 +10,7 @@ import click
 
 # imports - module imports
 import bench
-from bench.app import get_apps
+from bench.bench import Bench
 from bench.commands import bench_command
 from bench.config.common_site_config import get_config
 from bench.utils import (
@@ -87,7 +87,7 @@ def cli():
 		if sys.argv[1] in get_frappe_commands():
 			frappe_cmd()
 
-		if sys.argv[1] in get_apps():
+		if sys.argv[1] in Bench(".").apps:
 			app_cmd()
 
 	if not (len(sys.argv) > 1 and sys.argv[1] == "src"):

@@ -395,7 +395,10 @@ def setup_socketio(bench_path='.'):
 
 
 def patch_sites(bench_path='.'):
-	for site in get_sites(bench_path=bench_path):
+	from bench.bench import Bench
+	bench = Bench(bench_path)
+
+	for site in bench.sites:
 		try:
 			migrate_site(site, bench_path=bench_path)
 		except subprocess.CalledProcessError:
@@ -417,21 +420,7 @@ def get_sites(bench_path='.'):
 
 def setup_backups(bench_path='.'):
 	from crontab import CronTab
-	from bench.config.common_site_config import get_config
-	logger.log('setting up backups')
-
-	bench_dir = os.path.abspath(bench_path)
-	user = get_config(bench_path=bench_dir).get('frappe_user')
-	logfile = os.path.join(bench_dir, 'logs', 'backup.log')
-	system_crontab = CronTab(user=user)
-	backup_command = f"cd {bench_dir} && {sys.argv[0]} --verbose --site all backup"
-	job_command = f"{backup_command} >> {logfile} 2>&1"
-
-	if job_command not in str(system_crontab):
-		job = system_crontab.new(command=job_command, comment="bench auto backups set for every 6 hours")
-		job.every(6).hours()
-		system_crontab.write()
-
+	from bench.bench import Bench
 
 def remove_backups_crontab(bench_path='.'):
 	from crontab import CronTab, CronItem
@@ -439,7 +428,7 @@ def remove_backups_crontab(bench_path='.'):
 	logger.log('removing backup cronjob')
 
 	bench_dir = os.path.abspath(bench_path)
-	user = get_config(bench_path=bench_dir).get('frappe_user')
+	user = Bench(bench_dir).conf.get('frappe_user')
 	logfile = os.path.join(bench_dir, 'logs', 'backup.log')
 	system_crontab = CronTab(user=user)
 	backup_command = f"cd {bench_dir} && {sys.argv[0]} --verbose --site all backup"
@@ -540,8 +529,8 @@ def get_git_version():
 
 
 def check_git_for_shallow_clone():
-	from bench.config.common_site_config import get_config
-	config = get_config('.')
+	from bench.bench import Bench
+	config = Bench('.').conf
 
 	if config:
 		if config.get('release_bench'):

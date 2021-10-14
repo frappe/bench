@@ -5,13 +5,13 @@ import subprocess
 
 # imports - module imports
 import bench
-from bench.config.common_site_config import get_config
 
 
 def generate_config(bench_path):
 	from urllib.parse import urlparse
+	from bench.bench import Bench
 
-	config = get_config(bench_path)
+	config = Bench(bench_path).conf
 	redis_version = get_redis_version()
 
 	ports = {}

@@ -70,13 +70,15 @@ def setup_production(user, yes=False):
 
 @click.command("backups", help="Add cronjob for bench backups")
 def setup_backups():
-	bench.utils.setup_backups()
+	from bench.bench import Bench
+	Bench(".").setup.backups()
 
 
 @click.command("env", help="Setup virtualenv for bench")
 @click.option("--python", type = str, default = "python3", help = "Path to Python Executable.")
 def setup_env(python="python3"):
-	bench.utils.setup_env(python=python)
+	from bench.bench import Bench
+	return Bench(".").setup.env(python=python)
 
 
 @click.command("firewall", help="Setup firewall for system")
@@ -162,8 +164,7 @@ def setup_requirements(node=False, python=False, dev=False):
 @click.option("--port", help="Port on which you want to run bench manager", default=23624)
 @click.option("--domain", help="Domain on which you want to run bench manager")
 def setup_manager(yes=False, port=23624, domain=None):
-	from bench.utils import get_sites
-	from bench.config.common_site_config import get_config
+	from bench.bench import Bench
 	from bench.config.nginx import make_bench_manager_nginx_conf
 
 	create_new_site = True
@@ -182,15 +183,15 @@ def setup_manager(yes=False, port=23624, domain=None):
 	exec_cmd("bench --site bench-manager.local install-app bench_manager")
 
 	bench_path = "."
-	conf = get_config(bench_path)
+	bench = Bench(bench_path)
 
-	if conf.get("restart_supervisor_on_update") or conf.get("restart_systemd_on_update"):
+	if bench.conf.get("restart_supervisor_on_update") or bench.conf.get("restart_systemd_on_update"):
 		# implicates a production setup or so I presume
 		if not domain:
 			print("Please specify the site name on which you want to host bench-manager using the 'domain' flag")
 			sys.exit(1)
 
-		if domain not in get_sites(bench_path):
+		if domain not in bench.sites:
 			raise Exception("No such site")
 
 		make_bench_manager_nginx_conf(bench_path, yes=yes, port=port, domain=domain)

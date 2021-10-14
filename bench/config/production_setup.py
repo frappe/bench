@@ -5,10 +5,10 @@ import sys
 
 # imports - module imports
 import bench
-from bench.config.common_site_config import get_config
 from bench.config.nginx import make_nginx_conf
 from bench.config.supervisor import generate_supervisor_config, update_supervisord_config
 from bench.config.systemd import generate_systemd_config
+from bench.bench import Bench
 from bench.utils import exec_cmd, which, fix_prod_setup_perms, get_bench_name, get_cmd_output, log
 from bench.exceptions import CommandFailedError
 
@@ -30,10 +30,13 @@ def setup_production_prerequisites():
 def setup_production(user, bench_path='.', yes=False):
 	print("Setting Up prerequisites...")
 	setup_production_prerequisites()
-	if get_config(bench_path).get('restart_supervisor_on_update') and get_config(bench_path).get('restart_systemd_on_update'):
+
+	conf = Bench(bench_path).conf
+
+	if conf.get('restart_supervisor_on_update') and conf.get('restart_systemd_on_update'):
 		raise Exception("You cannot use supervisor and systemd at the same time. Modify your common_site_config accordingly." )
 
-	if get_config(bench_path).get('restart_systemd_on_update'):
+	if conf.get('restart_systemd_on_update'):
 		print("Setting Up systemd...")
 		generate_systemd_config(bench_path=bench_path, user=user, yes=yes)
 	else:
@@ -50,7 +53,7 @@ def setup_production(user, bench_path='.', yes=False):
 	nginx_conf = f'/etc/nginx/conf.d/{bench_name}.conf'
 
 	print("Setting Up symlinks and reloading services...")
-	if get_config(bench_path).get('restart_supervisor_on_update'):
+	if conf.get('restart_supervisor_on_update'):
 		supervisor_conf_extn = "ini" if is_centos7() else "conf"
 		supervisor_conf = os.path.join(get_supervisor_confdir(), f'{bench_name}.{supervisor_conf_extn}')
 
@@ -61,7 +64,7 @@ def setup_production(user, bench_path='.', yes=False):
 	if not os.path.islink(nginx_conf):
 		os.symlink(os.path.abspath(os.path.join(bench_path, 'config', 'nginx.conf')), nginx_conf)
 
-	if get_config(bench_path).get('restart_supervisor_on_update'):
+	if conf.get('restart_supervisor_on_update'):
 		reload_supervisor()
 
 	if os.environ.get('NO_SERVICE_RESTART'):
@@ -72,6 +75,7 @@ def setup_production(user, bench_path='.', yes=False):
 
 def disable_production(bench_path='.'):
 	bench_name = get_bench_name(bench_path)
+	conf = Bench(bench_path).conf
 
 	# supervisorctl
 	supervisor_conf_extn = "ini" if is_centos7() else "conf"
@@ -80,7 +84,7 @@ def disable_production(bench_path='.'):
 	if os.path.islink(supervisor_conf):
 		os.unlink(supervisor_conf)
 
-	if get_config(bench_path).get('restart_supervisor_on_update'):
+	if conf.get('restart_supervisor_on_update'):
 		reload_supervisor()
 
 	# nginx
