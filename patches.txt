@@ -1,2 +1,1 @@
 bench.patches.v3.deprecate_old_config
-bench.patches.v5.set_live_reload_config
