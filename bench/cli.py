@@ -65,7 +65,7 @@ def cli():
 		not is_bench_directory()
 		and not cmd_requires_root()
 		and len(sys.argv) > 1
-		and sys.argv[1] not in ("init", "find", "src")
+		and sys.argv[1] not in ("init", "find", "src", "drop", "get", "get-app")
 	):
 		log("Command not being executed in bench directory", level=3)
 
@@ -100,6 +100,7 @@ def cli():
 		if return_code:
 			logger.warning(f"{command} executed with exit code {return_code}")
 		if isinstance(e, Exception):
+			click.secho(f"ERROR: {e}", fg="red")
 			raise e
 	finally:
 		try:
@@ -209,6 +210,8 @@ def change_working_directory():
 	"""Allows bench commands to be run from anywhere inside a bench directory"""
 	cur_dir = os.path.abspath(".")
 	bench_path = find_parent_bench(cur_dir)
+	bench.current_path = os.getcwd()
+	bench.updated_path = bench_path
 
 	if bench_path:
 		os.chdir(bench_path)

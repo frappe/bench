@@ -50,6 +50,13 @@ def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups, c
 				shutil.rmtree(path)
 
 
+@click.command('drop')
+@click.argument('path')
+def drop(path):
+	from bench.app import drop_bench
+	drop_bench(path)
+
+
 @click.command('get-app', help='Clone an app from the internet or filesystem and set it up in your bench')
 @click.argument('name', nargs=-1) # Dummy argument for backward compatibility
 @click.argument('git-url')

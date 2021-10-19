@@ -17,8 +17,9 @@ def bench_command(bench_path='.'):
 	bench.set_frappe_version(bench_path=bench_path)
 
 
-from bench.commands.make import init, get_app, new_app, remove_app, exclude_app_for_update, include_app_for_update, pip
+from bench.commands.make import init, drop, get_app, new_app, remove_app, exclude_app_for_update, include_app_for_update, pip
 bench_command.add_command(init)
+bench_command.add_command(drop)
 bench_command.add_command(get_app)
 bench_command.add_command(new_app)
 bench_command.add_command(remove_app)

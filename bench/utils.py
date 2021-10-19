@@ -415,6 +415,21 @@ def setup_backups(bench_path='.'):
 		system_crontab.write()
 
 
+def remove_backups_crontab(bench_path='.'):
+	from crontab import CronTab, CronItem
+	from bench.config.common_site_config import get_config
+	logger.log('removing backup cronjob')
+
+	bench_dir = os.path.abspath(bench_path)
+	user = get_config(bench_path=bench_dir).get('frappe_user')
+	logfile = os.path.join(bench_dir, 'logs', 'backup.log')
+	system_crontab = CronTab(user=user)
+	backup_command = f"cd {bench_dir} && {sys.argv[0]} --verbose --site all backup"
+	job_command = f"{backup_command} >> {logfile} 2>&1"
+
+	system_crontab.remove_all(command=job_command)
+
+
 def setup_sudoers(user):
 	if not os.path.exists('/etc/sudoers.d'):
 		os.makedirs('/etc/sudoers.d')

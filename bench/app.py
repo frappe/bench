@@ -188,6 +188,26 @@ def remove_from_excluded_apps_txt(app, bench_path='.'):
 		apps.remove(app)
 		return write_excluded_apps_txt(apps, bench_path=bench_path)
 
+def drop_bench(bench_path):
+	if not os.path.exists(bench_path):
+		print(f"Bench {bench_path} does not exist")
+		return
+
+	import shutil
+	from bench.utils import remove_backups_crontab
+
+	sites_exist = [
+		x for x in os.listdir(os.path.join(bench_path, 'sites')) if x not in ('assets', 'apps.txt', 'common_site_config.json')
+	]
+	if sites_exist:
+		raise Exception("Cannot remove non-empty bench directory")
+	remove_backups_crontab(bench_path)
+	shutil.rmtree(bench_path)
+	print('Bench dropped')
+
+def get_bench_name(git_url, bench_path):
+	return "temp-bench"
+
 def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=False, restart_bench=True, overwrite=False):
 	import requests
 	import shutil
