@@ -158,8 +158,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	if clone_from:
 		clone_apps_from(bench_path=path, clone_from=clone_from, update_app=not clone_without_update)
 	else:
-		if not frappe_path:
-			frappe_path = 'https://github.com/frappe/frappe.git'
+		frappe_path = frappe_path or 'https://github.com/frappe/frappe.git'
 
 		get_app(frappe_path, branch=frappe_branch, bench_path=path, skip_assets=True, verbose=verbose)
 

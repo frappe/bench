@@ -206,56 +206,65 @@ def drop_bench(bench_path):
 	print('Bench dropped')
 
 def get_bench_name(git_url, bench_path):
-	return "temp-bench"
+	if os.path.exists(git_url):
+		guessed_app_name = os.path.basename(git_url)
+	else:
+		app = App(git_url)
+		guessed_app_name = f"{app.org}_{app.repo}"
+
+	return os.path.join(bench_path, f"{guessed_app_name}-bench")
 
 def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=False, restart_bench=True, overwrite=False):
-	import requests
 	import shutil
 
-	if not os.path.exists(git_url):
-		if not is_git_url(git_url):
-			orgs = ['frappe', 'erpnext']
-			for org in orgs:
-				url = f'https://api.github.com/repos/{org}/{git_url}'
-				res = requests.get(url)
-				if res.ok:
-					data = res.json()
-					if 'name' in data:
-						if git_url == data['name']:
-							git_url = f'https://github.com/{org}/{git_url}'
-							break
-				else:
-					bench.utils.log(f"App {git_url} not found", level=2)
-					sys.exit(1)
+	if not is_bench_directory(bench_path):
+		bench_name = get_bench_name(git_url, bench_path)
+		from bench.commands.make import init
 
-		# Gets repo name from URL
-		repo_name = git_url.rstrip('/').rsplit('/', 1)[1].rsplit('.', 1)[0]
+		click.get_current_context().invoke(init, path=bench_name)
+		bench_path = bench_name
+
+	if not os.path.exists(git_url):
+		app = App(git_url)
+
+		git_url = app.url
+		repo_name = app.repo
 		shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
-		branch = f'--branch {branch}' if branch else ''
+		branch = f'--branch {app.tag}' if app.tag else ''
+
 	else:
 		git_url = os.path.abspath(git_url)
 		_, repo_name = os.path.split(git_url)
 		shallow_clone = ''
 		branch = f'--branch {branch}' if branch else ''
 
-	if os.path.isdir(os.path.join(bench_path, 'apps', repo_name)):
+	cloned_path = os.path.join(bench_path, 'apps', repo_name)
+
+	if os.path.isdir(cloned_path):
 		# application directory already exists
 		# prompt user to overwrite it
 		if overwrite or click.confirm(f'''A directory for the application "{repo_name}" already exists.
 Do you want to continue and overwrite it?'''):
-			shutil.rmtree(os.path.join(bench_path, 'apps', repo_name))
+			shutil.rmtree(cloned_path)
 		elif click.confirm('''Do you want to reinstall the existing application?''', abort=True):
 			app_name = get_app_name(bench_path, repo_name)
-			install_app(app=app_name, bench_path=bench_path, verbose=verbose, skip_assets=skip_assets)
+			install_app(
+				app=app_name, bench_path=bench_path, verbose=verbose, skip_assets=skip_assets
+			)
 			sys.exit()
 
 	print(f'\n{color.yellow}Getting {repo_name}{color.nc}')
 	logger.log(f'Getting app {repo_name}')
-	exec_cmd(f"git clone {git_url} {branch} {shallow_clone} --origin upstream",
-		cwd=os.path.join(bench_path, 'apps'))
+
+	exec_cmd(
+		f"git clone {git_url} {branch} {shallow_clone} --origin upstream",
+		cwd=os.path.join(bench_path, 'apps')
+	)
 
 	app_name = get_app_name(bench_path, repo_name)
-	install_app(app=app_name, bench_path=bench_path, verbose=verbose, skip_assets=skip_assets)
+	install_app(
+		app=app_name, bench_path=bench_path, verbose=verbose, skip_assets=skip_assets
+	)
 
 
 def get_app_name(bench_path, repo_name):
