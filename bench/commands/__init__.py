@@ -1,5 +1,5 @@
 import click
-
+from click.core import _check_multicommand
 
 def print_bench_version(ctx, param, value):
 	"""Prints current bench version"""
@@ -10,7 +10,28 @@ def print_bench_version(ctx, param, value):
 	click.echo(bench.VERSION)
 	ctx.exit()
 
-@click.group()
+class MultiCommandGroup(click.Group):
+	def add_command(self, cmd, name=None):
+		"""Registers another :class:`Command` with this group.  If the name
+		is not provided, the name of the command is used.
+
+		Note: This is a custom Group that allows passing a list of names for
+		the command name.
+		"""
+		name = name or cmd.name
+		if name is None:
+			raise TypeError('Command has no name.')
+		_check_multicommand(self, name, cmd, register=True)
+
+		try:
+			self.commands[name] = cmd
+		except TypeError:
+			if isinstance(name, list):
+				for _name in name:
+					self.commands[_name] = cmd
+
+
+@click.group(cls=MultiCommandGroup)
 @click.option('--version', is_flag=True, is_eager=True, callback=print_bench_version, expose_value=False)
 def bench_command(bench_path='.'):
 	import bench

@@ -57,7 +57,7 @@ def drop(path):
 	drop_bench(path)
 
 
-@click.command('get-app', help='Clone an app from the internet or filesystem and set it up in your bench')
+@click.command(['get', 'get-app'], help='Clone an app from the internet or filesystem and set it up in your bench')
 @click.argument('name', nargs=-1) # Dummy argument for backward compatibility
 @click.argument('git-url')
 @click.option('--branch', default=None, help="branch to checkout")
