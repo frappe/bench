@@ -13,7 +13,7 @@ from setuptools.config import read_configuration
 
 # imports - module imports
 import bench
-from bench.utils import color, CommandFailedError, build_assets, check_git_for_shallow_clone, exec_cmd, get_cmd_output, get_frappe, restart_supervisor_processes, restart_systemd_processes, run_frappe_cmd
+from bench.utils import color, CommandFailedError, build_assets, check_git_for_shallow_clone, exec_cmd, get_cmd_output, get_frappe, is_bench_directory, restart_supervisor_processes, restart_systemd_processes, run_frappe_cmd
 
 
 logger = logging.getLogger(bench.PROJECT_NAME)
@@ -21,6 +21,111 @@ logger = logging.getLogger(bench.PROJECT_NAME)
 
 class InvalidBranchException(Exception): pass
 class InvalidRemoteException(Exception): pass
+
+
+def find_org(org_repo):
+	import requests
+
+	org_repo = org_repo[0]
+
+	for org in ["frappe", "erpnext"]:
+		res = requests.head(f'https://api.github.com/repos/{org}/{org_repo}')
+		if res.ok:
+			return org, org_repo
+
+	raise InvalidRemoteException
+
+
+def fetch_details_from_tag(_tag):
+	if not _tag:
+		raise Exception("Tag is not provided")
+
+	app_tag = _tag.split("@")
+	org_repo = app_tag[0].split("/")
+
+	try:
+		repo, tag = app_tag
+	except ValueError:
+		repo, tag = app_tag + [None]
+
+	try:
+		org, repo = org_repo
+	except ValueError:
+		org, repo = find_org(org_repo)
+
+	return org, repo, tag
+
+
+class App:
+	def __init__(self, name: str, branch : str = None):
+		"""
+		name (str): This could look something like
+			1. https://github.com/frappe/healthcare.git
+			2. git@github.com:frappe/healthcare.git
+			3. frappe/healthcare@develop
+			4. healthcare
+			5. healthcare@develop, healthcare@v13.12.1
+
+		References for Version Identifiers:
+		 * https://www.python.org/dev/peps/pep-0440/#version-specifiers
+		 * https://docs.npmjs.com/about-semantic-versioning
+
+		class Healthcare(AppConfig):
+			dependencies = [{"frappe/erpnext": "~13.17.0"}]
+		"""
+		self.name = name
+		self.remote_server = "github.com"
+		self.use_ssh = False
+		self.branch = branch
+		self.setup_details()
+
+	def setup_details(self):
+		# fetch meta for repo on mounted disk
+		if os.path.exists(self.name):
+			self._setup_details_from_mounted_disk()
+
+		# fetch meta for repo from remote git server - traditional get-app url
+		elif is_git_url(self.name):
+			self._setup_details_from_git_url()
+
+		# fetch meta from new styled name tags & first party apps on github
+		else:
+			self._setup_details_from_name_tag()
+
+	def _setup_details_from_name_tag(self):
+		self.org, self.repo, self.tag = fetch_details_from_tag(self.name)
+
+	def _setup_details_from_mounted_disk(self):
+		return self.__setup_details_from_git(remote=False)
+
+	def _setup_details_from_git_url(self):
+		return self.__setup_details_from_git(remote=True)
+
+	def __setup_details_from_git(self, remote=True):
+		if not remote:
+			raise NotImplementedError
+
+		if self.use_ssh:
+			self.org, _repo = self.name.split(":")[1].split("/")
+		else:
+			self.org, _repo = self.name.split("/")[-2:]
+
+		self.tag = self.branch
+		self.repo = _repo.split(".")[0]
+
+	@property
+	def url(self):
+		if self.use_ssh:
+			return self.get_ssh_url()
+
+		return self.get_http_url()
+
+	def get_http_url(self):
+		return f"https://{self.remote_server}/{self.org}/{self.repo}.git"
+
+	def get_ssh_url(self):
+		return f"git@{self.remote_server}:{self.org}/{self.repo}.git"
+
 
 class MajorVersionUpgradeException(Exception):
 	def __init__(self, message, upstream_version, local_version):

@@ -1,6 +1,8 @@
 VERSION = "5.0.0-dev"
 PROJECT_NAME = "frappe-bench"
 FRAPPE_VERSION = None
+current_path = None
+updated_path = None
 
 
 def set_frappe_version(bench_path='.'):
