@@ -13,7 +13,7 @@ from setuptools.config import read_configuration
 
 # imports - module imports
 import bench
-from bench.utils import color, CommandFailedError, build_assets, check_git_for_shallow_clone, exec_cmd, get_cmd_output, get_frappe, is_bench_directory, restart_supervisor_processes, restart_systemd_processes, run_frappe_cmd
+from bench.utils import CommandFailedError, build_assets, check_git_for_shallow_clone, exec_cmd, get_cmd_output, get_frappe, is_bench_directory, restart_supervisor_processes, restart_systemd_processes, run_frappe_cmd
 
 
 logger = logging.getLogger(bench.PROJECT_NAME)
@@ -322,12 +322,14 @@ def new_app(app, bench_path='.'):
 
 
 def install_app(app, bench_path=".", verbose=False, no_cache=False, restart_bench=True, skip_assets=False):
+	from bench.utils import get_env_cmd
 	from bench.config.common_site_config import get_config
 
-	print(f'\n{color.yellow}Installing {app}{color.nc}')
-	logger.log(f"installing {app}")
+	install_text = f'Installing {app}'
+	click.secho(install_text, fg="yellow")
+	logger.log(install_text)
 
-	python_path = os.path.join(bench_path, "env", "bin", "python")
+	python_path = get_env_cmd("python", bench_path=bench_path)
 	quiet_flag = "-q" if not verbose else ""
 	app_path = os.path.join(bench_path, "apps", app)
 	cache_flag = "--no-cache-dir" if no_cache else ""
