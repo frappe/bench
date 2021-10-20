@@ -75,6 +75,7 @@ class App:
 		"""
 		self.name = name
 		self.remote_server = "github.com"
+		self.on_disk = False
 		self.use_ssh = False
 		self.branch = branch
 		self.setup_details()
@@ -82,6 +83,7 @@ class App:
 	def setup_details(self):
 		# fetch meta for repo on mounted disk
 		if os.path.exists(self.name):
+			self.on_disk = True
 			self._setup_details_from_mounted_disk()
 
 		# fetch meta for repo from remote git server - traditional get-app url
@@ -96,15 +98,12 @@ class App:
 		self.org, self.repo, self.tag = fetch_details_from_tag(self.name)
 
 	def _setup_details_from_mounted_disk(self):
-		return self.__setup_details_from_git(remote=False)
+		self.org, self.repo, self.tag = os.path.split(self.name)[-2:] + [self.branch]
 
 	def _setup_details_from_git_url(self):
-		return self.__setup_details_from_git(remote=True)
+		return self.__setup_details_from_git()
 
-	def __setup_details_from_git(self, remote=True):
-		if not remote:
-			raise NotImplementedError
-
+	def __setup_details_from_git(self):
 		if self.use_ssh:
 			self.org, _repo = self.name.split(":")[1].split("/")
 		else:
@@ -115,6 +114,9 @@ class App:
 
 	@property
 	def url(self):
+		if self.on_disk:
+			return os.path.abspath(self.name)
+
 		if self.use_ssh:
 			return self.get_ssh_url()
 
