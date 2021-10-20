@@ -216,58 +216,80 @@ def get_bench_name(git_url, bench_path):
 
 	return os.path.join(bench_path, f"{guessed_app_name}-bench")
 
-def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=False, restart_bench=True, overwrite=False):
-	import shutil
+def setup_app_dependencies(repo_name, bench_path='.', branch=None):
+	# branch kwarg is somewhat of a hack here; since we're assuming the same branches for all apps
+	# for eg: if you're installing erpnext@develop, you'll want frappe@develop and healthcare@develop too
+	import glob
+
+	apps_path = os.path.join(os.path.abspath(bench_path), 'apps')
+	files = glob.glob(os.path.join(apps_path, repo_name, '**', 'hooks.py'))
+
+	if files:
+		lines = [x for x in open(files[0]).read().split('\n') if x.strip().startswith('required_apps')]
+		if lines:
+			required_apps = eval(lines[0].strip('required_apps').strip().lstrip('=').strip())
+			# TODO: when the time comes, add version check here
+			for app in required_apps:
+				if app not in get_apps(bench_path=bench_path):
+					get_app(app, bench_path=bench_path, branch=branch)
+
+def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=False, overwrite=False):
+	"""bench get-app clones a Frappe App from remote (GitHub or any other git server),
+	and installs it on the current bench. This also resolves dependencies based on the
+	apps' required_apps defined in the hooks.py file.
+
+	If the bench_path is not a bench directory, a new bench is created named using the
+	git_url parameter.
+	"""
+	app = App(git_url, branch=branch)
+	git_url = app.url
+	repo_name = app.repo
+	branch = app.tag
 
 	if not is_bench_directory(bench_path):
-		bench_name = get_bench_name(git_url, bench_path)
+		bench_path = get_bench_name(git_url, bench_path)
 		from bench.commands.make import init
-
-		click.get_current_context().invoke(init, path=bench_name)
-		bench_path = bench_name
-
-	if not os.path.exists(git_url):
-		app = App(git_url)
-
-		git_url = app.url
-		repo_name = app.repo
-		shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
-		branch = f'--branch {app.tag}' if app.tag else ''
-
-	else:
-		git_url = os.path.abspath(git_url)
-		_, repo_name = os.path.split(git_url)
-		shallow_clone = ''
-		branch = f'--branch {branch}' if branch else ''
+		click.get_current_context().invoke(init, path=bench_path, frappe_branch=branch)
 
 	cloned_path = os.path.join(bench_path, 'apps', repo_name)
+	dir_already_exists = os.path.isdir(cloned_path)
+	to_clone = not dir_already_exists
+	to_resolve_dependencies = True
+	to_install = True
 
-	if os.path.isdir(cloned_path):
+	if dir_already_exists:
 		# application directory already exists
 		# prompt user to overwrite it
 		if overwrite or click.confirm(f'''A directory for the application "{repo_name}" already exists.
 Do you want to continue and overwrite it?'''):
+			import shutil
 			shutil.rmtree(cloned_path)
+			to_clone = True
 		elif click.confirm('''Do you want to reinstall the existing application?''', abort=True):
-			app_name = get_app_name(bench_path, repo_name)
-			install_app(
-				app=app_name, bench_path=bench_path, verbose=verbose, skip_assets=skip_assets
-			)
-			sys.exit()
+			pass
 
-	print(f'\n{color.yellow}Getting {repo_name}{color.nc}')
-	logger.log(f'Getting app {repo_name}')
+	if to_clone:
+		fetch_txt = f"Getting {repo_name}"
+		click.secho(fetch_txt, fg="yellow")
+		logger.log(fetch_txt)
 
-	exec_cmd(
-		f"git clone {git_url} {branch} {shallow_clone} --origin upstream",
-		cwd=os.path.join(bench_path, 'apps')
-	)
+		git_branch = f'--branch {app.tag}' if app.tag else ''
+		shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
+		exec_cmd(
+			f"git clone {git_url} {git_branch} {shallow_clone} --origin upstream",
+			cwd=os.path.join(bench_path, 'apps')
+		)
 
-	app_name = get_app_name(bench_path, repo_name)
-	install_app(
-		app=app_name, bench_path=bench_path, verbose=verbose, skip_assets=skip_assets
-	)
+	if to_resolve_dependencies:
+		setup_app_dependencies(
+			repo_name=repo_name, bench_path=bench_path, branch=branch
+		)
 
+	if to_install:
+		app_name = get_app_name(bench_path, repo_name)
+		install_app(
+			app=app_name, bench_path=bench_path, verbose=verbose, skip_assets=skip_assets
+		)
 
 def get_app_name(bench_path, repo_name):
 	app_name = None
