@@ -9,8 +9,8 @@ from bench.config.common_site_config import get_config
 from bench.config.nginx import make_nginx_conf
 from bench.config.supervisor import generate_supervisor_config, update_supervisord_config
 from bench.config.systemd import generate_systemd_config
-from bench.utils import CommandFailedError, exec_cmd, which, fix_prod_setup_perms, get_bench_name, get_cmd_output, log
-
+from bench.utils import exec_cmd, which, fix_prod_setup_perms, get_bench_name, get_cmd_output, log
+from bench.exceptions import CommandFailedError
 
 logger = logging.getLogger(bench.PROJECT_NAME)
 

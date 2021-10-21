@@ -10,7 +10,8 @@ from bench.config.common_site_config import get_config
 from bench.config.nginx import make_nginx_conf
 from bench.config.production_setup import service
 from bench.config.site_config import get_domains, remove_domain, update_site_config
-from bench.utils import CommandFailedError, exec_cmd, update_common_site_config
+from bench.utils import exec_cmd, update_common_site_config
+from bench.exceptions import CommandFailedError
 
 
 def setup_letsencrypt(site, custom_domain, bench_path, interactive):

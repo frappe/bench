@@ -13,14 +13,11 @@ from setuptools.config import read_configuration
 
 # imports - module imports
 import bench
-from bench.utils import CommandFailedError, build_assets, check_git_for_shallow_clone, exec_cmd, get_cmd_output, get_frappe, is_bench_directory, restart_supervisor_processes, restart_systemd_processes, run_frappe_cmd
+from bench.exceptions import InvalidRemoteException, InvalidBranchException, CommandFailedError
+from bench.utils import build_assets, check_git_for_shallow_clone, exec_cmd, get_cmd_output, is_bench_directory, restart_supervisor_processes, restart_systemd_processes, run_frappe_cmd
 
 
 logger = logging.getLogger(bench.PROJECT_NAME)
-
-
-class InvalidBranchException(Exception): pass
-class InvalidRemoteException(Exception): pass
 
 
 def find_org(org_repo):
@@ -128,12 +125,6 @@ class App:
 	def get_ssh_url(self):
 		return f"git@{self.remote_server}:{self.org}/{self.repo}.git"
 
-
-class MajorVersionUpgradeException(Exception):
-	def __init__(self, message, upstream_version, local_version):
-		super(MajorVersionUpgradeException, self).__init__(message)
-		self.upstream_version = upstream_version
-		self.local_version = local_version
 
 def get_apps(bench_path='.'):
 	try:
@@ -594,7 +585,7 @@ def get_repo_dir(app, bench_path='.'):
 def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrade=True):
 	import git
 	import importlib
-	from bench.utils import update_requirements, update_node_packages, backup_all_sites, patch_sites, build_assets, post_upgrade
+	from bench.utils import update_requirements, update_node_packages, backup_all_sites, patch_sites, post_upgrade
 
 	apps_dir = os.path.join(bench_path, 'apps')
 	version_upgrade = (False,)

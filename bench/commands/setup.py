@@ -198,8 +198,8 @@ def setup_manager(yes=False, port=23624, domain=None):
 
 @click.command("config", help="Generate or over-write sites/common_site_config.json")
 def setup_config():
-	from bench.config.common_site_config import make_config
-	make_config(".")
+	from bench.config.common_site_config import setup_config
+	setup_config(".")
 
 
 @click.command("add-domain", help="Add a custom domain to a particular site")

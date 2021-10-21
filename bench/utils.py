@@ -16,13 +16,8 @@ import click
 
 # imports - module imports
 import bench
+from bench.exceptions import PatchError
 
-
-class PatchError(Exception):
-	pass
-
-class CommandFailedError(Exception):
-	pass
 
 logger = logging.getLogger(bench.PROJECT_NAME)
 bench_cache_file = '.bench.cmd'
@@ -122,17 +117,7 @@ def pause_exec(seconds=10):
 	print(" " * 40, end="\r")
 
 
-def init(path, apps_path=None, no_procfile=False, no_backups=False,
-		frappe_path=None, frappe_branch=None, verbose=False, clone_from=None,
-		skip_redis_config_generation=False, clone_without_update=False, ignore_exist=False, skip_assets=False,
-		python='python3'):
-	"""Initialize a new bench directory"""
-	from bench.app import get_app, install_apps_from_path
-	from bench.config import redis
-	from bench.config.common_site_config import make_config
-	from bench.config.procfile import setup_procfile
-	from bench.patches import set_all_patches_executed
-
+def setup_bench_directory(path, ignore_exist=False):
 	if os.path.exists(path) and not ignore_exist:
 		log(f'Path {path} already exists!')
 		sys.exit(0)
@@ -149,11 +134,42 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 			if e.errno == errno.EEXIST:
 				pass
 
+
+def init(path, apps_path=None, no_procfile=False, no_backups=False,
+		frappe_path=None, frappe_branch=None, verbose=False, clone_from=None,
+		skip_redis_config_generation=False, clone_without_update=False, ignore_exist=False, skip_assets=False,
+		python='python3'):
+	"""Initialize a new bench directory
+
+	1. create a bench directory in the given path
+	2. setup logging for the bench
+	3. setup env for the bench
+	4. setup config for the bench
+	5. clone frappe
+	6. install python & node dependencies
+	7. build assets
+	8. setup redi
+	9. setup procfile
+	10. setup backups crontab
+	11. setup patches.txt for bench
+	"""
+
+	# Use print("\033c", end="") to clear entire screen after each step and re-render each list
+	# another way => https://stackoverflow.com/a/44591228/10309266
+
+	from bench.app import get_app, install_apps_from_path
+	from bench.config import redis
+	from bench.config.common_site_config import setup_config
+	from bench.config.procfile import setup_procfile
+	from bench.patches import set_all_patches_executed
+
+	setup_bench_directory(path=path, ignore_exist=ignore_exist)
+
 	setup_logging(bench_path=path)
 
 	setup_env(bench_path=path, python=python)
 
-	make_config(path)
+	setup_config(path)
 
 	if clone_from:
 		clone_apps_from(bench_path=path, clone_from=clone_from, update_app=not clone_without_update)
@@ -177,6 +193,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	if not no_procfile:
 		setup_procfile(path, skip_redis=skip_redis_config_generation)
+
 	if not no_backups:
 		setup_backups(bench_path=path)
 
@@ -283,8 +300,10 @@ To avoid seeing this warning, set shallow_clone to false in your common_site_con
 def copy_patches_txt(bench_path):
 	import shutil
 
-	shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'patches', 'patches.txt'),
-		os.path.join(bench_path, 'patches.txt'))
+	shutil.copy(
+		os.path.join(os.path.dirname(os.path.abspath(__file__)), 'patches', 'patches.txt'),
+		os.path.join(bench_path, 'patches.txt')
+	)
 
 
 def clone_apps_from(bench_path, clone_from, update_app=True):
