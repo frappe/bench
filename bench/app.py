@@ -13,47 +13,16 @@ from setuptools.config import read_configuration
 
 # imports - module imports
 import bench
+from bench.bench import Bench
 from bench.exceptions import InvalidRemoteException, InvalidBranchException, CommandFailedError
-from bench.utils import build_assets, check_git_for_shallow_clone, exec_cmd, get_cmd_output, is_bench_directory, restart_supervisor_processes, restart_systemd_processes, run_frappe_cmd
+from bench.utils import exec_cmd, get_cmd_output, is_bench_directory, run_frappe_cmd
+from bench.utils import build_assets, check_git_for_shallow_clone, fetch_details_from_tag, restart_supervisor_processes, restart_systemd_processes
 
 
 logger = logging.getLogger(bench.PROJECT_NAME)
 
 
-def find_org(org_repo):
-	import requests
-
-	org_repo = org_repo[0]
-
-	for org in ["frappe", "erpnext"]:
-		res = requests.head(f'https://api.github.com/repos/{org}/{org_repo}')
-		if res.ok:
-			return org, org_repo
-
-	raise InvalidRemoteException
-
-
-def fetch_details_from_tag(_tag):
-	if not _tag:
-		raise Exception("Tag is not provided")
-
-	app_tag = _tag.split("@")
-	org_repo = app_tag[0].split("/")
-
-	try:
-		repo, tag = app_tag
-	except ValueError:
-		repo, tag = app_tag + [None]
-
-	try:
-		org, repo = org_repo
-	except ValueError:
-		org, repo = find_org(org_repo)
-
-	return org, repo, tag
-
-
-class App:
+class AppMeta:
 	def __init__(self, name: str, branch : str = None):
 		"""
 		name (str): This could look something like
@@ -95,7 +64,7 @@ class App:
 		self.org, self.repo, self.tag = fetch_details_from_tag(self.name)
 
 	def _setup_details_from_mounted_disk(self):
-		self.org, self.repo, self.tag = os.path.split(self.name)[-2:] + [self.branch]
+		self.org, self.repo, self.tag = os.path.split(self.name)[-2:] + (self.branch,)
 
 	def _setup_details_from_git_url(self):
 		return self.__setup_details_from_git()
@@ -126,12 +95,11 @@ class App:
 		return f"git@{self.remote_server}:{self.org}/{self.repo}.git"
 
 
-def get_apps(bench_path='.'):
-	try:
-		with open(os.path.join(bench_path, 'sites', 'apps.txt')) as f:
-			return f.read().strip().split('\n')
-	except IOError:
-		return []
+class App(AppMeta):
+	def __init__(self, name: str, branch : str = None, bench=None):
+		super().__init__(name, branch)
+		self.bench = bench
+
 
 def add_to_appstxt(app, bench_path='.'):
 	apps = get_apps(bench_path=bench_path)

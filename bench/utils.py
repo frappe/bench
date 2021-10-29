@@ -1141,3 +1141,36 @@ def clear_command_cache(bench_path='.'):
 		os.remove(bench_cache_file)
 	else:
 		print("Bench command cache doesn't exist in this folder!")
+
+
+def find_org(org_repo):
+	import requests
+
+	org_repo = org_repo[0]
+
+	for org in ["frappe", "erpnext"]:
+		res = requests.head(f'https://api.github.com/repos/{org}/{org_repo}')
+		if res.ok:
+			return org, org_repo
+
+	raise InvalidRemoteException
+
+
+def fetch_details_from_tag(_tag):
+	if not _tag:
+		raise Exception("Tag is not provided")
+
+	app_tag = _tag.split("@")
+	org_repo = app_tag[0].split("/")
+
+	try:
+		repo, tag = app_tag
+	except ValueError:
+		repo, tag = app_tag + [None]
+
+	try:
+		org, repo = org_repo
+	except ValueError:
+		org, repo = find_org(org_repo)
+
+	return org, repo, tag
