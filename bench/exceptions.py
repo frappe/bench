@@ -9,3 +9,9 @@ class PatchError(Exception):
 
 class CommandFailedError(Exception):
 	pass
+
+class BenchNotFoundError(Exception):
+	pass
+
+class ValidationError(Exception):
+	pass

@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 # imports - standard imports
 import grp
 import itertools
@@ -10,14 +7,14 @@ import os
 import pwd
 import subprocess
 import sys
+from shlex import split
 
 # imports - third party imports
 import click
 
 # imports - module imports
 import bench
-from bench.exceptions import PatchError
-
+from bench.exceptions import InvalidRemoteException, PatchError
 
 logger = logging.getLogger(bench.PROJECT_NAME)
 bench_cache_file = '.bench.cmd'
@@ -116,88 +113,56 @@ def pause_exec(seconds=10):
 
 	print(" " * 40, end="\r")
 
-
-def setup_bench_directory(path, ignore_exist=False):
-	if os.path.exists(path) and not ignore_exist:
-		log(f'Path {path} already exists!')
-		sys.exit(0)
-	elif not os.path.exists(path):
-		# only create dir if it does not exist
-		os.makedirs(path)
-
-	for dirname in folders_in_bench:
-		try:
-			os.makedirs(os.path.join(path, dirname))
-		except OSError as e:
-			import errno
-
-			if e.errno == errno.EEXIST:
-				pass
-
-
 def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		frappe_path=None, frappe_branch=None, verbose=False, clone_from=None,
-		skip_redis_config_generation=False, clone_without_update=False, ignore_exist=False, skip_assets=False,
+		skip_redis_config_generation=False, clone_without_update=False, skip_assets=False,
 		python='python3'):
 	"""Initialize a new bench directory
 
-	1. create a bench directory in the given path
-	2. setup logging for the bench
-	3. setup env for the bench
-	4. setup config for the bench
-	5. clone frappe
-	6. install python & node dependencies
-	7. build assets
-	8. setup redi
-	9. setup procfile
-	10. setup backups crontab
-	11. setup patches.txt for bench
+	* create a bench directory in the given path
+	* setup logging for the bench
+	* setup env for the bench
+	* setup config (dir/pids/redis/procfile) for the bench
+	* setup patches.txt for bench
+	* clone & install frappe
+		* install python & node dependencies
+		* build assets
+	* setup backups crontab
 	"""
 
 	# Use print("\033c", end="") to clear entire screen after each step and re-render each list
 	# another way => https://stackoverflow.com/a/44591228/10309266
 
 	from bench.app import get_app, install_apps_from_path
-	from bench.config import redis
-	from bench.config.common_site_config import setup_config
-	from bench.config.procfile import setup_procfile
-	from bench.patches import set_all_patches_executed
+	from bench.bench import Bench
 
-	setup_bench_directory(path=path, ignore_exist=ignore_exist)
+	bench = Bench(path)
 
-	setup_logging(bench_path=path)
+	bench.setup.dirs()
+	bench.setup.logging()
+	bench.setup.env(python=python)
+	bench.setup.config(redis=not skip_redis_config_generation, procfile=not no_procfile)
+	bench.setup.patches()
 
-	setup_env(bench_path=path, python=python)
-
-	setup_config(path)
-
+	# local apps
 	if clone_from:
 		clone_apps_from(bench_path=path, clone_from=clone_from, update_app=not clone_without_update)
+
+	# remote apps
 	else:
 		frappe_path = frappe_path or 'https://github.com/frappe/frappe.git'
 
 		get_app(frappe_path, branch=frappe_branch, bench_path=path, skip_assets=True, verbose=verbose)
 
+		# fetch remote apps using config file - deprecate this!
 		if apps_path:
 			install_apps_from_path(apps_path, bench_path=path)
 
 	if not skip_assets:
-		update_node_packages(bench_path=path)
-
-	set_all_patches_executed(bench_path=path)
-	if not skip_assets:
 		build_assets(bench_path=path)
 
-	if not skip_redis_config_generation:
-		redis.generate_config(path)
-
-	if not no_procfile:
-		setup_procfile(path, skip_redis=skip_redis_config_generation)
-
 	if not no_backups:
-		setup_backups(bench_path=path)
-
-	copy_patches_txt(path)
+		bench.setup.backups()
 
 
 def update(pull=False, apps=None, patch=False, build=False, requirements=False, backup=True, compile=True,
@@ -206,11 +171,13 @@ def update(pull=False, apps=None, patch=False, build=False, requirements=False, 
 	import re
 	from bench import patches
 	from bench.app import is_version_upgrade, pull_apps, validate_branch
-	from bench.config.common_site_config import get_config, update_config
+	from bench.config.common_site_config import update_config
+	from bench.bench import Bench
 
 	bench_path = os.path.abspath(".")
+	bench = Bench(bench_path)
 	patches.run(bench_path=bench_path)
-	conf = get_config(bench_path)
+	conf = bench.conf
 
 	if apps and not pull:
 		apps = []
@@ -295,15 +262,6 @@ To avoid seeing this warning, set shallow_clone to false in your common_site_con
 	update_config(conf, bench_path=bench_path)
 
 	print("_" * 80 + "\nBench: Deployment tool for Frappe and Frappe Applications (https://frappe.io/bench).\nOpen source depends on your contributions, so do give back by submitting bug reports, patches and fixes and be a part of the community :)")
-
-
-def copy_patches_txt(bench_path):
-	import shutil
-
-	shutil.copy(
-		os.path.join(os.path.dirname(os.path.abspath(__file__)), 'patches', 'patches.txt'),
-		os.path.join(bench_path, 'patches.txt')
-	)
 
 
 def clone_apps_from(bench_path, clone_from, update_app=True):
@@ -409,22 +367,13 @@ def build_assets(bench_path='.', app=None):
 	command = 'bench build'
 	if app:
 		command += f' --app {app}'
-	exec_cmd(command, cwd=bench_path)
+	exec_cmd(command, cwd=bench_path, env={"BENCH_DEVELOPER": "1"})
 
 
-def get_sites(bench_path='.'):
-	sites_path = os.path.join(bench_path, 'sites')
-	sites = (site for site in os.listdir(sites_path) if os.path.exists(os.path.join(sites_path, site, 'site_config.json')))
-	return sites
-
-
-def setup_backups(bench_path='.'):
+def remove_backups_crontab(bench_path='.'):
 	from crontab import CronTab
 	from bench.bench import Bench
 
-def remove_backups_crontab(bench_path='.'):
-	from crontab import CronTab, CronItem
-	from bench.config.common_site_config import get_config
 	logger.log('removing backup cronjob')
 
 	bench_dir = os.path.abspath(bench_path)
@@ -557,13 +506,15 @@ def get_cmd_output(cmd, cwd='.', _raise=True):
 
 
 def restart_supervisor_processes(bench_path='.', web_workers=False):
-	from bench.config.common_site_config import get_config
-	conf = get_config(bench_path=bench_path)
+	from bench.bench import Bench
+
+	bench = Bench(bench_path)
+	conf = bench.conf
+	cmd = conf.get('supervisor_restart_cmd')
 	bench_name = get_bench_name(bench_path)
 
-	cmd = conf.get('supervisor_restart_cmd')
 	if cmd:
-		exec_cmd(cmd, cwd=bench_path)
+		bench.run(cmd)
 
 	else:
 		supervisor_status = get_cmd_output('supervisorctl status', cwd=bench_path)
@@ -583,7 +534,7 @@ def restart_supervisor_processes(bench_path='.', web_workers=False):
 		else:
 			group = 'frappe:'
 
-		exec_cmd(f'supervisorctl restart {group}', cwd=bench_path)
+		bench.run(f"supervisorctl restart {group}")
 
 
 def restart_systemd_processes(bench_path='.', web_workers=False):
@@ -592,35 +543,31 @@ def restart_systemd_processes(bench_path='.', web_workers=False):
 	exec_cmd(f'sudo systemctl start -- $(systemctl show -p Requires {bench_name}.target | cut -d= -f2)')
 
 
-def set_default_site(site, bench_path='.'):
-	if site not in get_sites(bench_path=bench_path):
-		raise Exception("Site not in bench")
-	exec_cmd(f"{get_frappe(bench_path)} --use {site}", cwd=os.path.join(bench_path, 'sites'))
-
-
 def update_env_pip(bench_path):
 	env_py = get_env_cmd("python")
 	exec_cmd(f"{env_py} -m pip install -q -U pip")
 
 
 def update_requirements(bench_path='.'):
-	from bench.app import get_apps, install_app
+	from bench.app import install_app
+	from bench.bench import Bench
+
 	print('Installing applications...')
 
 	update_env_pip(bench_path)
 
-	for app in get_apps():
+	for app in Bench(bench_path).apps:
 		install_app(app, bench_path=bench_path, skip_assets=True, restart_bench=False)
 
 
 def update_python_packages(bench_path='.'):
-	from bench.app import get_apps
+	from bench.bench import Bench
 	env_py = get_env_cmd("python")
 	print('Updating Python libraries...')
 
 	update_env_pip(bench_path)
-	for app in get_apps():
-		print(f'\n{color.yellow}Installing python dependencies for {app}{color.nc}')
+	for app in Bench(bench_path).apps:
+		click.secho(f"\nInstalling python dependencies for {app}", fg="yellow")
 		app_path = os.path.join(bench_path, "apps", app)
 		exec_cmd(f"{env_py} -m pip install -q -U -e {app_path}", cwd=bench_path)
 
@@ -640,12 +587,12 @@ def update_node_packages(bench_path='.'):
 
 
 def install_python_dev_dependencies(bench_path='.', apps=None):
-	from bench.app import get_apps
+	from bench.bench import Bench
 
 	if isinstance(apps, str):
 		apps = [apps]
 	elif apps is None:
-		apps = get_apps()
+		apps = Bench(bench_path).apps
 
 	env_py = get_env_cmd("python")
 	for app in apps:
@@ -670,7 +617,7 @@ def update_yarn_packages(bench_path='.'):
 	for app in os.listdir(apps_dir):
 		app_path = os.path.join(apps_dir, app)
 		if os.path.exists(os.path.join(app_path, 'package.json')):
-			print(f'\n{color.yellow}Installing node dependencies for {app}{color.nc}')
+			click.secho(f"\nInstalling node dependencies for {app}", fg="yellow")
 			exec_cmd('yarn install', cwd=app_path)
 
 
@@ -715,7 +662,9 @@ def backup_site(site, bench_path='.'):
 
 
 def backup_all_sites(bench_path='.'):
-	for site in get_sites(bench_path=bench_path):
+	from bench.bench import Bench
+
+	for site in Bench(bench_path).sites:
 		backup_site(site, bench_path=bench_path)
 
 
@@ -779,10 +728,9 @@ def drop_privileges(uid_name='nobody', gid_name='nogroup'):
 
 def fix_prod_setup_perms(bench_path='.', frappe_user=None):
 	from glob import glob
-	from bench.config.common_site_config import get_config
+	from bench.bench import Bench
 
-	if not frappe_user:
-		frappe_user = get_config(bench_path).get('frappe_user')
+	frappe_user = frappe_user or Bench(bench_path).conf.get('frappe_user')
 
 	if not frappe_user:
 		print("frappe user not set")
@@ -961,9 +909,11 @@ def setup_fonts():
 
 def set_git_remote_url(git_url, bench_path='.'):
 	"Set app remote git url"
+	from bench.bench import Bench
+
 	app = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
 
-	if app not in bench.app.get_apps(bench_path):
+	if app not in Bench(bench_path).apps:
 		print(f"No app named {app}")
 		sys.exit(1)
 
@@ -1019,9 +969,9 @@ def find_benches(directory=None):
 def migrate_env(python, backup=False):
 	import shutil
 	from urllib.parse import urlparse
-	from bench.config.common_site_config import get_config
-	from bench.app import get_apps
+	from bench.bench import Bench
 
+	bench = Bench(".")
 	nvenv = 'env'
 	path = os.getcwd()
 	python = which(python)
@@ -1030,7 +980,7 @@ def migrate_env(python, backup=False):
 
 	# Clear Cache before Bench Dies.
 	try:
-		config = get_config(bench_path=os.getcwd())
+		config = bench.conf
 		rredis = urlparse(config['redis_cache'])
 		redis  = f"{which('redis-cli')} -p {rredis.port}"
 
@@ -1065,7 +1015,7 @@ def migrate_env(python, backup=False):
 		logger.log(f'Setting up a New Virtual {python} Environment')
 		venv_creation = exec_cmd(f'{virtualenv} --python {python} {pvenv}')
 
-		apps = ' '.join([f"-e {os.path.join('apps', app)}" for app in get_apps()])
+		apps = ' '.join([f"-e {os.path.join('apps', app)}" for app in bench.apps])
 		packages_setup = exec_cmd(f'{pvenv} -m pip install -q -U {apps}')
 
 		logger.log(f'Migration Successful to {python}')

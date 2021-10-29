@@ -17,27 +17,31 @@ import click
 @click.option('--skip-assets',is_flag=True, default=False, help="Do not build assets")
 @click.option('--verbose',is_flag=True, help="Verbose output during install")
 def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups, clone_from, verbose, skip_redis_config_generation, clone_without_update, ignore_exist=False, skip_assets=False, python='python3'):
+	import os
 	from bench.utils import init, log
+
+	if not ignore_exist and os.path.exists(path):
+		log(f"Bench instance already exists at {path}", level=2)
+		return
 
 	try:
 		init(
 			path,
-			apps_path=apps_path,
+			apps_path=apps_path, # can be used from --config flag? Maybe config file could have more info?
 			no_procfile=no_procfile,
 			no_backups=no_backups,
 			frappe_path=frappe_path,
 			frappe_branch=frappe_branch,
-			verbose=verbose,
 			clone_from=clone_from,
 			skip_redis_config_generation=skip_redis_config_generation,
 			clone_without_update=clone_without_update,
-			ignore_exist=ignore_exist,
 			skip_assets=skip_assets,
 			python=python,
+			verbose=verbose,
 		)
 		log(f'Bench {path} initialized', level=1)
 	except SystemExit:
-		pass
+		raise
 	except Exception as e:
 		import os, shutil, time
 		# add a sleep here so that the traceback of other processes doesnt overlap with the prompts
@@ -53,8 +57,21 @@ def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups, c
 @click.command('drop')
 @click.argument('path')
 def drop(path):
-	from bench.app import drop_bench
-	drop_bench(path)
+	from bench.bench import Bench
+	from bench.exceptions import BenchNotFoundError, ValidationError
+
+	bench = Bench(path)
+
+	if not bench.exists:
+		raise BenchNotFoundError(f"Bench {bench.name} does not exist")
+
+	if bench.sites:
+		raise ValidationError("Cannot remove non-empty bench directory")
+
+	bench.drop()
+
+	print('Bench dropped')
+
 
 
 @click.command(['get', 'get-app'], help='Clone an app from the internet or filesystem and set it up in your bench')
