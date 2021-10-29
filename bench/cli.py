@@ -21,7 +21,6 @@ from bench.utils import (
 	generate_command_cache,
 	get_cmd_output,
 	get_env_cmd,
-	get_frappe,
 	is_bench_directory,
 	is_dist_editable,
 	is_root,
@@ -160,12 +159,6 @@ def change_uid():
 		else:
 			log(change_uid_msg, level=3)
 			sys.exit(1)
-
-
-def old_frappe_cli(bench_path="."):
-	f = get_frappe(bench_path=bench_path)
-	os.chdir(os.path.join(bench_path, "sites"))
-	os.execv(f, [f] + sys.argv[2:])
 
 
 def app_cmd(bench_path="."):

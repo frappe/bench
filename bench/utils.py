@@ -92,14 +92,6 @@ def check_latest_version():
 			log(f"A newer version of bench is available: {local_version} → {pypi_version}")
 
 
-def get_frappe(bench_path='.'):
-	frappe = get_env_cmd('frappe', bench_path=bench_path)
-	if not os.path.exists(frappe):
-		print('frappe app is not installed. Run the following command to install frappe')
-		print('bench get-app https://github.com/frappe/frappe.git')
-	return frappe
-
-
 def get_env_cmd(cmd, bench_path='.'):
 	return os.path.abspath(os.path.join(bench_path, 'env', 'bin', cmd))
 
@@ -776,30 +768,24 @@ def validate_upgrade(from_ver, to_ver, bench_path='.'):
 
 
 def post_upgrade(from_ver, to_ver, bench_path='.'):
-	from bench.config.common_site_config import get_config
 	from bench.config import redis
 	from bench.config.supervisor import generate_supervisor_config
 	from bench.config.nginx import make_nginx_conf
-	conf = get_config(bench_path=bench_path)
+	from bench.bench import Bench
+
+	conf = Bench(bench_path).conf
 	print("-" * 80 + f"Your bench was upgraded to version {to_ver}")
 
 	if conf.get('restart_supervisor_on_update'):
 		redis.generate_config(bench_path=bench_path)
 		generate_supervisor_config(bench_path=bench_path)
 		make_nginx_conf(bench_path=bench_path)
-
-		if from_ver == 4 and to_ver == 5:
-			setup_backups(bench_path=bench_path)
-
-		if from_ver <= 5 and to_ver == 6:
-			setup_socketio(bench_path=bench_path)
-
-		message = """
-As you have setup your bench for production, you will have to reload configuration for nginx and supervisor. To complete the migration, please run the following commands
-sudo service nginx restart
-sudo supervisorctl reload
-		""".strip()
-		print(message)
+		print(
+			"As you have setup your bench for production, you will have to reload configuration for "
+			"nginx and supervisor. To complete the migration, please run the following commands:"
+			"\nsudo service nginx restart"
+			"\nsudo supervisorctl reload"
+		)
 
 
 def update_translations_p(args):
