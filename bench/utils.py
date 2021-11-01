@@ -320,16 +320,6 @@ def get_venv_path():
 
 	return venv or log("virtualenv cannot be found", level=2)
 
-def setup_env(bench_path='.', python='python3'):
-	frappe = os.path.join(bench_path, "apps", "frappe")
-	py = os.path.join(bench_path, "env", "bin", "python")
-	virtualenv = get_venv_path()
-
-	exec_cmd(f'{virtualenv} -q env -p {python}', cwd=bench_path)
-
-	if os.path.exists(frappe):
-		exec_cmd(f'{py} -m pip install -q -U -e {frappe}', cwd=bench_path)
-
 
 def setup_socketio(bench_path='.'):
 	exec_cmd("npm install socket.io redis express superagent cookie babel-core less chokidar \
