@@ -129,10 +129,9 @@ def setup_procfile():
 	bench.config.procfile.setup_procfile(".")
 
 
-@click.command("socketio", help="Setup node dependencies for socketio server")
+@click.command("socketio", help="[DEPRECATED] Setup node dependencies for socketio server")
 def setup_socketio():
-	bench.utils.setup_socketio()
-
+	return
 
 @click.command("requirements", help="Setup Python and Node dependencies")
 @click.option("--node", help="Update only Node packages", default=False, is_flag=True)
