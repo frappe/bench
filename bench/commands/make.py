@@ -96,8 +96,9 @@ def new_app(app_name):
 @click.command('remove-app', help='Completely remove app from bench and re-build assets if not installed on any site')
 @click.argument('app-name')
 def remove_app(app_name):
-	from bench.app import remove_app
-	remove_app(app_name)
+	from bench.bench import Bench
+	bench = Bench(".")
+	bench.uninstall(app_name)
 
 
 @click.command('exclude-app', help='Exclude app from updating')
