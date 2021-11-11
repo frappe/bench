@@ -1,30 +1,66 @@
 import os
 import shutil
 import sys
+import typing
 import logging
 from typing import MutableSequence
 
 import bench
-from bench.utils import remove_backups_crontab, folders_in_bench, get_venv_path, exec_cmd, get_env_cmd
+from bench.exceptions import ValidationError
 from bench.config.common_site_config import setup_config
+from bench.utils import paths_in_bench, get_venv_path, exec_cmd, get_env_cmd, is_frappe_app, get_git_version, run_frappe_cmd
+from bench.utils.bench import validate_app_installed_on_sites, restart_supervisor_processes, restart_systemd_processes, remove_backups_crontab
 
+
+if typing.TYPE_CHECKING:
+	from bench.app import App
 
 logger = logging.getLogger(bench.PROJECT_NAME)
 
 
 class Base:
-	def run(self, cmd):
-		return exec_cmd(cmd, cwd=self.cwd)
+	def run(self, cmd, cwd=None):
+		return exec_cmd(cmd, cwd=cwd or self.cwd)
 
 
-class Bench(Base):
+class Validator:
+	def validate_app_uninstall(self, app):
+		if app not in self.apps:
+			raise ValidationError(f"No app named {app}")
+		validate_app_installed_on_sites(app, bench_path=self.name)
+
+
+class Bench(Base, Validator):
 	def __init__(self, path):
 		self.name = path
 		self.cwd = os.path.abspath(path)
 		self.exists = os.path.exists(self.name)
+
 		self.setup = BenchSetup(self)
 		self.teardown = BenchTearDown(self)
 		self.apps = BenchApps(self)
+
+		self.apps_txt = os.path.join(self.name, 'sites', 'apps.txt')
+		self.excluded_apps_txt = os.path.join(self.name, 'sites', 'excluded_apps.txt')
+
+	@property
+	def shallow_clone(self):
+		config = self.conf
+
+		if config:
+			if config.get('release_bench') or not config.get('shallow_clone'):
+				return False
+
+		if get_git_version() > 1.9:
+			return True
+
+	@property
+	def excluded_apps(self):
+		try:
+			with open(self.excluded_apps_txt) as f:
+				return f.read().strip().split('\n')
+		except Exception:
+			return []
 
 	@property
 	def sites(self):
@@ -59,17 +95,33 @@ class Bench(Base):
 		from bench.app import App
 
 		app = App(app, branch=branch)
-
-		# get app?
-		# install app to env
-		# add to apps.txt
-		return
+		self.apps.append(app)
+		self.sync()
 
 	def uninstall(self, app):
-		# remove from apps.txt
-		# uninstall app from env
-		# remove app?
-		return
+		from bench.app import App
+
+		self.validate_app_uninstall(app)
+		self.apps.remove(App(app, bench=self))
+		self.sync()
+		self.build()
+		self.reload()
+
+	def build(self):
+		# build assets & stuff
+		run_frappe_cmd("build", bench_path=self.name)
+
+	def reload(self):
+		conf = self.conf
+		if conf.get('restart_supervisor_on_update'):
+			restart_supervisor_processes(bench_path=self.name)
+		if conf.get('restart_systemd_on_update'):
+			restart_systemd_processes(bench_path=self.name)
+
+	def sync(self):
+		self.apps.initialize_apps()
+		with open(self.apps_txt, "w") as f:
+			return f.write("\n".join(self.apps))
 
 
 class BenchApps(MutableSequence):
@@ -79,9 +131,10 @@ class BenchApps(MutableSequence):
 
 	def initialize_apps(self):
 		try:
-			self.apps = open(
-				os.path.join(self.bench.name, "sites", "apps.txt")
-			).read().splitlines()
+			self.apps = [x for x in os.listdir(
+				os.path.join(self.bench.name, "apps")
+			) if is_frappe_app(os.path.join(self.bench.name, "apps", x))]
+			self.apps.sort()
 		except FileNotFoundError:
 			self.apps = []
 
@@ -108,6 +161,20 @@ class BenchApps(MutableSequence):
 		# TODO: fetch and install app to bench
 		self.apps.insert(key, value)
 
+	def add(self, app: "App"):
+		app.get()
+		app.install()
+		super().append(app.repo)
+		self.apps.sort()
+
+	def remove(self, app: "App"):
+		app.uninstall()
+		app.remove()
+		super().remove(app.repo)
+
+	def append(self, app : "App"):
+		return self.add(app)
+
 	def __repr__(self):
 		return self.__str__()
 
@@ -123,7 +190,7 @@ class BenchSetup(Base):
 	def dirs(self):
 		os.makedirs(self.bench.name, exist_ok=True)
 
-		for dirname in folders_in_bench:
+		for dirname in paths_in_bench:
 			os.makedirs(os.path.join(self.bench.name, dirname), exist_ok=True)
 
 	def env(self, python="python3"):

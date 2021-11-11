@@ -289,87 +289,18 @@ def install_app(app, bench_path=".", verbose=False, no_cache=False, restart_benc
 			restart_systemd_processes(bench_path=bench_path)
 
 
-def remove_app(app, bench_path='.'):
-	import shutil
-
-	bench = Bench(bench_path)
-	app_path = os.path.join(bench_path, 'apps', app)
-	py = os.path.join(bench_path, 'env', 'bin', 'python')
-
-	# validate app removal
-	if app not in bench.apps:
-		print(f"No app named {app}")
-		sys.exit(1)
-
-	validate_app_installed_on_sites(app, bench_path=bench_path)
-
-	# remove app from bench
-	exec_cmd("{0} -m pip uninstall -y {1}".format(py, app), cwd=bench_path)
-	remove_from_appstxt(app, bench_path)
-	shutil.rmtree(app_path)
-
-	# re-build assets and restart processes
-	run_frappe_cmd("build", bench_path=bench_path)
-
-	if bench.conf.get('restart_supervisor_on_update'):
-		restart_supervisor_processes(bench_path=bench_path)
-	if bench.conf.get('restart_systemd_on_update'):
-		restart_systemd_processes(bench_path=bench_path)
-
-
-def validate_app_installed_on_sites(app, bench_path="."):
-	print("Checking if app installed on active sites...")
-	ret = check_app_installed(app, bench_path=bench_path)
-
-	if ret is None:
-		check_app_installed_legacy(app, bench_path=bench_path)
-	else:
-		return ret
-
-
-def check_app_installed(app, bench_path="."):
-	try:
-		out = subprocess.check_output(
-			["bench", "--site", "all", "list-apps", "--format", "json"],
-			stderr=open(os.devnull, "wb"),
-			cwd=bench_path,
-		).decode('utf-8')
-	except subprocess.CalledProcessError:
-		return None
-
-	try:
-		apps_sites_dict = json.loads(out)
-	except JSONDecodeError:
-		return None
-
-	for site, apps in apps_sites_dict.items():
-		if app in apps:
-			print("Cannot remove, app is installed on site: {0}".format(site))
-			sys.exit(1)
-
-
-def check_app_installed_legacy(app, bench_path="."):
-	site_path = os.path.join(bench_path, 'sites')
-
-	for site in os.listdir(site_path):
-		req_file = os.path.join(site_path, site, 'site_config.json')
-		if os.path.exists(req_file):
-			out = subprocess.check_output(["bench", "--site", site, "list-apps"], cwd=bench_path).decode('utf-8')
-			if re.search(r'\b' + app + r'\b', out):
-				print(f"Cannot remove, app is installed on site: {site}")
-				sys.exit(1)
-
-
 def pull_apps(apps=None, bench_path='.', reset=False):
 	'''Check all apps if there no local changes, pull'''
+	from bench.utils.app import get_remote, get_current_branch
+
 	bench = Bench(bench_path)
 	rebase = '--rebase' if bench.conf.get('rebase_on_pull') else ''
 	apps = apps or bench.apps
+	excluded_apps = bench.excluded_apps
 
 	# check for local changes
 	if not reset:
 		for app in apps:
-			excluded_apps = get_excluded_apps()
 			if app in excluded_apps:
 				print(f"Skipping reset for app {app}")
 				continue
@@ -391,7 +322,6 @@ Here are your choices:
 	wait for them to be merged in the core.''')
 					sys.exit(1)
 
-	excluded_apps = get_excluded_apps()
 	for app in apps:
 		if app in excluded_apps:
 			print(f"Skipping pull for app {app}")
