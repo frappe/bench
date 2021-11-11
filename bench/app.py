@@ -94,9 +94,42 @@ class AppMeta:
 
 
 class App(AppMeta):
-	def __init__(self, name: str, branch : str = None, bench=None):
+	def __init__(self, name: str, branch : str = None, bench : Bench = None):
 		super().__init__(name, branch)
 		self.bench = bench
+
+	def get(self):
+		branch = f'--branch {self.tag}' if self.tag else ''
+		shallow = '--depth 1' if self.bench.shallow_clone else ''
+
+		self.bench.run(
+			f"git clone {self.url} {branch} {shallow} --origin upstream",
+			cwd=os.path.join(self.bench.name, 'apps')
+		)
+
+	def remove(self):
+		shutil.move(
+			os.path.join("apps", self.repo),
+			os.path.join("archived", "apps", self.repo),
+		)
+
+	def install(self, skip_assets=False, verbose=False):
+		app_name = get_app_name(self.bench.name, self.repo)
+
+		# TODO: this should go inside install_app only tho - issue: default/resolved branch
+		setup_app_dependencies(
+			repo_name=self.repo, bench_path=self.bench.name, branch=self.tag
+		)
+
+		install_app(
+			app=app_name, bench_path=self.bench.name, verbose=verbose, skip_assets=skip_assets
+		)
+
+	def uninstall(self):
+		env_python = get_env_cmd("python", bench_path=self.bench.name)
+		self.bench.run(
+			f"{env_python} -m pip uninstall -y {self.repo}"
+		)
 
 
 def add_to_appstxt(app, bench_path='.'):
@@ -178,7 +211,8 @@ def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=Fal
 	If the bench_path is not a bench directory, a new bench is created named using the
 	git_url parameter.
 	"""
-	app = App(git_url, branch=branch)
+	bench = Bench(bench_path)
+	app = App(git_url, branch=branch, bench=bench)
 	git_url = app.url
 	repo_name = app.repo
 	branch = app.tag
@@ -190,9 +224,6 @@ def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=Fal
 
 	cloned_path = os.path.join(bench_path, 'apps', repo_name)
 	dir_already_exists = os.path.isdir(cloned_path)
-	to_clone = not dir_already_exists
-	to_resolve_dependencies = True
-	to_install = True
 
 	if dir_already_exists:
 		# application directory already exists
@@ -203,52 +234,15 @@ def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=Fal
 		):
 			import shutil
 			shutil.rmtree(cloned_path)
-			to_clone = True
 		elif click.confirm("Do you want to reinstall the existing application?", abort=True):
 			pass
 
-	if to_clone:
-		fetch_txt = f"Getting {repo_name}"
-		click.secho(fetch_txt, fg="yellow")
-		logger.log(fetch_txt)
+	fetch_txt = f"Getting {repo_name}"
+	click.secho(fetch_txt, fg="yellow")
+	logger.log(fetch_txt)
 
-		git_branch = f'--branch {app.tag}' if app.tag else ''
-		shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
-		exec_cmd(
-			f"git clone {git_url} {git_branch} {shallow_clone} --origin upstream",
-			cwd=os.path.join(bench_path, 'apps')
-		)
-
-	if to_resolve_dependencies:
-		setup_app_dependencies(
-			repo_name=repo_name, bench_path=bench_path, branch=branch
-		)
-
-	if to_install:
-		app_name = get_app_name(bench_path, repo_name)
-		install_app(
-			app=app_name, bench_path=bench_path, verbose=verbose, skip_assets=skip_assets
-		)
-
-def get_app_name(bench_path, repo_name):
-	app_name = None
-	apps_path = os.path.join(os.path.abspath(bench_path), 'apps')
-	config_path = os.path.join(apps_path, repo_name, 'setup.cfg')
-	if os.path.exists(config_path):
-		config = read_configuration(config_path)
-		app_name = config.get('metadata', {}).get('name')
-
-	if not app_name:
-		# retrieve app name from setup.py as fallback
-		app_path = os.path.join(apps_path, repo_name, 'setup.py')
-		with open(app_path, 'rb') as f:
-			app_name = re.search(r'name\s*=\s*[\'"](.*)[\'"]', f.read().decode('utf-8')).group(1)
-
-	if app_name and repo_name != app_name:
-		os.rename(os.path.join(apps_path, repo_name), os.path.join(apps_path, app_name))
-		return app_name
-
-	return repo_name
+	app.get()
+	app.install(verbose=verbose, skip_assets=skip_assets)
 
 
 def new_app(app, bench_path='.'):
