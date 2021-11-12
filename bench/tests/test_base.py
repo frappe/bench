@@ -11,6 +11,7 @@ import unittest
 # imports - module imports
 import bench
 import bench.utils
+from bench.bench import Bench
 
 if sys.version_info.major == 2:
 	FRAPPE_BRANCH = "version-12"
@@ -25,15 +26,16 @@ class TestBenchBase(unittest.TestCase):
 	def tearDown(self):
 		for bench_name in self.benches:
 			bench_path = os.path.join(self.benches_path, bench_name)
+			bench = Bench(bench_path)
 			mariadb_password = "travis" if os.environ.get("CI") else getpass.getpass(prompt="Enter MariaDB root Password: ")
-			if os.path.exists(bench_path):
-				sites = bench.utils.get_sites(bench_path=bench_path)
-				for site in sites:
+
+			if bench.exists:
+				for site in bench.sites:
 					subprocess.call(["bench", "drop-site", site, "--force", "--no-backup", "--root-password", mariadb_password], cwd=bench_path)
 				shutil.rmtree(bench_path, ignore_errors=True)
 
 	def assert_folders(self, bench_name):
-		for folder in bench.utils.folders_in_bench:
+		for folder in bench.utils.paths_in_bench:
 			self.assert_exists(bench_name, folder)
 		self.assert_exists(bench_name, "apps", "frappe")
 

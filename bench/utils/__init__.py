@@ -338,7 +338,7 @@ def generate_command_cache(bench_path='.'):
 
 	except subprocess.CalledProcessError as e:
 		if hasattr(e, "stderr"):
-			print(e.stderr.decode('utf-8'))
+			print(e.stderr)
 
 	return []
 

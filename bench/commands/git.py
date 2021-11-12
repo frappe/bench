@@ -4,8 +4,9 @@ import subprocess
 
 # imports - module imports
 from bench.bench import Bench
-from bench.app import get_repo_dir, get_remote
+from bench.app import get_repo_dir
 from bench.utils import set_git_remote_url
+from bench.utils.app import get_remote
 
 # imports - third party imports
 import click

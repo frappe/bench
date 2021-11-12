@@ -6,19 +6,21 @@ import re
 import shutil
 import subprocess
 import sys
+import typing
 
 # imports - third party imports
 import click
 
 # imports - module imports
 import bench
-from bench.bench import Bench
 from bench.utils import exec_cmd, is_bench_directory, run_frappe_cmd, is_git_url, fetch_details_from_tag
-from bench.utils.app import get_app_name
 from bench.utils.bench import get_env_cmd, build_assets, restart_supervisor_processes, restart_systemd_processes
 
 logger = logging.getLogger(bench.PROJECT_NAME)
 
+
+if typing.TYPE_CHECKING:
+	from bench.bench import Bench
 
 class AppMeta:
 	def __init__(self, name: str, branch : str = None):
@@ -94,7 +96,7 @@ class AppMeta:
 
 
 class App(AppMeta):
-	def __init__(self, name: str, branch : str = None, bench : Bench = None):
+	def __init__(self, name: str, branch : str = None, bench : "Bench" = None):
 		super().__init__(name, branch)
 		self.bench = bench
 
@@ -114,6 +116,8 @@ class App(AppMeta):
 		)
 
 	def install(self, skip_assets=False, verbose=False):
+		from bench.utils.app import get_app_name
+
 		app_name = get_app_name(self.bench.name, self.repo)
 
 		# TODO: this should go inside install_app only tho - issue: default/resolved branch
@@ -133,6 +137,8 @@ class App(AppMeta):
 
 
 def add_to_appstxt(app, bench_path='.'):
+	from bench.bench import Bench
+
 	apps = Bench(bench_path).apps
 
 	if app not in apps:
@@ -140,6 +146,8 @@ def add_to_appstxt(app, bench_path='.'):
 		return write_appstxt(apps, bench_path=bench_path)
 
 def remove_from_appstxt(app, bench_path='.'):
+	from bench.bench import Bench
+
 	apps = Bench(bench_path).apps
 
 	if app in apps:
@@ -211,6 +219,8 @@ def get_app(git_url, branch=None, bench_path='.', skip_assets=False, verbose=Fal
 	If the bench_path is not a bench directory, a new bench is created named using the
 	git_url parameter.
 	"""
+	from bench.bench import Bench
+
 	bench = Bench(bench_path)
 	app = App(git_url, branch=branch, bench=bench)
 	git_url = app.url
@@ -255,6 +265,7 @@ def new_app(app, bench_path='.'):
 
 
 def install_app(app, bench_path=".", verbose=False, no_cache=False, restart_bench=True, skip_assets=False):
+	from bench.bench import Bench
 	from bench.utils import get_env_cmd
 
 	install_text = f'Installing {app}'
@@ -291,6 +302,7 @@ def install_app(app, bench_path=".", verbose=False, no_cache=False, restart_benc
 
 def pull_apps(apps=None, bench_path='.', reset=False):
 	'''Check all apps if there no local changes, pull'''
+	from bench.bench import Bench
 	from bench.utils.app import get_remote, get_current_branch
 
 	bench = Bench(bench_path)

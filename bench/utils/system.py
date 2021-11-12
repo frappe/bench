@@ -10,6 +10,7 @@ import bench
 # TODO: Fix this
 import bench.utils
 from bench.utils import *
+from bench.utils.bench import build_assets
 
 
 def init(path, apps_path=None, no_procfile=False, no_backups=False,

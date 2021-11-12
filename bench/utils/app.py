@@ -5,6 +5,7 @@ import bench
 import sys
 import subprocess
 from bench.exceptions import InvalidRemoteException, InvalidBranchException, CommandFailedError
+from bench.app import get_repo_dir
 
 
 def is_version_upgrade(app='frappe', bench_path='.', branch=None):
@@ -26,6 +27,7 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 	import git
 	import importlib
 	from bench.utils import update_requirements, update_node_packages, backup_all_sites, patch_sites, post_upgrade
+	from bench.utils.bench import build_assets
 
 	apps_dir = os.path.join(bench_path, 'apps')
 	version_upgrade = (False,)
