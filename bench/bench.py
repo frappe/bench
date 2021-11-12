@@ -96,14 +96,14 @@ class Bench(Base, Validator):
 
 		app = App(app, branch=branch)
 		self.apps.append(app)
-		self.sync()
+		self.apps.sync()
 
 	def uninstall(self, app):
 		from bench.app import App
 
 		self.validate_app_uninstall(app)
 		self.apps.remove(App(app, bench=self))
-		self.sync()
+		self.apps.sync()
 		self.build()
 		self.reload()
 
@@ -118,16 +118,16 @@ class Bench(Base, Validator):
 		if conf.get('restart_systemd_on_update'):
 			restart_systemd_processes(bench_path=self.name)
 
-	def sync(self):
-		self.apps.initialize_apps()
-		with open(self.apps_txt, "w") as f:
-			return f.write("\n".join(self.apps))
-
 
 class BenchApps(MutableSequence):
 	def __init__(self, bench : Bench):
 		self.bench = bench
 		self.initialize_apps()
+
+	def sync(self):
+		self.initialize_apps()
+		with open(self.bench.apps_txt, "w") as f:
+			return f.write("\n".join(self.apps))
 
 	def initialize_apps(self):
 		try:

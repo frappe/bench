@@ -1,5 +1,6 @@
 # imports - standard imports
 import json
+import logging
 import os
 import re
 import subprocess
@@ -8,12 +9,13 @@ from json.decoder import JSONDecodeError
 
 # imports - third party imports
 import click
+import bench
 
 # imports - module imports
+from bench.utils import which, log, exec_cmd, get_bench_name, get_cmd_output
 from bench.exceptions import PatchError, ValidationError
 
-# TODO: Fix this
-from bench.utils import *
+logger = logging.getLogger(bench.PROJECT_NAME)
 
 
 def get_env_cmd(cmd, bench_path='.'):
@@ -74,7 +76,7 @@ def update_python_packages(bench_path='.'):
 
 def update_node_packages(bench_path='.'):
 	print('Updating node packages...')
-	from bench.app import get_develop_version
+	from bench.utils.app import get_develop_version
 	from distutils.version import LooseVersion
 	v = LooseVersion(get_develop_version('frappe', bench_path = bench_path))
 
@@ -302,7 +304,7 @@ def update(pull=False, apps=None, patch=False, build=False, requirements=False, 
 	import re
 	from bench import patches
 	from bench.utils import clear_command_cache, pause_exec, log
-	from bench.utils.bench import restart_supervisor_processes, restart_systemd_processes
+	from bench.utils.bench import restart_supervisor_processes, restart_systemd_processes, backup_all_sites
 	from bench.app import pull_apps
 	from bench.utils.app import is_version_upgrade
 	from bench.config.common_site_config import update_config

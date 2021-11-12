@@ -3,9 +3,6 @@ import itertools
 import json
 import os
 
-# TODO: Fix this
-from bench.utils import *
-
 
 def update_translations_p(args):
 	import requests

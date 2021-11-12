@@ -57,7 +57,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		if apps_path:
 			install_apps_from_path(apps_path, bench_path=path)
 
-	bench.sync()
+	bench.apps.sync()
 
 	if not skip_assets:
 		build_assets(bench_path=path)
