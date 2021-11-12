@@ -18,17 +18,19 @@ from bench.exceptions import PatchError, ValidationError
 logger = logging.getLogger(bench.PROJECT_NAME)
 
 
-def get_env_cmd(cmd, bench_path='.'):
-	return os.path.abspath(os.path.join(bench_path, 'env', 'bin', cmd))
+def get_env_cmd(cmd, bench_path="."):
+	return os.path.abspath(os.path.join(bench_path, "env", "bin", cmd))
 
 
 def get_venv_path():
-	venv = which('virtualenv')
+	venv = which("virtualenv")
 
 	if not venv:
 		current_python = sys.executable
 		with open(os.devnull, "wb") as devnull:
-			is_venv_installed = not subprocess.call([current_python, "-m", "venv", "--help"], stdout=devnull)
+			is_venv_installed = not subprocess.call(
+				[current_python, "-m", "venv", "--help"], stdout=devnull
+			)
 		if is_venv_installed:
 			venv = f"{current_python} -m venv"
 
@@ -40,14 +42,14 @@ def update_env_pip(bench_path):
 	exec_cmd(f"{env_py} -m pip install -q -U pip")
 
 
-def update_requirements(bench_path='.'):
+def update_requirements(bench_path="."):
 	from bench.app import install_app
 	from bench.bench import Bench
 
 	bench = Bench(bench_path)
 	apps = [app for app in bench.apps if app not in bench.excluded_apps]
 
-	print(f"Updating env pip...")
+	print("Updating env pip...")
 
 	update_env_pip(bench_path)
 
@@ -57,14 +59,14 @@ def update_requirements(bench_path='.'):
 		install_app(app, bench_path=bench_path, skip_assets=True, restart_bench=False)
 
 
-def update_python_packages(bench_path='.'):
+def update_python_packages(bench_path="."):
 	from bench.bench import Bench
 
 	bench = Bench(bench_path)
 	env_py = get_env_cmd("python")
 	apps = [app for app in bench.apps if app not in bench.excluded_apps]
 
-	print('Updating Python libraries...')
+	print("Updating Python libraries...")
 
 	update_env_pip(bench_path)
 
@@ -74,21 +76,22 @@ def update_python_packages(bench_path='.'):
 		bench.run(f"{env_py} -m pip install -q -U -e {app_path}")
 
 
-def update_node_packages(bench_path='.'):
-	print('Updating node packages...')
+def update_node_packages(bench_path="."):
+	print("Updating node packages...")
 	from bench.utils.app import get_develop_version
 	from distutils.version import LooseVersion
-	v = LooseVersion(get_develop_version('frappe', bench_path = bench_path))
+
+	v = LooseVersion(get_develop_version("frappe", bench_path=bench_path))
 
 	# After rollup was merged, frappe_version = 10.1
 	# if develop_verion is 11 and up, only then install yarn
-	if v < LooseVersion('11.x.x-develop'):
+	if v < LooseVersion("11.x.x-develop"):
 		update_npm_packages(bench_path)
 	else:
 		update_yarn_packages(bench_path)
 
 
-def install_python_dev_dependencies(bench_path='.', apps=None):
+def install_python_dev_dependencies(bench_path=".", apps=None):
 	from bench.bench import Bench
 
 	bench = Bench(bench_path)
@@ -104,43 +107,43 @@ def install_python_dev_dependencies(bench_path='.', apps=None):
 		dev_requirements_path = os.path.join(app_path, "dev-requirements.txt")
 
 		if os.path.exists(dev_requirements_path):
-			log(f'Installing python development dependencies for {app}')
+			log(f"Installing python development dependencies for {app}")
 			bench.run(f"{env_py} -m pip install -q -r {dev_requirements_path}")
 
 
-def update_yarn_packages(bench_path='.'):
+def update_yarn_packages(bench_path="."):
 	from bench.bench import Bench
 
 	bench = Bench(bench_path)
 	apps = [app for app in bench.apps if app not in bench.excluded_apps]
-	apps_dir = os.path.join(bench.name, 'apps')
+	apps_dir = os.path.join(bench.name, "apps")
 
 	# TODO: Check for stuff like this early on only??
-	if not which('yarn'):
+	if not which("yarn"):
 		print("Please install yarn using below command and try again.")
 		print("`npm install -g yarn`")
 		return
 
 	for app in apps:
 		app_path = os.path.join(apps_dir, app)
-		if os.path.exists(os.path.join(app_path, 'package.json')):
+		if os.path.exists(os.path.join(app_path, "package.json")):
 			click.secho(f"\nInstalling node dependencies for {app}", fg="yellow")
-			bench.run('yarn install', cwd=app_path)
+			bench.run("yarn install", cwd=app_path)
 
 
-def update_npm_packages(bench_path='.'):
-	apps_dir = os.path.join(bench_path, 'apps')
+def update_npm_packages(bench_path="."):
+	apps_dir = os.path.join(bench_path, "apps")
 	package_json = {}
 
 	for app in os.listdir(apps_dir):
-		package_json_path = os.path.join(apps_dir, app, 'package.json')
+		package_json_path = os.path.join(apps_dir, app, "package.json")
 
 		if os.path.exists(package_json_path):
 			with open(package_json_path, "r") as f:
 				app_package_json = json.loads(f.read())
 				# package.json is usually a dict in a dict
 				for key, value in app_package_json.items():
-					if not key in package_json:
+					if key not in package_json:
 						package_json[key] = value
 					else:
 						if isinstance(value, dict):
@@ -151,13 +154,13 @@ def update_npm_packages(bench_path='.'):
 							package_json[key] = value
 
 	if package_json is {}:
-		with open(os.path.join(os.path.dirname(__file__), 'package.json'), 'r') as f:
+		with open(os.path.join(os.path.dirname(__file__), "package.json"), "r") as f:
 			package_json = json.loads(f.read())
 
-	with open(os.path.join(bench_path, 'package.json'), 'w') as f:
+	with open(os.path.join(bench_path, "package.json"), "w") as f:
 		f.write(json.dumps(package_json, indent=1, sort_keys=True))
 
-	exec_cmd('npm install', cwd=bench_path)
+	exec_cmd("npm install", cwd=bench_path)
 
 
 def migrate_env(python, backup=False):
@@ -166,38 +169,38 @@ def migrate_env(python, backup=False):
 	from bench.bench import Bench
 
 	bench = Bench(".")
-	nvenv = 'env'
+	nvenv = "env"
 	path = os.getcwd()
 	python = which(python)
-	virtualenv = which('virtualenv')
+	virtualenv = which("virtualenv")
 	pvenv = os.path.join(path, nvenv)
 
 	# Clear Cache before Bench Dies.
 	try:
 		config = bench.conf
-		rredis = urlparse(config['redis_cache'])
-		redis  = f"{which('redis-cli')} -p {rredis.port}"
+		rredis = urlparse(config["redis_cache"])
+		redis = f"{which('redis-cli')} -p {rredis.port}"
 
-		logger.log('Clearing Redis Cache...')
-		exec_cmd(f'{redis} FLUSHALL')
-		logger.log('Clearing Redis DataBase...')
-		exec_cmd(f'{redis} FLUSHDB')
+		logger.log("Clearing Redis Cache...")
+		exec_cmd(f"{redis} FLUSHALL")
+		logger.log("Clearing Redis DataBase...")
+		exec_cmd(f"{redis} FLUSHDB")
 	except Exception:
-		logger.warning('Please ensure Redis Connections are running or Daemonized.')
+		logger.warning("Please ensure Redis Connections are running or Daemonized.")
 
 	# Backup venv: restore using `virtualenv --relocatable` if needed
 	if backup:
 		from datetime import datetime
 
-		parch = os.path.join(path, 'archived', 'envs')
+		parch = os.path.join(path, "archived", "envs")
 		if not os.path.exists(parch):
 			os.mkdir(parch)
 
-		source = os.path.join(path, 'env')
+		source = os.path.join(path, "env")
 		target = parch
 
-		logger.log('Backing up Virtual Environment')
-		stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+		logger.log("Backing up Virtual Environment")
+		stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 		dest = os.path.join(path, str(stamp))
 
 		os.rename(source, dest)
@@ -206,24 +209,25 @@ def migrate_env(python, backup=False):
 	# Create virtualenv using specified python
 	venv_creation, packages_setup = 1, 1
 	try:
-		logger.log(f'Setting up a New Virtual {python} Environment')
-		venv_creation = exec_cmd(f'{virtualenv} --python {python} {pvenv}')
+		logger.log(f"Setting up a New Virtual {python} Environment")
+		venv_creation = exec_cmd(f"{virtualenv} --python {python} {pvenv}")
 
-		apps = ' '.join([f"-e {os.path.join('apps', app)}" for app in bench.apps])
-		packages_setup = exec_cmd(f'{pvenv} -m pip install -q -U {apps}')
+		apps = " ".join([f"-e {os.path.join('apps', app)}" for app in bench.apps])
+		packages_setup = exec_cmd(f"{pvenv} -m pip install -q -U {apps}")
 
-		logger.log(f'Migration Successful to {python}')
+		logger.log(f"Migration Successful to {python}")
 	except Exception:
 		if venv_creation or packages_setup:
-			logger.warning('Migration Error')
+			logger.warning("Migration Error")
 
-def validate_upgrade(from_ver, to_ver, bench_path='.'):
+
+def validate_upgrade(from_ver, to_ver, bench_path="."):
 	if to_ver >= 6:
-		if not which('npm') and not (which('node') or which('nodejs')):
+		if not which("npm") and not (which("node") or which("nodejs")):
 			raise Exception("Please install nodejs and npm")
 
 
-def post_upgrade(from_ver, to_ver, bench_path='.'):
+def post_upgrade(from_ver, to_ver, bench_path="."):
 	from bench.config import redis
 	from bench.config.supervisor import generate_supervisor_config
 	from bench.config.nginx import make_nginx_conf
@@ -232,18 +236,19 @@ def post_upgrade(from_ver, to_ver, bench_path='.'):
 	conf = Bench(bench_path).conf
 	print("-" * 80 + f"Your bench was upgraded to version {to_ver}")
 
-	if conf.get('restart_supervisor_on_update'):
+	if conf.get("restart_supervisor_on_update"):
 		redis.generate_config(bench_path=bench_path)
 		generate_supervisor_config(bench_path=bench_path)
 		make_nginx_conf(bench_path=bench_path)
 		print(
-			"As you have setup your bench for production, you will have to reload configuration for "
-			"nginx and supervisor. To complete the migration, please run the following commands:"
-			"\nsudo service nginx restart"
-			"\nsudo supervisorctl reload"
+			"As you have setup your bench for production, you will have to reload"
+			" configuration for nginx and supervisor. To complete the migration, please"
+			" run the following commands:\nsudo service nginx restart\nsudo"
+			" supervisorctl reload"
 		)
 
-def patch_sites(bench_path='.'):
+
+def patch_sites(bench_path="."):
 	from bench.bench import Bench
 	from bench.utils.system import migrate_site
 
@@ -255,56 +260,79 @@ def patch_sites(bench_path='.'):
 		except subprocess.CalledProcessError:
 			raise PatchError
 
-def restart_supervisor_processes(bench_path='.', web_workers=False):
+
+def restart_supervisor_processes(bench_path=".", web_workers=False):
 	from bench.bench import Bench
 
 	bench = Bench(bench_path)
 	conf = bench.conf
-	cmd = conf.get('supervisor_restart_cmd')
+	cmd = conf.get("supervisor_restart_cmd")
 	bench_name = get_bench_name(bench_path)
 
 	if cmd:
 		bench.run(cmd)
 
 	else:
-		supervisor_status = get_cmd_output('supervisorctl status', cwd=bench_path)
+		supervisor_status = get_cmd_output("supervisorctl status", cwd=bench_path)
 
-		if web_workers and f'{bench_name}-web:' in supervisor_status:
-			group = f'{bench_name}-web:\t'
+		if web_workers and f"{bench_name}-web:" in supervisor_status:
+			group = f"{bench_name}-web:\t"
 
-		elif f'{bench_name}-workers:' in supervisor_status:
-			group = f'{bench_name}-workers: {bench_name}-web:'
+		elif f"{bench_name}-workers:" in supervisor_status:
+			group = f"{bench_name}-workers: {bench_name}-web:"
 
 		# backward compatibility
-		elif f'{bench_name}-processes:' in supervisor_status:
-			group = f'{bench_name}-processes:'
+		elif f"{bench_name}-processes:" in supervisor_status:
+			group = f"{bench_name}-processes:"
 
 		# backward compatibility
 		else:
-			group = 'frappe:'
+			group = "frappe:"
 
 		bench.run(f"supervisorctl restart {group}")
 
 
-def restart_systemd_processes(bench_path='.', web_workers=False):
+def restart_systemd_processes(bench_path=".", web_workers=False):
 	bench_name = get_bench_name(bench_path)
-	exec_cmd(f'sudo systemctl stop -- $(systemctl show -p Requires {bench_name}.target | cut -d= -f2)')
-	exec_cmd(f'sudo systemctl start -- $(systemctl show -p Requires {bench_name}.target | cut -d= -f2)')
+	exec_cmd(
+		f"sudo systemctl stop -- $(systemctl show -p Requires {bench_name}.target | cut"
+		" -d= -f2)"
+	)
+	exec_cmd(
+		f"sudo systemctl start -- $(systemctl show -p Requires {bench_name}.target |"
+		" cut -d= -f2)"
+	)
 
 
-def build_assets(bench_path='.', app=None):
-	command = 'bench build'
+def build_assets(bench_path=".", app=None):
+	command = "bench build"
 	if app:
-		command += f' --app {app}'
+		command += f" --app {app}"
 	exec_cmd(command, cwd=bench_path, env={"BENCH_DEVELOPER": "1"})
 
-def update(pull=False, apps=None, patch=False, build=False, requirements=False, backup=True, compile=True,
-	force=False, reset=False, restart_supervisor=False, restart_systemd=False):
+
+def update(
+	pull=False,
+	apps=None,
+	patch=False,
+	build=False,
+	requirements=False,
+	backup=True,
+	compile=True,
+	force=False,
+	reset=False,
+	restart_supervisor=False,
+	restart_systemd=False,
+):
 	"""command: bench update"""
 	import re
 	from bench import patches
 	from bench.utils import clear_command_cache, pause_exec, log
-	from bench.utils.bench import restart_supervisor_processes, restart_systemd_processes, backup_all_sites
+	from bench.utils.bench import (
+		restart_supervisor_processes,
+		restart_systemd_processes,
+		backup_all_sites,
+	)
 	from bench.app import pull_apps
 	from bench.utils.app import is_version_upgrade
 	from bench.config.common_site_config import update_config
@@ -318,10 +346,10 @@ def update(pull=False, apps=None, patch=False, build=False, requirements=False, 
 	if apps and not pull:
 		apps = []
 
-	clear_command_cache(bench_path='.')
+	clear_command_cache(bench_path=".")
 
-	if conf.get('release_bench'):
-		print('Release bench detected, cannot update!')
+	if conf.get("release_bench"):
+		print("Release bench detected, cannot update!")
 		sys.exit(1)
 
 	if not (pull or patch or build or requirements):
@@ -332,50 +360,58 @@ def update(pull=False, apps=None, patch=False, build=False, requirements=False, 
 
 	if version_upgrade[0]:
 		if force:
-			log("""Force flag has been used for a major version change in Frappe and it's apps.
-This will take significant time to migrate and might break custom apps.""", level=3)
+			log(
+				"""Force flag has been used for a major version change in Frappe and it's apps.
+This will take significant time to migrate and might break custom apps.""",
+				level=3,
+			)
 		else:
-			print(f"""This update will cause a major version change in Frappe/ERPNext from {version_upgrade[1]} to {version_upgrade[2]}.
-This would take significant time to migrate and might break custom apps.""")
-			click.confirm('Do you want to continue?', abort=True)
+			print(
+				f"""This update will cause a major version change in Frappe/ERPNext from {version_upgrade[1]} to {version_upgrade[2]}.
+This would take significant time to migrate and might break custom apps."""
+			)
+			click.confirm("Do you want to continue?", abort=True)
 
-	if not reset and conf.get('shallow_clone'):
-		log("""shallow_clone is set in your bench config.
+	if not reset and conf.get("shallow_clone"):
+		log(
+			"""shallow_clone is set in your bench config.
 However without passing the --reset flag, your repositories will be unshallowed.
 To avoid this, cancel this operation and run `bench update --reset`.
 
 Consider the consequences of `git reset --hard` on your apps before you run that.
 To avoid seeing this warning, set shallow_clone to false in your common_site_config.json
-		""", level=3)
+		""",
+			level=3,
+		)
 		pause_exec(seconds=10)
 
 	if version_upgrade[0] or (not version_upgrade[0] and force):
 		validate_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
-	conf.update({ "maintenance_mode": 1, "pause_scheduler": 1 })
+	conf.update({"maintenance_mode": 1, "pause_scheduler": 1})
 	update_config(conf, bench_path=bench_path)
 
 	if backup:
-		print('Backing up sites...')
+		print("Backing up sites...")
 		backup_all_sites(bench_path=bench_path)
 
 	if apps:
 		apps = [app.strip() for app in re.split(",| ", apps) if app]
 
 	if pull:
-		print('Updating apps source...')
+		print("Updating apps source...")
 		pull_apps(apps=apps, bench_path=bench_path, reset=reset)
 
 	if requirements:
-		print('Setting up requirements...')
+		print("Setting up requirements...")
 		update_requirements(bench_path=bench_path)
 		update_node_packages(bench_path=bench_path)
 
 	if patch:
-		print('Patching sites...')
+		print("Patching sites...")
 		patch_sites(bench_path=bench_path)
 
 	if build:
-		print('Building assets...')
+		print("Building assets...")
 		build_assets(bench_path=bench_path)
 
 	if version_upgrade[0] or (not version_upgrade[0] and force):
@@ -384,102 +420,112 @@ To avoid seeing this warning, set shallow_clone to false in your common_site_con
 	if pull and compile:
 		from compileall import compile_dir
 
-		print('Compiling Python files...')
-		apps_dir = os.path.join(bench_path, 'apps')
-		compile_dir(apps_dir, quiet=1, rx=re.compile('.*node_modules.*'))
+		print("Compiling Python files...")
+		apps_dir = os.path.join(bench_path, "apps")
+		compile_dir(apps_dir, quiet=1, rx=re.compile(".*node_modules.*"))
 
-	if restart_supervisor or conf.get('restart_supervisor_on_update'):
+	if restart_supervisor or conf.get("restart_supervisor_on_update"):
 		restart_supervisor_processes(bench_path=bench_path)
 
-	if restart_systemd or conf.get('restart_systemd_on_update'):
+	if restart_systemd or conf.get("restart_systemd_on_update"):
 		restart_systemd_processes(bench_path=bench_path)
 
-	conf.update({ "maintenance_mode": 0, "pause_scheduler": 0 })
+	conf.update({"maintenance_mode": 0, "pause_scheduler": 0})
 	update_config(conf, bench_path=bench_path)
 
-	print("_" * 80 + "\nBench: Deployment tool for Frappe and Frappe Applications (https://frappe.io/bench).\nOpen source depends on your contributions, so do give back by submitting bug reports, patches and fixes and be a part of the community :)")
+	print(
+		"_" * 80
+		+ "\nBench: Deployment tool for Frappe and Frappe Applications"
+		" (https://frappe.io/bench).\nOpen source depends on your contributions, so do"
+		" give back by submitting bug reports, patches and fixes and be a part of the"
+		" community :)"
+	)
 
 
 def clone_apps_from(bench_path, clone_from, update_app=True):
 	from bench.app import install_app
-	print(f'Copying apps from {clone_from}...')
-	subprocess.check_output(['cp', '-R', os.path.join(clone_from, 'apps'), bench_path])
 
-	node_modules_path = os.path.join(clone_from, 'node_modules')
+	print(f"Copying apps from {clone_from}...")
+	subprocess.check_output(["cp", "-R", os.path.join(clone_from, "apps"), bench_path])
+
+	node_modules_path = os.path.join(clone_from, "node_modules")
 	if os.path.exists(node_modules_path):
-		print(f'Copying node_modules from {clone_from}...')
-		subprocess.check_output(['cp', '-R', node_modules_path, bench_path])
+		print(f"Copying node_modules from {clone_from}...")
+		subprocess.check_output(["cp", "-R", node_modules_path, bench_path])
 
 	def setup_app(app):
 		# run git reset --hard in each branch, pull latest updates and install_app
-		app_path = os.path.join(bench_path, 'apps', app)
+		app_path = os.path.join(bench_path, "apps", app)
 
 		# remove .egg-ino
-		subprocess.check_output(['rm', '-rf', app + '.egg-info'], cwd=app_path)
+		subprocess.check_output(["rm", "-rf", app + ".egg-info"], cwd=app_path)
 
-		if update_app and os.path.exists(os.path.join(app_path, '.git')):
-			remotes = subprocess.check_output(['git', 'remote'], cwd=app_path).strip().split()
-			if 'upstream' in remotes:
-				remote = 'upstream'
+		if update_app and os.path.exists(os.path.join(app_path, ".git")):
+			remotes = subprocess.check_output(["git", "remote"], cwd=app_path).strip().split()
+			if "upstream" in remotes:
+				remote = "upstream"
 			else:
 				remote = remotes[0]
-			print(f'Cleaning up {app}')
-			branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=app_path).strip()
-			subprocess.check_output(['git', 'reset', '--hard'], cwd=app_path)
-			subprocess.check_output(['git', 'pull', '--rebase', remote, branch], cwd=app_path)
+			print(f"Cleaning up {app}")
+			branch = subprocess.check_output(
+				["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=app_path
+			).strip()
+			subprocess.check_output(["git", "reset", "--hard"], cwd=app_path)
+			subprocess.check_output(["git", "pull", "--rebase", remote, branch], cwd=app_path)
 
 		install_app(app, bench_path, restart_bench=False)
 
-	with open(os.path.join(clone_from, 'sites', 'apps.txt'), 'r') as f:
+	with open(os.path.join(clone_from, "sites", "apps.txt"), "r") as f:
 		apps = f.read().splitlines()
 
 	for app in apps:
 		setup_app(app)
 
 
-def remove_backups_crontab(bench_path='.'):
+def remove_backups_crontab(bench_path="."):
 	from crontab import CronTab
 	from bench.bench import Bench
 
-	logger.log('removing backup cronjob')
+	logger.log("removing backup cronjob")
 
 	bench_dir = os.path.abspath(bench_path)
-	user = Bench(bench_dir).conf.get('frappe_user')
-	logfile = os.path.join(bench_dir, 'logs', 'backup.log')
+	user = Bench(bench_dir).conf.get("frappe_user")
+	logfile = os.path.join(bench_dir, "logs", "backup.log")
 	system_crontab = CronTab(user=user)
 	backup_command = f"cd {bench_dir} && {sys.argv[0]} --verbose --site all backup"
 	job_command = f"{backup_command} >> {logfile} 2>&1"
 
 	system_crontab.remove_all(command=job_command)
 
-def set_mariadb_host(host, bench_path='.'):
-	update_common_site_config({'db_host': host}, bench_path=bench_path)
+
+def set_mariadb_host(host, bench_path="."):
+	update_common_site_config({"db_host": host}, bench_path=bench_path)
 
 
-def set_redis_cache_host(host, bench_path='.'):
-	update_common_site_config({'redis_cache': f"redis://{host}"}, bench_path=bench_path)
+def set_redis_cache_host(host, bench_path="."):
+	update_common_site_config({"redis_cache": f"redis://{host}"}, bench_path=bench_path)
 
 
-def set_redis_queue_host(host, bench_path='.'):
-	update_common_site_config({'redis_queue': f"redis://{host}"}, bench_path=bench_path)
+def set_redis_queue_host(host, bench_path="."):
+	update_common_site_config({"redis_queue": f"redis://{host}"}, bench_path=bench_path)
 
 
-def set_redis_socketio_host(host, bench_path='.'):
-	update_common_site_config({'redis_socketio': f"redis://{host}"}, bench_path=bench_path)
+def set_redis_socketio_host(host, bench_path="."):
+	update_common_site_config({"redis_socketio": f"redis://{host}"}, bench_path=bench_path)
 
 
-def update_common_site_config(ddict, bench_path='.'):
-	filename = os.path.join(bench_path, 'sites', 'common_site_config.json')
+def update_common_site_config(ddict, bench_path="."):
+	filename = os.path.join(bench_path, "sites", "common_site_config.json")
 
 	if os.path.exists(filename):
-		with open(filename, 'r') as f:
+		with open(filename, "r") as f:
 			content = json.load(f)
 
 	else:
 		content = {}
 
 	content.update(ddict)
-	with open(filename, 'w') as f:
+	with open(filename, "w") as f:
 		json.dump(content, f, indent=1, sort_keys=True)
 
 
@@ -499,7 +545,7 @@ def check_app_installed(app, bench_path="."):
 			["bench", "--site", "all", "list-apps", "--format", "json"],
 			stderr=open(os.devnull, "wb"),
 			cwd=bench_path,
-		).decode('utf-8')
+		).decode("utf-8")
 	except subprocess.CalledProcessError:
 		return None
 
@@ -514,15 +560,18 @@ def check_app_installed(app, bench_path="."):
 
 
 def check_app_installed_legacy(app, bench_path="."):
-	site_path = os.path.join(bench_path, 'sites')
+	site_path = os.path.join(bench_path, "sites")
 
 	for site in os.listdir(site_path):
-		req_file = os.path.join(site_path, site, 'site_config.json')
+		req_file = os.path.join(site_path, site, "site_config.json")
 		if os.path.exists(req_file):
-			out = subprocess.check_output(["bench", "--site", site, "list-apps"], cwd=bench_path).decode('utf-8')
-			if re.search(r'\b' + app + r'\b', out):
+			out = subprocess.check_output(
+				["bench", "--site", site, "list-apps"], cwd=bench_path
+			).decode("utf-8")
+			if re.search(r"\b" + app + r"\b", out):
 				print(f"Cannot remove, app is installed on site: {site}")
 				sys.exit(1)
+
 
 def validate_branch():
 	from bench.bench import Bench
@@ -531,14 +580,15 @@ def validate_branch():
 	apps = Bench(".").apps
 
 	installed_apps = set(apps)
-	check_apps = set(['frappe', 'erpnext'])
+	check_apps = set(["frappe", "erpnext"])
 	intersection_apps = installed_apps.intersection(check_apps)
 
 	for app in intersection_apps:
 		branch = get_current_branch(app)
 
 		if branch == "master":
-			print("""'master' branch is renamed to 'version-11' since 'version-12' release.
+			print(
+				"""'master' branch is renamed to 'version-11' since 'version-12' release.
 As of January 2020, the following branches are
 version		Frappe			ERPNext
 11		version-11		version-11
@@ -547,6 +597,7 @@ version		Frappe			ERPNext
 14		develop			develop
 
 Please switch to new branches to get future updates.
-To switch to your required branch, run the following commands: bench switch-to-branch [branch-name]""")
+To switch to your required branch, run the following commands: bench switch-to-branch [branch-name]"""
+			)
 
 			sys.exit(1)

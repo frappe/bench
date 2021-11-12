@@ -7,15 +7,31 @@ import sys
 
 # imports - module imports
 import bench
-from bench.utils import exec_cmd, get_process_manager, log, run_frappe_cmd, sudoers_file, which
+from bench.utils import (
+	exec_cmd,
+	get_process_manager,
+	log,
+	run_frappe_cmd,
+	sudoers_file,
+	which,
+)
 from bench.utils.bench import build_assets, clone_apps_from
 
 
-
-def init(path, apps_path=None, no_procfile=False, no_backups=False,
-		frappe_path=None, frappe_branch=None, verbose=False, clone_from=None,
-		skip_redis_config_generation=False, clone_without_update=False, skip_assets=False,
-		python='python3'):
+def init(
+	path,
+	apps_path=None,
+	no_procfile=False,
+	no_backups=False,
+	frappe_path=None,
+	frappe_branch=None,
+	verbose=False,
+	clone_from=None,
+	skip_redis_config_generation=False,
+	clone_without_update=False,
+	skip_assets=False,
+	python="python3",
+):
 	"""Initialize a new bench directory
 
 	* create a bench directory in the given path
@@ -45,13 +61,17 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 	# local apps
 	if clone_from:
-		clone_apps_from(bench_path=path, clone_from=clone_from, update_app=not clone_without_update)
+		clone_apps_from(
+			bench_path=path, clone_from=clone_from, update_app=not clone_without_update
+		)
 
 	# remote apps
 	else:
-		frappe_path = frappe_path or 'https://github.com/frappe/frappe.git'
+		frappe_path = frappe_path or "https://github.com/frappe/frappe.git"
 
-		get_app(frappe_path, branch=frappe_branch, bench_path=path, skip_assets=True, verbose=verbose)
+		get_app(
+			frappe_path, branch=frappe_branch, bench_path=path, skip_assets=True, verbose=verbose
+		)
 
 		# fetch remote apps using config file - deprecate this!
 		if apps_path:
@@ -65,29 +85,32 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 	if not no_backups:
 		bench.setup.backups()
 
+
 def setup_sudoers(user):
-	if not os.path.exists('/etc/sudoers.d'):
-		os.makedirs('/etc/sudoers.d')
+	if not os.path.exists("/etc/sudoers.d"):
+		os.makedirs("/etc/sudoers.d")
 
 		set_permissions = False
-		if not os.path.exists('/etc/sudoers'):
+		if not os.path.exists("/etc/sudoers"):
 			set_permissions = True
 
-		with open('/etc/sudoers', 'a') as f:
-			f.write('\n#includedir /etc/sudoers.d\n')
+		with open("/etc/sudoers", "a") as f:
+			f.write("\n#includedir /etc/sudoers.d\n")
 
 		if set_permissions:
-			os.chmod('/etc/sudoers', 0o440)
+			os.chmod("/etc/sudoers", 0o440)
 
-	template = bench.config.env().get_template('frappe_sudoers')
-	frappe_sudoers = template.render(**{
-		'user': user,
-		'service': which('service'),
-		'systemctl': which('systemctl'),
-		'nginx': which('nginx'),
-	})
+	template = bench.config.env().get_template("frappe_sudoers")
+	frappe_sudoers = template.render(
+		**{
+			"user": user,
+			"service": which("service"),
+			"systemctl": which("systemctl"),
+			"nginx": which("nginx"),
+		}
+	)
 
-	with open(sudoers_file, 'w') as f:
+	with open(sudoers_file, "w") as f:
 		f.write(frappe_sudoers)
 
 	os.chmod(sudoers_file, 0o440)
@@ -103,43 +126,43 @@ def start(no_dev=False, concurrency=None, procfile=None, no_prefix=False, procma
 	if not program:
 		raise Exception("No process manager found")
 
-	os.environ['PYTHONUNBUFFERED'] = "true"
+	os.environ["PYTHONUNBUFFERED"] = "true"
 	if not no_dev:
-		os.environ['DEV_SERVER'] = "true"
+		os.environ["DEV_SERVER"] = "true"
 
-	command = [program, 'start']
+	command = [program, "start"]
 	if concurrency:
-		command.extend(['-c', concurrency])
+		command.extend(["-c", concurrency])
 
 	if procfile:
-		command.extend(['-f', procfile])
+		command.extend(["-f", procfile])
 
 	if no_prefix:
-		command.extend(['--no-prefix'])
+		command.extend(["--no-prefix"])
 
 	os.execv(program, command)
 
 
-def migrate_site(site, bench_path='.'):
-	run_frappe_cmd('--site', site, 'migrate', bench_path=bench_path)
+def migrate_site(site, bench_path="."):
+	run_frappe_cmd("--site", site, "migrate", bench_path=bench_path)
 
 
-def backup_site(site, bench_path='.'):
-	run_frappe_cmd('--site', site, 'backup', bench_path=bench_path)
+def backup_site(site, bench_path="."):
+	run_frappe_cmd("--site", site, "backup", bench_path=bench_path)
 
 
-def backup_all_sites(bench_path='.'):
+def backup_all_sites(bench_path="."):
 	from bench.bench import Bench
 
 	for site in Bench(bench_path).sites:
 		backup_site(site, bench_path=bench_path)
 
 
-def fix_prod_setup_perms(bench_path='.', frappe_user=None):
+def fix_prod_setup_perms(bench_path=".", frappe_user=None):
 	from glob import glob
 	from bench.bench import Bench
 
-	frappe_user = frappe_user or Bench(bench_path).conf.get('frappe_user')
+	frappe_user = frappe_user or Bench(bench_path).conf.get("frappe_user")
 
 	if not frappe_user:
 		print("frappe user not set")
@@ -154,15 +177,15 @@ def fix_prod_setup_perms(bench_path='.', frappe_user=None):
 
 
 def setup_fonts():
-	fonts_path = os.path.join('/tmp', 'fonts')
+	fonts_path = os.path.join("/tmp", "fonts")
 
-	if os.path.exists('/etc/fonts_backup'):
+	if os.path.exists("/etc/fonts_backup"):
 		return
 
-	exec_cmd("git clone https://github.com/frappe/fonts.git", cwd='/tmp')
-	os.rename('/etc/fonts', '/etc/fonts_backup')
-	os.rename('/usr/share/fonts', '/usr/share/fonts_backup')
-	os.rename(os.path.join(fonts_path, 'etc_fonts'), '/etc/fonts')
-	os.rename(os.path.join(fonts_path, 'usr_share_fonts'), '/usr/share/fonts')
+	exec_cmd("git clone https://github.com/frappe/fonts.git", cwd="/tmp")
+	os.rename("/etc/fonts", "/etc/fonts_backup")
+	os.rename("/usr/share/fonts", "/usr/share/fonts_backup")
+	os.rename(os.path.join(fonts_path, "etc_fonts"), "/etc/fonts")
+	os.rename(os.path.join(fonts_path, "usr_share_fonts"), "/usr/share/fonts")
 	shutil.rmtree(fonts_path)
 	exec_cmd("fc-cache -fv")

@@ -7,8 +7,21 @@ from typing import MutableSequence, TYPE_CHECKING
 import bench
 from bench.exceptions import ValidationError
 from bench.config.common_site_config import setup_config
-from bench.utils import paths_in_bench, exec_cmd, is_frappe_app, get_git_version, run_frappe_cmd
-from bench.utils.bench import validate_app_installed_on_sites, restart_supervisor_processes, restart_systemd_processes, remove_backups_crontab, get_venv_path, get_env_cmd
+from bench.utils import (
+	paths_in_bench,
+	exec_cmd,
+	is_frappe_app,
+	get_git_version,
+	run_frappe_cmd,
+)
+from bench.utils.bench import (
+	validate_app_installed_on_sites,
+	restart_supervisor_processes,
+	restart_systemd_processes,
+	remove_backups_crontab,
+	get_venv_path,
+	get_env_cmd,
+)
 
 
 if TYPE_CHECKING:
@@ -39,15 +52,15 @@ class Bench(Base, Validator):
 		self.teardown = BenchTearDown(self)
 		self.apps = BenchApps(self)
 
-		self.apps_txt = os.path.join(self.name, 'sites', 'apps.txt')
-		self.excluded_apps_txt = os.path.join(self.name, 'sites', 'excluded_apps.txt')
+		self.apps_txt = os.path.join(self.name, "sites", "apps.txt")
+		self.excluded_apps_txt = os.path.join(self.name, "sites", "excluded_apps.txt")
 
 	@property
 	def shallow_clone(self):
 		config = self.conf
 
 		if config:
-			if config.get('release_bench') or not config.get('shallow_clone'):
+			if config.get("release_bench") or not config.get("shallow_clone"):
 				return False
 
 		if get_git_version() > 1.9:
@@ -57,22 +70,22 @@ class Bench(Base, Validator):
 	def excluded_apps(self):
 		try:
 			with open(self.excluded_apps_txt) as f:
-				return f.read().strip().split('\n')
+				return f.read().strip().split("\n")
 		except Exception:
 			return []
 
 	@property
 	def sites(self):
 		return [
-			path for path in os.listdir(os.path.join(self.name, 'sites'))
-			if os.path.exists(
-				os.path.join("sites", path, "site_config.json")
-			)
+			path
+			for path in os.listdir(os.path.join(self.name, "sites"))
+			if os.path.exists(os.path.join("sites", path, "site_config.json"))
 		]
 
 	@property
 	def conf(self):
 		from bench.config.common_site_config import get_config
+
 		return get_config(self.name)
 
 	def init(self):
@@ -112,14 +125,14 @@ class Bench(Base, Validator):
 
 	def reload(self):
 		conf = self.conf
-		if conf.get('restart_supervisor_on_update'):
+		if conf.get("restart_supervisor_on_update"):
 			restart_supervisor_processes(bench_path=self.name)
-		if conf.get('restart_systemd_on_update'):
+		if conf.get("restart_systemd_on_update"):
 			restart_systemd_processes(bench_path=self.name)
 
 
 class BenchApps(MutableSequence):
-	def __init__(self, bench : Bench):
+	def __init__(self, bench: Bench):
 		self.bench = bench
 		self.initialize_apps()
 
@@ -130,25 +143,27 @@ class BenchApps(MutableSequence):
 
 	def initialize_apps(self):
 		try:
-			self.apps = [x for x in os.listdir(
-				os.path.join(self.bench.name, "apps")
-			) if is_frappe_app(os.path.join(self.bench.name, "apps", x))]
+			self.apps = [
+				x
+				for x in os.listdir(os.path.join(self.bench.name, "apps"))
+				if is_frappe_app(os.path.join(self.bench.name, "apps", x))
+			]
 			self.apps.sort()
 		except FileNotFoundError:
 			self.apps = []
 
 	def __getitem__(self, key):
-		''' retrieves an item by its index, key'''
+		""" retrieves an item by its index, key"""
 		return self.apps[key]
 
 	def __setitem__(self, key, value):
-		''' set the item at index, key, to value '''
+		""" set the item at index, key, to value """
 		# should probably not be allowed
 		# self.apps[key] = value
 		raise NotImplementedError
 
 	def __delitem__(self, key):
-		''' removes the item at index, key '''
+		""" removes the item at index, key """
 		# TODO: uninstall and delete app from bench
 		del self.apps[key]
 
@@ -156,7 +171,7 @@ class BenchApps(MutableSequence):
 		return len(self.apps)
 
 	def insert(self, key, value):
-		''' add an item, value, at index, key. '''
+		""" add an item, value, at index, key. """
 		# TODO: fetch and install app to bench
 		self.apps.insert(key, value)
 
@@ -171,7 +186,7 @@ class BenchApps(MutableSequence):
 		app.remove()
 		super().remove(app.repo)
 
-	def append(self, app : "App"):
+	def append(self, app: "App"):
 		return self.add(app)
 
 	def __repr__(self):
@@ -182,7 +197,7 @@ class BenchApps(MutableSequence):
 
 
 class BenchSetup(Base):
-	def __init__(self, bench : Bench):
+	def __init__(self, bench: Bench):
 		self.bench = bench
 		self.cwd = self.bench.cwd
 
@@ -219,41 +234,46 @@ class BenchSetup(Base):
 
 		if redis:
 			from bench.config.redis import generate_config
+
 			generate_config(self.bench.name)
 
 		if procfile:
 			from bench.config.procfile import setup_procfile
+
 			setup_procfile(self.bench.name, skip_redis=not redis)
 
 	def logging(self):
 		from bench.utils import setup_logging
+
 		return setup_logging(bench_path=self.bench.name)
 
 	def patches(self):
 		shutil.copy(
-			os.path.join(os.path.dirname(os.path.abspath(__file__)), 'patches', 'patches.txt'),
-			os.path.join(self.bench.name, 'patches.txt')
+			os.path.join(os.path.dirname(os.path.abspath(__file__)), "patches", "patches.txt"),
+			os.path.join(self.bench.name, "patches.txt"),
 		)
 
 	def backups(self):
 		# TODO: to something better for logging data? - maybe a wrapper that auto-logs with more context
-		logger.log('setting up backups')
+		logger.log("setting up backups")
 
 		from crontab import CronTab
 
 		bench_dir = os.path.abspath(self.bench.name)
-		user = self.bench.conf.get('frappe_user')
-		logfile = os.path.join(bench_dir, 'logs', 'backup.log')
+		user = self.bench.conf.get("frappe_user")
+		logfile = os.path.join(bench_dir, "logs", "backup.log")
 		system_crontab = CronTab(user=user)
 		backup_command = f"cd {bench_dir} && {sys.argv[0]} --verbose --site all backup"
 		job_command = f"{backup_command} >> {logfile} 2>&1"
 
 		if job_command not in str(system_crontab):
-			job = system_crontab.new(command=job_command, comment="bench auto backups set for every 6 hours")
+			job = system_crontab.new(
+				command=job_command, comment="bench auto backups set for every 6 hours"
+			)
 			job.every(6).hours()
 			system_crontab.write()
 
-		logger.log('backups were set up')
+		logger.log("backups were set up")
 
 
 class BenchTearDown:
