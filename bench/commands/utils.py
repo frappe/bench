@@ -11,9 +11,10 @@ import click
 @click.option('--no-prefix', is_flag=True, default=False, help="Hide process name from bench start log")
 @click.option('--concurrency', '-c', type=str)
 @click.option('--procfile', '-p', type=str)
-def start(no_dev, concurrency, procfile, no_prefix):
-	from bench.utils import start
-	start(no_dev=no_dev, concurrency=concurrency, procfile=procfile, no_prefix=no_prefix)
+@click.option('--man', '-m', help="Process Manager of your choice ;)")
+def start(no_dev, concurrency, procfile, no_prefix, man):
+	from bench.utils.system import start
+	start(no_dev=no_dev, concurrency=concurrency, procfile=procfile, no_prefix=no_prefix, procman=man)
 
 
 @click.command('restart', help="Restart supervisor processes or systemd units")
