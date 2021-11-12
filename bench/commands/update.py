@@ -37,7 +37,7 @@ def retry_upgrade(version):
 @click.argument('apps', nargs=-1)
 @click.option('--upgrade',is_flag=True)
 def switch_to_branch(branch, apps, upgrade=False):
-	from bench.app import switch_to_branch
+	from bench.utils.app import switch_to_branch
 	switch_to_branch(branch=branch, apps=list(apps), upgrade=upgrade)
 
 

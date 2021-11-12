@@ -2,15 +2,14 @@
 import grp
 import os
 import pwd
+import shutil
 import sys
 
 # imports - module imports
 import bench
+from bench.utils import exec_cmd, get_process_manager, log, run_frappe_cmd, sudoers_file, which
+from bench.utils.bench import build_assets, clone_apps_from
 
-# TODO: Fix this
-import bench.utils
-from bench.utils import *
-from bench.utils.bench import build_assets
 
 
 def init(path, apps_path=None, no_procfile=False, no_backups=False,
@@ -57,6 +56,8 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 		# fetch remote apps using config file - deprecate this!
 		if apps_path:
 			install_apps_from_path(apps_path, bench_path=path)
+
+	bench.sync()
 
 	if not skip_assets:
 		build_assets(bench_path=path)
@@ -174,8 +175,6 @@ def fix_prod_setup_perms(bench_path='.', frappe_user=None):
 
 
 def setup_fonts():
-	import shutil
-
 	fonts_path = os.path.join('/tmp', 'fonts')
 
 	if os.path.exists('/etc/fonts_backup'):

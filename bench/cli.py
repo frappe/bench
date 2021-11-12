@@ -37,6 +37,7 @@ def cli():
 	global from_command_line
 	from_command_line = True
 	command = " ".join(sys.argv)
+	is_envvar_warn_set = not (os.environ.get("BENCH_DEVELOPER") or os.environ.get("CI"))
 
 	change_working_directory()
 	logger = setup_logging()
@@ -47,7 +48,7 @@ def cli():
 		change_uid()
 		change_dir()
 
-	if not os.environ.get("BENCH_DEVELOPER") and (
+	if is_envvar_warn_set and (
 		is_dist_editable(bench.PROJECT_NAME)
 		and len(sys.argv) > 1
 		and sys.argv[1] != "src"

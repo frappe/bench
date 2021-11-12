@@ -203,7 +203,8 @@ def setup_app_dependencies(repo_name, bench_path='.', branch=None):
 	files = glob.glob(os.path.join(apps_path, repo_name, '**', 'hooks.py'))
 
 	if files:
-		lines = [x for x in open(files[0]).read().split('\n') if x.strip().startswith('required_apps')]
+		with open(files[0]) as f:
+			lines = [x for x in f.read().split('\n') if x.strip().startswith('required_apps')]
 		if lines:
 			required_apps = eval(lines[0].strip('required_apps').strip().lstrip('=').strip())
 			# TODO: when the time comes, add version check here
