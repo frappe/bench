@@ -1,23 +1,21 @@
 # imports - standard imports
 import json
-from json.decoder import JSONDecodeError
 import logging
 import os
 import re
+import shutil
 import subprocess
 import sys
 
 # imports - third party imports
 import click
-from setuptools.config import read_configuration
 
 # imports - module imports
 import bench
 from bench.bench import Bench
-from bench.exceptions import InvalidRemoteException, InvalidBranchException, CommandFailedError
-from bench.utils import exec_cmd, get_cmd_output, is_bench_directory, run_frappe_cmd
-from bench.utils import build_assets, check_git_for_shallow_clone, fetch_details_from_tag, restart_supervisor_processes, restart_systemd_processes
-
+from bench.utils import exec_cmd, is_bench_directory, run_frappe_cmd, is_git_url, fetch_details_from_tag
+from bench.utils.app import get_app_name
+from bench.utils.bench import get_env_cmd, build_assets, restart_supervisor_processes, restart_systemd_processes
 
 logger = logging.getLogger(bench.PROJECT_NAME)
 
@@ -118,11 +116,6 @@ def remove_from_appstxt(app, bench_path='.'):
 def write_appstxt(apps, bench_path='.'):
 	with open(os.path.join(bench_path, 'sites', 'apps.txt'), 'w') as f:
 		return f.write('\n'.join(apps))
-
-def is_git_url(url):
-	# modified to allow without the tailing .git from https://github.com/jonschlinkert/is-git-url.git
-	pattern = r"(?:git|ssh|https?|\w*@[-\w.]+):(\/\/)?(.*?)(\.git)?(\/?|\#[-\d\w._]+?)$"
-	return bool(re.match(pattern, url))
 
 def get_excluded_apps(bench_path='.'):
 	try:
@@ -423,190 +416,32 @@ Here are your choices:
 				if is_shallow:
 					s = " to safely pull remote changes." if not reset else ""
 					print(f"Unshallowing {app}{s}")
-					exec_cmd(f"git fetch {remote} --unshallow", cwd=app_dir)
+					bench.run(f"git fetch {remote} --unshallow", cwd=app_dir)
 
 			branch = get_current_branch(app, bench_path=bench_path)
 			logger.log(f'pulling {app}')
 			if reset:
 				reset_cmd = f"git reset --hard {remote}/{branch}"
 				if bench.conf.get('shallow_clone'):
-					exec_cmd(f"git fetch --depth=1 --no-tags {remote} {branch}",
-						cwd=app_dir)
-					exec_cmd(reset_cmd, cwd=app_dir)
-					exec_cmd("git reflog expire --all", cwd=app_dir)
-					exec_cmd("git gc --prune=all", cwd=app_dir)
+					bench.run(f"git fetch --depth=1 --no-tags {remote} {branch}", cwd=app_dir)
+					bench.run(reset_cmd, cwd=app_dir)
+					bench.run("git reflog expire --all", cwd=app_dir)
+					bench.run("git gc --prune=all", cwd=app_dir)
 				else:
-					exec_cmd("git fetch --all", cwd=app_dir)
-					exec_cmd(reset_cmd, cwd=app_dir)
+					bench.run("git fetch --all", cwd=app_dir)
+					bench.run(reset_cmd, cwd=app_dir)
 			else:
-				exec_cmd(f"git pull {rebase} {remote} {branch}", cwd=app_dir)
-			exec_cmd('find . -name "*.pyc" -delete', cwd=app_dir)
+				bench.run(f"git pull {rebase} {remote} {branch}", cwd=app_dir)
+			bench.run('find . -name "*.pyc" -delete', cwd=app_dir)
 
-
-def is_version_upgrade(app='frappe', bench_path='.', branch=None):
-	upstream_version = get_upstream_version(app=app, branch=branch, bench_path=bench_path)
-
-	if not upstream_version:
-		raise InvalidBranchException(f'Specified branch of app {app} is not in upstream remote')
-
-	local_version = get_major_version(get_current_version(app, bench_path=bench_path))
-	upstream_version = get_major_version(upstream_version)
-
-	if upstream_version > local_version:
-		return (True, local_version, upstream_version)
-
-	return (False, local_version, upstream_version)
-
-def get_current_frappe_version(bench_path='.'):
-	try:
-		return get_major_version(get_current_version('frappe', bench_path=bench_path))
-	except IOError:
-		return 0
-
-def get_current_branch(app, bench_path='.'):
-	repo_dir = get_repo_dir(app, bench_path=bench_path)
-	return get_cmd_output("basename $(git symbolic-ref -q HEAD)", cwd=repo_dir)
-
-def get_remote(app, bench_path='.'):
-	repo_dir = get_repo_dir(app, bench_path=bench_path)
-	contents = subprocess.check_output(['git', 'remote', '-v'], cwd=repo_dir, stderr=subprocess.STDOUT)
-	contents = contents.decode('utf-8')
-	if re.findall('upstream[\s]+', contents):
-		return 'upstream'
-	elif not contents:
-		# if contents is an empty string => remote doesn't exist
-		return False
-	else:
-		# get the first remote
-		return contents.splitlines()[0].split()[0]
 
 def use_rq(bench_path):
 	bench_path = os.path.abspath(bench_path)
 	celery_app = os.path.join(bench_path, 'apps', 'frappe', 'frappe', 'celery_app.py')
 	return not os.path.exists(celery_app)
 
-def get_current_version(app, bench_path='.'):
-	current_version = None
-	repo_dir = get_repo_dir(app, bench_path=bench_path)
-	config_path = os.path.join(repo_dir, "setup.cfg")
-	init_path = os.path.join(repo_dir, os.path.basename(repo_dir), '__init__.py')
-	setup_path = os.path.join(repo_dir, 'setup.py')
-
-	try:
-		if os.path.exists(config_path):
-			config = read_configuration(config_path)
-			current_version = config.get("metadata", {}).get("version")
-		if not current_version:
-			with open(init_path) as f:
-				current_version = get_version_from_string(f.read())
-
-	except AttributeError:
-		# backward compatibility
-		with open(setup_path) as f:
-			current_version = get_version_from_string(f.read(), field='version')
-
-	return current_version
-
-def get_develop_version(app, bench_path='.'):
-	repo_dir = get_repo_dir(app, bench_path=bench_path)
-	with open(os.path.join(repo_dir, os.path.basename(repo_dir), 'hooks.py')) as f:
-		return get_version_from_string(f.read(), field='develop_version')
-
-def get_upstream_version(app, branch=None, bench_path='.'):
-	repo_dir = get_repo_dir(app, bench_path=bench_path)
-	if not branch:
-		branch = get_current_branch(app, bench_path=bench_path)
-
-	try:
-		subprocess.call(f'git fetch --depth=1 --no-tags upstream {branch}', shell=True, cwd=repo_dir)
-	except CommandFailedError:
-		raise InvalidRemoteException(f'Failed to fetch from remote named upstream for {app}')
-
-	try:
-		contents = subprocess.check_output(f'git show upstream/{branch}:{app}/__init__.py',
-			shell=True, cwd=repo_dir, stderr=subprocess.STDOUT)
-		contents = contents.decode('utf-8')
-	except subprocess.CalledProcessError as e:
-		if b"Invalid object" in e.output:
-			return None
-		else:
-			raise
-	return get_version_from_string(contents)
-
 def get_repo_dir(app, bench_path='.'):
 	return os.path.join(bench_path, 'apps', app)
-
-def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrade=True):
-	import git
-	import importlib
-	from bench.utils import update_requirements, update_node_packages, backup_all_sites, patch_sites, post_upgrade
-
-	apps_dir = os.path.join(bench_path, 'apps')
-	version_upgrade = (False,)
-	switched_apps = []
-
-	if not apps:
-		apps = [name for name in os.listdir(apps_dir)
-			if os.path.isdir(os.path.join(apps_dir, name))]
-		if branch=="v4.x.x":
-			apps.append('shopping_cart')
-
-	for app in apps:
-		app_dir = os.path.join(apps_dir, app)
-
-		if not os.path.exists(app_dir):
-			bench.utils.log(f"{app} does not exist!", level=2)
-			continue
-
-		repo = git.Repo(app_dir)
-		unshallow_flag = os.path.exists(os.path.join(app_dir, ".git", "shallow"))
-		bench.utils.log(f"Fetching upstream {'unshallow ' if unshallow_flag else ''}for {app}")
-
-		bench.utils.exec_cmd("git remote set-branches upstream  '*'", cwd=app_dir)
-		bench.utils.exec_cmd(f"git fetch --all{' --unshallow' if unshallow_flag else ''} --quiet", cwd=app_dir)
-
-		if check_upgrade:
-			version_upgrade = is_version_upgrade(app=app, bench_path=bench_path, branch=branch)
-			if version_upgrade[0] and not upgrade:
-				bench.utils.log(f"Switching to {branch} will cause upgrade from {version_upgrade[1]} to {version_upgrade[2]}. Pass --upgrade to confirm", level=2)
-				sys.exit(1)
-
-		print("Switching for "+app)
-		bench.utils.exec_cmd(f"git checkout -f {branch}", cwd=app_dir)
-
-		if str(repo.active_branch) == branch:
-			switched_apps.append(app)
-		else:
-			bench.utils.log(f"Switching branches failed for: {app}", level=2)
-
-	if switched_apps:
-		bench.utils.log("Successfully switched branches for: " + ", ".join(switched_apps), level=1)
-		print('Please run `bench update --patch` to be safe from any differences in database schema')
-
-	if version_upgrade[0] and upgrade:
-		update_requirements()
-		update_node_packages()
-		importlib.reload(bench.utils)
-		backup_all_sites()
-		patch_sites()
-		build_assets()
-		post_upgrade(version_upgrade[1], version_upgrade[2])
-
-
-def switch_to_branch(branch=None, apps=None, bench_path='.', upgrade=False):
-	switch_branch(branch, apps=apps, bench_path=bench_path, upgrade=upgrade)
-
-def switch_to_develop(apps=None, bench_path='.', upgrade=True):
-	switch_branch('develop', apps=apps, bench_path=bench_path, upgrade=upgrade)
-
-def get_version_from_string(contents, field='__version__'):
-	match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % field, contents)
-	return match.group(2)
-
-def get_major_version(version):
-	import semantic_version
-
-	return semantic_version.Version(version).major
 
 def install_apps_from_path(path, bench_path='.'):
 	apps = get_apps_json(path)
@@ -622,27 +457,3 @@ def get_apps_json(path):
 
 	with open(path) as f:
 		return json.load(f)
-
-def validate_branch():
-	apps = Bench(".").apps
-
-	installed_apps = set(apps)
-	check_apps = set(['frappe', 'erpnext'])
-	intersection_apps = installed_apps.intersection(check_apps)
-
-	for app in intersection_apps:
-		branch = get_current_branch(app)
-
-		if branch == "master":
-			print("""'master' branch is renamed to 'version-11' since 'version-12' release.
-As of January 2020, the following branches are
-version		Frappe			ERPNext
-11		version-11		version-11
-12		version-12		version-12
-13		version-13		version-13
-14		develop			develop
-
-Please switch to new branches to get future updates.
-To switch to your required branch, run the following commands: bench switch-to-branch [branch-name]""")
-
-			sys.exit(1)
