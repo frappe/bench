@@ -182,7 +182,7 @@ def reload_supervisor():
 def reload_nginx():
 	try:
 		exec_cmd(f"sudo {which('nginx')} -t")
-	except:
+	except Exception:
 		raise
 
 	service('nginx', 'reload')

@@ -191,10 +191,10 @@ def get_bumped_version(version, bump_type):
 			v.prerelease = ('beta', str(int(v.prerelease[1]) + 1))
 
 		else:
-			raise ("Something wen't wrong while doing a prerelease")
+			raise ValidationError("Something wen't wrong while doing a prerelease")
 
 	else:
-		raise ("bump_type not amongst [major, minor, patch, prerelease]")
+		raise ValidationError("bump_type not amongst [major, minor, patch, prerelease]")
 
 	return str(v)
 

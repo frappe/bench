@@ -201,7 +201,7 @@ def get_sites_with_config(bench_path):
 					"If you want this command to pass, instead of just throwing an error,",
 					"You may remove the 'strict_nginx' flag from common_site_config.json or set it to 0",
 					"\n\n")
-				raise (e)
+				raise e
 			else:
 				print(f"\n\nWARNING: The site config for the site {site} is broken.",
 					"If you want this command to fail, instead of just showing a warning,",

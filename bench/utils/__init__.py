@@ -239,15 +239,16 @@ def get_bench_name(bench_path):
 
 def set_git_remote_url(git_url, bench_path='.'):
 	"Set app remote git url"
+	from bench.app import get_repo_dir
 	from bench.bench import Bench
 
 	app = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
 
 	if app not in Bench(bench_path).apps:
-		print(f"No app named {app}")
-		sys.exit(1)
+		raise ValidationError(f"No app named {app}")
 
-	app_dir = bench.app.get_repo_dir(app, bench_path=bench_path)
+	app_dir = get_repo_dir(app, bench_path=bench_path)
+
 	if os.path.exists(os.path.join(app_dir, '.git')):
 		exec_cmd(f"git remote set-url upstream {git_url}", cwd=app_dir)
 

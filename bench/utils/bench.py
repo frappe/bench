@@ -182,7 +182,7 @@ def migrate_env(python, backup=False):
 		exec_cmd(f'{redis} FLUSHALL')
 		logger.log('Clearing Redis DataBase...')
 		exec_cmd(f'{redis} FLUSHDB')
-	except:
+	except Exception:
 		logger.warning('Please ensure Redis Connections are running or Daemonized.')
 
 	# Backup venv: restore using `virtualenv --relocatable` if needed
@@ -213,7 +213,7 @@ def migrate_env(python, backup=False):
 		packages_setup = exec_cmd(f'{pvenv} -m pip install -q -U {apps}')
 
 		logger.log(f'Migration Successful to {python}')
-	except:
+	except Exception:
 		if venv_creation or packages_setup:
 			logger.warning('Migration Error')
 
