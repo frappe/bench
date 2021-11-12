@@ -90,7 +90,6 @@ install:
       mkdir -p ~/.bench;
       cp -r $TRAVIS_BUILD_DIR/* ~/.bench;
       pip3 install -q -U -e ~/.bench;
-      sudo pip install -q -U -e ~/.bench;
 
       mysql -u root -e "SET GLOBAL character_set_server = 'utf8mb4'";
       mysql -u root -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'";
