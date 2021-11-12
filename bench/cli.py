@@ -20,13 +20,13 @@ from bench.utils import (
 	find_parent_bench,
 	generate_command_cache,
 	get_cmd_output,
-	get_env_cmd,
 	is_bench_directory,
 	is_dist_editable,
 	is_root,
 	log,
 	setup_logging,
 )
+from bench.utils.bench import get_env_cmd
 
 from_command_line = False
 change_uid_msg = "You should not run this command as root"

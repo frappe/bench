@@ -12,11 +12,12 @@ from shlex import split
 import click
 
 # imports - module imports
-import bench
+from bench import PROJECT_NAME, VERSION
+
 from bench.exceptions import InvalidRemoteException, ValidationError
 
 
-logger = logging.getLogger(bench.PROJECT_NAME)
+logger = logging.getLogger(PROJECT_NAME)
 bench_cache_file = '.bench.cmd'
 paths_in_app = ('hooks.py', 'modules.txt', 'patches.txt', 'public')
 paths_in_bench = ('apps', 'sites', 'config', 'logs', 'config/pids')
@@ -65,7 +66,7 @@ def log(message, level=0):
 
 
 def check_latest_version():
-	if bench.VERSION.endswith("dev"):
+	if VERSION.endswith("dev"):
 		return
 
 	import requests
@@ -81,7 +82,7 @@ def check_latest_version():
 	if pypi_request.status_code == 200:
 		pypi_version_str = pypi_request.json().get('info').get('version')
 		pypi_version = Version(pypi_version_str)
-		local_version = Version(bench.VERSION)
+		local_version = Version(VERSION)
 
 		if pypi_version > local_version:
 			log(f"A newer version of bench is available: {local_version} → {pypi_version}")
@@ -137,7 +138,7 @@ def setup_logging(bench_path='.'):
 	else:
 		hdlr = logging.NullHandler()
 
-	logger = logging.getLogger(bench.PROJECT_NAME)
+	logger = logging.getLogger(PROJECT_NAME)
 	formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 	hdlr.setFormatter(formatter)
 	logger.addHandler(hdlr)
@@ -180,6 +181,7 @@ def is_root():
 
 def run_frappe_cmd(*args, **kwargs):
 	from bench.cli import from_command_line
+	from bench.utils.bench import get_env_cmd
 
 	bench_path = kwargs.get('bench_path', '.')
 	f = get_env_cmd('python', bench_path=bench_path)
@@ -395,6 +397,9 @@ def is_git_url(url):
 
 
 def drop_privileges(uid_name='nobody', gid_name='nogroup'):
+	import grp
+	import pwd
+
 	# from http://stackoverflow.com/a/2699996
 	if os.getuid() != 0:
 		# We're not root so, like, whatever dude
