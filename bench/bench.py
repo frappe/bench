@@ -1,18 +1,17 @@
 import os
 import shutil
 import sys
-import typing
 import logging
-from typing import MutableSequence
+from typing import MutableSequence, TYPE_CHECKING
 
 import bench
 from bench.exceptions import ValidationError
 from bench.config.common_site_config import setup_config
-from bench.utils import paths_in_bench, get_venv_path, exec_cmd, get_env_cmd, is_frappe_app, get_git_version, run_frappe_cmd
-from bench.utils.bench import validate_app_installed_on_sites, restart_supervisor_processes, restart_systemd_processes, remove_backups_crontab
+from bench.utils import paths_in_bench, exec_cmd, is_frappe_app, get_git_version, run_frappe_cmd
+from bench.utils.bench import validate_app_installed_on_sites, restart_supervisor_processes, restart_systemd_processes, remove_backups_crontab, get_venv_path, get_env_cmd
 
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
 	from bench.app import App
 
 logger = logging.getLogger(bench.PROJECT_NAME)
@@ -231,8 +230,6 @@ class BenchSetup(Base):
 		return setup_logging(bench_path=self.bench.name)
 
 	def patches(self):
-		import shutil
-
 		shutil.copy(
 			os.path.join(os.path.dirname(os.path.abspath(__file__)), 'patches', 'patches.txt'),
 			os.path.join(self.bench.name, 'patches.txt')

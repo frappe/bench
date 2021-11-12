@@ -22,8 +22,8 @@ def start(no_dev, concurrency, procfile, no_prefix, man):
 @click.option('--supervisor', is_flag=True, default=False)
 @click.option('--systemd', is_flag=True, default=False)
 def restart(web, supervisor, systemd):
-	from bench.utils import restart_supervisor_processes, restart_systemd_processes
 	from bench.bench import Bench
+	from bench.utils.bench import restart_supervisor_processes, restart_systemd_processes
 
 	bench = Bench(".")
 
@@ -68,7 +68,7 @@ def set_url_root(site, url_root):
 @click.command('set-mariadb-host', help="Set MariaDB host for bench")
 @click.argument('host')
 def set_mariadb_host(host):
-	from bench.utils import set_mariadb_host
+	from bench.utils.bench import set_mariadb_host
 	set_mariadb_host(host)
 
 
@@ -78,7 +78,7 @@ def set_redis_cache_host(host):
 	"""
 	Usage: bench set-redis-cache-host localhost:6379/1
 	"""
-	from bench.utils import set_redis_cache_host
+	from bench.utils.bench import set_redis_cache_host
 	set_redis_cache_host(host)
 
 
@@ -88,7 +88,7 @@ def set_redis_queue_host(host):
 	"""
 	Usage: bench set-redis-queue-host localhost:6379/2
 	"""
-	from bench.utils import set_redis_queue_host
+	from bench.utils.bench import set_redis_queue_host
 	set_redis_queue_host(host)
 
 
@@ -98,14 +98,14 @@ def set_redis_socketio_host(host):
 	"""
 	Usage: bench set-redis-socketio-host localhost:6379/3
 	"""
-	from bench.utils import set_redis_socketio_host
+	from bench.utils.bench import set_redis_socketio_host
 	set_redis_socketio_host(host)
 
 
 
 @click.command('download-translations', help="Download latest translations")
 def download_translations():
-	from bench.utils import download_translations_p
+	from bench.utils.translation import download_translations_p
 	download_translations_p()
 
 
@@ -119,7 +119,7 @@ def renew_lets_encrypt():
 @click.argument('site')
 def backup_site(site):
 	from bench.bench import Bench
-	from bench.utils import backup_site
+	from bench.utils.system import backup_site
 	if site not in Bench(".").sites:
 		print(f'Site `{site}` not found')
 		sys.exit(1)
@@ -128,7 +128,7 @@ def backup_site(site):
 
 @click.command('backup-all-sites', help="Backup all sites in current bench")
 def backup_all_sites():
-	from bench.utils import backup_all_sites
+	from bench.utils.system import backup_all_sites
 	backup_all_sites(bench_path='.')
 
 
@@ -178,7 +178,7 @@ def find_benches(location):
 @click.argument('python', type=str)
 @click.option('--no-backup', 'backup', is_flag=True, default=True)
 def migrate_env(python, backup=True):
-	from bench.utils import migrate_env
+	from bench.utils.bench import migrate_env
 	migrate_env(python=python, backup=backup)
 
 

@@ -18,7 +18,8 @@ import click
 @click.option('--verbose',is_flag=True, help="Verbose output during install")
 def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups, clone_from, verbose, skip_redis_config_generation, clone_without_update, ignore_exist=False, skip_assets=False, python='python3'):
 	import os
-	from bench.utils import init, log
+	from bench.utils import log
+	from bench.utils.system import init
 
 	if not ignore_exist and os.path.exists(path):
 		log(f"Bench instance already exists at {path}", level=2)
@@ -122,6 +123,6 @@ def include_app_for_update(app_name):
 def pip(ctx, args):
 	"Run pip commands in bench env"
 	import os
-	from bench.utils import get_env_cmd
+	from bench.utils.bench import get_env_cmd
 	env_py = get_env_cmd('python')
 	os.execv(env_py, (env_py, '-m', 'pip') + args)

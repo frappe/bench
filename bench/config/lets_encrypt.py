@@ -10,7 +10,8 @@ from bench.config.nginx import make_nginx_conf
 from bench.config.production_setup import service
 from bench.config.site_config import get_domains, remove_domain, update_site_config
 from bench.bench import Bench
-from bench.utils import exec_cmd, update_common_site_config
+from bench.utils import exec_cmd
+from bench.utils.bench import update_common_site_config
 from bench.exceptions import CommandFailedError
 
 

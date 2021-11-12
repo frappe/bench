@@ -7,6 +7,8 @@ import git
 import getpass
 import re
 from time import sleep
+
+from bench.exceptions import ValidationError
 from .config.common_site_config import get_config
 import click
 

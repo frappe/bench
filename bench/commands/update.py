@@ -3,7 +3,7 @@ import click
 
 # imports - module imports
 from bench.app import pull_apps
-from bench.utils import post_upgrade, patch_sites, build_assets
+from bench.utils.bench import post_upgrade, patch_sites, build_assets
 
 
 @click.command('update', help="Performs an update operation on current bench. Without any flags will backup, pull, setup requirements, build, run patches and restart bench. Using specific flags will only do certain tasks instead of all")
@@ -19,7 +19,7 @@ from bench.utils import post_upgrade, patch_sites, build_assets
 @click.option('--force', is_flag=True, help="Forces major version upgrades")
 @click.option('--reset', is_flag=True, help="Hard resets git branch's to their new states overriding any changes and overriding rebase on pull")
 def update(pull, apps, patch, build, requirements, restart_supervisor, restart_systemd, no_backup, no_compile, force, reset):
-	from bench.utils import update
+	from bench.utils.bench import update
 	update(pull=pull, apps=apps, patch=patch, build=build, requirements=requirements, restart_supervisor=restart_supervisor, restart_systemd=restart_systemd, backup=not no_backup, compile=not no_compile, force=force, reset=reset)
 
 

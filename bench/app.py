@@ -267,7 +267,7 @@ def new_app(app, bench_path='.'):
 
 def install_app(app, bench_path=".", verbose=False, no_cache=False, restart_bench=True, skip_assets=False):
 	from bench.bench import Bench
-	from bench.utils import get_env_cmd
+	from bench.utils.bench import get_env_cmd
 
 	install_text = f'Installing {app}'
 	click.secho(install_text, fg="yellow")
@@ -288,7 +288,7 @@ def install_app(app, bench_path=".", verbose=False, no_cache=False, restart_benc
 	conf = Bench(bench_path).conf
 
 	if conf.get("developer_mode"):
-		from bench.utils import install_python_dev_dependencies
+		from bench.utils.bench import install_python_dev_dependencies
 		install_python_dev_dependencies(apps=app)
 
 	if not skip_assets:
