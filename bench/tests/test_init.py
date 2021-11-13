@@ -13,7 +13,10 @@ from bench.release import get_bumped_version
 from bench.tests.test_base import FRAPPE_BRANCH, TestBenchBase
 
 
-TEST_FRAPPE_APP = "chat"
+# changed from frappe_theme because it wasn't maintained and incompatible,
+# chat app & wiki was breaking too. hopefully frappe_docs will be maintained
+# for longer since docs.erpnext.com is powered by it ;)
+TEST_FRAPPE_APP = "frappe_docs"
 
 class TestBenchInit(TestBenchBase):
 	def test_semantic_version(self):
