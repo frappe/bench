@@ -4,6 +4,7 @@ import json
 import os
 import pwd
 import sys
+from traceback import format_exception
 
 # imports - third party imports
 import click
@@ -34,7 +35,7 @@ src = os.path.dirname(__file__)
 
 
 def cli():
-	global from_command_line
+	global from_command_line, bench_config
 	from_command_line = True
 	command = " ".join(sys.argv)
 	is_envvar_warn_set = not (os.environ.get("BENCH_DEVELOPER") or os.environ.get("CI"))
@@ -42,6 +43,8 @@ def cli():
 	change_working_directory()
 	logger = setup_logging()
 	logger.info(command)
+
+	bench_config = get_config(".")
 
 	if len(sys.argv) > 1 and sys.argv[1] not in ("src",):
 		check_uid()
@@ -52,7 +55,7 @@ def cli():
 		is_dist_editable(bench.PROJECT_NAME)
 		and len(sys.argv) > 1
 		and sys.argv[1] != "src"
-		and not get_config(".").get("developer_mode")
+		and not bench_config.get("developer_mode")
 	):
 		log(
 			"bench is installed in editable mode!\n\nThis is not the recommended mode"
@@ -98,8 +101,12 @@ def cli():
 		return_code = getattr(e, "code", 0)
 		if return_code:
 			logger.warning(f"{command} executed with exit code {return_code}")
+
 		if isinstance(e, Exception):
+			if os.environ.get("BENCH_DEVELOPER") or bench_config.get("developer_mode"):
+				click.secho("".join(format_exception(*sys.exc_info()))[:-1])
 			click.secho(f"ERROR: {e}", fg="red")
+			return_code = 1
 			raise e
 	finally:
 		try:
@@ -152,7 +159,7 @@ def change_dir():
 
 def change_uid():
 	if is_root() and not cmd_requires_root():
-		frappe_user = get_config(".").get("frappe_user")
+		frappe_user = bench_config.get("frappe_user")
 		if frappe_user:
 			drop_privileges(uid_name=frappe_user, gid_name=frappe_user)
 			os.environ["HOME"] = pwd.getpwnam(frappe_user).pw_dir
