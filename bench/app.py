@@ -35,7 +35,7 @@ if typing.TYPE_CHECKING:
 
 
 class AppMeta:
-	def __init__(self, name: str, branch: str = None):
+	def __init__(self, name: str, branch: str = None, to_clone: bool = True):
 		"""
 		name (str): This could look something like
 			1. https://github.com/frappe/healthcare.git
@@ -53,14 +53,21 @@ class AppMeta:
 		"""
 		self.name = name
 		self.remote_server = "github.com"
+		self.to_clone = to_clone
 		self.on_disk = False
 		self.use_ssh = False
+		self.from_apps = False
 		self.branch = branch
 		self.setup_details()
 
 	def setup_details(self):
+		# fetch meta from installed apps
+		if not self.to_clone and hasattr(self, "bench") and os.path.exists(os.path.join(self.bench.name, "apps", self.name)):
+			self.from_apps = True
+			self._setup_details_from_installed_apps()
+
 		# fetch meta for repo on mounted disk
-		if os.path.exists(self.name):
+		elif os.path.exists(self.name):
 			self.on_disk = True
 			self._setup_details_from_mounted_disk()
 
@@ -72,11 +79,16 @@ class AppMeta:
 		else:
 			self._setup_details_from_name_tag()
 
+	def _setup_details_from_mounted_disk(self):
+		self.org, self.repo, self.tag = os.path.split(self.name)[-2:] + (self.branch,)
+
 	def _setup_details_from_name_tag(self):
 		self.org, self.repo, self.tag = fetch_details_from_tag(self.name)
 
-	def _setup_details_from_mounted_disk(self):
-		self.org, self.repo, self.tag = os.path.split(self.name)[-2:] + (self.branch,)
+	def _setup_details_from_installed_apps(self):
+		self.org, self.repo, self.tag = os.path.split(
+			os.path.join(self.bench.name, "apps", self.name)
+		)[-2:] + (self.branch,)
 
 	def _setup_details_from_git_url(self):
 		return self.__setup_details_from_git()
@@ -92,6 +104,9 @@ class AppMeta:
 
 	@property
 	def url(self):
+		if self.from_apps:
+			return os.path.abspath(os.path.join("apps", self.name))
+
 		if self.on_disk:
 			return os.path.abspath(self.name)
 
@@ -108,9 +123,9 @@ class AppMeta:
 
 
 class App(AppMeta):
-	def __init__(self, name: str, branch: str = None, bench: "Bench" = None):
-		super().__init__(name, branch)
+	def __init__(self, name: str, branch: str = None, bench: "Bench" = None, *args, **kwargs):
 		self.bench = bench
+		super().__init__(name, branch, *args, **kwargs)
 
 	def get(self):
 		branch = f"--branch {self.tag}" if self.tag else ""

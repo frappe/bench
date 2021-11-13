@@ -397,7 +397,7 @@ def fetch_details_from_tag(_tag):
 
 	try:
 		org, repo = org_repo
-	except ValueError:
+	except Exception:
 		org, repo = find_org(org_repo)
 
 	return org, repo, tag

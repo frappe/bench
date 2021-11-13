@@ -114,9 +114,9 @@ class Bench(Base, Validator):
 		from bench.app import App
 
 		self.validate_app_uninstall(app)
-		self.apps.remove(App(app, bench=self))
+		self.apps.remove(App(app, bench=self, to_clone=False))
 		self.apps.sync()
-		self.build()
+		# self.build() - removed because it seems unnecessary
 		self.reload()
 
 	def build(self):
