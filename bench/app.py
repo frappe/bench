@@ -137,9 +137,22 @@ class App(AppMeta):
 		)
 
 	def remove(self):
-		shutil.move(
-			os.path.join("apps", self.repo), os.path.join("archived", "apps", self.repo),
-		)
+		import datetime
+		from bench.utils import log
+
+		def get_archived_app_name():
+			dt = f"{self.repo}-{datetime.date.today()}"
+			if os.path.exists(os.path.join("archived", "apps", dt)):
+				for num in range(1, 100):
+					dt = f"{dt}_{num}"
+					if not os.path.exists(os.path.join("archived", "apps", dt)):
+						return dt
+			return dt
+
+		src = os.path.join("apps", self.repo)
+		dst = os.path.join("archived", "apps", get_archived_app_name())
+		log(f"App moved from {src} to {dst}")
+		shutil.move(src, dst)
 
 	def install(self, skip_assets=False, verbose=False):
 		from bench.utils.app import get_app_name
@@ -291,6 +304,7 @@ def get_app(
 
 	app.get()
 	app.install(verbose=verbose, skip_assets=skip_assets)
+	bench.apps.sync()
 
 
 def new_app(app, bench_path="."):
