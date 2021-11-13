@@ -32,14 +32,14 @@ def is_version_upgrade(app="frappe", bench_path=".", branch=None):
 def switch_branch(branch, apps=None, bench_path=".", upgrade=False, check_upgrade=True):
 	import git
 	import importlib
-	from bench.utils import (
+	from bench.utils.bench import (
+		build_assets,
 		update_requirements,
 		update_node_packages,
-		backup_all_sites,
 		patch_sites,
 		post_upgrade,
 	)
-	from bench.utils.bench import build_assets
+	from bench.utils.system import backup_all_sites
 
 	apps_dir = os.path.join(bench_path, "apps")
 	version_upgrade = (False,)

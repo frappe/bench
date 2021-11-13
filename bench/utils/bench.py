@@ -12,7 +12,7 @@ import click
 import bench
 
 # imports - module imports
-from bench.utils import which, log, exec_cmd, get_bench_name, get_cmd_output
+from bench.utils import get_process_manager, which, log, exec_cmd, get_bench_name, get_cmd_output
 from bench.exceptions import PatchError, ValidationError
 
 logger = logging.getLogger(bench.PROJECT_NAME)
@@ -304,6 +304,14 @@ def restart_systemd_processes(bench_path=".", web_workers=False):
 	)
 
 
+def restart_process_manager(bench_path="."):
+	# only overmind has the restart feature, not sure other supported procmans do
+	if which("overmind") and os.path.exists(
+		os.path.join(bench_path, ".overmind.sock")
+	):
+		exec_cmd("overmind restart", cwd=bench_path)
+
+
 def build_assets(bench_path=".", app=None):
 	command = "bench build"
 	if app:
@@ -331,8 +339,8 @@ def update(
 	from bench.utils.bench import (
 		restart_supervisor_processes,
 		restart_systemd_processes,
-		backup_all_sites,
 	)
+	from bench.utils.system import backup_all_sites
 	from bench.app import pull_apps
 	from bench.utils.app import is_version_upgrade
 	from bench.config.common_site_config import update_config

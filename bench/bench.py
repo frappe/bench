@@ -18,6 +18,7 @@ from bench.utils.bench import (
 	validate_app_installed_on_sites,
 	restart_supervisor_processes,
 	restart_systemd_processes,
+	restart_process_manager,
 	remove_backups_crontab,
 	get_venv_path,
 	get_env_cmd,
@@ -129,7 +130,8 @@ class Bench(Base, Validator):
 			restart_supervisor_processes(bench_path=self.name)
 		if conf.get("restart_systemd_on_update"):
 			restart_systemd_processes(bench_path=self.name)
-
+		if conf.get("developer_mode"):
+			restart_process_manager(bench_path=self.name)
 
 class BenchApps(MutableSequence):
 	def __init__(self, bench: Bench):
