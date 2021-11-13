@@ -144,9 +144,9 @@ class App(AppMeta):
 			dt = f"{self.repo}-{datetime.date.today()}"
 			if os.path.exists(os.path.join("archived", "apps", dt)):
 				for num in range(1, 100):
-					dt = f"{dt}_{num}"
-					if not os.path.exists(os.path.join("archived", "apps", dt)):
-						return dt
+					_dt = f"{dt}_{num}"
+					if not os.path.exists(os.path.join("archived", "apps", _dt)):
+						return _dt
 			return dt
 
 		src = os.path.join("apps", self.repo)
@@ -304,7 +304,6 @@ def get_app(
 
 	app.get()
 	app.install(verbose=verbose, skip_assets=skip_assets)
-	bench.apps.sync()
 
 
 def new_app(app, bench_path="."):
@@ -341,10 +340,10 @@ def install_app(
 	if os.path.exists(os.path.join(app_path, "package.json")):
 		exec_cmd("yarn install", cwd=app_path)
 
-	add_to_appstxt(app, bench_path=bench_path)
+	bench = Bench(bench_path)
+	bench.apps.sync()
 
-	conf = Bench(bench_path).conf
-
+	conf = bench.conf
 	if conf.get("developer_mode"):
 		from bench.utils.bench import install_python_dev_dependencies
 
