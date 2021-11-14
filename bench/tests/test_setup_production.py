@@ -7,7 +7,7 @@ import time
 import unittest
 
 # imports - module imports
-import bench.utils
+from bench.utils import exec_cmd, get_cmd_output, which
 from bench.config.production_setup import get_supervisor_confdir
 from bench.tests.test_base import TestBenchBase
 
@@ -19,18 +19,18 @@ class TestSetupProduction(TestBenchBase):
 		for bench_name in ("test-bench-1", "test-bench-2"):
 			bench_path = os.path.join(os.path.abspath(self.benches_path), bench_name)
 			self.init_bench(bench_name)
-			bench.utils.exec_cmd(f"sudo bench setup production {user} --yes", cwd=bench_path)
+			exec_cmd(f"sudo bench setup production {user} --yes", cwd=bench_path)
 			self.assert_nginx_config(bench_name)
 			self.assert_supervisor_config(bench_name)
 			self.assert_supervisor_process(bench_name)
 
 		self.assert_nginx_process()
-		bench.utils.exec_cmd(f"sudo bench setup sudoers {user}")
+		exec_cmd(f"sudo bench setup sudoers {user}")
 		self.assert_sudoers(user)
 
 		for bench_name in self.benches:
 			bench_path = os.path.join(os.path.abspath(self.benches_path), bench_name)
-			bench.utils.exec_cmd("sudo bench disable-production", cwd=bench_path)
+			exec_cmd("sudo bench disable-production", cwd=bench_path)
 
 
 	def production(self):
@@ -62,14 +62,14 @@ class TestSetupProduction(TestBenchBase):
 
 
 	def assert_nginx_process(self):
-		out = bench.utils.get_cmd_output("sudo nginx -t 2>&1")
+		out = get_cmd_output("sudo nginx -t 2>&1")
 		self.assertTrue("nginx: configuration file /etc/nginx/nginx.conf test is successful" in out)
 
 
 	def assert_sudoers(self, user):
 		sudoers_file = '/etc/sudoers.d/frappe'
-		service = bench.utils.which("service")
-		nginx = bench.utils.which("nginx")
+		service = which("service")
+		nginx = which("nginx")
 
 		self.assertTrue(self.file_exists(sudoers_file))
 
@@ -133,12 +133,12 @@ class TestSetupProduction(TestBenchBase):
 
 
 	def assert_supervisor_process(self, bench_name, use_rq=True, disable_production=False):
-		out = bench.utils.get_cmd_output("supervisorctl status")
+		out = get_cmd_output("supervisorctl status")
 
 		while "STARTING" in out:
 			print ("Waiting for all processes to start...")
 			time.sleep(10)
-			out = bench.utils.get_cmd_output("supervisorctl status")
+			out = get_cmd_output("supervisorctl status")
 
 		tests = [
 			"{bench_name}-web:{bench_name}-frappe-web[\s]+RUNNING",

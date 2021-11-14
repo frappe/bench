@@ -256,6 +256,8 @@ def set_git_remote_url(git_url, bench_path='.'):
 
 
 def run_playbook(playbook_name, extra_vars=None, tag=None):
+	import bench
+
 	if not which('ansible'):
 		print("Ansible is needed to run this command, please install it using 'pip install ansible'")
 		sys.exit(1)
@@ -326,6 +328,7 @@ def generate_command_cache(bench_path='.'):
 	"""Caches all available commands (even custom apps) via Frappe
 	Default caching behaviour: generated the first time any command (for a specific bench directory)
 	"""
+	from bench.utils.bench import get_env_cmd
 
 	python = get_env_cmd('python', bench_path=bench_path)
 	sites_path = os.path.join(bench_path, 'sites')

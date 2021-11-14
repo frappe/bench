@@ -130,6 +130,7 @@ def get_current_frappe_version(bench_path='.'):
 		return 0
 
 def get_current_branch(app, bench_path='.'):
+	from bench.utils import get_cmd_output
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	return get_cmd_output("basename $(git symbolic-ref -q HEAD)", cwd=repo_dir)
 
