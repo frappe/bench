@@ -284,26 +284,29 @@ def get_app(
 
 	cloned_path = os.path.join(bench_path, "apps", repo_name)
 	dir_already_exists = os.path.isdir(cloned_path)
+	to_clone = not dir_already_exists
 
-	if dir_already_exists:
-		# application directory already exists
-		# prompt user to overwrite it
-		if overwrite or click.confirm(
-			f"A directory for the application '{repo_name}' already exists."
+	# application directory already exists
+	# prompt user to overwrite it
+	if dir_already_exists and (
+		overwrite
+		or click.confirm(
+			f"A directory for the application '{repo_name}' already exists. "
 			"Do you want to continue and overwrite it?"
-		):
-			import shutil
+		)
+	):
+		shutil.rmtree(cloned_path)
+		to_clone = True
 
-			shutil.rmtree(cloned_path)
-		elif click.confirm("Do you want to reinstall the existing application?", abort=True):
-			pass
+	if to_clone:
+		app.get()
 
-	fetch_txt = f"Getting {repo_name}"
-	click.secho(fetch_txt, fg="yellow")
-	logger.log(fetch_txt)
-
-	app.get()
-	app.install(verbose=verbose, skip_assets=skip_assets)
+	if (
+		to_clone
+		or overwrite
+		or click.confirm("Do you want to reinstall the existing application?")
+	):
+		app.install(verbose=verbose, skip_assets=skip_assets)
 
 
 def new_app(app, bench_path="."):
