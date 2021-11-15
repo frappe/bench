@@ -355,13 +355,14 @@ def install_app(
 		exec_cmd("yarn install", cwd=app_path)
 
 	bench = Bench(bench_path)
-	bench.apps.sync()
 
 	conf = bench.conf
 	if conf.get("developer_mode"):
 		from bench.utils.bench import install_python_dev_dependencies
 
 		install_python_dev_dependencies(apps=app)
+
+	bench.apps.sync()
 
 	if not skip_assets:
 		build_assets(bench_path=bench_path, app=app)
