@@ -62,7 +62,11 @@ class AppMeta:
 
 	def setup_details(self):
 		# fetch meta from installed apps
-		if not self.to_clone and hasattr(self, "bench") and os.path.exists(os.path.join(self.bench.name, "apps", self.name)):
+		if (
+			not self.to_clone
+			and hasattr(self, "bench")
+			and os.path.exists(os.path.join(self.bench.name, "apps", self.name))
+		):
 			self.from_apps = True
 			self._setup_details_from_installed_apps()
 
@@ -123,7 +127,9 @@ class AppMeta:
 
 
 class App(AppMeta):
-	def __init__(self, name: str, branch: str = None, bench: "Bench" = None, *args, **kwargs):
+	def __init__(
+		self, name: str, branch: str = None, bench: "Bench" = None, *args, **kwargs
+	):
 		self.bench = bench
 		super().__init__(name, branch, *args, **kwargs)
 
@@ -165,7 +171,7 @@ class App(AppMeta):
 		)
 
 		install_app(
-			app=app_name, bench_path=self.bench.name, verbose=verbose, skip_assets=skip_assets
+			app=app_name, bench_path=self.bench.name, verbose=verbose, skip_assets=skip_assets,
 		)
 
 	def uninstall(self):
@@ -259,7 +265,12 @@ def setup_app_dependencies(repo_name, bench_path=".", branch=None):
 
 
 def get_app(
-	git_url, branch=None, bench_path=".", skip_assets=False, verbose=False, overwrite=False
+	git_url,
+	branch=None,
+	bench_path=".",
+	skip_assets=False,
+	verbose=False,
+	overwrite=False,
 ):
 	"""bench get-app clones a Frappe App from remote (GitHub or any other git server),
 	and installs it on the current bench. This also resolves dependencies based on the
@@ -451,7 +462,9 @@ def get_repo_dir(app, bench_path="."):
 def install_apps_from_path(path, bench_path="."):
 	apps = get_apps_json(path)
 	for app in apps:
-		get_app(app["url"], branch=app.get("branch"), bench_path=bench_path, skip_assets=True)
+		get_app(
+			app["url"], branch=app.get("branch"), bench_path=bench_path, skip_assets=True,
+		)
 
 
 def get_apps_json(path):
