@@ -137,6 +137,10 @@ class App(AppMeta):
 		branch = f"--branch {self.tag}" if self.tag else ""
 		shallow = "--depth 1" if self.bench.shallow_clone else ""
 
+		fetch_txt = f"Getting {self.repo}"
+		click.secho(fetch_txt, fg="yellow")
+		logger.log(fetch_txt)
+
 		self.bench.run(
 			f"git clone {self.url} {branch} {shallow} --origin upstream",
 			cwd=os.path.join(self.bench.name, "apps"),
