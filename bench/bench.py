@@ -98,12 +98,6 @@ class Bench(Base, Validator):
 		self.teardown.backups()
 		self.teardown.dirs()
 
-	def get_app(self, app, version=None):
-		pass
-
-	def drop_app(self, app, version=None):
-		pass
-
 	def install(self, app, branch=None):
 		from bench.app import App
 

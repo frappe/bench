@@ -431,3 +431,28 @@ def drop_privileges(uid_name="nobody", gid_name="nogroup"):
 
 	# Ensure a very conservative umask
 	os.umask(0o22)
+
+
+def get_available_folder_name(name: str, path: str) -> str:
+	"""Subfixes the passed name with -1 uptil -100 whatever's available
+	"""
+	if os.path.exists(os.path.join(path, name)):
+		for num in range(1, 100):
+			_dt = f"{name}_{num}"
+			if not os.path.exists(os.path.join(path, _dt)):
+				return _dt
+	return name
+
+
+def get_traceback() -> str:
+	"""
+		Returns the traceback of the Exception
+	"""
+	from traceback import format_exception
+	exc_type, exc_value, exc_tb = sys.exc_info()
+
+	if not any([exc_type, exc_value, exc_tb]):
+		return ""
+
+	trace_list = format_exception(exc_type, exc_value, exc_tb)
+	return "".join(trace_list)

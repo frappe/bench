@@ -14,11 +14,12 @@ import click
 # imports - module imports
 import bench
 from bench.utils import (
-	exec_cmd,
-	is_bench_directory,
-	run_frappe_cmd,
-	is_git_url,
 	fetch_details_from_tag,
+	get_available_folder_name,
+	is_bench_directory,
+	is_git_url,
+	log,
+	run_frappe_cmd,
 )
 from bench.utils.bench import (
 	get_env_cmd,
@@ -147,31 +148,23 @@ class App(AppMeta):
 		)
 
 	def remove(self):
-		import datetime
-		from bench.utils import log
+		active_app_path = os.path.join("apps", self.repo)
+		archived_path = os.path.join("archived", "apps")
+		archived_name = get_available_folder_name(
+			f"{self.repo}-{date.today()}", archived_path
+		)
+		archived_app_path = os.path.join(archived_path, archived_name)
+		log(f"App moved from {active_app_path} to {archived_app_path}")
+		shutil.move(active_app_path, archived_app_path)
 
-		def get_archived_app_name():
-			dt = f"{self.repo}-{datetime.date.today()}"
-			if os.path.exists(os.path.join("archived", "apps", dt)):
-				for num in range(1, 100):
-					_dt = f"{dt}_{num}"
-					if not os.path.exists(os.path.join("archived", "apps", _dt)):
-						return _dt
-			return dt
-
-		src = os.path.join("apps", self.repo)
-		dst = os.path.join("archived", "apps", get_archived_app_name())
-		log(f"App moved from {src} to {dst}")
-		shutil.move(src, dst)
-
-	def install(self, skip_assets=False, verbose=False):
+	def install(self, skip_assets=False, verbose=True):
 		from bench.utils.app import get_app_name
 
 		app_name = get_app_name(self.bench.name, self.repo)
 
 		# TODO: this should go inside install_app only tho - issue: default/resolved branch
 		setup_app_dependencies(
-			repo_name=self.repo, bench_path=self.bench.name, branch=self.tag
+			repo_name=self.repo, bench_path=self.bench.name, branch=self.tag, verbose=verbose,
 		)
 
 		install_app(
@@ -239,20 +232,11 @@ def remove_from_excluded_apps_txt(app, bench_path="."):
 		return write_excluded_apps_txt(apps, bench_path=bench_path)
 
 
-def generate_bench_name(git_url, bench_path):
-	if os.path.exists(git_url):
-		guessed_app_name = os.path.basename(git_url)
-	else:
-		app = App(git_url)
-		guessed_app_name = f"{app.org}_{app.repo}"
-
-	return os.path.join(bench_path, f"{guessed_app_name}-bench")
-
-
-def setup_app_dependencies(repo_name, bench_path=".", branch=None):
+def setup_app_dependencies(repo_name, bench_path=".", branch=None, verbose=True):
 	# branch kwarg is somewhat of a hack here; since we're assuming the same branches for all apps
 	# for eg: if you're installing erpnext@develop, you'll want frappe@develop and healthcare@develop too
 	import glob
+	from bench.bench import Bench
 
 	apps_path = os.path.join(os.path.abspath(bench_path), "apps")
 	files = glob.glob(os.path.join(apps_path, repo_name, "**", "hooks.py"))
@@ -265,7 +249,7 @@ def setup_app_dependencies(repo_name, bench_path=".", branch=None):
 			# TODO: when the time comes, add version check here
 			for app in required_apps:
 				if app not in Bench(bench_path).apps:
-					get_app(app, bench_path=bench_path, branch=branch)
+					get_app(app, bench_path=bench_path, branch=branch, verbose=verbose)
 
 
 def get_app(
@@ -342,29 +326,25 @@ def install_app(
 	skip_assets=False,
 ):
 	from bench.bench import Bench
-	from bench.utils.bench import get_env_cmd
 
 	install_text = f"Installing {app}"
 	click.secho(install_text, fg="yellow")
 	logger.log(install_text)
 
+	bench = Bench(bench_path)
+	conf = bench.conf
 	python_path = get_env_cmd("python", bench_path=bench_path)
 	quiet_flag = "-q" if not verbose else ""
-	app_path = os.path.join(bench_path, "apps", app)
+	app_path = os.path.realpath(os.path.join(bench_path, "apps", app))
 	cache_flag = "--no-cache-dir" if no_cache else ""
 
-	exec_cmd(f"{python_path} -m pip install {quiet_flag} -U -e {app_path} {cache_flag}")
+	bench.run(f"{python_path} -m pip install {quiet_flag} -U -e {app_path} {cache_flag}")
+
+	if conf.get("developer_mode"):
+		install_python_dev_dependencies(apps=app)
 
 	if os.path.exists(os.path.join(app_path, "package.json")):
-		exec_cmd("yarn install", cwd=app_path)
-
-	bench = Bench(bench_path)
-
-	conf = bench.conf
-	if conf.get("developer_mode"):
-		from bench.utils.bench import install_python_dev_dependencies
-
-		install_python_dev_dependencies(apps=app)
+		bench.run("yarn install", cwd=app_path)
 
 	bench.apps.sync()
 
@@ -381,7 +361,7 @@ def install_app(
 def pull_apps(apps=None, bench_path=".", reset=False):
 	"""Check all apps if there no local changes, pull"""
 	from bench.bench import Bench
-	from bench.utils.app import get_remote, get_current_branch
+	from bench.utils.app import get_current_branch, get_remote
 
 	bench = Bench(bench_path)
 	rebase = "--rebase" if bench.conf.get("rebase_on_pull") else ""
