@@ -44,10 +44,11 @@ def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups, c
 	except SystemExit:
 		raise
 	except Exception as e:
-		import os, shutil, time
+		import shutil, time
+		from bench.utils import get_traceback
 		# add a sleep here so that the traceback of other processes doesnt overlap with the prompts
 		time.sleep(1)
-		print(e)
+		print(get_traceback())
 		log(f"There was a problem while creating {path}", level=2)
 		if click.confirm("Do you want to rollback these changes?"):
 			print(f'Rolling back Bench "{path}"')

@@ -276,10 +276,11 @@ def get_app(
 	branch = app.tag
 
 	if not is_bench_directory(bench_path):
-		bench_path = generate_bench_name(git_url, bench_path)
-		from bench.commands.make import init
+		from bench.utils.system import init
 
-		click.get_current_context().invoke(init, path=bench_path, frappe_branch=branch)
+		bench_path = get_available_folder_name(f"{app.repo}-bench", bench_path)
+		init(path=bench_path, frappe_branch=branch)
+		os.chdir(bench_path)
 
 	cloned_path = os.path.join(bench_path, "apps", repo_name)
 	dir_already_exists = os.path.isdir(cloned_path)
