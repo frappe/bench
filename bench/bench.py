@@ -1,3 +1,5 @@
+# imports - standard imports
+import functools
 import os
 import shutil
 import sys
@@ -45,6 +47,7 @@ class Validator:
 		validate_app_installed_on_sites(app, bench_path=self.name)
 
 
+@functools.lru_cache(maxsize=None)
 class Bench(Base, Validator):
 	def __init__(self, path):
 		self.name = path

@@ -29,6 +29,7 @@ from bench.utils import (
 )
 from bench.utils.bench import get_env_cmd
 
+fancy = True
 from_command_line = False
 bench.LOG_BUFFER = []
 change_uid_msg = "You should not run this command as root"

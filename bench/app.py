@@ -1,4 +1,5 @@
 # imports - standard imports
+import functools
 import json
 import logging
 import os
@@ -7,6 +8,7 @@ import shutil
 import subprocess
 import sys
 import typing
+from datetime import date
 
 # imports - third party imports
 import click
@@ -127,7 +129,7 @@ class AppMeta:
 	def get_ssh_url(self):
 		return f"git@{self.remote_server}:{self.org}/{self.repo}.git"
 
-
+@functools.lru_cache(maxsize=None)
 class App(AppMeta):
 	def __init__(
 		self, name: str, branch: str = None, bench: "Bench" = None, *args, **kwargs
