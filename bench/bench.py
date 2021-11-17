@@ -285,6 +285,10 @@ class BenchSetup(Base):
 
 		logger.log("backups were set up")
 
+	def requirements(self):
+		from bench.utils.bench import update_requirements
+		update_requirements(bench=self.bench)
+
 
 class BenchTearDown:
 	def __init__(self, bench):
