@@ -1,7 +1,6 @@
 import os
 import re
 from setuptools.config import read_configuration
-import bench
 import sys
 import subprocess
 from bench.exceptions import (
@@ -31,11 +30,10 @@ def is_version_upgrade(app="frappe", bench_path=".", branch=None):
 
 def switch_branch(branch, apps=None, bench_path=".", upgrade=False, check_upgrade=True):
 	import git
-	import importlib
+	from bench.utils import log, exec_cmd
 	from bench.utils.bench import (
 		build_assets,
 		update_requirements,
-		update_node_packages,
 		patch_sites,
 		post_upgrade,
 	)
@@ -56,24 +54,22 @@ def switch_branch(branch, apps=None, bench_path=".", upgrade=False, check_upgrad
 		app_dir = os.path.join(apps_dir, app)
 
 		if not os.path.exists(app_dir):
-			bench.utils.log(f"{app} does not exist!", level=2)
+			log(f"{app} does not exist!", level=2)
 			continue
 
 		repo = git.Repo(app_dir)
 		unshallow_flag = os.path.exists(os.path.join(app_dir, ".git", "shallow"))
-		bench.utils.log(
-			f"Fetching upstream {'unshallow ' if unshallow_flag else ''}for {app}"
-		)
+		log(f"Fetching upstream {'unshallow ' if unshallow_flag else ''}for {app}")
 
-		bench.utils.exec_cmd("git remote set-branches upstream  '*'", cwd=app_dir)
-		bench.utils.exec_cmd(
+		exec_cmd("git remote set-branches upstream  '*'", cwd=app_dir)
+		exec_cmd(
 			f"git fetch --all{' --unshallow' if unshallow_flag else ''} --quiet", cwd=app_dir
 		)
 
 		if check_upgrade:
 			version_upgrade = is_version_upgrade(app=app, bench_path=bench_path, branch=branch)
 			if version_upgrade[0] and not upgrade:
-				bench.utils.log(
+				log(
 					f"Switching to {branch} will cause upgrade from"
 					f" {version_upgrade[1]} to {version_upgrade[2]}. Pass --upgrade to"
 					" confirm",
@@ -82,17 +78,15 @@ def switch_branch(branch, apps=None, bench_path=".", upgrade=False, check_upgrad
 				sys.exit(1)
 
 		print("Switching for " + app)
-		bench.utils.exec_cmd(f"git checkout -f {branch}", cwd=app_dir)
+		exec_cmd(f"git checkout -f {branch}", cwd=app_dir)
 
 		if str(repo.active_branch) == branch:
 			switched_apps.append(app)
 		else:
-			bench.utils.log(f"Switching branches failed for: {app}", level=2)
+			log(f"Switching branches failed for: {app}", level=2)
 
 	if switched_apps:
-		bench.utils.log(
-			"Successfully switched branches for: " + ", ".join(switched_apps), level=1
-		)
+		log(f"Successfully switched branches for: {', '.join(switched_apps)}", level=1)
 		print(
 			"Please run `bench update --patch` to be safe from any differences in"
 			" database schema"
@@ -100,8 +94,6 @@ def switch_branch(branch, apps=None, bench_path=".", upgrade=False, check_upgrad
 
 	if version_upgrade[0] and upgrade:
 		update_requirements()
-		update_node_packages()
-		importlib.reload(bench.utils)
 		backup_all_sites()
 		patch_sites()
 		build_assets()
