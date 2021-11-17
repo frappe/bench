@@ -7,6 +7,7 @@ import re
 import sys
 from glob import glob
 from shlex import split
+from typing import List, Tuple
 
 # imports - third party imports
 import click
@@ -34,7 +35,7 @@ def is_bench_directory(directory=os.path.curdir):
 	return is_bench
 
 
-def is_frappe_app(directory):
+def is_frappe_app(directory: str) -> bool:
 	is_frappe_app = True
 
 	for folder in paths_in_app:
@@ -110,7 +111,7 @@ def exec_cmd(cmd, cwd=".", env=None):
 		logger.warning(f"{cmd_log} executed with exit code {return_code}")
 
 
-def which(executable, raise_err=False):
+def which(executable: str, raise_err: bool = False) -> str:
 	from shutil import which
 
 	exec_ = which(executable)
@@ -121,7 +122,7 @@ def which(executable, raise_err=False):
 	return exec_
 
 
-def setup_logging(bench_path="."):
+def setup_logging(bench_path=".") -> "logger":
 	LOG_LEVEL = 15
 	logging.addLevelName(LOG_LEVEL, "LOG")
 
@@ -146,14 +147,14 @@ def setup_logging(bench_path="."):
 	return logger
 
 
-def get_process_manager():
+def get_process_manager() -> str:
 	for proc_man in ["honcho", "foreman", "forego"]:
 		proc_man_path = which(proc_man)
 		if proc_man_path:
 			return proc_man_path
 
 
-def get_git_version():
+def get_git_version() -> float:
 	"""returns git version from `git --version`
 	extracts version number from string `get version 1.9.1` etc"""
 	version = get_cmd_output("git --version")
@@ -280,7 +281,7 @@ def run_playbook(playbook_name, extra_vars=None, tag=None):
 	subprocess.check_call(args, cwd=os.path.join(bench.__path__[0], "playbooks"))
 
 
-def find_benches(directory=None):
+def find_benches(directory: str = None) -> List:
 	if not directory:
 		directory = os.path.expanduser("~")
 	elif os.path.exists(directory):
@@ -309,16 +310,16 @@ def find_benches(directory=None):
 	return benches
 
 
-def is_dist_editable(dist):
+def is_dist_editable(dist: str) -> bool:
 	"""Is distribution an editable install?"""
 	for path_item in sys.path:
-		egg_link = os.path.join(path_item, dist + ".egg-link")
+		egg_link = os.path.join(path_item, f"{dist}.egg-link")
 		if os.path.isfile(egg_link):
 			return True
 	return False
 
 
-def find_parent_bench(path):
+def find_parent_bench(path: str) -> str:
 	"""Checks if parent directories are benches"""
 	if is_bench_directory(directory=path):
 		return path
@@ -332,7 +333,7 @@ def find_parent_bench(path):
 		return find_parent_bench(parent_dir)
 
 
-def generate_command_cache(bench_path="."):
+def generate_command_cache(bench_path=".") -> List:
 	"""Caches all available commands (even custom apps) via Frappe
 	Default caching behaviour: generated the first time any command (for a specific bench directory)
 	"""
@@ -383,7 +384,7 @@ def find_org(org_repo):
 	raise InvalidRemoteException
 
 
-def fetch_details_from_tag(_tag):
+def fetch_details_from_tag(_tag: str) -> Tuple[str, str, str]:
 	if not _tag:
 		raise Exception("Tag is not provided")
 
@@ -403,7 +404,7 @@ def fetch_details_from_tag(_tag):
 	return org, repo, tag
 
 
-def is_git_url(url):
+def is_git_url(url: str) -> bool:
 	# modified to allow without the tailing .git from https://github.com/jonschlinkert/is-git-url.git
 	pattern = r"(?:git|ssh|https?|\w*@[-\w.]+):(\/\/)?(.*?)(\.git)?(\/?|\#[-\d\w._]+?)$"
 	return bool(re.match(pattern, url))
@@ -434,8 +435,7 @@ def drop_privileges(uid_name="nobody", gid_name="nogroup"):
 
 
 def get_available_folder_name(name: str, path: str) -> str:
-	"""Subfixes the passed name with -1 uptil -100 whatever's available
-	"""
+	"""Subfixes the passed name with -1 uptil -100 whatever's available"""
 	if os.path.exists(os.path.join(path, name)):
 		for num in range(1, 100):
 			_dt = f"{name}_{num}"
@@ -445,10 +445,9 @@ def get_available_folder_name(name: str, path: str) -> str:
 
 
 def get_traceback() -> str:
-	"""
-		Returns the traceback of the Exception
-	"""
+	"""Returns the traceback of the Exception"""
 	from traceback import format_exception
+
 	exc_type, exc_value, exc_tb = sys.exc_info()
 
 	if not any([exc_type, exc_value, exc_tb]):
