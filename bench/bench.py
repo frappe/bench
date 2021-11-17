@@ -4,6 +4,7 @@ import sys
 import logging
 from typing import MutableSequence, TYPE_CHECKING
 
+# imports - module imports
 import bench
 from bench.exceptions import ValidationError
 from bench.config.common_site_config import setup_config
@@ -11,6 +12,7 @@ from bench.utils import (
 	paths_in_bench,
 	exec_cmd,
 	is_frappe_app,
+	get_cmd_output,
 	get_git_version,
 	run_frappe_cmd,
 )
@@ -138,11 +140,23 @@ class BenchApps(MutableSequence):
 			return f.write("\n".join(self.apps))
 
 	def initialize_apps(self):
+		cmd = f"{get_env_cmd('python', bench_path=self.bench.name)} -m pip freeze"
+		is_installed = lambda app: app in installed_packages
+
+		try:
+			installed_packages = get_cmd_output(cmd=cmd, cwd=self.bench.name)
+		except Exception:
+			self.apps = []
+			return
+
 		try:
 			self.apps = [
 				x
 				for x in os.listdir(os.path.join(self.bench.name, "apps"))
-				if is_frappe_app(os.path.join(self.bench.name, "apps", x))
+				if (
+					is_frappe_app(os.path.join(self.bench.name, "apps", x))
+					and is_installed(x)
+				)
 			]
 			self.apps.sort()
 		except FileNotFoundError:
