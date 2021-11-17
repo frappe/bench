@@ -13,7 +13,13 @@ import click
 import bench
 
 # imports - module imports
-from bench.utils import get_process_manager, which, log, exec_cmd, get_bench_name, get_cmd_output
+from bench.utils import (
+	which,
+	log,
+	exec_cmd,
+	get_bench_name,
+	get_cmd_output,
+)
 from bench.exceptions import PatchError, ValidationError
 
 
@@ -328,52 +334,8 @@ def build_assets(bench_path=".", app=None):
 	exec_cmd(command, cwd=bench_path, env={"BENCH_DEVELOPER": "1"})
 
 
-def update(
-	pull=False,
-	apps=None,
-	patch=False,
-	build=False,
-	requirements=False,
-	backup=True,
-	compile=True,
-	force=False,
-	reset=False,
-	restart_supervisor=False,
-	restart_systemd=False,
-):
-	"""command: bench update"""
-	import re
-	from bench import patches
-	from bench.utils import clear_command_cache, pause_exec, log
-	from bench.utils.bench import (
-		restart_supervisor_processes,
-		restart_systemd_processes,
-	)
-	from bench.utils.system import backup_all_sites
-	from bench.app import pull_apps
-	from bench.utils.app import is_version_upgrade
-	from bench.config.common_site_config import update_config
-	from bench.bench import Bench
-
-	bench_path = os.path.abspath(".")
-	bench = Bench(bench_path)
-	patches.run(bench_path=bench_path)
-	conf = bench.conf
-
-	if apps and not pull:
-		apps = []
-
-	clear_command_cache(bench_path=".")
-
-	if conf.get("release_bench"):
-		print("Release bench detected, cannot update!")
-		sys.exit(1)
-
-	if not (pull or patch or build or requirements):
-		pull, patch, build, requirements = True, True, True, True
-
-	validate_branch()
-	version_upgrade = is_version_upgrade()
+def handle_version_upgrade(version_upgrade, bench_path, force, reset, conf):
+	from bench.utils import pause_exec, log
 
 	if version_upgrade[0]:
 		if force:
@@ -404,15 +366,67 @@ To avoid seeing this warning, set shallow_clone to false in your common_site_con
 
 	if version_upgrade[0] or (not version_upgrade[0] and force):
 		validate_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
+
+
+def update(
+	pull: bool = False,
+	apps: str = None,
+	patch: bool = False,
+	build: bool = False,
+	requirements: bool = False,
+	backup: bool = True,
+	compile: bool = True,
+	force: bool = False,
+	reset: bool = False,
+	restart_supervisor: bool = False,
+	restart_systemd: bool = False,
+):
+	"""command: bench update"""
+	import re
+	from bench import patches
+
+	from bench.app import pull_apps
+	from bench.bench import Bench
+	from bench.config.common_site_config import update_config
+	from bench.exceptions import CannotUpdateReleaseBench
+
+	from bench.utils import clear_command_cache
+	from bench.utils.app import is_version_upgrade
+	from bench.utils.bench import (
+		restart_supervisor_processes,
+		restart_systemd_processes,
+	)
+	from bench.utils.system import backup_all_sites
+
+	bench_path = os.path.abspath(".")
+	bench = Bench(bench_path)
+	patches.run(bench_path=bench_path)
+	conf = bench.conf
+
+	clear_command_cache(bench_path=".")
+
+	if conf.get("release_bench"):
+		raise CannotUpdateReleaseBench("Release bench detected, cannot update!")
+
+	if not (pull or patch or build or requirements):
+		pull, patch, build, requirements = True, True, True, True
+
+	if apps and pull:
+		apps = [app.strip() for app in re.split(",| ", apps) if app]
+	else:
+		apps = []
+
+	validate_branch()
+
+	version_upgrade = is_version_upgrade()
+	handle_version_upgrade(version_upgrade, bench_path, force, reset, conf)
+
 	conf.update({"maintenance_mode": 1, "pause_scheduler": 1})
 	update_config(conf, bench_path=bench_path)
 
 	if backup:
 		print("Backing up sites...")
 		backup_all_sites(bench_path=bench_path)
-
-	if apps:
-		apps = [app.strip() for app in re.split(",| ", apps) if app]
 
 	if pull:
 		print("Updating apps source...")
@@ -428,7 +442,7 @@ To avoid seeing this warning, set shallow_clone to false in your common_site_con
 
 	if build:
 		print("Building assets...")
-		build_assets(bench_path=bench_path)
+		bench.build()
 
 	if version_upgrade[0] or (not version_upgrade[0] and force):
 		post_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
