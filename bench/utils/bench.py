@@ -107,7 +107,6 @@ def install_python_dev_dependencies(bench_path=".", apps=None):
 		dev_requirements_path = os.path.join(app_path, "dev-requirements.txt")
 
 		if os.path.exists(dev_requirements_path):
-			log(f"Installing python development dependencies for {app}")
 			bench.run(f"{env_py} -m pip install -q -r {dev_requirements_path}")
 
 

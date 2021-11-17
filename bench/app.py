@@ -22,8 +22,9 @@ from bench.utils import (
 	run_frappe_cmd,
 )
 from bench.utils.bench import (
-	get_env_cmd,
 	build_assets,
+	get_env_cmd,
+	install_python_dev_dependencies,
 	restart_supervisor_processes,
 	restart_systemd_processes,
 )
