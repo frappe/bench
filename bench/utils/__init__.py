@@ -48,19 +48,32 @@ def is_frappe_app(directory: str) -> bool:
 	return bool(is_frappe_app)
 
 
-def log(message, level=0):
+def log(message, level=0, no_log=False):
+	import bench
+	import bench.cli
+
 	levels = {
 		0: ("blue", "INFO"),  # normal
 		1: ("green", "SUCCESS"),  # success
 		2: ("red", "ERROR"),  # fail
 		3: ("yellow", "WARN"),  # warn/suggest
 	}
-	loggers = {2: logger.error, 3: logger.warning}
-	color, prefix = levels.get(level, levels[0])
-	level_logger = loggers.get(level, logger.info)
 
-	level_logger(message)
-	click.secho(f"{prefix}: {message}", fg=color)
+	color, prefix = levels.get(level, levels[0])
+
+	if bench.cli.from_command_line and bench.cli.fancy:
+		bench.LOG_BUFFER.append(
+			{"prefix": prefix, "message": message, "color": color,}
+		)
+
+	if no_log:
+		click.secho(message, fg=color)
+	else:
+		loggers = {2: logger.error, 3: logger.warning}
+		level_logger = loggers.get(level, logger.info)
+
+		level_logger(message)
+		click.secho(f"{prefix}: {message}", fg=color)
 
 
 def check_latest_version():
