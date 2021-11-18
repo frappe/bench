@@ -34,6 +34,8 @@ class MultiCommandGroup(click.Group):
 
 
 def use_experimental_feature(ctx, param, value):
+	if not value:
+		return
 	if value == "dynamic-feed":
 		import bench.cli
 		bench.cli.dynamic_feed = True

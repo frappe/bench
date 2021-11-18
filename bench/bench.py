@@ -125,6 +125,7 @@ class Bench(Base, Validator):
 		# build assets & stuff
 		run_frappe_cmd("build", bench_path=self.name)
 
+	@step(title="Reloading Bench Processes", success="Bench Processes Reloaded")
 	def reload(self):
 		conf = self.conf
 		if conf.get("restart_supervisor_on_update"):

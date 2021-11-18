@@ -16,8 +16,10 @@ from bench.utils import (
 	which,
 )
 from bench.utils.bench import build_assets, clone_apps_from
+from bench.utils.render import job
 
 
+@job(title="Initializing Bench {path}", success="Bench {path} initialized")
 def init(
 	path,
 	apps_path=None,
