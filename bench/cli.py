@@ -29,9 +29,13 @@ from bench.utils import (
 )
 from bench.utils.bench import get_env_cmd
 
-fancy = True
-from_command_line = False
+# these variables are used to show dynamic outputs on the terminal
+fancy = False
 bench.LOG_BUFFER = []
+
+# set when commands are executed via the CLI
+from_command_line = False
+
 change_uid_msg = "You should not run this command as root"
 src = os.path.dirname(__file__)
 

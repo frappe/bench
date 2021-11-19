@@ -27,6 +27,7 @@ from bench.utils.bench import (
 	get_venv_path,
 	get_env_cmd,
 )
+from bench.utils.render import step
 
 
 if TYPE_CHECKING:
@@ -119,6 +120,7 @@ class Bench(Base, Validator):
 		# self.build() - removed because it seems unnecessary
 		self.reload()
 
+	@step(title="Building Bench Assets", success="Bench Assets Built")
 	def build(self):
 		# build assets & stuff
 		run_frappe_cmd("build", bench_path=self.name)
@@ -214,12 +216,14 @@ class BenchSetup(Base):
 		self.bench = bench
 		self.cwd = self.bench.cwd
 
+	@step(title="Setting Up Directories", success="Directories Set Up")
 	def dirs(self):
 		os.makedirs(self.bench.name, exist_ok=True)
 
 		for dirname in paths_in_bench:
 			os.makedirs(os.path.join(self.bench.name, dirname), exist_ok=True)
 
+	@step(title="Setting Up Environment", success="Environment Set Up")
 	def env(self, python="python3"):
 		"""Setup env folder
 		- create env if not exists
@@ -238,6 +242,7 @@ class BenchSetup(Base):
 		if os.path.exists(frappe):
 			self.run(f"{env_python} -m pip install -q -U -e {frappe}")
 
+	@step(title="Setting Up Bench Config", success="Bench Config Set Up")
 	def config(self, redis=True, procfile=True):
 		"""Setup config folder
 		- create pids folder
@@ -260,12 +265,14 @@ class BenchSetup(Base):
 
 		return setup_logging(bench_path=self.bench.name)
 
+	@step(title="Setting Up Bench Patches", success="Bench Patches Set Up")
 	def patches(self):
 		shutil.copy(
 			os.path.join(os.path.dirname(os.path.abspath(__file__)), "patches", "patches.txt"),
 			os.path.join(self.bench.name, "patches.txt"),
 		)
 
+	@step(title="Setting Up Backups Cronjob", success="Backups Cronjob Set Up")
 	def backups(self):
 		# TODO: to something better for logging data? - maybe a wrapper that auto-logs with more context
 		logger.log("setting up backups")
@@ -288,6 +295,7 @@ class BenchSetup(Base):
 
 		logger.log("backups were set up")
 
+	@step(title="Setting Up Bench Dependencies", success="Bench Dependencies Set Up")
 	def requirements(self):
 		from bench.utils.bench import update_requirements
 		update_requirements(bench=self.bench)

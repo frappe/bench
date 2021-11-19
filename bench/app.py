@@ -30,6 +30,8 @@ from bench.utils.bench import (
 	restart_supervisor_processes,
 	restart_systemd_processes,
 )
+from bench.utils.render import step
+
 
 logger = logging.getLogger(bench.PROJECT_NAME)
 
@@ -137,6 +139,7 @@ class App(AppMeta):
 		self.bench = bench
 		super().__init__(name, branch, *args, **kwargs)
 
+	@step(title="Fetching App {repo}", success="App {repo} Fetched")
 	def get(self):
 		branch = f"--branch {self.tag}" if self.tag else ""
 		shallow = "--depth 1" if self.bench.shallow_clone else ""
@@ -150,6 +153,7 @@ class App(AppMeta):
 			cwd=os.path.join(self.bench.name, "apps"),
 		)
 
+	@step(title="Archiving App {repo}", success="App {repo} Archived")
 	def remove(self):
 		active_app_path = os.path.join("apps", self.repo)
 		archived_path = os.path.join("archived", "apps")
@@ -160,6 +164,7 @@ class App(AppMeta):
 		log(f"App moved from {active_app_path} to {archived_app_path}")
 		shutil.move(active_app_path, archived_app_path)
 
+	@step(title="Installing App {repo}", success="App {repo} Installed")
 	def install(self, skip_assets=False, verbose=True):
 		from bench.utils.app import get_app_name
 
@@ -174,6 +179,7 @@ class App(AppMeta):
 			app=app_name, bench_path=self.bench.name, verbose=verbose, skip_assets=skip_assets,
 		)
 
+	@step(title="Uninstalling App {repo}", success="App {repo} Uninstalled")
 	def uninstall(self):
 		env_python = get_env_cmd("python", bench_path=self.bench.name)
 		self.bench.run(f"{env_python} -m pip uninstall -y {self.repo}")
