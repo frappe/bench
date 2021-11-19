@@ -118,7 +118,7 @@ def include_app_for_update(app_name):
 	remove_from_excluded_apps_txt(app_name)
 
 
-@click.command('pip', context_settings={"ignore_unknown_options": True}, help="For pip help use `bench pip help [COMMAND]` or `bench pip [COMMAND] -h`")
+@click.command('pip', context_settings={"ignore_unknown_options": True, "help_option_names": []}, help="For pip help use `bench pip help [COMMAND]` or `bench pip [COMMAND] -h`")
 @click.argument('args', nargs=-1)
 @click.pass_context
 def pip(ctx, args):
