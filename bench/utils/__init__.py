@@ -15,7 +15,7 @@ import click
 # imports - module imports
 from bench import PROJECT_NAME, VERSION
 
-from bench.exceptions import InvalidRemoteException, ValidationError
+from bench.exceptions import CommandFailedError, InvalidRemoteException, ValidationError
 
 
 logger = logging.getLogger(PROJECT_NAME)
@@ -109,7 +109,7 @@ def pause_exec(seconds=10):
 	print(" " * 40, end="\r")
 
 
-def exec_cmd(cmd, cwd=".", env=None):
+def exec_cmd(cmd, cwd=".", env=None, _raise=True):
 	if env:
 		env.update(os.environ.copy())
 
@@ -122,6 +122,9 @@ def exec_cmd(cmd, cwd=".", env=None):
 	return_code = subprocess.call(cmd, cwd=cwd, universal_newlines=True, env=env)
 	if return_code:
 		logger.warning(f"{cmd_log} executed with exit code {return_code}")
+		if _raise:
+			raise CommandFailedError
+	return return_code
 
 
 def which(executable: str, raise_err: bool = False) -> str:

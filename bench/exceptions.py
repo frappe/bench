@@ -20,3 +20,6 @@ class BenchNotFoundError(Exception):
 
 class ValidationError(Exception):
 	pass
+
+class CannotUpdateReleaseBench(ValidationError):
+	pass
