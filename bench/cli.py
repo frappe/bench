@@ -4,7 +4,6 @@ import json
 import os
 import pwd
 import sys
-from traceback import format_exception
 
 # imports - third party imports
 import click
@@ -42,9 +41,12 @@ src = os.path.dirname(__file__)
 
 def cli():
 	global from_command_line, bench_config
+
 	from_command_line = True
 	command = " ".join(sys.argv)
+	argv = set(sys.argv)
 	is_envvar_warn_set = not (os.environ.get("BENCH_DEVELOPER") or os.environ.get("CI"))
+	is_cli_command = len(sys.argv) > 1 and not argv.intersection({"src", "--version"})
 
 	change_working_directory()
 	logger = setup_logging()
@@ -52,15 +54,15 @@ def cli():
 
 	bench_config = get_config(".")
 
-	if len(sys.argv) > 1 and sys.argv[1] not in ("src",):
+	if is_cli_command:
 		check_uid()
 		change_uid()
 		change_dir()
 
-	if is_envvar_warn_set and (
-		is_dist_editable(bench.PROJECT_NAME)
-		and len(sys.argv) > 1
-		and sys.argv[1] != "src"
+	if (
+		is_envvar_warn_set
+		and is_cli_command
+		and is_dist_editable(bench.PROJECT_NAME)
 		and not bench_config.get("developer_mode")
 	):
 		log(
@@ -74,9 +76,9 @@ def cli():
 
 	if (
 		not in_bench
-		and not cmd_requires_root()
 		and len(sys.argv) > 1
-		and sys.argv[1] not in ("init", "find", "src", "drop", "get", "get-app")
+		and not argv.intersection({"init", "find", "src", "drop", "get", "get-app", "--version"})
+		and not cmd_requires_root()
 	):
 		log("Command not being executed in bench directory", level=3)
 
@@ -98,35 +100,21 @@ def cli():
 		if sys.argv[1] in Bench(".").apps:
 			app_cmd()
 
-	if not (len(sys.argv) > 1 and sys.argv[1] == "src"):
+	if not is_cli_command:
 		atexit.register(check_latest_version)
 
 	try:
 		bench_command()
 	except BaseException as e:
-		return_code = getattr(e, "code", 0)
+		return_code = getattr(e, "code", 1)
+
+		if isinstance(e, Exception):
+			click.secho(f"ERROR: {e}", fg="red")
+
 		if return_code:
 			logger.warning(f"{command} executed with exit code {return_code}")
 
-		if isinstance(e, Exception):
-			if (
-				os.environ.get("BENCH_DEVELOPER")
-				or bench_config.get("developer_mode")
-				or (
-					sys.argv[1] in ("init", "get", "get-app") and not in_bench
-				)
-			):
-				from bench.utils import get_traceback
-				click.echo(get_traceback())
-			click.secho(f"ERROR: {e}", fg="red")
-			return_code = 1
-			raise e
-	finally:
-		try:
-			return_code
-		except NameError:
-			return_code = 0
-		sys.exit(return_code)
+		raise e
 
 
 def check_uid():
