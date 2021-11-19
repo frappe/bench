@@ -277,12 +277,14 @@ def get_app(
 	git_url parameter.
 	"""
 	from bench.bench import Bench
+	import bench as bench_cli
 
 	bench = Bench(bench_path)
 	app = App(git_url, branch=branch, bench=bench)
 	git_url = app.url
 	repo_name = app.repo
 	branch = app.tag
+	bench_setup = False
 
 	if not is_bench_directory(bench_path):
 		from bench.utils.system import init
@@ -290,6 +292,16 @@ def get_app(
 		bench_path = get_available_folder_name(f"{app.repo}-bench", bench_path)
 		init(path=bench_path, frappe_branch=branch)
 		os.chdir(bench_path)
+		bench_setup = True
+
+	if bench_setup and bench_cli.cli.from_command_line and bench_cli.cli.dynamic_feed:
+		bench_cli.LOG_BUFFER.append({
+			"message": f"Fetching App {repo_name}",
+			"prefix": click.style('⏼', fg='bright_yellow'),
+			"is_parent": True,
+			"color": None,
+		})
+
 
 	cloned_path = os.path.join(bench_path, "apps", repo_name)
 	dir_already_exists = os.path.isdir(cloned_path)
