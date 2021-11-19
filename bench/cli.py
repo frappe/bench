@@ -109,8 +109,15 @@ def cli():
 			logger.warning(f"{command} executed with exit code {return_code}")
 
 		if isinstance(e, Exception):
-			if os.environ.get("BENCH_DEVELOPER") or bench_config.get("developer_mode"):
-				click.secho("".join(format_exception(*sys.exc_info()))[:-1])
+			if (
+				os.environ.get("BENCH_DEVELOPER")
+				or bench_config.get("developer_mode")
+				or (
+					sys.argv[1] in ("init", "get", "get-app") and not in_bench
+				)
+			):
+				from bench.utils import get_traceback
+				click.echo(get_traceback())
 			click.secho(f"ERROR: {e}", fg="red")
 			return_code = 1
 			raise e

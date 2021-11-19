@@ -50,7 +50,7 @@ def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups, c
 		time.sleep(1)
 		print(get_traceback())
 		log(f"There was a problem while creating {path}", level=2)
-		if click.confirm("Do you want to rollback these changes?"):
+		if click.confirm("Do you want to rollback these changes?", abort=True):
 			print(f'Rolling back Bench "{path}"')
 			if os.path.exists(path):
 				shutil.rmtree(path)
