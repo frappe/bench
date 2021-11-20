@@ -30,7 +30,7 @@ from bench.utils import (
 from bench.utils.bench import get_env_cmd
 
 # these variables are used to show dynamic outputs on the terminal
-fancy = False
+dynamic_feed = False
 bench.LOG_BUFFER = []
 
 # set when commands are executed via the CLI

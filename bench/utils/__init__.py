@@ -61,7 +61,7 @@ def log(message, level=0, no_log=False):
 
 	color, prefix = levels.get(level, levels[0])
 
-	if bench.cli.from_command_line and bench.cli.fancy:
+	if bench.cli.from_command_line and bench.cli.dynamic_feed:
 		bench.LOG_BUFFER.append(
 			{"prefix": prefix, "message": message, "color": color,}
 		)

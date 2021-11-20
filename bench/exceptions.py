@@ -23,3 +23,6 @@ class ValidationError(Exception):
 
 class CannotUpdateReleaseBench(ValidationError):
 	pass
+
+class FeatureDoesNotExistError(CommandFailedError):
+	pass

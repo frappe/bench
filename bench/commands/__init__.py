@@ -1,40 +1,28 @@
+# imports - third party imports
 import click
-from click.core import _check_multicommand
 
-def print_bench_version(ctx, param, value):
-	"""Prints current bench version"""
-	if not value or ctx.resilient_parsing:
-		return
-
-	import bench
-	click.echo(bench.VERSION)
-	ctx.exit()
-
-class MultiCommandGroup(click.Group):
-	def add_command(self, cmd, name=None):
-		"""Registers another :class:`Command` with this group.  If the name
-		is not provided, the name of the command is used.
-
-		Note: This is a custom Group that allows passing a list of names for
-		the command name.
-		"""
-		name = name or cmd.name
-		if name is None:
-			raise TypeError('Command has no name.')
-		_check_multicommand(self, name, cmd, register=True)
-
-		try:
-			self.commands[name] = cmd
-		except TypeError:
-			if isinstance(name, list):
-				for _name in name:
-					self.commands[_name] = cmd
+# imports - module imports
+from bench.utils.cli import (
+	MultiCommandGroup,
+	print_bench_version,
+	use_experimental_feature,
+)
 
 
 @click.group(cls=MultiCommandGroup)
-@click.option('--version', is_flag=True, is_eager=True, callback=print_bench_version, expose_value=False)
-def bench_command(bench_path='.'):
+@click.option(
+	"--version",
+	is_flag=True,
+	is_eager=True,
+	callback=print_bench_version,
+	expose_value=False,
+)
+@click.option(
+	"--use-feature", is_eager=True, callback=use_experimental_feature, expose_value=False
+)
+def bench_command(bench_path="."):
 	import bench
+
 	bench.set_frappe_version(bench_path=bench_path)
 
 

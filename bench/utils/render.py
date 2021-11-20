@@ -37,7 +37,7 @@ def step(title: str = None, success: str = None):
 		def wrapper_fn(*args, **kwargs):
 			import bench.cli
 
-			if bench.cli.from_command_line and bench.cli.fancy:
+			if bench.cli.from_command_line and bench.cli.dynamic_feed:
 				kw = args[0].__dict__
 
 				_title = f"{click.style('⏼', fg='bright_yellow')} {title.format(**kw)}"
@@ -45,7 +45,7 @@ def step(title: str = None, success: str = None):
 
 			retval = fn(*args)
 
-			if bench.cli.from_command_line and bench.cli.fancy:
+			if bench.cli.from_command_line and bench.cli.dynamic_feed:
 				click.clear()
 
 				for l in bench.LOG_BUFFER:
