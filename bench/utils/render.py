@@ -33,6 +33,8 @@ class Capturing(list):
 
 class Rendering:
 	def __init__(self, success, title, is_parent, args, kwargs):
+		import bench.cli
+
 		self.dynamic_feed = bench.cli.from_command_line and bench.cli.dynamic_feed
 
 		if not self.dynamic_feed:
