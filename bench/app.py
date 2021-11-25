@@ -190,6 +190,9 @@ def install_app(app, bench_path=".", verbose=False, no_cache=False, restart_benc
 	if not skip_assets:
 		build_assets(bench_path=bench_path, app=app)
 
+	from bench.utils import download_translations_f
+	download_translations_f(app)
+
 	if restart_bench:
 		if conf.get('restart_supervisor_on_update'):
 			restart_supervisor_processes(bench_path=bench_path)

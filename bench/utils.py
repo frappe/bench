@@ -185,7 +185,7 @@ def init(path, apps_path=None, no_procfile=False, no_backups=False,
 
 
 def update(pull=False, apps=None, patch=False, build=False, requirements=False, backup=True, compile=True,
-	force=False, reset=False, restart_supervisor=False, restart_systemd=False):
+	force=False, reset=False, restart_supervisor=False, restart_systemd=False, download_translations=False):
 	"""command: bench update"""
 	import re
 	from bench import patches
@@ -274,6 +274,9 @@ To avoid seeing this warning, set shallow_clone to false in your common_site_con
 
 	if restart_systemd or conf.get('restart_systemd_on_update'):
 		restart_systemd_processes(bench_path=bench_path)
+
+	if download_translations:
+		download_translations_f()
 
 	conf.update({ "maintenance_mode": 0, "pause_scheduler": 0 })
 	update_config(conf, bench_path=bench_path)
@@ -832,60 +835,6 @@ sudo supervisorctl reload
 		print(message)
 
 
-def update_translations_p(args):
-	import requests
-
-	try:
-		update_translations(*args)
-	except requests.exceptions.HTTPError:
-		print('Download failed for', args[0], args[1])
-
-
-def download_translations_p():
-	import multiprocessing
-
-	pool = multiprocessing.Pool(multiprocessing.cpu_count())
-
-	langs = get_langs()
-	apps = ('frappe', 'erpnext')
-	args = list(itertools.product(apps, langs))
-
-	pool.map(update_translations_p, args)
-
-
-def download_translations():
-	langs = get_langs()
-	apps = ('frappe', 'erpnext')
-	for app, lang in itertools.product(apps, langs):
-		update_translations(app, lang)
-
-
-def get_langs():
-	lang_file = 'apps/frappe/frappe/geo/languages.json'
-	with open(lang_file) as f:
-		langs = json.loads(f.read())
-	return [d['code'] for d in langs]
-
-
-def update_translations(app, lang):
-	import requests
-
-	translations_dir = os.path.join('apps', app, app, 'translations')
-	csv_file = os.path.join(translations_dir, lang + '.csv')
-	url = f"https://translate.erpnext.com/files/{app}-{lang}.csv"
-	r = requests.get(url, stream=True)
-	r.raise_for_status()
-
-	with open(csv_file, 'wb') as f:
-		for chunk in r.iter_content(chunk_size=1024):
-			# filter out keep-alive new chunks
-			if chunk:
-				f.write(chunk)
-				f.flush()
-
-	print('downloaded for', app, lang)
-
-
 def print_output(p):
 	from select import select
 
@@ -1108,3 +1057,9 @@ def clear_command_cache(bench_path='.'):
 		os.remove(bench_cache_file)
 	else:
 		print("Bench command cache doesn't exist in this folder!")
+
+def download_translations_f(app=None):
+	if app:
+		run_frappe_cmd('download-translations', '--app', app)
+		return	
+	run_frappe_cmd('download-translations')

@@ -18,9 +18,10 @@ from bench.utils import post_upgrade, patch_sites, build_assets
 @click.option('--no-compile', is_flag=True, help="If set, Python bytecode won't be compiled before restarting the processes")
 @click.option('--force', is_flag=True, help="Forces major version upgrades")
 @click.option('--reset', is_flag=True, help="Hard resets git branch's to their new states overriding any changes and overriding rebase on pull")
-def update(pull, apps, patch, build, requirements, restart_supervisor, restart_systemd, no_backup, no_compile, force, reset):
+@click.option('--download-translations', is_flag=True, help="Update Translations files for all apps.")
+def update(pull, apps, patch, build, requirements, restart_supervisor, restart_systemd, no_backup, no_compile, force, reset, download_translations):
 	from bench.utils import update
-	update(pull=pull, apps=apps, patch=patch, build=build, requirements=requirements, restart_supervisor=restart_supervisor, restart_systemd=restart_systemd, backup=not no_backup, compile=not no_compile, force=force, reset=reset)
+	update(pull=pull, apps=apps, patch=patch, build=build, requirements=requirements, restart_supervisor=restart_supervisor, restart_systemd=restart_systemd, backup=not no_backup, compile=not no_compile, force=force, reset=reset, download_translations=download_translations)
 
 
 @click.command('retry-upgrade', help="Retry a failed upgrade")
