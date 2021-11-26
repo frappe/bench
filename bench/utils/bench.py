@@ -83,12 +83,12 @@ def update_python_packages(bench_path="."):
 	apps.insert(0, "frappe")
 
 	print("Updating Python libraries...")
-	update_env_pip(bench_path)
+	bench.setup.pip()
 
 	for app in apps:
 		app_path = os.path.join(bench_path, "apps", app)
 		click.secho(f"\nInstalling python dependencies for {app}", fg="yellow")
-		bench.run(f"{bench.python} -m pip install -U -e {app_path}")
+		bench.run(f"{bench.python} -m pip install --upgrade -e {app_path}")
 
 
 def update_node_packages(bench_path="."):
@@ -226,7 +226,7 @@ def migrate_env(python, backup=False):
 		venv_creation = exec_cmd(f"{virtualenv} --python {python} {pvenv}")
 
 		apps = " ".join([f"-e {os.path.join('apps', app)}" for app in bench.apps])
-		packages_setup = exec_cmd(f"{pvenv} -m pip install -q -U {apps}")
+		packages_setup = exec_cmd(f"{pvenv} -m pip install --upgrade {apps}")
 
 		logger.log(f"Migration Successful to {python}")
 	except Exception:

@@ -237,12 +237,12 @@ class BenchSetup(Base):
 		virtualenv = get_venv_path()
 
 		if not os.path.exists(self.bench.python):
-			self.run(f"{virtualenv} -q env -p {python}")
+			self.run(f"{virtualenv} env -p {python}")
 
-		self.run(f"{self.bench.python} -m pip install -U pip")
+		self.pip()
 
 		if os.path.exists(frappe):
-			self.run(f"{self.bench.python} -m pip install -U -e {frappe}")
+			self.run(f"{self.bench.python} -m pip install --upgrade -e {frappe}")
 
 	@step(title="Setting Up Bench Config", success="Bench Config Set Up")
 	def config(self, redis=True, procfile=True):
@@ -261,6 +261,11 @@ class BenchSetup(Base):
 			from bench.config.procfile import setup_procfile
 
 			setup_procfile(self.bench.name, skip_redis=not redis)
+
+	def pip(self):
+		"""Updates env pip; assumes that env is setup
+		"""
+		return self.run(f"{self.bench.python} -m pip install --upgrade pip")
 
 	def logging(self):
 		from bench.utils import setup_logging

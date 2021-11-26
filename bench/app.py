@@ -354,11 +354,11 @@ def install_app(
 
 	bench = Bench(bench_path)
 	conf = bench.conf
-	quiet_flag = "" if verbose else "-q"
+	quiet_flag = "" if verbose else "--quiet"
 	app_path = os.path.realpath(os.path.join(bench_path, "apps", app))
 	cache_flag = "--no-cache-dir" if no_cache else ""
 
-	bench.run(f"{bench.python} -m pip install {quiet_flag} -U -e {app_path} {cache_flag}")
+	bench.run(f"{bench.python} -m pip install {quiet_flag} --upgrade -e {app_path} {cache_flag}")
 
 	if conf.get("developer_mode"):
 		install_python_dev_dependencies(apps=app)
