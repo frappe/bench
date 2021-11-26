@@ -30,6 +30,7 @@ from bench.utils.bench import get_env_cmd
 
 # these variables are used to show dynamic outputs on the terminal
 dynamic_feed = False
+verbose = False
 bench.LOG_BUFFER = []
 
 # set when commands are executed via the CLI
@@ -88,7 +89,7 @@ def cli():
 			print(get_frappe_help())
 			return
 
-		if sys.argv[1] in ["--site", "--verbose", "--force", "--profile"]:
+		if sys.argv[1] in ["--site", "--force", "--profile"]:
 			frappe_cmd()
 
 		if sys.argv[1] in get_cached_frappe_commands():

@@ -16,6 +16,7 @@ from bench.utils import (
 	is_frappe_app,
 	get_cmd_output,
 	get_git_version,
+	log,
 	run_frappe_cmd,
 )
 from bench.utils.bench import (
@@ -233,16 +234,19 @@ class BenchSetup(Base):
 		- upgrade env pip
 		- install frappe python dependencies
 		"""
+		import bench.cli
+
 		frappe = os.path.join(self.bench.name, "apps", "frappe")
 		virtualenv = get_venv_path()
+		quiet_flag = "" if bench.cli.verbose else "--quiet"
 
 		if not os.path.exists(self.bench.python):
-			self.run(f"{virtualenv} env -p {python}")
+			self.run(f"{virtualenv} {quiet_flag} env -p {python}")
 
 		self.pip()
 
 		if os.path.exists(frappe):
-			self.run(f"{self.bench.python} -m pip install --upgrade -e {frappe}")
+			self.run(f"{self.bench.python} -m pip install {quiet_flag} --upgrade -e {frappe}")
 
 	@step(title="Setting Up Bench Config", success="Bench Config Set Up")
 	def config(self, redis=True, procfile=True):
@@ -262,10 +266,16 @@ class BenchSetup(Base):
 
 			setup_procfile(self.bench.name, skip_redis=not redis)
 
-	def pip(self):
+	@step(title="Updating pip", success="Updated pip")
+	def pip(self, verbose=False):
 		"""Updates env pip; assumes that env is setup
 		"""
-		return self.run(f"{self.bench.python} -m pip install --upgrade pip")
+		import bench.cli
+
+		verbose = bench.cli.verbose or verbose
+		quiet_flag = "" if verbose else "--quiet"
+
+		return self.run(f"{self.bench.python} -m pip install {quiet_flag} --upgrade pip")
 
 	def logging(self):
 		from bench.utils import setup_logging
@@ -302,10 +312,50 @@ class BenchSetup(Base):
 
 		logger.log("backups were set up")
 
+	def __get_installed_apps(self) -> List:
+		"""Returns list of installed apps on bench, not in excluded_apps.txt
+		"""
+		apps = [app for app in self.bench.apps if app not in self.bench.excluded_apps]
+		apps.remove("frappe")
+		apps.insert(0, "frappe")
+		return apps
+
 	@step(title="Setting Up Bench Dependencies", success="Bench Dependencies Set Up")
 	def requirements(self):
-		from bench.utils.bench import update_requirements
-		update_requirements(bench=self.bench)
+		"""Install and upgrade all installed apps on given Bench
+		"""
+		from bench.app import App
+
+		apps = self.__get_installed_apps()
+
+		self.pip()
+
+		print(f"Installing {len(apps)} applications...")
+		for app in apps:
+			App(app, bench=self.bench, to_clone=False).install()
+
+	def python(self):
+		"""Install and upgrade Python dependencies for installed apps on given Bench
+		"""
+		import bench.cli
+
+		apps = self.__get_installed_apps()
+
+		quiet_flag = "" if bench.cli.verbose else "--quiet"
+
+		self.pip()
+
+		for app in apps:
+			app_path = os.path.join(self.bench.name, "apps", app)
+			log(f"\nInstalling python dependencies for {app}", level=3, no_log=True)
+			self.run(f"{self.bench.python} -m pip install {quiet_flag} --upgrade -e {app_path}")
+
+	def node(self):
+		"""Install and upgrade Node dependencies for all apps on given Bench
+		"""
+		from bench.utils.bench import update_node_packages
+
+		return update_node_packages(bench_path=self.bench.name)
 
 
 class BenchTearDown:

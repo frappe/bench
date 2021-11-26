@@ -50,8 +50,11 @@ def init(
 	# Use print("\033c", end="") to clear entire screen after each step and re-render each list
 	# another way => https://stackoverflow.com/a/44591228/10309266
 
+	import bench.cli
 	from bench.app import get_app, install_apps_from_path
 	from bench.bench import Bench
+
+	verbose = bench.cli.verbose or verbose
 
 	bench = Bench(path)
 

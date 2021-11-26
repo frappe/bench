@@ -30,10 +30,10 @@ def is_version_upgrade(app="frappe", bench_path=".", branch=None):
 
 def switch_branch(branch, apps=None, bench_path=".", upgrade=False, check_upgrade=True):
 	import git
+	from bench.bench import Bench
 	from bench.utils import log, exec_cmd
 	from bench.utils.bench import (
 		build_assets,
-		update_requirements,
 		patch_sites,
 		post_upgrade,
 	)
@@ -47,8 +47,6 @@ def switch_branch(branch, apps=None, bench_path=".", upgrade=False, check_upgrad
 		apps = [
 			name for name in os.listdir(apps_dir) if os.path.isdir(os.path.join(apps_dir, name))
 		]
-		if branch == "v4.x.x":
-			apps.append("shopping_cart")
 
 	for app in apps:
 		app_dir = os.path.join(apps_dir, app)
@@ -93,7 +91,7 @@ def switch_branch(branch, apps=None, bench_path=".", upgrade=False, check_upgrad
 		)
 
 	if version_upgrade[0] and upgrade:
-		update_requirements()
+		Bench(bench_path).setup.requirements()
 		backup_all_sites()
 		patch_sites()
 		build_assets()

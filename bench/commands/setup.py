@@ -136,17 +136,18 @@ def setup_socketio():
 @click.option("--python", help="Update only Python packages", default=False, is_flag=True)
 @click.option("--dev", help="Install optional python development dependencies", default=False, is_flag=True)
 def setup_requirements(node=False, python=False, dev=False):
+	from bench.bench import Bench
+
+	bench = Bench(".")
+
 	if not (node or python or dev):
-		from bench.utils.bench import update_requirements
-		update_requirements()
+		bench.setup.requirements()
 
 	elif not node and not dev:
-		from bench.utils.bench import update_python_packages
-		update_python_packages()
+		bench.setup.python()
 
 	elif not python and not dev:
-		from bench.utils.bench import update_node_packages
-		update_node_packages()
+		bench.setup.node()
 
 	else:
 		from bench.utils.bench import install_python_dev_dependencies

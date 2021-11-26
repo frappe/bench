@@ -6,6 +6,7 @@ from bench.utils.cli import (
 	MultiCommandGroup,
 	print_bench_version,
 	use_experimental_feature,
+	setup_verbosity,
 )
 
 
@@ -18,7 +19,10 @@ from bench.utils.cli import (
 	expose_value=False,
 )
 @click.option(
-	"--use-feature", is_eager=True, callback=use_experimental_feature, expose_value=False
+	"--use-feature", is_eager=True, callback=use_experimental_feature, expose_value=False,
+)
+@click.option(
+	"-v", "--verbose", is_flag=True, callback=setup_verbosity, expose_value=False,
 )
 def bench_command(bench_path="."):
 	import bench

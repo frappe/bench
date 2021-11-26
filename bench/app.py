@@ -165,9 +165,11 @@ class App(AppMeta):
 		shutil.move(active_app_path, archived_app_path)
 
 	@step(title="Installing App {repo}", success="App {repo} Installed")
-	def install(self, skip_assets=False, verbose=True):
+	def install(self, skip_assets=False, verbose=False):
+		import bench.cli
 		from bench.utils.app import get_app_name
 
+		verbose = bench.cli.verbose or verbose
 		app_name = get_app_name(self.bench.name, self.repo)
 
 		# TODO: this should go inside install_app only tho - issue: default/resolved branch
@@ -240,12 +242,14 @@ def remove_from_excluded_apps_txt(app, bench_path="."):
 		return write_excluded_apps_txt(apps, bench_path=bench_path)
 
 
-def setup_app_dependencies(repo_name, bench_path=".", branch=None, verbose=True):
+def setup_app_dependencies(repo_name, bench_path=".", branch=None, verbose=False):
 	# branch kwarg is somewhat of a hack here; since we're assuming the same branches for all apps
 	# for eg: if you're installing erpnext@develop, you'll want frappe@develop and healthcare@develop too
 	import glob
+	import bench.cli
 	from bench.bench import Bench
 
+	verbose = bench.cli.verbose or verbose
 	apps_path = os.path.join(os.path.abspath(bench_path), "apps")
 	files = glob.glob(os.path.join(apps_path, repo_name, "**", "hooks.py"))
 
@@ -346,6 +350,7 @@ def install_app(
 	restart_bench=True,
 	skip_assets=False,
 ):
+	import bench.cli as bench_cli
 	from bench.bench import Bench
 
 	install_text = f"Installing {app}"
@@ -354,14 +359,17 @@ def install_app(
 
 	bench = Bench(bench_path)
 	conf = bench.conf
+
+	verbose = bench_cli.verbose or verbose
 	quiet_flag = "" if verbose else "--quiet"
-	app_path = os.path.realpath(os.path.join(bench_path, "apps", app))
 	cache_flag = "--no-cache-dir" if no_cache else ""
+
+	app_path = os.path.realpath(os.path.join(bench_path, "apps", app))
 
 	bench.run(f"{bench.python} -m pip install {quiet_flag} --upgrade -e {app_path} {cache_flag}")
 
 	if conf.get("developer_mode"):
-		install_python_dev_dependencies(apps=app)
+		install_python_dev_dependencies(apps=app, bench_path=bench_path, verbose=verbose)
 
 	if os.path.exists(os.path.join(app_path, "package.json")):
 		bench.run("yarn install", cwd=app_path)

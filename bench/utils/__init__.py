@@ -63,7 +63,7 @@ def log(message, level=0, no_log=False):
 
 	if bench.cli.from_command_line and bench.cli.dynamic_feed:
 		bench.LOG_BUFFER.append(
-			{"prefix": prefix, "message": message, "color": color,}
+			{"prefix": prefix, "message": message, "color": color}
 		)
 
 	if no_log:

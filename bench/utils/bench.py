@@ -48,49 +48,6 @@ def get_venv_path():
 	return venv or log("virtualenv cannot be found", level=2)
 
 
-def update_env_pip(bench_path):
-	env_py = get_env_cmd("python", bench_path=bench_path)
-	exec_cmd(f"{env_py} -m pip install -q -U pip")
-
-
-def update_requirements(bench: "Bench" = None, bench_path="."):
-	from bench.app import install_app
-
-	if not bench:
-		from bench.bench import Bench
-
-		bench = Bench(bench_path)
-
-	apps = [app for app in bench.apps if app not in bench.excluded_apps]
-	apps.remove("frappe")
-	apps.insert(0, "frappe")
-
-	print("Updating env pip...")
-	update_env_pip(bench.name)
-
-	print(f"Installing {len(apps)} applications...")
-	for app in apps:
-		install_app(app, bench_path=bench.name, skip_assets=True, restart_bench=False)
-
-
-def update_python_packages(bench_path="."):
-	from bench.bench import Bench
-
-	bench = Bench(bench_path)
-
-	apps = [app for app in bench.apps if app not in bench.excluded_apps]
-	apps.remove("frappe")
-	apps.insert(0, "frappe")
-
-	print("Updating Python libraries...")
-	bench.setup.pip()
-
-	for app in apps:
-		app_path = os.path.join(bench_path, "apps", app)
-		click.secho(f"\nInstalling python dependencies for {app}", fg="yellow")
-		bench.run(f"{bench.python} -m pip install --upgrade -e {app_path}")
-
-
 def update_node_packages(bench_path="."):
 	print("Updating node packages...")
 	from bench.utils.app import get_develop_version
@@ -106,8 +63,12 @@ def update_node_packages(bench_path="."):
 		update_yarn_packages(bench_path)
 
 
-def install_python_dev_dependencies(bench_path=".", apps=None):
+def install_python_dev_dependencies(bench_path=".", apps=None, verbose=False):
+	import bench.cli
 	from bench.bench import Bench
+
+	verbose = bench.cli.verbose or verbose
+	quiet_flag = "" if verbose else "--quiet"
 
 	bench = Bench(bench_path)
 
@@ -118,10 +79,11 @@ def install_python_dev_dependencies(bench_path=".", apps=None):
 
 	for app in apps:
 		app_path = os.path.join(bench_path, "apps", app)
+
 		dev_requirements_path = os.path.join(app_path, "dev-requirements.txt")
 
 		if os.path.exists(dev_requirements_path):
-			bench.run(f"{bench.python} -m pip install -r {dev_requirements_path}")
+			bench.run(f"{bench.python} -m pip install {quiet_flag} --upgrade -r {dev_requirements_path}")
 
 
 def update_yarn_packages(bench_path="."):

@@ -39,6 +39,15 @@ def use_experimental_feature(ctx, param, value):
 	if value == "dynamic-feed":
 		import bench.cli
 		bench.cli.dynamic_feed = True
+		bench.cli.verbose = True
 	else:
 		from bench.exceptions import FeatureDoesNotExistError
 		raise FeatureDoesNotExistError(f"Feature {value} does not exist")
+
+
+def setup_verbosity(ctx, param, value):
+	if not value:
+		return
+
+	import bench.cli
+	bench.cli.verbose = True
