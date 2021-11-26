@@ -31,17 +31,16 @@ from bench.utils.bench import get_env_cmd
 # these variables are used to show dynamic outputs on the terminal
 dynamic_feed = False
 verbose = False
+is_envvar_warn_set = None
+from_command_line = False # set when commands are executed via the CLI
 bench.LOG_BUFFER = []
-
-# set when commands are executed via the CLI
-from_command_line = False
 
 change_uid_msg = "You should not run this command as root"
 src = os.path.dirname(__file__)
 
 
 def cli():
-	global from_command_line, bench_config
+	global from_command_line, bench_config, is_envvar_warn_set
 
 	from_command_line = True
 	command = " ".join(sys.argv)

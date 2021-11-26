@@ -28,7 +28,7 @@ from bench.utils.bench import (
 	get_venv_path,
 	get_env_cmd,
 )
-from bench.utils.render import step
+from bench.utils.render import job, step
 
 
 if TYPE_CHECKING:
@@ -320,7 +320,7 @@ class BenchSetup(Base):
 		apps.insert(0, "frappe")
 		return apps
 
-	@step(title="Setting Up Bench Dependencies", success="Bench Dependencies Set Up")
+	@job(title="Setting Up Bench Dependencies", success="Bench Dependencies Set Up")
 	def requirements(self):
 		"""Install and upgrade all installed apps on given Bench
 		"""
@@ -331,6 +331,7 @@ class BenchSetup(Base):
 		self.pip()
 
 		print(f"Installing {len(apps)} applications...")
+
 		for app in apps:
 			App(app, bench=self.bench, to_clone=False).install()
 
