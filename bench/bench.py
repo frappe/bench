@@ -4,7 +4,7 @@ import os
 import shutil
 import sys
 import logging
-from typing import MutableSequence, TYPE_CHECKING
+from typing import List, MutableSequence, TYPE_CHECKING
 
 # imports - module imports
 import bench
@@ -63,18 +63,21 @@ class Bench(Base, Validator):
 		self.excluded_apps_txt = os.path.join(self.name, "sites", "excluded_apps.txt")
 
 	@property
-	def shallow_clone(self):
+	def python(self) -> str:
+		return get_env_cmd("python", bench_path=self.name)
+
+	@property
+	def shallow_clone(self) -> bool:
 		config = self.conf
 
 		if config:
 			if config.get("release_bench") or not config.get("shallow_clone"):
 				return False
 
-		if get_git_version() > 1.9:
-			return True
+		return get_git_version() > 1.9
 
 	@property
-	def excluded_apps(self):
+	def excluded_apps(self) -> List:
 		try:
 			with open(self.excluded_apps_txt) as f:
 				return f.read().strip().split("\n")
@@ -82,7 +85,7 @@ class Bench(Base, Validator):
 			return []
 
 	@property
-	def sites(self):
+	def sites(self) -> List:
 		return [
 			path
 			for path in os.listdir(os.path.join(self.name, "sites"))
@@ -146,11 +149,10 @@ class BenchApps(MutableSequence):
 			return f.write("\n".join(self.apps))
 
 	def initialize_apps(self):
-		cmd = f"{get_env_cmd('python', bench_path=self.bench.name)} -m pip freeze"
 		is_installed = lambda app: app in installed_packages
 
 		try:
-			installed_packages = get_cmd_output(cmd=cmd, cwd=self.bench.name)
+			installed_packages = get_cmd_output(f"{self.bench.python} -m pip freeze", cwd=self.bench.name)
 		except Exception:
 			self.apps = []
 			return
@@ -232,16 +234,15 @@ class BenchSetup(Base):
 		- install frappe python dependencies
 		"""
 		frappe = os.path.join(self.bench.name, "apps", "frappe")
-		env_python = get_env_cmd("python", bench_path=self.bench.name)
 		virtualenv = get_venv_path()
 
-		if not os.path.exists(env_python):
+		if not os.path.exists(self.bench.python):
 			self.run(f"{virtualenv} -q env -p {python}")
 
-		self.run(f"{env_python} -m pip install -q -U pip")
+		self.run(f"{self.bench.python} -m pip install -U pip")
 
 		if os.path.exists(frappe):
-			self.run(f"{env_python} -m pip install -q -U -e {frappe}")
+			self.run(f"{self.bench.python} -m pip install -U -e {frappe}")
 
 	@step(title="Setting Up Bench Config", success="Bench Config Set Up")
 	def config(self, redis=True, procfile=True):

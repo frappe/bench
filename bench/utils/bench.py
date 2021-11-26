@@ -77,7 +77,6 @@ def update_python_packages(bench_path="."):
 	from bench.bench import Bench
 
 	bench = Bench(bench_path)
-	env_py = get_env_cmd("python", bench_path=bench.name)
 
 	apps = [app for app in bench.apps if app not in bench.excluded_apps]
 	apps.remove("frappe")
@@ -89,7 +88,7 @@ def update_python_packages(bench_path="."):
 	for app in apps:
 		app_path = os.path.join(bench_path, "apps", app)
 		click.secho(f"\nInstalling python dependencies for {app}", fg="yellow")
-		bench.run(f"{env_py} -m pip install -q -U -e {app_path}")
+		bench.run(f"{bench.python} -m pip install -U -e {app_path}")
 
 
 def update_node_packages(bench_path="."):
@@ -117,13 +116,12 @@ def install_python_dev_dependencies(bench_path=".", apps=None):
 	elif apps is None:
 		apps = [app for app in bench.apps if app not in bench.excluded_apps]
 
-	env_py = get_env_cmd("python")
 	for app in apps:
 		app_path = os.path.join(bench_path, "apps", app)
 		dev_requirements_path = os.path.join(app_path, "dev-requirements.txt")
 
 		if os.path.exists(dev_requirements_path):
-			bench.run(f"{env_py} -m pip install -q -r {dev_requirements_path}")
+			bench.run(f"{bench.python} -m pip install -r {dev_requirements_path}")
 
 
 def update_yarn_packages(bench_path="."):

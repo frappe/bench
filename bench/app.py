@@ -181,8 +181,7 @@ class App(AppMeta):
 
 	@step(title="Uninstalling App {repo}", success="App {repo} Uninstalled")
 	def uninstall(self):
-		env_python = get_env_cmd("python", bench_path=self.bench.name)
-		self.bench.run(f"{env_python} -m pip uninstall -y {self.repo}")
+		self.bench.run(f"{self.bench.python} -m pip uninstall -y {self.repo}")
 
 
 def add_to_appstxt(app, bench_path="."):
@@ -355,12 +354,11 @@ def install_app(
 
 	bench = Bench(bench_path)
 	conf = bench.conf
-	python_path = get_env_cmd("python", bench_path=bench_path)
-	quiet_flag = "-q" if not verbose else ""
+	quiet_flag = "" if verbose else "-q"
 	app_path = os.path.realpath(os.path.join(bench_path, "apps", app))
 	cache_flag = "--no-cache-dir" if no_cache else ""
 
-	bench.run(f"{python_path} -m pip install {quiet_flag} -U -e {app_path} {cache_flag}")
+	bench.run(f"{bench.python} -m pip install {quiet_flag} -U -e {app_path} {cache_flag}")
 
 	if conf.get("developer_mode"):
 		install_python_dev_dependencies(apps=app)
