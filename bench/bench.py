@@ -13,6 +13,7 @@ from bench.config.common_site_config import setup_config
 from bench.utils import (
 	paths_in_bench,
 	exec_cmd,
+	is_bench_directory,
 	is_frappe_app,
 	get_cmd_output,
 	get_git_version,
@@ -54,7 +55,7 @@ class Bench(Base, Validator):
 	def __init__(self, path):
 		self.name = path
 		self.cwd = os.path.abspath(path)
-		self.exists = os.path.exists(self.name)
+		self.exists = is_bench_directory(self.name)
 
 		self.setup = BenchSetup(self)
 		self.teardown = BenchTearDown(self)

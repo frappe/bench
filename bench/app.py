@@ -15,6 +15,7 @@ import click
 
 # imports - module imports
 import bench
+from bench.exceptions import NotInBenchDirectoryError
 from bench.utils import (
 	fetch_details_from_tag,
 	get_available_folder_name,
@@ -271,6 +272,7 @@ def get_app(
 	skip_assets=False,
 	verbose=False,
 	overwrite=False,
+	init_bench=False,
 ):
 	"""bench get-app clones a Frappe App from remote (GitHub or any other git server),
 	and installs it on the current bench. This also resolves dependencies based on the
@@ -280,7 +282,8 @@ def get_app(
 	git_url parameter.
 	"""
 	from bench.bench import Bench
-	import bench as bench_cli
+	import bench as _bench
+	import bench.cli as bench_cli
 
 	bench = Bench(bench_path)
 	app = App(git_url, branch=branch, bench=bench)
@@ -290,6 +293,12 @@ def get_app(
 	bench_setup = False
 
 	if not is_bench_directory(bench_path):
+		if not init_bench:
+			raise NotInBenchDirectoryError(
+				f"{os.path.realpath(bench_path)} is not a valid bench directory. "
+				"Run with --init-bench if you'd like to create a Bench too."
+			)
+
 		from bench.utils.system import init
 
 		bench_path = get_available_folder_name(f"{app.repo}-bench", bench_path)
@@ -297,8 +306,9 @@ def get_app(
 		os.chdir(bench_path)
 		bench_setup = True
 
-	if bench_setup and bench_cli.cli.from_command_line and bench_cli.cli.dynamic_feed:
-		bench_cli.LOG_BUFFER.append({
+
+	if bench_setup and bench_cli.from_command_line and bench_cli.dynamic_feed:
+		_bench.LOG_BUFFER.append({
 			"message": f"Fetching App {repo_name}",
 			"prefix": click.style('⏼', fg='bright_yellow'),
 			"is_parent": True,
