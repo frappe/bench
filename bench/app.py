@@ -132,6 +132,7 @@ class AppMeta:
 	def get_ssh_url(self):
 		return f"git@{self.remote_server}:{self.org}/{self.repo}.git"
 
+
 @functools.lru_cache(maxsize=None)
 class App(AppMeta):
 	def __init__(
@@ -175,7 +176,11 @@ class App(AppMeta):
 
 		# TODO: this should go inside install_app only tho - issue: default/resolved branch
 		setup_app_dependencies(
-			repo_name=self.repo, bench_path=self.bench.name, branch=self.tag, verbose=verbose,
+			repo_name=self.repo,
+			bench_path=self.bench.name,
+			branch=self.tag,
+			verbose=verbose,
+			skip_assets=skip_assets,
 		)
 
 		install_app(
@@ -243,7 +248,9 @@ def remove_from_excluded_apps_txt(app, bench_path="."):
 		return write_excluded_apps_txt(apps, bench_path=bench_path)
 
 
-def setup_app_dependencies(repo_name, bench_path=".", branch=None, verbose=False):
+def setup_app_dependencies(
+	repo_name, bench_path=".", branch=None, skip_assets=False, verbose=False
+):
 	# branch kwarg is somewhat of a hack here; since we're assuming the same branches for all apps
 	# for eg: if you're installing erpnext@develop, you'll want frappe@develop and healthcare@develop too
 	import glob
@@ -262,7 +269,13 @@ def setup_app_dependencies(repo_name, bench_path=".", branch=None, verbose=False
 			# TODO: when the time comes, add version check here
 			for app in required_apps:
 				if app not in Bench(bench_path).apps:
-					get_app(app, bench_path=bench_path, branch=branch, verbose=verbose)
+					get_app(
+						app,
+						bench_path=bench_path,
+						branch=branch,
+						skip_assets=skip_assets,
+						verbose=verbose,
+					)
 
 
 def get_app(
