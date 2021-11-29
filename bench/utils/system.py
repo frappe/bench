@@ -33,6 +33,7 @@ def init(
 	clone_without_update=False,
 	skip_assets=False,
 	python="python3",
+	install_app=None,
 ):
 	"""Initialize a new bench directory
 
@@ -81,6 +82,12 @@ def init(
 		# fetch remote apps using config file - deprecate this!
 		if apps_path:
 			install_apps_from_path(apps_path, bench_path=path)
+
+	# getting app on bench init using --install-app
+	if install_app:
+		get_app(
+			install_app, branch=frappe_branch, bench_path=path, skip_assets=True, verbose=verbose
+		)
 
 	if not skip_assets:
 		build_assets(bench_path=path)

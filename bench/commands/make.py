@@ -2,22 +2,63 @@
 import click
 
 
-@click.command('init', help='Initialize a new bench instance in the specified path')
-@click.argument('path')
-@click.option('--version', '--frappe-branch', 'frappe_branch', default=None, help="Clone a particular branch of frappe")
-@click.option('--ignore-exist', is_flag = True, default = False, help = "Ignore if Bench instance exists.")
-@click.option('--python', type = str, default = 'python3', help = 'Path to Python Executable.')
-@click.option('--apps_path', default=None, help="path to json files with apps to install after init")
-@click.option('--frappe-path', default=None, help="path to frappe repo")
-@click.option('--clone-from', default=None, help="copy repos from path")
-@click.option('--clone-without-update', is_flag=True, help="copy repos from path without update")
-@click.option('--no-procfile', is_flag=True, help="Do not create a Procfile")
-@click.option('--no-backups',is_flag=True, help="Do not set up automatic periodic backups for all sites on this bench")
-@click.option('--skip-redis-config-generation', is_flag=True, help="Skip redis config generation if already specifying the common-site-config file")
-@click.option('--skip-assets',is_flag=True, default=False, help="Do not build assets")
-@click.option('--verbose',is_flag=True, help="Verbose output during install")
-def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups, clone_from, verbose, skip_redis_config_generation, clone_without_update, ignore_exist=False, skip_assets=False, python='python3'):
+@click.command("init", help="Initialize a new bench instance in the specified path")
+@click.argument("path")
+@click.option(
+	"--version",
+	"--frappe-branch",
+	"frappe_branch",
+	default=None,
+	help="Clone a particular branch of frappe",
+)
+@click.option(
+	"--ignore-exist", is_flag=True, default=False, help="Ignore if Bench instance exists."
+)
+@click.option(
+	"--python", type=str, default="python3", help="Path to Python Executable."
+)
+@click.option(
+	"--apps_path", default=None, help="path to json files with apps to install after init"
+)
+@click.option("--frappe-path", default=None, help="path to frappe repo")
+@click.option("--clone-from", default=None, help="copy repos from path")
+@click.option(
+	"--clone-without-update", is_flag=True, help="copy repos from path without update"
+)
+@click.option("--no-procfile", is_flag=True, help="Do not create a Procfile")
+@click.option(
+	"--no-backups",
+	is_flag=True,
+	help="Do not set up automatic periodic backups for all sites on this bench",
+)
+@click.option(
+	"--skip-redis-config-generation",
+	is_flag=True,
+	help="Skip redis config generation if already specifying the common-site-config file",
+)
+@click.option("--skip-assets", is_flag=True, default=False, help="Do not build assets")
+@click.option(
+	"--install-app", help="Install particular app after initialization"
+)
+@click.option("--verbose", is_flag=True, help="Verbose output during install")
+def init(
+	path,
+	apps_path,
+	frappe_path,
+	frappe_branch,
+	no_procfile,
+	no_backups,
+	clone_from,
+	verbose,
+	skip_redis_config_generation,
+	clone_without_update,
+	ignore_exist=False,
+	skip_assets=False,
+	python="python3",
+	install_app=None,
+):
 	import os
+
 	from bench.utils import log
 	from bench.utils.system import init
 
@@ -33,6 +74,7 @@ def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups, c
 			no_backups=no_backups,
 			frappe_path=frappe_path,
 			frappe_branch=frappe_branch,
+			install_app=install_app,
 			clone_from=clone_from,
 			skip_redis_config_generation=skip_redis_config_generation,
 			clone_without_update=clone_without_update,
@@ -43,15 +85,19 @@ def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups, c
 		log(f'Bench {path} initialized', level=1)
 	except SystemExit:
 		raise
-	except Exception as e:
-		import shutil, time
+	except Exception:
+		import shutil
+		import time
+
 		from bench.utils import get_traceback
+
 		# add a sleep here so that the traceback of other processes doesnt overlap with the prompts
 		time.sleep(1)
 		print(get_traceback())
+
 		log(f"There was a problem while creating {path}", level=2)
 		if click.confirm("Do you want to rollback these changes?", abort=True):
-			print(f'Rolling back Bench "{path}"')
+			log(f'Rolling back Bench "{path}"')
 			if os.path.exists(path):
 				shutil.rmtree(path)
 
