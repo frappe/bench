@@ -319,7 +319,6 @@ def get_app(
 		os.chdir(bench_path)
 		bench_setup = True
 
-
 	if bench_setup and bench_cli.from_command_line and bench_cli.dynamic_feed:
 		_bench.LOG_BUFFER.append({
 			"message": f"Fetching App {repo_name}",

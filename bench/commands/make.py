@@ -82,7 +82,7 @@ def init(
 			python=python,
 			verbose=verbose,
 		)
-		log(f'Bench {path} initialized', level=1)
+		log(f"Bench {path} initialized", level=1)
 	except SystemExit:
 		raise
 	except Exception:
@@ -102,8 +102,8 @@ def init(
 				shutil.rmtree(path)
 
 
-@click.command('drop')
-@click.argument('path')
+@click.command("drop")
+@click.argument("path")
 def drop(path):
 	from bench.bench import Bench
 	from bench.exceptions import BenchNotFoundError, ValidationError
@@ -118,8 +118,7 @@ def drop(path):
 
 	bench.drop()
 
-	print('Bench dropped')
-
+	print("Bench dropped")
 
 
 @click.command(
@@ -149,42 +148,57 @@ def get_app(
 	)
 
 
-@click.command('new-app', help='Create a new Frappe application under apps folder')
-@click.argument('app-name')
+@click.command("new-app", help="Create a new Frappe application under apps folder")
+@click.argument("app-name")
 def new_app(app_name):
 	from bench.app import new_app
+
 	new_app(app_name)
 
 
-@click.command(['remove', 'rm', 'remove-app'], help='Completely remove app from bench and re-build assets if not installed on any site')
-@click.argument('app-name')
+@click.command(
+	["remove", "rm", "remove-app"],
+	help=(
+		"Completely remove app from bench and re-build assets if not installed on any site"
+	),
+)
+@click.argument("app-name")
 def remove_app(app_name):
 	from bench.bench import Bench
+
 	bench = Bench(".")
 	bench.uninstall(app_name)
 
 
-@click.command('exclude-app', help='Exclude app from updating')
-@click.argument('app_name')
+@click.command("exclude-app", help="Exclude app from updating")
+@click.argument("app_name")
 def exclude_app_for_update(app_name):
 	from bench.app import add_to_excluded_apps_txt
+
 	add_to_excluded_apps_txt(app_name)
 
 
-@click.command('include-app', help='Include app for updating')
-@click.argument('app_name')
+@click.command("include-app", help="Include app for updating")
+@click.argument("app_name")
 def include_app_for_update(app_name):
 	"Include app from updating"
 	from bench.app import remove_from_excluded_apps_txt
+
 	remove_from_excluded_apps_txt(app_name)
 
 
-@click.command('pip', context_settings={"ignore_unknown_options": True, "help_option_names": []}, help="For pip help use `bench pip help [COMMAND]` or `bench pip [COMMAND] -h`")
-@click.argument('args', nargs=-1)
+@click.command(
+	"pip",
+	context_settings={"ignore_unknown_options": True, "help_option_names": []},
+	help="For pip help use `bench pip help [COMMAND]` or `bench pip [COMMAND] -h`",
+)
+@click.argument("args", nargs=-1)
 @click.pass_context
 def pip(ctx, args):
 	"Run pip commands in bench env"
 	import os
+
 	from bench.utils.bench import get_env_cmd
-	env_py = get_env_cmd('python')
-	os.execv(env_py, (env_py, '-m', 'pip') + args)
+
+	env_py = get_env_cmd("python")
+	os.execv(env_py, (env_py, "-m", "pip") + args)
