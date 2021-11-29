@@ -3,8 +3,10 @@ import os
 import subprocess
 
 # imports - module imports
-from bench.app import get_repo_dir, get_apps, get_remote
+from bench.bench import Bench
+from bench.app import get_repo_dir
 from bench.utils import set_git_remote_url
+from bench.utils.app import get_remote
 
 # imports - third party imports
 import click
@@ -25,7 +27,7 @@ def remote_reset_url(app):
 
 @click.command('remote-urls', help="Show apps remote url")
 def remote_urls():
-	for app in get_apps():
+	for app in Bench(".").apps:
 		repo_dir = get_repo_dir(app)
 
 		if os.path.exists(os.path.join(repo_dir, '.git')):

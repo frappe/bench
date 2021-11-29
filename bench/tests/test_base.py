@@ -10,7 +10,9 @@ import unittest
 
 # imports - module imports
 import bench
-import bench.utils
+from bench.utils import paths_in_bench, exec_cmd
+from bench.utils.system import init
+from bench.bench import Bench
 
 if sys.version_info.major == 2:
 	FRAPPE_BRANCH = "version-12"
@@ -25,15 +27,16 @@ class TestBenchBase(unittest.TestCase):
 	def tearDown(self):
 		for bench_name in self.benches:
 			bench_path = os.path.join(self.benches_path, bench_name)
+			bench = Bench(bench_path)
 			mariadb_password = "travis" if os.environ.get("CI") else getpass.getpass(prompt="Enter MariaDB root Password: ")
-			if os.path.exists(bench_path):
-				sites = bench.utils.get_sites(bench_path=bench_path)
-				for site in sites:
+
+			if bench.exists:
+				for site in bench.sites:
 					subprocess.call(["bench", "drop-site", site, "--force", "--no-backup", "--root-password", mariadb_password], cwd=bench_path)
 				shutil.rmtree(bench_path, ignore_errors=True)
 
 	def assert_folders(self, bench_name):
-		for folder in bench.utils.folders_in_bench:
+		for folder in paths_in_bench:
 			self.assert_exists(bench_name, folder)
 		self.assert_exists(bench_name, "apps", "frappe")
 
@@ -81,7 +84,7 @@ class TestBenchBase(unittest.TestCase):
 		frappe_tmp_path = "/tmp/frappe"
 
 		if not os.path.exists(frappe_tmp_path):
-			bench.utils.exec_cmd(f"git clone https://github.com/frappe/frappe -b {FRAPPE_BRANCH} --depth 1 --origin upstream {frappe_tmp_path}")
+			exec_cmd(f"git clone https://github.com/frappe/frappe -b {FRAPPE_BRANCH} --depth 1 --origin upstream {frappe_tmp_path}")
 
 		kwargs.update(dict(
 			python=sys.executable,
@@ -91,8 +94,8 @@ class TestBenchBase(unittest.TestCase):
 		))
 
 		if not os.path.exists(os.path.join(self.benches_path, bench_name)):
-			bench.utils.init(bench_name, **kwargs)
-			bench.utils.exec_cmd("git remote set-url upstream https://github.com/frappe/frappe", cwd=os.path.join(self.benches_path, bench_name, "apps", "frappe"))
+			init(bench_name, **kwargs)
+			exec_cmd("git remote set-url upstream https://github.com/frappe/frappe", cwd=os.path.join(self.benches_path, bench_name, "apps", "frappe"))
 
 	def file_exists(self, path):
 		if os.environ.get("CI"):

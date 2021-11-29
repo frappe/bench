@@ -17,7 +17,7 @@ default_config = {
 	'live_reload': True
 }
 
-def make_config(bench_path):
+def setup_config(bench_path):
 	make_pid_folder(bench_path)
 	bench_config = get_config(bench_path)
 	bench_config.update(default_config)
