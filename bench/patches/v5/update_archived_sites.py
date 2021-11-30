@@ -28,6 +28,9 @@ def execute(bench_path):
 	old_directory = Path(bench_path, "archived_sites")
 	new_directory = Path(bench_path, "archived", "sites")
 
+	if not old_directory.exists():
+		return False
+
 	if old_directory.is_symlink():
 		return True
 
