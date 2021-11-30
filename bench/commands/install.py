@@ -1,5 +1,6 @@
 # imports - module imports
-from bench.utils import run_playbook, setup_sudoers
+from bench.utils import run_playbook
+from bench.utils.system import setup_sudoers
 
 # imports - third party imports
 import click

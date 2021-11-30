@@ -8,12 +8,15 @@ import unittest
 import git
 
 # imports - module imports
-import bench
-import bench.cli
-import bench.utils
+from bench.utils import exec_cmd
 from bench.release import get_bumped_version
 from bench.tests.test_base import FRAPPE_BRANCH, TestBenchBase
 
+
+# changed from frappe_theme because it wasn't maintained and incompatible,
+# chat app & wiki was breaking too. hopefully frappe_docs will be maintained
+# for longer since docs.erpnext.com is powered by it ;)
+TEST_FRAPPE_APP = "frappe_docs"
 
 class TestBenchInit(TestBenchBase):
 	def test_semantic_version(self):
@@ -78,7 +81,7 @@ class TestBenchInit(TestBenchBase):
 		site_config_path = os.path.join(site_path, "site_config.json")
 
 		self.init_bench(bench_name)
-		bench.utils.exec_cmd("bench setup requirements --node", cwd=bench_path)
+		exec_cmd("bench setup requirements --node", cwd=bench_path)
 		self.new_site(site_name, bench_name)
 
 		self.assertTrue(os.path.exists(site_path))
@@ -97,9 +100,9 @@ class TestBenchInit(TestBenchBase):
 	def test_get_app(self):
 		self.init_bench("test-bench")
 		bench_path = os.path.join(self.benches_path, "test-bench")
-		bench.utils.exec_cmd("bench get-app frappe_theme", cwd=bench_path)
-		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", "frappe_theme")))
-		app_installed_in_env = "frappe_theme" in subprocess.check_output(["bench", "pip", "freeze"], cwd=bench_path).decode('utf8')
+		exec_cmd(f"bench get-app {TEST_FRAPPE_APP}", cwd=bench_path)
+		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", TEST_FRAPPE_APP)))
+		app_installed_in_env = TEST_FRAPPE_APP in subprocess.check_output(["bench", "pip", "freeze"], cwd=bench_path).decode('utf8')
 		self.assertTrue(app_installed_in_env)
 
 
@@ -109,38 +112,38 @@ class TestBenchInit(TestBenchBase):
 		bench_path = os.path.join(self.benches_path, "test-bench")
 
 		self.init_bench(bench_name)
-		bench.utils.exec_cmd("bench setup requirements --node", cwd=bench_path)
-		bench.utils.exec_cmd("bench build", cwd=bench_path)
-		bench.utils.exec_cmd("bench get-app frappe_theme --branch master", cwd=bench_path)
+		exec_cmd("bench setup requirements --node", cwd=bench_path)
+		exec_cmd("bench build", cwd=bench_path)
+		exec_cmd(f"bench get-app {TEST_FRAPPE_APP} --branch master", cwd=bench_path)
 
-		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", "frappe_theme")))
+		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", TEST_FRAPPE_APP)))
 
 		# check if app is installed
-		app_installed_in_env = "frappe_theme" in subprocess.check_output(["bench", "pip", "freeze"], cwd=bench_path).decode('utf8')
+		app_installed_in_env = TEST_FRAPPE_APP in subprocess.check_output(["bench", "pip", "freeze"], cwd=bench_path).decode('utf8')
 		self.assertTrue(app_installed_in_env)
 
 		# create and install app on site
 		self.new_site(site_name, bench_name)
-		installed_app = not bench.utils.exec_cmd(f"bench --site {site_name} install-app frappe_theme", cwd=bench_path)
+		installed_app = not exec_cmd(f"bench --site {site_name} install-app {TEST_FRAPPE_APP}", cwd=bench_path)
 
 		app_installed_on_site = subprocess.check_output(["bench", "--site", site_name, "list-apps"], cwd=bench_path).decode('utf8')
 
 		if installed_app:
-			self.assertTrue("frappe_theme" in app_installed_on_site)
+			self.assertTrue(TEST_FRAPPE_APP in app_installed_on_site)
 
 
 	def test_remove_app(self):
 		self.init_bench("test-bench")
 		bench_path = os.path.join(self.benches_path, "test-bench")
 
-		bench.utils.exec_cmd("bench setup requirements --node", cwd=bench_path)
-		bench.utils.exec_cmd("bench get-app frappe_theme --branch master --overwrite", cwd=bench_path)
-		bench.utils.exec_cmd("bench remove-app frappe_theme", cwd=bench_path)
+		exec_cmd("bench setup requirements --node", cwd=bench_path)
+		exec_cmd(f"bench get-app {TEST_FRAPPE_APP} --branch master --overwrite", cwd=bench_path)
+		exec_cmd(f"bench remove-app {TEST_FRAPPE_APP}", cwd=bench_path)
 
 		with open(os.path.join(bench_path, "sites", "apps.txt")) as f:
-			self.assertFalse("frappe_theme" in f.read())
-		self.assertFalse("frappe_theme" in subprocess.check_output(["bench", "pip", "freeze"], cwd=bench_path).decode('utf8'))
-		self.assertFalse(os.path.exists(os.path.join(bench_path, "apps", "frappe_theme")))
+			self.assertFalse(TEST_FRAPPE_APP in f.read())
+		self.assertFalse(TEST_FRAPPE_APP in subprocess.check_output(["bench", "pip", "freeze"], cwd=bench_path).decode('utf8'))
+		self.assertFalse(os.path.exists(os.path.join(bench_path, "apps", TEST_FRAPPE_APP)))
 
 
 	def test_switch_to_branch(self):
@@ -148,12 +151,12 @@ class TestBenchInit(TestBenchBase):
 		bench_path = os.path.join(self.benches_path, "test-bench")
 		app_path = os.path.join(bench_path, "apps", "frappe")
 
-		successful_switch = not bench.utils.exec_cmd("bench switch-to-branch version-13 frappe --upgrade", cwd=bench_path)
+		successful_switch = not exec_cmd("bench switch-to-branch version-13 frappe --upgrade", cwd=bench_path)
 		app_branch_after_switch = str(git.Repo(path=app_path).active_branch)
 		if successful_switch:
 			self.assertEqual("version-13", app_branch_after_switch)
 
-		successful_switch = not bench.utils.exec_cmd("bench switch-to-branch develop frappe --upgrade", cwd=bench_path)
+		successful_switch = not exec_cmd("bench switch-to-branch develop frappe --upgrade", cwd=bench_path)
 		app_branch_after_second_switch = str(git.Repo(path=app_path).active_branch)
 		if successful_switch:
 			self.assertEqual("develop", app_branch_after_second_switch)

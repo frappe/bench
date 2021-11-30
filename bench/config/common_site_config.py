@@ -13,10 +13,11 @@ default_config = {
 	'frappe_user': getpass.getuser(),
 	'shallow_clone': True,
 	'background_workers': 1,
-	'use_redis_auth': False
+	'use_redis_auth': False,
+	'live_reload': True
 }
 
-def make_config(bench_path):
+def setup_config(bench_path):
 	make_pid_folder(bench_path)
 	bench_config = get_config(bench_path)
 	bench_config.update(default_config)

@@ -1,7 +1,7 @@
 import click, os
 from bench.config.procfile import setup_procfile
 from bench.config.supervisor import generate_supervisor_config
-from bench.app import get_current_frappe_version, get_current_branch
+from bench.utils.app import get_current_frappe_version, get_current_branch
 
 def execute(bench_path):
 	frappe_branch = get_current_branch('frappe', bench_path)
