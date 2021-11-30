@@ -58,7 +58,7 @@ class AppMeta:
 		class Healthcare(AppConfig):
 			dependencies = [{"frappe/erpnext": "~13.17.0"}]
 		"""
-		self.name = name
+		self.name = name.rstrip('/')
 		self.remote_server = "github.com"
 		self.to_clone = to_clone
 		self.on_disk = False
