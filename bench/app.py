@@ -355,12 +355,27 @@ def get_app(
 		app.install(verbose=verbose, skip_assets=skip_assets)
 
 
-def new_app(app, bench_path="."):
+def new_app(app, no_git=None, bench_path="."):
+	if bench.FRAPPE_VERSION in (0, None):
+		raise NotInBenchDirectoryError(
+			f"{os.path.realpath(bench_path)} is not a valid bench directory."
+		)
+
 	# For backwards compatibility
 	app = app.lower().replace(" ", "_").replace("-", "_")
-	logger.log(f"creating new app {app}")
 	apps = os.path.abspath(os.path.join(bench_path, "apps"))
-	run_frappe_cmd("make-app", apps, app, bench_path=bench_path)
+	args = ["make-app", apps, app]
+	if no_git:
+		if bench.FRAPPE_VERSION < 14:
+			click.secho(
+				"Frappe v14 or greater is needed for '--no-git' flag",
+				fg="red"
+			)
+			return
+		args.append(no_git)
+
+	logger.log(f"creating new app {app}")
+	run_frappe_cmd(*args, bench_path=bench_path)
 	install_app(app, bench_path=bench_path)
 
 
