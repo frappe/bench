@@ -149,11 +149,17 @@ def get_app(
 
 
 @click.command("new-app", help="Create a new Frappe application under apps folder")
+@click.option(
+	"--no-git",
+	is_flag=True,
+	flag_value="--no-git",
+	help="Do not initialize git repository for the app (available in Frappe v14+)"
+)
 @click.argument("app-name")
-def new_app(app_name):
+def new_app(app_name, no_git=None):
 	from bench.app import new_app
 
-	new_app(app_name)
+	new_app(app_name, no_git)
 
 
 @click.command(
