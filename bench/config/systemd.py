@@ -8,7 +8,8 @@ import click
 # imports - module imports
 import bench
 from bench.app import use_rq
-from bench.config.common_site_config import get_config, get_gunicorn_workers, update_config
+from bench.bench import Bench
+from bench.config.common_site_config import get_gunicorn_workers, update_config
 from bench.utils import exec_cmd, which, get_bench_name
 
 
@@ -19,7 +20,7 @@ def generate_systemd_config(bench_path, user=None, yes=False,
 	if not user:
 		user = getpass.getuser()
 
-	config = get_config(bench_path=bench_path)
+	config = Bench(bench_path).conf
 
 	bench_dir = os.path.abspath(bench_path)
 	bench_name = get_bench_name(bench_path)

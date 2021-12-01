@@ -5,6 +5,24 @@
 
 Bench is a command-line utility that helps you to install, update, and manage multiple sites for Frappe/ERPNext applications on [*nix systems](https://en.wikipedia.org/wiki/Unix-like) for development and production.
 
+<div align="center">
+	<a target="_blank" href="https://www.python.org/downloads/" title="Python version">
+		<img src="https://img.shields.io/badge/python-%3E=_3.6-green.svg">
+	</a>
+	<a target="_blank" href="https://app.travis-ci.com/github/frappe/bench" title="CI Status">
+		<img src="https://app.travis-ci.com/frappe/bench.svg?branch=develop">
+	</a>
+	<a target="_blank">
+		<img src="https://img.shields.io/badge/platform-linux%20%7C%20osx-blue">
+	</a>
+	<a target="_blank" href="https://app.fossa.com/projects/git%2Bgithub.com%2Ffrappe%2Fbench?ref=badge_shield" title="FOSSA Status">
+		<img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Ffrappe%2Fbench.svg?type=shield">
+	</a>
+	<a target="_blank" href="#LICENSE" title="License: GPLv3">
+		<img src="https://img.shields.io/badge/License-GPLv3-blue.svg">
+	</a>
+</div>
+
 ## Table of Contents
 
  - [Installation](#installation)
@@ -17,6 +35,7 @@ Bench is a command-line utility that helps you to install, update, and manage mu
  - [Guides](#guides)
  - [Resources](#resources)
  - [Development](#development)
+ - [Releases](#releases)
  - [License](#license)
 
 
@@ -235,6 +254,27 @@ $ pip3 install -U frappe-bench
 ```
 
 To confirm the switch, check the output of `bench src`. It should change from something like `$HOME/bench-repo` to `/usr/local/lib/python3.6/dist-packages` and stop the editable install warnings from getting triggered at every command.
+
+
+## Releases
+
+Bench's version information can be accessed via `bench.VERSION` in the package's __init__.py file. Eversince the v5.0 release, we've started publishing releases on GitHub, and PyPI.
+
+GitHub: https://github.com/frappe/bench/releases
+
+PyPI: https://pypi.org/project/frappe-bench
+
+
+From v5.3.0, we partially automated the release process using [@semantic-release](.github/workflows/release.yml). Under this new pipeline, we do the following steps to make a release:
+
+1. Merge `develop` into the `staging` branch
+1. Merge `staging` into the latest stable branch, which is `v5.x` at this point.
+
+This triggers a GitHub Action job that generates a bump commit, drafts and generates a GitHub release, builds a Python package and publishes it to PyPI.
+
+The intermediate `staging` branch exists to mediate the `bench.VERSION` conflict that would arise while merging `develop` and stable. On develop, the version has to be manually updated (for major release changes). The version tag plays a role in deciding when checks have to be made for new Bench releases.
+
+> Note: We may want to kill the convention of separate branches for different version releases of Bench. We don't need to maintain this the way we do for Frappe & ERPNext. A single branch named `stable` would sustain.
 
 ## License
 

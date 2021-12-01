@@ -10,7 +10,7 @@ import click
 
 # imports - module imports
 import bench
-from bench.app import get_apps
+from bench.bench import Bench
 from bench.commands import bench_command
 from bench.config.common_site_config import get_config
 from bench.utils import (
@@ -20,39 +20,50 @@ from bench.utils import (
 	find_parent_bench,
 	generate_command_cache,
 	get_cmd_output,
-	get_env_cmd,
-	get_frappe,
 	is_bench_directory,
 	is_dist_editable,
 	is_root,
 	log,
 	setup_logging,
 )
+from bench.utils.bench import get_env_cmd
 
-from_command_line = False
+# these variables are used to show dynamic outputs on the terminal
+dynamic_feed = False
+verbose = False
+is_envvar_warn_set = None
+from_command_line = False # set when commands are executed via the CLI
+bench.LOG_BUFFER = []
+
 change_uid_msg = "You should not run this command as root"
 src = os.path.dirname(__file__)
 
 
 def cli():
-	global from_command_line
+	global from_command_line, bench_config, is_envvar_warn_set
+
 	from_command_line = True
 	command = " ".join(sys.argv)
+	argv = set(sys.argv)
+	is_envvar_warn_set = not (os.environ.get("BENCH_DEVELOPER") or os.environ.get("CI"))
+	is_cli_command = len(sys.argv) > 1 and not argv.intersection({"src", "--version"})
 
 	change_working_directory()
 	logger = setup_logging()
 	logger.info(command)
 
-	if len(sys.argv) > 1 and sys.argv[1] not in ("src",):
+	bench_config = get_config(".")
+
+	if is_cli_command:
 		check_uid()
 		change_uid()
 		change_dir()
 
 	if (
-		is_dist_editable(bench.PROJECT_NAME)
-		and len(sys.argv) > 1
-		and sys.argv[1] != "src"
-		and not get_config(".").get("developer_mode")
+		is_envvar_warn_set
+		and is_cli_command
+		and is_dist_editable(bench.PROJECT_NAME)
+		and not bench_config.get("developer_mode")
 	):
 		log(
 			"bench is installed in editable mode!\n\nThis is not the recommended mode"
@@ -61,24 +72,23 @@ def cli():
 			level=3,
 		)
 
+	in_bench = is_bench_directory()
+
 	if (
-		not is_bench_directory()
-		and not cmd_requires_root()
+		not in_bench
 		and len(sys.argv) > 1
-		and sys.argv[1] not in ("init", "find", "src")
+		and not argv.intersection({"init", "find", "src", "drop", "get", "get-app", "--version"})
+		and not cmd_requires_root()
 	):
 		log("Command not being executed in bench directory", level=3)
 
-	if len(sys.argv) > 2 and sys.argv[1] == "frappe":
-		old_frappe_cli()
-
-	elif len(sys.argv) > 1:
+	if in_bench and len(sys.argv) > 1:
 		if sys.argv[1] == "--help":
 			print(click.Context(bench_command).get_help())
 			print(get_frappe_help())
 			return
 
-		if sys.argv[1] in ["--site", "--verbose", "--force", "--profile"]:
+		if sys.argv[1] in ["--site", "--force", "--profile"]:
 			frappe_cmd()
 
 		if sys.argv[1] in get_cached_frappe_commands():
@@ -87,26 +97,24 @@ def cli():
 		if sys.argv[1] in get_frappe_commands():
 			frappe_cmd()
 
-		if sys.argv[1] in get_apps():
+		if sys.argv[1] in Bench(".").apps:
 			app_cmd()
 
-	if not (len(sys.argv) > 1 and sys.argv[1] == "src"):
+	if not is_cli_command:
 		atexit.register(check_latest_version)
 
 	try:
 		bench_command()
 	except BaseException as e:
-		return_code = getattr(e, "code", 0)
+		return_code = getattr(e, "code", 1)
+
+		if isinstance(e, Exception):
+			click.secho(f"ERROR: {e}", fg="red")
+
 		if return_code:
 			logger.warning(f"{command} executed with exit code {return_code}")
-		if isinstance(e, Exception):
-			raise e
-	finally:
-		try:
-			return_code
-		except NameError:
-			return_code = 0
-		sys.exit(return_code)
+
+		raise e
 
 
 def check_uid():
@@ -152,19 +160,13 @@ def change_dir():
 
 def change_uid():
 	if is_root() and not cmd_requires_root():
-		frappe_user = get_config(".").get("frappe_user")
+		frappe_user = bench_config.get("frappe_user")
 		if frappe_user:
 			drop_privileges(uid_name=frappe_user, gid_name=frappe_user)
 			os.environ["HOME"] = pwd.getpwnam(frappe_user).pw_dir
 		else:
 			log(change_uid_msg, level=3)
 			sys.exit(1)
-
-
-def old_frappe_cli(bench_path="."):
-	f = get_frappe(bench_path=bench_path)
-	os.chdir(os.path.join(bench_path, "sites"))
-	os.execv(f, [f] + sys.argv[2:])
 
 
 def app_cmd(bench_path="."):
@@ -209,6 +211,8 @@ def change_working_directory():
 	"""Allows bench commands to be run from anywhere inside a bench directory"""
 	cur_dir = os.path.abspath(".")
 	bench_path = find_parent_bench(cur_dir)
+	bench.current_path = os.getcwd()
+	bench.updated_path = bench_path
 
 	if bench_path:
 		os.chdir(bench_path)

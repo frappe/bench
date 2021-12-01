@@ -1,5 +1,5 @@
 # imports - module imports
-from bench.config.common_site_config import update_config, get_config, put_config
+from bench.config.common_site_config import update_config, put_config
 
 # imports - third party imports
 import click
@@ -68,7 +68,8 @@ def set_common_config(configs):
 @click.command('remove-common-config', help='Remove specific keys from current bench\'s common config')
 @click.argument('keys', nargs=-1)
 def remove_common_config(keys):
-	common_site_config = get_config('.')
+	from bench.bench import Bench
+	common_site_config = Bench('.').conf
 	for key in keys:
 		if key in common_site_config:
 			del common_site_config[key]
