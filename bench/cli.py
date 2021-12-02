@@ -51,6 +51,7 @@ def cli():
 	change_working_directory()
 	logger = setup_logging()
 	logger.info(command)
+	setup_clear_cache()
 
 	bench_config = get_config(".")
 
@@ -216,3 +217,14 @@ def change_working_directory():
 
 	if bench_path:
 		os.chdir(bench_path)
+
+
+def setup_clear_cache():
+	from copy import copy
+	f = copy(os.chdir)
+
+	def _chdir(*args, **kwargs):
+		Bench.cache_clear()
+		return f(*args, **kwargs)
+
+	os.chdir = _chdir
