@@ -26,10 +26,7 @@ from bench.utils import (
 )
 from bench.utils.bench import (
 	build_assets,
-	get_env_cmd,
 	install_python_dev_dependencies,
-	restart_supervisor_processes,
-	restart_systemd_processes,
 )
 from bench.utils.render import step
 
@@ -417,10 +414,7 @@ def install_app(
 		build_assets(bench_path=bench_path, app=app)
 
 	if restart_bench:
-		if conf.get("restart_supervisor_on_update"):
-			restart_supervisor_processes(bench_path=bench_path)
-		if conf.get("restart_systemd_on_update"):
-			restart_systemd_processes(bench_path=bench_path)
+		bench.reload()
 
 
 def pull_apps(apps=None, bench_path=".", reset=False):
