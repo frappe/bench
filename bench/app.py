@@ -84,6 +84,8 @@ class AppMeta:
 
 		# fetch meta for repo from remote git server - traditional get-app url
 		elif is_git_url(self.name):
+			if self.name.startswith("git@") or self.name.startswith("ssh://"):
+				self.use_ssh = True
 			self._setup_details_from_git_url()
 
 		# fetch meta from new styled name tags & first party apps on github
