@@ -20,8 +20,8 @@ from bench.utils import (
 	fetch_details_from_tag,
 	get_available_folder_name,
 	is_bench_directory,
-	is_git_url,
 	log,
+	parse_git_url,
 	run_frappe_cmd,
 )
 from bench.utils.bench import (
@@ -56,17 +56,27 @@ class AppMeta:
 			dependencies = [{"frappe/erpnext": "~13.17.0"}]
 		"""
 		self.name = name.rstrip('/')
-		self.remote_server = "github.com"
 		self.to_clone = to_clone
+		# NOTE: keeping this here in lieu of:
+		# https://github.com/frappe/bench/pull/1233#discussion_r766489037
+		self.remote_git_host = "github.com"
 		self.on_disk = False
-		self.use_ssh = False
+		self.from_name_tag = False
 		self.from_apps = False
 		self.branch = branch
 		self.setup_details()
 
 	def setup_details(self):
+
+		# fetch meta for repo from git url - traditional get-app url
+		parsed_git_obj = parse_git_url(self.name)
+		if parsed_git_obj:
+			self.tag = self.branch
+			self.org = parsed_git_obj.owner
+			self.repo = parsed_git_obj.name
+
 		# fetch meta from installed apps
-		if (
+		elif (
 			not self.to_clone
 			and hasattr(self, "bench")
 			and os.path.exists(os.path.join(self.bench.name, "apps", self.name))
@@ -78,12 +88,6 @@ class AppMeta:
 		elif os.path.exists(self.name):
 			self.on_disk = True
 			self._setup_details_from_mounted_disk()
-
-		# fetch meta for repo from remote git server - traditional get-app url
-		elif is_git_url(self.name):
-			if self.name.startswith("git@") or self.name.startswith("ssh://"):
-				self.use_ssh = True
-			self._setup_details_from_git_url()
 
 		# fetch meta from new styled name tags & first party apps on github
 		else:
@@ -123,16 +127,14 @@ class AppMeta:
 		if self.on_disk:
 			return os.path.abspath(self.name)
 
-		if self.use_ssh:
-			return self.get_ssh_url()
+		if self.from_name_tag:
+			return self.get_http_url()
 
-		return self.get_http_url()
+		# return the git url when it's valid
+		return self.name
 
 	def get_http_url(self):
-		return f"https://{self.remote_server}/{self.org}/{self.repo}.git"
-
-	def get_ssh_url(self):
-		return f"git@{self.remote_server}:{self.org}/{self.repo}.git"
+		return f"https://{self.remote_git_host}/{self.org}/{self.repo}.git"
 
 
 @functools.lru_cache(maxsize=None)

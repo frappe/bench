@@ -11,6 +11,7 @@ from typing import List, Tuple
 
 # imports - third party imports
 import click
+import giturlparse
 
 # imports - module imports
 from bench import PROJECT_NAME, VERSION
@@ -420,10 +421,14 @@ def fetch_details_from_tag(_tag: str) -> Tuple[str, str, str]:
 	return org, repo, tag
 
 
-def is_git_url(url: str) -> bool:
-	# modified to allow without the tailing .git from https://github.com/jonschlinkert/is-git-url.git
-	pattern = r"(?:git|ssh|https?|\w*@[-\w.]+):(\/\/)?(.*?)(\.git)?(\/?|\#[-\d\w._]+?)$"
-	return bool(re.match(pattern, url))
+def parse_git_url(url: str):
+	try:
+		parsed_obj = giturlparse.parse(url)
+	except Exception:
+		# the git url is not parsable
+		return False
+
+	return parsed_obj
 
 
 def drop_privileges(uid_name="nobody", gid_name="nogroup"):

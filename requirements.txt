@@ -1,5 +1,6 @@
 Click
 GitPython~=2.1.15
+git-url-parse~=1.2.2
 honcho
 Jinja2~=2.11.3
 python-crontab~=2.4.0
