@@ -401,11 +401,11 @@ def find_org(org_repo):
 	raise InvalidRemoteException
 
 
-def fetch_details_from_tag(_tag: str) -> Tuple[str, str, str]:
-	if not _tag:
-		raise Exception("Tag is not provided")
+def fetch_details_from_partial_url(partial_url: str) -> Tuple[str, str, str]:
+	if not partial_url:
+		raise Exception("Partial url is not provided")
 
-	app_tag = _tag.split("@")
+	app_tag = partial_url.split("@")
 	org_repo = app_tag[0].split("/")
 
 	try:

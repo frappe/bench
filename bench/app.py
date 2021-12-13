@@ -17,7 +17,7 @@ import click
 import bench
 from bench.exceptions import NotInBenchDirectoryError
 from bench.utils import (
-	fetch_details_from_tag,
+	fetch_details_from_partial_url,
 	get_available_folder_name,
 	is_bench_directory,
 	log,
@@ -39,7 +39,14 @@ if typing.TYPE_CHECKING:
 
 
 class AppMeta:
-	def __init__(self, name: str, branch: str = None, to_clone: bool = True):
+	def __init__(
+		self,
+		name: str,
+		branch: str = None,
+		git_host: str = None,
+		to_clone: bool = True,
+		use_ssh: bool = False
+	):
 		"""
 		name (str): This could look something like
 			1. https://github.com/frappe/healthcare.git
@@ -58,12 +65,14 @@ class AppMeta:
 		"""
 		self.name = name.rstrip('/')
 		self.to_clone = to_clone
-		# NOTE: keeping this here in lieu of:
-		# https://github.com/frappe/bench/pull/1233#discussion_r766489037
-		self.remote_git_host = "github.com"
 		self.on_disk = False
-		self.from_name_tag = False
 		self.from_apps = False
+
+		# for partial url format
+		self.is_partial_url = False
+		self.git_host = git_host
+		self.use_ssh = use_ssh
+
 		self.branch = branch
 		self.setup_details()
 
@@ -91,16 +100,24 @@ class AppMeta:
 			self.org = parsed_git_obj.owner
 			self.repo = parsed_git_obj.name
 
-		# fetch meta from new styled name tags & first party apps on github
+		# fetch meta from new styled partial urls & first party apps on github
 		else:
-			self._setup_details_from_name_tag()
+			self._setup_details_from_partial_url()
 
 	def _setup_details_from_mounted_disk(self):
 		self.org, self.repo, self.tag = os.path.split(self.name)[-2:] + (self.branch,)
 
-	def _setup_details_from_name_tag(self):
-		self.org, self.repo, self.tag = fetch_details_from_tag(self.name)
+	def _setup_details_from_partial_url(self):
+		self.org, self.repo, self.tag = fetch_details_from_partial_url(self.name)
+
+		if self.tag and self.branch:
+			click.secho(
+				"Ignoring the branch provided with `--branch` option",
+				fg="bright_yellow"
+			)
+
 		self.tag = self.tag or self.branch
+		self.is_partial_url = True
 
 	def _setup_details_from_installed_apps(self):
 		self.org, self.repo, self.tag = os.path.split(
@@ -129,15 +146,20 @@ class AppMeta:
 		if self.on_disk:
 			return os.path.abspath(self.name)
 
-		if self.from_name_tag:
+		if self.is_partial_url:
+			if self.use_ssh:
+				return self.get_ssh_url()
+
 			return self.get_http_url()
 
-		# return the git url when it's valid
+		# return the git url as is, when it's valid
 		return self.name
 
 	def get_http_url(self):
-		return f"https://{self.remote_git_host}/{self.org}/{self.repo}.git"
+		return f"https://{self.git_host}.com/{self.org}/{self.repo}.git"
 
+	def get_ssh_url(self):
+		return f"git@{self.git_host}.com:{self.org}/{self.repo}.git"
 
 @functools.lru_cache(maxsize=None)
 class App(AppMeta):
@@ -288,10 +310,12 @@ def get_app(
 	git_url,
 	branch=None,
 	bench_path=".",
+	git_host="github",
 	skip_assets=False,
 	verbose=False,
 	overwrite=False,
 	init_bench=False,
+	use_ssh=False
 ):
 	"""bench get-app clones a Frappe App from remote (GitHub or any other git server),
 	and installs it on the current bench. This also resolves dependencies based on the
@@ -305,7 +329,9 @@ def get_app(
 	import bench.cli as bench_cli
 
 	bench = Bench(bench_path)
-	app = App(git_url, branch=branch, bench=bench)
+	app = App(
+		git_url, branch=branch, bench=bench, git_host=git_host, use_ssh=use_ssh
+	)
 	git_url = app.url
 	repo_name = app.repo
 	branch = app.tag

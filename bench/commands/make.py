@@ -133,8 +133,24 @@ def drop(path):
 @click.option(
 	"--init-bench", is_flag=True, default=False, help="Initialize Bench if not in one"
 )
+@click.option(
+	"--use-ssh", is_flag=True, default=False, help="Use SSH for cloning (to be used with partial url format)"
+)
+@click.option(
+	"--git-host",
+	type=click.Choice(["github", "gitlab"], case_sensitive=False),
+	default="github",
+	help="Remote git host from where to fetch the app (to be used with partial url format)"
+)
 def get_app(
-	git_url, branch, name=None, overwrite=False, skip_assets=False, init_bench=False
+	git_url,
+	branch,
+	name=None,
+	git_host=None,
+	overwrite=False,
+	skip_assets=False,
+	init_bench=False,
+	use_ssh=False,
 ):
 	"clone an app from the internet and set it up in your bench"
 	from bench.app import get_app
@@ -145,6 +161,8 @@ def get_app(
 		skip_assets=skip_assets,
 		overwrite=overwrite,
 		init_bench=init_bench,
+		git_host=git_host,
+		use_ssh=use_ssh
 	)
 
 
