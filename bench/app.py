@@ -45,8 +45,9 @@ class AppMeta:
 			1. https://github.com/frappe/healthcare.git
 			2. git@github.com:frappe/healthcare.git
 			3. frappe/healthcare@develop
-			4. healthcare
-			5. healthcare@develop, healthcare@v13.12.1
+			4. frappe/healthcare
+			5. healthcare
+			6. healthcare@develop, healthcare@v13.12.1
 
 		References for Version Identifiers:
 		 * https://www.python.org/dev/peps/pep-0440/#version-specifiers
@@ -67,16 +68,10 @@ class AppMeta:
 		self.setup_details()
 
 	def setup_details(self):
-
-		# fetch meta for repo from git url - traditional get-app url
 		parsed_git_obj = parse_git_url(self.name)
-		if parsed_git_obj:
-			self.tag = self.branch
-			self.org = parsed_git_obj.owner
-			self.repo = parsed_git_obj.name
 
 		# fetch meta from installed apps
-		elif (
+		if (
 			not self.to_clone
 			and hasattr(self, "bench")
 			and os.path.exists(os.path.join(self.bench.name, "apps", self.name))
@@ -88,6 +83,13 @@ class AppMeta:
 		elif os.path.exists(self.name):
 			self.on_disk = True
 			self._setup_details_from_mounted_disk()
+
+		# fetch meta for repo from git url - traditional get-app url
+		# NOTE: Adding a check for owner here for making `organisation/repoository` format work
+		elif parsed_git_obj and parsed_git_obj.owner:
+			self.tag = self.branch
+			self.org = parsed_git_obj.owner
+			self.repo = parsed_git_obj.name
 
 		# fetch meta from new styled name tags & first party apps on github
 		else:
