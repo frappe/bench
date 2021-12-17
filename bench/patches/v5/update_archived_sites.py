@@ -9,7 +9,6 @@ patch and try again later.
 Corresponding changes in frappe/frappe via https://github.com/frappe/frappe/pull/15060
 """
 import os
-import shutil
 from pathlib import Path
 
 import click
