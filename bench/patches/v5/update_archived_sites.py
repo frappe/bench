@@ -40,7 +40,7 @@ def execute(bench_path):
 		os.makedirs(new_directory)
 
 	for archived_site_path in old_directory.glob("*"):
-		shutil.move(str(archived_site_path), str(new_directory))
+		archived_site_path.rename(new_directory)
 
 	click.secho(f"Archived sites are now stored under {new_directory}")
 
