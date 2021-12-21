@@ -1,7 +1,6 @@
 # imports - third party imports
 import click
 
-
 @click.command("init", help="Initialize a new bench instance in the specified path")
 @click.argument("path")
 @click.option(
@@ -60,6 +59,7 @@ def init(
 	import os
 
 	from bench.utils import log
+	from bench.utils.cli import log_config_json
 	from bench.utils.system import init
 
 	if not ignore_exist and os.path.exists(path):
@@ -83,6 +83,7 @@ def init(
 			verbose=verbose,
 		)
 		log(f"Bench {path} initialized", level=1)
+		log_config_json(path)
 	except SystemExit:
 		raise
 	except Exception:
@@ -149,11 +150,17 @@ def get_app(
 
 
 @click.command("new-app", help="Create a new Frappe application under apps folder")
+@click.option(
+	"--no-git",
+	is_flag=True,
+	flag_value="--no-git",
+	help="Do not initialize git repository for the app (available in Frappe v14+)"
+)
 @click.argument("app-name")
-def new_app(app_name):
+def new_app(app_name, no_git=None):
 	from bench.app import new_app
 
-	new_app(app_name)
+	new_app(app_name, no_git)
 
 
 @click.command(

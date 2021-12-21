@@ -131,14 +131,17 @@ class Bench(Base, Validator):
 		run_frappe_cmd("build", bench_path=self.name)
 
 	@step(title="Reloading Bench Processes", success="Bench Processes Reloaded")
-	def reload(self):
+	def reload(self, web=False, supervisor=True, systemd=True):
+		"""If web is True, only web workers are restarted
+		"""
 		conf = self.conf
-		if conf.get("restart_supervisor_on_update"):
-			restart_supervisor_processes(bench_path=self.name)
-		if conf.get("restart_systemd_on_update"):
-			restart_systemd_processes(bench_path=self.name)
+
 		if conf.get("developer_mode"):
-			restart_process_manager(bench_path=self.name)
+			restart_process_manager(bench_path=self.name, web_workers=web)
+		if supervisor and conf.get("restart_supervisor_on_update"):
+			restart_supervisor_processes(bench_path=self.name, web_workers=web)
+		if systemd and conf.get("restart_systemd_on_update"):
+			restart_systemd_processes(bench_path=self.name, web_workers=web)
 
 class BenchApps(MutableSequence):
 	def __init__(self, bench: Bench):

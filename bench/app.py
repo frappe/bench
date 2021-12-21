@@ -26,10 +26,7 @@ from bench.utils import (
 )
 from bench.utils.bench import (
 	build_assets,
-	get_env_cmd,
 	install_python_dev_dependencies,
-	restart_supervisor_processes,
-	restart_systemd_processes,
 )
 from bench.utils.render import step
 
@@ -84,6 +81,8 @@ class AppMeta:
 
 		# fetch meta for repo from remote git server - traditional get-app url
 		elif is_git_url(self.name):
+			if self.name.startswith("git@") or self.name.startswith("ssh://"):
+				self.use_ssh = True
 			self._setup_details_from_git_url()
 
 		# fetch meta from new styled name tags & first party apps on github
@@ -355,12 +354,27 @@ def get_app(
 		app.install(verbose=verbose, skip_assets=skip_assets)
 
 
-def new_app(app, bench_path="."):
+def new_app(app, no_git=None, bench_path="."):
+	if bench.FRAPPE_VERSION in (0, None):
+		raise NotInBenchDirectoryError(
+			f"{os.path.realpath(bench_path)} is not a valid bench directory."
+		)
+
 	# For backwards compatibility
 	app = app.lower().replace(" ", "_").replace("-", "_")
-	logger.log(f"creating new app {app}")
 	apps = os.path.abspath(os.path.join(bench_path, "apps"))
-	run_frappe_cmd("make-app", apps, app, bench_path=bench_path)
+	args = ["make-app", apps, app]
+	if no_git:
+		if bench.FRAPPE_VERSION < 14:
+			click.secho(
+				"Frappe v14 or greater is needed for '--no-git' flag",
+				fg="red"
+			)
+			return
+		args.append(no_git)
+
+	logger.log(f"creating new app {app}")
+	run_frappe_cmd(*args, bench_path=bench_path)
 	install_app(app, bench_path=bench_path)
 
 
@@ -402,10 +416,7 @@ def install_app(
 		build_assets(bench_path=bench_path, app=app)
 
 	if restart_bench:
-		if conf.get("restart_supervisor_on_update"):
-			restart_supervisor_processes(bench_path=bench_path)
-		if conf.get("restart_systemd_on_update"):
-			restart_systemd_processes(bench_path=bench_path)
+		bench.reload()
 
 
 def pull_apps(apps=None, bench_path=".", reset=False):

@@ -25,7 +25,6 @@ setup(
 	classifiers=[
 		"Development Status :: 5 - Production/Stable",
 		"Environment :: Console",
-		"Framework :: Frappe Framework",
 		"License :: OSI Approved :: GNU Affero General Public License v3",
 		"Natural Language :: English",
 		"Operating System :: MacOS",

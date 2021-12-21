@@ -27,6 +27,7 @@ from bench.utils import (
 	setup_logging,
 )
 from bench.utils.bench import get_env_cmd
+from bench.utils.cli import is_config_changed
 
 # these variables are used to show dynamic outputs on the terminal
 dynamic_feed = False
@@ -51,6 +52,7 @@ def cli():
 	change_working_directory()
 	logger = setup_logging()
 	logger.info(command)
+	setup_clear_cache()
 
 	bench_config = get_config(".")
 
@@ -73,6 +75,13 @@ def cli():
 		)
 
 	in_bench = is_bench_directory()
+	if in_bench:
+		if not os.path.isfile("./.bench_configs.json"):
+			log("Run 'bench restart' to create config log file", level=0)
+		elif is_config_changed():
+			log("Config files have changed. Run 'bench restart' to apply those changes", level=3)
+	else:
+		log("Run the command from bench directory to check config changes",level=3)
 
 	if (
 		not in_bench
@@ -216,3 +225,13 @@ def change_working_directory():
 
 	if bench_path:
 		os.chdir(bench_path)
+
+def setup_clear_cache():
+	from copy import copy
+	f = copy(os.chdir)
+
+	def _chdir(*args, **kwargs):
+		Bench.cache_clear()
+		return f(*args, **kwargs)
+
+	os.chdir = _chdir
