@@ -143,6 +143,7 @@ class Bench(Base, Validator):
 		if systemd and conf.get("restart_systemd_on_update"):
 			restart_systemd_processes(bench_path=self.name, web_workers=web)
 
+
 class BenchApps(MutableSequence):
 	def __init__(self, bench: Bench):
 		self.bench = bench
