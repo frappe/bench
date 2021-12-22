@@ -20,7 +20,7 @@ from bench.exceptions import CommandFailedError, InvalidRemoteException, Validat
 
 logger = logging.getLogger(PROJECT_NAME)
 bench_cache_file = ".bench.cmd"
-paths_in_app = ("hooks.py", "modules.txt", "patches.txt")
+paths_in_app = ("hooks.py", "modules.txt")
 paths_in_bench = ("apps", "sites", "config", "logs", "config/pids")
 sudoers_file = "/etc/sudoers.d/frappe"
 
