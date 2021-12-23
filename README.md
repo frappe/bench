@@ -12,7 +12,10 @@ Bench is a command-line utility that helps you to install, update, and manage mu
 	<a target="_blank" href="https://app.travis-ci.com/github/frappe/bench" title="CI Status">
 		<img src="https://app.travis-ci.com/frappe/bench.svg?branch=develop">
 	</a>
-	<a target="_blank">
+	<a target="_blank" href="https://pypi.org/project/frappe-bench" title="PyPI Version">
+		<img src="https://badge.fury.io/py/frappe-bench.svg" alt="PyPI version">
+	</a>
+	<a target="_blank" title="Platform Compatibility">
 		<img src="https://img.shields.io/badge/platform-linux%20%7C%20osx-blue">
 	</a>
 	<a target="_blank" href="https://app.fossa.com/projects/git%2Bgithub.com%2Ffrappe%2Fbench?ref=badge_shield" title="FOSSA Status">
