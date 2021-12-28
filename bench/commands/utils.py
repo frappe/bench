@@ -23,14 +23,7 @@ def start(no_dev, concurrency, procfile, no_prefix, man):
 @click.option('--systemd', is_flag=True, default=False)
 def restart(web, supervisor, systemd):
 	from bench.bench import Bench
-	from bench.utils.bench import restart_supervisor_processes, restart_systemd_processes
-
-	bench = Bench(".")
-
-	if bench.conf.get('restart_supervisor_on_update') or supervisor:
-		restart_supervisor_processes(bench_path='.', web_workers=web)
-	if bench.conf.get('restart_systemd_on_update') or systemd:
-		restart_systemd_processes(bench_path='.', web_workers=web)
+	Bench(".").reload(web, supervisor, systemd)
 
 
 @click.command('set-nginx-port', help="Set NGINX port for site")

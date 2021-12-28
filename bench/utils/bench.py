@@ -279,12 +279,13 @@ def restart_systemd_processes(bench_path=".", web_workers=False):
 	)
 
 
-def restart_process_manager(bench_path="."):
+def restart_process_manager(bench_path=".", web_workers=False):
 	# only overmind has the restart feature, not sure other supported procmans do
 	if which("overmind") and os.path.exists(
 		os.path.join(bench_path, ".overmind.sock")
 	):
-		exec_cmd("overmind restart", cwd=bench_path)
+		worker = "web" if web_workers else ""
+		exec_cmd(f"overmind restart {worker}", cwd=bench_path)
 
 
 def build_assets(bench_path=".", app=None):
@@ -352,10 +353,6 @@ def update(
 
 	from bench.utils import clear_command_cache
 	from bench.utils.app import is_version_upgrade
-	from bench.utils.bench import (
-		restart_supervisor_processes,
-		restart_systemd_processes,
-	)
 	from bench.utils.system import backup_all_sites
 
 	bench_path = os.path.abspath(".")
@@ -414,11 +411,7 @@ def update(
 		apps_dir = os.path.join(bench_path, "apps")
 		compile_dir(apps_dir, quiet=1, rx=re.compile(".*node_modules.*"))
 
-	if restart_supervisor or conf.get("restart_supervisor_on_update"):
-		restart_supervisor_processes(bench_path=bench_path)
-
-	if restart_systemd or conf.get("restart_systemd_on_update"):
-		restart_systemd_processes(bench_path=bench_path)
+	bench.reload(web=False, supervisor=restart_supervisor, systemd=restart_systemd)
 
 	conf.update({"maintenance_mode": 0, "pause_scheduler": 0})
 	update_config(conf, bench_path=bench_path)
