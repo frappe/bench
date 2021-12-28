@@ -106,9 +106,11 @@ class AppMeta:
 
 	def __setup_details_from_git(self):
 		if self.use_ssh:
-			self.org, _repo = self.name.split(":")[1].split("/")
+			_first_part, _second_part = self.name.split(":")
+			self.remote_server = _first_part.split("@")[-1]
+			self.org, _repo = _second_part.split("/")
 		else:
-			self.org, _repo = self.name.split("/")[-2:]
+			self.remote_server, self.org, _repo = self.name.split("/")[-3:]
 
 		self.tag = self.branch
 		self.repo = _repo.split(".")[0]
