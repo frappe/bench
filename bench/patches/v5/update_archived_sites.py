@@ -9,7 +9,6 @@ patch and try again later.
 Corresponding changes in frappe/frappe via https://github.com/frappe/frappe/pull/15060
 """
 import os
-import shutil
 from pathlib import Path
 
 import click
@@ -40,7 +39,7 @@ def execute(bench_path):
 		os.makedirs(new_directory)
 
 	for archived_site_path in old_directory.glob("*"):
-		shutil.move(archived_site_path, new_directory)
+		archived_site_path.rename(new_directory)
 
 	click.secho(f"Archived sites are now stored under {new_directory}")
 
