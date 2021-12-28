@@ -94,6 +94,7 @@ class AppMeta:
 
 	def _setup_details_from_name_tag(self):
 		self.org, self.repo, self.tag = fetch_details_from_tag(self.name)
+		self.tag = self.tag or self.branch
 
 	def _setup_details_from_installed_apps(self):
 		self.org, self.repo, self.tag = os.path.split(
