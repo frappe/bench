@@ -471,3 +471,38 @@ def get_traceback() -> str:
 
 	trace_list = format_exception(exc_type, exc_value, exc_tb)
 	return "".join(trace_list)
+
+
+class _dict(dict):
+	"""dict like object that exposes keys as attributes"""
+	# bench port of frappe._dict
+	def __getattr__(self, key):
+		ret = self.get(key)
+		# "__deepcopy__" exception added to fix frappe#14833 via DFP
+		if not ret and key.startswith("__") and key != "__deepcopy__":
+			raise AttributeError()
+		return ret
+	def __setattr__(self, key, value):
+		self[key] = value
+	def __getstate__(self):
+		return self
+	def __setstate__(self, d):
+		self.update(d)
+	def update(self, d):
+		"""update and return self -- the missing dict feature in python"""
+		super(_dict, self).update(d)
+		return self
+	def copy(self):
+		return _dict(dict(self).copy())
+
+
+def parse_sys_argv():
+	sys_argv = _dict(options=set(), commands=set())
+
+	for c in sys.argv[1:]:
+		if c.startswith("-"):
+			sys_argv.options.add(c)
+		else:
+			sys_argv.commands.add(c)
+
+	return sys_argv
