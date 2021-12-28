@@ -40,13 +40,16 @@ src = os.path.dirname(__file__)
 
 
 def cli():
-	global from_command_line, bench_config, is_envvar_warn_set
+	global from_command_line, bench_config, is_envvar_warn_set, verbose
 
 	from_command_line = True
 	command = " ".join(sys.argv)
 	argv = set(sys.argv)
 	is_envvar_warn_set = not (os.environ.get("BENCH_DEVELOPER") or os.environ.get("CI"))
 	is_cli_command = len(sys.argv) > 1 and not argv.intersection({"src", "--version"})
+
+	if "--verbose" in sys.argv:
+		verbose = True
 
 	change_working_directory()
 	logger = setup_logging()
