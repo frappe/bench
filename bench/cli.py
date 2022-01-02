@@ -25,6 +25,7 @@ from bench.utils import (
 	is_root,
 	log,
 	setup_logging,
+	parse_sys_argv,
 )
 from bench.utils.bench import get_env_cmd
 from bench.utils.cli import is_config_changed
@@ -35,19 +36,24 @@ verbose = False
 is_envvar_warn_set = None
 from_command_line = False # set when commands are executed via the CLI
 bench.LOG_BUFFER = []
+sys_argv = None
 
 change_uid_msg = "You should not run this command as root"
 src = os.path.dirname(__file__)
 
 
 def cli():
-	global from_command_line, bench_config, is_envvar_warn_set
+	global from_command_line, bench_config, is_envvar_warn_set, verbose, sys_argv
 
 	from_command_line = True
 	command = " ".join(sys.argv)
 	argv = set(sys.argv)
 	is_envvar_warn_set = not (os.environ.get("BENCH_DEVELOPER") or os.environ.get("CI"))
 	is_cli_command = len(sys.argv) > 1 and not argv.intersection({"src", "--version"})
+	sys_argv = parse_sys_argv()
+
+	if "--verbose" in sys_argv.options:
+		verbose = True
 
 	change_working_directory()
 	logger = setup_logging()
@@ -97,13 +103,10 @@ def cli():
 			print(get_frappe_help())
 			return
 
-		if sys.argv[1] in ["--site", "--force", "--profile"]:
-			frappe_cmd()
-
-		if sys.argv[1] in get_cached_frappe_commands():
-			frappe_cmd()
-
-		if sys.argv[1] in get_frappe_commands():
+		if (
+			sys_argv.commands.intersection(get_cached_frappe_commands())
+			or sys_argv.commands.intersection(get_frappe_commands())
+		):
 			frappe_cmd()
 
 		if sys.argv[1] in Bench(".").apps:
@@ -193,15 +196,15 @@ def frappe_cmd(bench_path="."):
 def get_cached_frappe_commands():
 	if os.path.exists(bench_cache_file):
 		command_dump = open(bench_cache_file, "r").read() or "[]"
-		return json.loads(command_dump)
-	return []
+		return set(json.loads(command_dump))
+	return set()
 
 
 def get_frappe_commands():
 	if not is_bench_directory():
-		return []
+		return set()
 
-	return generate_command_cache()
+	return set(generate_command_cache())
 
 
 def get_frappe_help(bench_path="."):
