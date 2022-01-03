@@ -19,10 +19,10 @@ from bench.exceptions import NotInBenchDirectoryError
 from bench.utils import (
 	fetch_details_from_partial_url,
 	get_available_folder_name,
+	get_parsed_giturl,
 	is_bench_directory,
 	log,
-	parse_git_url,
-	run_frappe_cmd,
+	run_frappe_cmd
 )
 from bench.utils.bench import (
 	build_assets,
@@ -76,7 +76,7 @@ class AppMeta:
 		self.setup_details()
 
 	def setup_details(self):
-		parsed_git_obj = parse_git_url(self.name)
+		parsed_git_obj = get_parsed_giturl(self.name)
 
 		# fetch meta from installed apps
 		if (

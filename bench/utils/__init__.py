@@ -433,12 +433,12 @@ def fetch_details_from_partial_url(partial_url: str) -> Tuple[str, str, str]:
 	return git_host, org, repo, tag
 
 
-def parse_git_url(url: str):
+def get_parsed_giturl(url: str):
 	try:
 		parsed_obj = giturlparse.parse(url)
 	except Exception:
 		# the git url is not parsable
-		return False
+		return None
 
 	return parsed_obj
 
