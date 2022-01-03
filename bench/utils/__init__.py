@@ -405,7 +405,16 @@ def fetch_details_from_partial_url(partial_url: str) -> Tuple[str, str, str]:
 	if not partial_url:
 		raise Exception("Partial url is not provided")
 
-	app_tag = partial_url.split("@")
+	splitted_partial_url = partial_url.split(":")
+	git_host = splitted_partial_url[0]
+
+	try:
+		app_tag = splitted_partial_url[1].split("@")
+	except IndexError:
+		# githost is not available in partial url
+		app_tag = git_host.split("@")
+		git_host = "github"
+
 	org_repo = app_tag[0].split("/")
 
 	try:
@@ -416,9 +425,12 @@ def fetch_details_from_partial_url(partial_url: str) -> Tuple[str, str, str]:
 	try:
 		org, repo = org_repo
 	except Exception:
-		org, repo = find_org(org_repo)
+		if git_host == "github":
+			org, repo = find_org(org_repo)
+		else:
+			raise Exception("Git Host provided is Invalid")
 
-	return org, repo, tag
+	return git_host, org, repo, tag
 
 
 def parse_git_url(url: str):

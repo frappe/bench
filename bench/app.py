@@ -43,7 +43,6 @@ class AppMeta:
 		self,
 		name: str,
 		branch: str = None,
-		git_host: str = None,
 		to_clone: bool = True,
 		use_ssh: bool = False
 	):
@@ -51,10 +50,11 @@ class AppMeta:
 		name (str): This could look something like
 			1. https://github.com/frappe/healthcare.git
 			2. git@github.com:frappe/healthcare.git
-			3. frappe/healthcare@develop
-			4. frappe/healthcare
-			5. healthcare
+			3. github:frappe/healthcare@develop
+			4. frappe/healthcare@develop
+			5. frappe/healthcare
 			6. healthcare@develop, healthcare@v13.12.1
+			7. healthcare
 
 		References for Version Identifiers:
 		 * https://www.python.org/dev/peps/pep-0440/#version-specifiers
@@ -70,7 +70,6 @@ class AppMeta:
 
 		# for partial url format
 		self.is_partial_url = False
-		self.git_host = git_host
 		self.use_ssh = use_ssh
 
 		self.branch = branch
@@ -94,8 +93,12 @@ class AppMeta:
 			self._setup_details_from_mounted_disk()
 
 		# fetch meta for repo from git url - traditional get-app url
-		# NOTE: Adding a check for owner here for making `organisation/repoository` format work
-		elif parsed_git_obj and parsed_git_obj.owner:
+		# NOTE: additional checks for making `org/repo` and `githost:org/repo`
+		# partial url formats work - basically checking if the protocol is ssh,
+		# there should be a user associated with it, for it to be a valid ssh git url
+		elif parsed_git_obj and not (
+			parsed_git_obj.protocol == "ssh" and not parsed_git_obj.user
+		):
 			self.tag = self.branch
 			self.org = parsed_git_obj.owner
 			self.repo = parsed_git_obj.name
@@ -108,7 +111,7 @@ class AppMeta:
 		self.org, self.repo, self.tag = os.path.split(self.name)[-2:] + (self.branch,)
 
 	def _setup_details_from_partial_url(self):
-		self.org, self.repo, self.tag = fetch_details_from_partial_url(self.name)
+		self.git_host, self.org, self.repo, self.tag = fetch_details_from_partial_url(self.name)
 
 		if self.tag and self.branch:
 			click.secho(
@@ -123,20 +126,6 @@ class AppMeta:
 		self.org, self.repo, self.tag = os.path.split(
 			os.path.join(self.bench.name, "apps", self.name)
 		)[-2:] + (self.branch,)
-
-	def _setup_details_from_git_url(self):
-		return self.__setup_details_from_git()
-
-	def __setup_details_from_git(self):
-		if self.use_ssh:
-			_first_part, _second_part = self.name.split(":")
-			self.remote_server = _first_part.split("@")[-1]
-			self.org, _repo = _second_part.split("/")
-		else:
-			self.remote_server, self.org, _repo = self.name.split("/")[-3:]
-
-		self.tag = self.branch
-		self.repo = _repo.split(".")[0]
 
 	@property
 	def url(self):
@@ -310,7 +299,6 @@ def get_app(
 	git_url,
 	branch=None,
 	bench_path=".",
-	git_host="github",
 	skip_assets=False,
 	verbose=False,
 	overwrite=False,
@@ -329,9 +317,7 @@ def get_app(
 	import bench.cli as bench_cli
 
 	bench = Bench(bench_path)
-	app = App(
-		git_url, branch=branch, bench=bench, git_host=git_host, use_ssh=use_ssh
-	)
+	app = App(git_url, branch=branch, bench=bench, use_ssh=use_ssh)
 	git_url = app.url
 	repo_name = app.repo
 	branch = app.tag
