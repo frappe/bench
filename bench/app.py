@@ -30,12 +30,11 @@ from bench.utils.bench import (
 )
 from bench.utils.render import step
 
-
-logger = logging.getLogger(bench.PROJECT_NAME)
-
-
 if typing.TYPE_CHECKING:
 	from bench.bench import Bench
+
+
+logger = logging.getLogger(bench.PROJECT_NAME)
 
 
 class AppMeta:
@@ -61,6 +60,7 @@ class AppMeta:
 		self.on_disk = False
 		self.use_ssh = False
 		self.from_apps = False
+		self.is_url = False
 		self.branch = branch
 		self.setup_details()
 
@@ -81,6 +81,7 @@ class AppMeta:
 
 		# fetch meta for repo from remote git server - traditional get-app url
 		elif is_git_url(self.name):
+			self.is_url = True
 			if self.name.startswith("git@") or self.name.startswith("ssh://"):
 				self.use_ssh = True
 			self._setup_details_from_git_url()
@@ -108,9 +109,9 @@ class AppMeta:
 		if self.use_ssh:
 			_first_part, _second_part = self.name.split(":")
 			self.remote_server = _first_part.split("@")[-1]
-			self.org, _repo = _second_part.split("/")
+			self.org, _repo = _second_part.rsplit("/", 1)
 		else:
-			self.remote_server, self.org, _repo = self.name.split("/")[-3:]
+			self.remote_server, self.org, _repo = self.name.rsplit("/", 2)
 
 		self.tag = self.branch
 		self.repo = _repo.split(".")[0]
@@ -122,6 +123,9 @@ class AppMeta:
 
 		if self.on_disk:
 			return os.path.abspath(self.name)
+
+		if self.is_url:
+			return self.name
 
 		if self.use_ssh:
 			return self.get_ssh_url()
