@@ -61,6 +61,7 @@ class AppMeta:
 		self.on_disk = False
 		self.use_ssh = False
 		self.from_apps = False
+		self.is_url = False
 		self.branch = branch
 		self.setup_details()
 
@@ -81,6 +82,7 @@ class AppMeta:
 
 		# fetch meta for repo from remote git server - traditional get-app url
 		elif is_git_url(self.name):
+			self.is_url = True
 			if self.name.startswith("git@") or self.name.startswith("ssh://"):
 				self.use_ssh = True
 			self._setup_details_from_git_url()
@@ -122,6 +124,9 @@ class AppMeta:
 
 		if self.on_disk:
 			return os.path.abspath(self.name)
+
+		if self.is_url:
+			return self.name
 
 		if self.use_ssh:
 			return self.get_ssh_url()
