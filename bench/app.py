@@ -30,12 +30,11 @@ from bench.utils.bench import (
 )
 from bench.utils.render import step
 
-
-logger = logging.getLogger(bench.PROJECT_NAME)
-
-
 if typing.TYPE_CHECKING:
 	from bench.bench import Bench
+
+
+logger = logging.getLogger(bench.PROJECT_NAME)
 
 
 class AppMeta:
