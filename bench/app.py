@@ -110,9 +110,9 @@ class AppMeta:
 		if self.use_ssh:
 			_first_part, _second_part = self.name.split(":")
 			self.remote_server = _first_part.split("@")[-1]
-			self.org, _repo = _second_part.split("/")
+			self.org, _repo = _second_part.rsplit("/", 1)
 		else:
-			self.remote_server, self.org, _repo = self.name.split("/")[-3:]
+			self.remote_server, self.org, _repo = self.name.rsplit("/", 2)
 
 		self.tag = self.branch
 		self.repo = _repo.split(".")[0]
