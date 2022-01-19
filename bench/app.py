@@ -1,4 +1,5 @@
 # imports - standard imports
+from collections import OrderedDict
 import functools
 import json
 import logging
@@ -47,6 +48,7 @@ class AppMeta:
 			3. frappe/healthcare@develop
 			4. healthcare
 			5. healthcare@develop, healthcare@v13.12.1
+			6. erpnext
 
 		References for Version Identifiers:
 		 * https://www.python.org/dev/peps/pep-0440/#version-specifiers
@@ -104,6 +106,7 @@ class AppMeta:
 		self.tag = self.tag or self.branch
 
 	def _setup_details_from_installed_apps(self):
+		self.branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"])
 		self.org, self.repo, self.tag = os.path.split(
 			os.path.join(self.bench.name, "apps", self.name)
 		)[-2:] + (self.branch,)
@@ -206,6 +209,35 @@ class App(AppMeta):
 	@step(title="Uninstalling App {repo}", success="App {repo} Uninstalled")
 	def uninstall(self):
 		self.bench.run(f"{self.bench.python} -m pip uninstall -y {self.repo}")
+
+	def _get_dependencies(self):
+		from bench.utils.app import get_required_deps_url
+		import toml
+
+		info_file = None
+		required_url = get_required_deps_url(self.url, self.tag)
+		print(required_url)
+		try:
+			info_file = toml.loads(requests.get(required_url).text)
+		except Exception:
+			click.echo("\nNo toml file found \n", err=True)
+
+		return info_file["required_apps"] if info_file  else {}
+
+def make_resolution_plan(app: App, bench):
+	"""
+	decide what apps and versions to install and in what order
+	"""
+	resolution = OrderedDict()
+	resolution[app.repo] = app
+	for app_name, branch in app._get_dependencies().items():
+		dep_app = App(app_name, branch=branch, bench=bench)
+		resolution[dep_app.repo] = dep_app
+		resolution.update(make_resolution_plan(dep_app, bench))
+		if app_name in resolution:
+			print("Resolve this conflict!")
+	return resolution
+
 
 
 def add_to_appstxt(app, bench_path="."):
@@ -320,6 +352,7 @@ def get_app(
 	repo_name = app.repo
 	branch = app.tag
 	bench_setup = False
+	apps_to_install = make_resolution_plan(app, bench)
 
 	if not is_bench_directory(bench_path):
 		if not init_bench:
@@ -330,8 +363,9 @@ def get_app(
 
 		from bench.utils.system import init
 
+		frappe_app = apps_to_install["frappe"]
 		bench_path = get_available_folder_name(f"{app.repo}-bench", bench_path)
-		init(path=bench_path, frappe_branch=branch)
+		init(path=bench_path, frappe_branch=frappe_app.tag)
 		os.chdir(bench_path)
 		bench_setup = True
 
