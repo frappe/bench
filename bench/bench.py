@@ -2,6 +2,7 @@
 import functools
 import os
 import shutil
+import json
 import sys
 import logging
 from typing import List, MutableSequence, TYPE_CHECKING
@@ -30,6 +31,7 @@ from bench.utils.bench import (
 	get_env_cmd,
 )
 from bench.utils.render import job, step
+from bench.utils.app import get_current_version
 
 
 if TYPE_CHECKING:
@@ -55,6 +57,7 @@ class Bench(Base, Validator):
 	def __init__(self, path):
 		self.name = path
 		self.cwd = os.path.abspath(path)
+		self.apps_states = os.path.join(self.name, "sites", "apps_states.json")
 		self.exists = is_bench_directory(self.name)
 
 		self.setup = BenchSetup(self)
@@ -122,6 +125,7 @@ class Bench(Base, Validator):
 		self.validate_app_uninstall(app)
 		self.apps.remove(App(app, bench=self, to_clone=False))
 		self.apps.sync()
+		self.apps.update_apps_states()
 		# self.build() - removed because it seems unnecessary
 		self.reload()
 
@@ -156,6 +160,38 @@ class BenchApps(MutableSequence):
 	def __init__(self, bench: Bench):
 		self.bench = bench
 		self.initialize_apps()
+		self.initialize_states()
+
+	def initialize_states(self):
+		try:
+			with open(self.bench.apps_states, "r") as f:
+				self.states = json.loads(f.read() or "{}")
+		except FileNotFoundError:
+			with open(self.bench.apps_states, "w") as f:
+				self.states = json.loads(f.read() or "{}")
+
+	def update_apps_states(self, app_name: str = None, resolution: str = None):
+		# Only tracking for app state for apps installed via `bench resolve-and-install`,
+		# Not all states can be maintained as some apps may not be install via bench resolve-and-install
+		# or may not be compatible with versioning
+		self.initialize_apps()
+		apps_to_remove = []
+		for app in self.states:
+			if app not in self.apps:
+				apps_to_remove.append(app)
+
+		for app in apps_to_remove:
+			del self.states[app]
+
+		if app_name and resolution:
+			version = get_current_version(app_name)
+			self.states[app_name] = {
+				"resolution": resolution,
+				"version": version,
+			}
+
+		with open(self.bench.apps_states, "w") as f:
+			f.write(json.dumps(self.states, indent=4))
 
 	def sync(self):
 		self.initialize_apps()

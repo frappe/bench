@@ -14,6 +14,7 @@ from urllib.parse import urlparse
 
 # imports - third party imports
 import click
+import requests
 
 # imports - module imports
 import bench
@@ -205,6 +206,12 @@ class App(AppMeta):
 			skip_assets=skip_assets,
 			restart_bench=restart_bench
 		)
+
+	@step(title="Cloning and installing {repo}", success="App {repo} Installed")
+	def install_resolved_apps(self, *args, **kwargs):
+		self.get()
+		self.install(*args, **kwargs, resolved=True)
+		self.bench.apps.update_apps_states(self.repo, self.tag)
 
 	@step(title="Uninstalling App {repo}", success="App {repo} Uninstalled")
 	def uninstall(self):
@@ -404,6 +411,49 @@ def get_app(
 	):
 		app.install(verbose=verbose, skip_assets=skip_assets)
 
+def resolve_and_install(
+	git_url,
+	branch=None,
+	bench_path=".",
+	skip_assets=False,
+	verbose=False,
+	init_bench=False,
+):
+	from bench.cli import Bench
+	from bench.utils.system import init
+	from bench.utils.app import check_existing_dir
+
+	bench = Bench(bench_path)
+	app = App(git_url, branch=branch, bench=bench)
+
+	resolution = make_resolution_plan(app, bench)
+	if "frappe" in resolution:
+		# Terminal dependency
+		del resolution["frappe"]
+
+	if init_bench:
+		bench_path = get_available_folder_name(f"{app.repo}-bench", bench_path)
+		init(
+			path=bench_path,
+			frappe_branch=branch,
+			skip_assets=skip_assets,
+			verbose=verbose,
+		)
+		os.chdir(bench_path)
+
+	for repo_name, app in reversed(resolution.items()):
+		existing_dir, cloned_path = check_existing_dir(bench_path, repo_name)
+		if existing_dir:
+			if click.confirm(
+				f"A directory for the application '{repo_name}' already exists. "
+				"Do you want to continue and overwrite it?"
+			):
+				click.secho(f"Removing {repo_name}", fg="yellow")
+				shutil.rmtree(cloned_path)
+				app.install_resolved_apps(skip_assets=skip_assets, verbose=verbose)
+
+			continue
+		app.install_resolved_apps(skip_assets=skip_assets, verbose=verbose)
 
 def new_app(app, no_git=None, bench_path="."):
 	if bench.FRAPPE_VERSION in (0, None):
