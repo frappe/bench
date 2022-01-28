@@ -222,7 +222,7 @@ class App(AppMeta):
 
 		return info_file["required_apps"] if info_file  else {}
 
-def make_resolution_plan(app: App, bench):
+def make_resolution_plan(app: App, bench: "Bench"):
 	"""
 	decide what apps and versions to install and in what order
 	"""
@@ -332,6 +332,7 @@ def get_app(
 	verbose=False,
 	overwrite=False,
 	init_bench=False,
+	resolve=False,
 ):
 	"""bench get-app clones a Frappe App from remote (GitHub or any other git server),
 	and installs it on the current bench. This also resolves dependencies based on the
@@ -343,6 +344,7 @@ def get_app(
 	from bench.bench import Bench
 	import bench as _bench
 	import bench.cli as bench_cli
+	from bench.utils.app import check_existing_dir
 
 	bench = Bench(bench_path)
 	app = App(git_url, branch=branch, bench=bench)
@@ -375,9 +377,17 @@ def get_app(
 			"color": None,
 		})
 
+	if resolve:
+		resolve_and_install(
+			app=app,
+			bench=bench,
+			bench_path=bench_path,
+			skip_assets=skip_assets,
+			verbose=verbose,
+		)
+		return
 
-	cloned_path = os.path.join(bench_path, "apps", repo_name)
-	dir_already_exists = os.path.isdir(cloned_path)
+	dir_already_exists, cloned_path = check_existing_dir(bench_path, repo_name)
 	to_clone = not dir_already_exists
 
 	# application directory already exists
@@ -403,34 +413,19 @@ def get_app(
 		app.install(verbose=verbose, skip_assets=skip_assets)
 
 def resolve_and_install(
-	git_url,
-	branch=None,
+	app: App,
+	bench: "Bench",
 	bench_path=".",
 	skip_assets=False,
 	verbose=False,
-	init_bench=False,
 ):
-	from bench.cli import Bench
-	from bench.utils.system import init
 	from bench.utils.app import check_existing_dir
 
-	bench = Bench(bench_path)
-	app = App(git_url, branch=branch, bench=bench)
 
 	resolution = make_resolution_plan(app, bench)
 	if "frappe" in resolution:
 		# Terminal dependency
 		del resolution["frappe"]
-
-	if init_bench:
-		bench_path = get_available_folder_name(f"{app.repo}-bench", bench_path)
-		init(
-			path=bench_path,
-			frappe_branch=branch,
-			skip_assets=skip_assets,
-			verbose=verbose,
-		)
-		os.chdir(bench_path)
 
 	for repo_name, app in reversed(resolution.items()):
 		existing_dir, cloned_path = check_existing_dir(bench_path, repo_name)
@@ -509,7 +504,6 @@ def install_app(
 
 	if restart_bench:
 		bench.reload()
-
 
 def pull_apps(apps=None, bench_path=".", reset=False):
 	"""Check all apps if there no local changes, pull"""
