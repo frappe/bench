@@ -133,8 +133,20 @@ def drop(path):
 @click.option(
 	"--init-bench", is_flag=True, default=False, help="Initialize Bench if not in one"
 )
+@click.option(
+	"--resolve/--no-resolve",
+	is_flag=True,
+	default=False,
+	help="Resolve dependencies before installing app",
+)
 def get_app(
-	git_url, branch, name=None, overwrite=False, skip_assets=False, init_bench=False
+	git_url,
+	branch,
+	name=None,
+	overwrite=False,
+	skip_assets=False,
+	init_bench=False,
+	resolve=False,
 ):
 	"clone an app from the internet and set it up in your bench"
 	from bench.app import get_app
@@ -145,26 +157,7 @@ def get_app(
 		skip_assets=skip_assets,
 		overwrite=overwrite,
 		init_bench=init_bench,
-	)
-
-@click.command("resolve-and-install", help="Resolve dependencies and install apps")
-@click.argument("git-url")
-@click.option("--branch", default=None)
-@click.option("--skip-assets", is_flag=True, default=False, help="Do not build assets")
-@click.option(
-	"--init-bench", is_flag=True, default=False, help="Initialize Bench if not in one"
-)
-@click.option("--skip-assets", is_flag=True, default=False, help="Do not build assets")
-@click.option("--verbose", is_flag=True, default=False, help="Verbosity")
-def resolve_and_install(git_url, branch, skip_assets, verbose, init_bench):
-	from bench.app import resolve_and_install
-
-	resolve_and_install(
-		git_url=git_url,
-		branch=branch,
-		skip_assets=skip_assets,
-		init_bench=init_bench,
-		verbose=verbose,
+		resolve=resolve,
 	)
 
 @click.command("new-app", help="Create a new Frappe application under apps folder")

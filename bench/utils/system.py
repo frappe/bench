@@ -76,7 +76,12 @@ def init(
 		frappe_path = frappe_path or "https://github.com/frappe/frappe.git"
 
 		get_app(
-			frappe_path, branch=frappe_branch, bench_path=path, skip_assets=True, verbose=verbose
+			frappe_path,
+			branch=frappe_branch,
+			bench_path=path,
+			skip_assets=True,
+			verbose=verbose,
+			resolve=False,
 		)
 
 		# fetch remote apps using config file - deprecate this!
@@ -86,7 +91,12 @@ def init(
 	# getting app on bench init using --install-app
 	if install_app:
 		get_app(
-			install_app, branch=frappe_branch, bench_path=path, skip_assets=True, verbose=verbose
+			install_app,
+			branch=frappe_branch,
+			bench_path=path,
+			skip_assets=True,
+			verbose=verbose,
+			resolve=False,
 		)
 
 	if not skip_assets:

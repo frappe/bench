@@ -39,7 +39,6 @@ from bench.commands.make import (
 	new_app,
 	pip,
 	remove_app,
-	resolve_and_install,
 )
 
 bench_command.add_command(init)
@@ -49,7 +48,6 @@ bench_command.add_command(new_app)
 bench_command.add_command(remove_app)
 bench_command.add_command(exclude_app_for_update)
 bench_command.add_command(include_app_for_update)
-bench_command.add_command(resolve_and_install)
 bench_command.add_command(pip)
 
 
