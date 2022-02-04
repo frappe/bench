@@ -11,6 +11,7 @@ from typing import List, Tuple
 
 # imports - third party imports
 import click
+import requests
 
 # imports - module imports
 from bench import PROJECT_NAME, VERSION
@@ -46,6 +47,12 @@ def is_frappe_app(directory: str) -> bool:
 		is_frappe_app = is_frappe_app and path
 
 	return bool(is_frappe_app)
+
+
+def is_valid_frappe_branch(frappe_path: str, frappe_branch: str):
+	url = frappe_path
+	url += "/tree/" + frappe_branch if frappe_branch else ""
+	return requests.get(url).status_code != 404
 
 
 def log(message, level=0, no_log=False):
