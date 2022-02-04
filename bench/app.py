@@ -354,6 +354,10 @@ def get_app(
 	bench_setup = False
 	apps_to_install = make_resolution_plan(app, bench)
 
+	if resolve:
+		resolution = make_resolution_plan(app, bench)
+		frappe_path, frappe_branch = resolution["frappe"].url, resolution["frappe"].tag
+
 	if not is_bench_directory(bench_path):
 		if not init_bench:
 			raise NotInBenchDirectoryError(
@@ -365,7 +369,11 @@ def get_app(
 
 		frappe_app = apps_to_install["frappe"]
 		bench_path = get_available_folder_name(f"{app.repo}-bench", bench_path)
-		init(path=bench_path, frappe_branch=frappe_app.tag)
+		init(
+			path=bench_path,
+			frappe_path=frappe_path if resolve else None,
+			frappe_branch=frappe_branch if resolve else branch,
+		)
 		os.chdir(bench_path)
 		bench_setup = True
 
@@ -378,9 +386,8 @@ def get_app(
 		})
 
 	if resolve:
-		resolve_and_install(
-			app=app,
-			bench=bench,
+		install_resolved_deps(
+			resolution,
 			bench_path=bench_path,
 			skip_assets=skip_assets,
 			verbose=verbose,
@@ -412,17 +419,14 @@ def get_app(
 	):
 		app.install(verbose=verbose, skip_assets=skip_assets)
 
-def resolve_and_install(
-	app: App,
-	bench: "Bench",
+def install_resolved_deps(
+	resolution,
 	bench_path=".",
 	skip_assets=False,
 	verbose=False,
 ):
 	from bench.utils.app import check_existing_dir
 
-
-	resolution = make_resolution_plan(app, bench)
 	if "frappe" in resolution:
 		# Terminal dependency
 		del resolution["frappe"]
