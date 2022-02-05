@@ -164,11 +164,12 @@ def get_current_branch(app, bench_path="."):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	return get_cmd_output("basename $(git symbolic-ref -q HEAD)", cwd=repo_dir)
 
-def get_required_deps_url(git_url, branch="master", deps="info.toml"):
+def get_required_deps_url(git_url, repo_name, branch, deps="hooks.py"):
 	git_url = (
 		git_url.replace(".git", "").replace("github.com", "raw.github.com")
 	)
-	git_url +=  f"/{branch}/{deps}" if branch else f"/{deps}"
+	branch = branch if branch else "develop"
+	git_url +=  f"/{branch}/{repo_name}/{deps}"
 	return git_url
 
 def get_remote(app, bench_path="."):

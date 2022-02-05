@@ -86,7 +86,7 @@ def init(
 			bench_path=path,
 			skip_assets=True,
 			verbose=verbose,
-			resolve=False,
+			resolve_deps=False,
 		)
 
 		# fetch remote apps using config file - deprecate this!
