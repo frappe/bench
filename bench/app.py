@@ -1,5 +1,4 @@
 # imports - standard imports
-from collections import OrderedDict
 import functools
 import json
 import logging
@@ -9,6 +8,7 @@ import shutil
 import subprocess
 import sys
 import typing
+from collections import OrderedDict
 from datetime import date
 
 # imports - third party imports
@@ -210,15 +210,15 @@ class App(AppMeta):
 
 	def _get_dependencies(self):
 		from bench.utils.app import get_required_deps_url
-		import toml
 
-		info_file = None
-		required_url = get_required_deps_url(self.url, self.tag)
-		print(required_url)
+		required_url = get_required_deps_url(git_url=self.url, repo_name=self.repo, branch=self.tag)
 		try:
-			info_file = toml.loads(requests.get(required_url).text)
-		except Exception:
-			click.echo("\nNo toml file found \n", err=True)
+			f = requests.get(required_url).text
+			lines = [x for x in f.split("\n") if x.strip().startswith("required_apps")]
+			required_apps = eval(lines[0].strip("required_apps").strip().lstrip("=").strip())
+			return required_apps
+		except Exception as e:
+			return []
 
 		return info_file["required_apps"] if info_file  else {}
 
@@ -228,14 +228,15 @@ def make_resolution_plan(app: App, bench: "Bench"):
 	"""
 	resolution = OrderedDict()
 	resolution[app.repo] = app
-	for app_name, branch in app._get_dependencies().items():
-		dep_app = App(app_name, branch=branch, bench=bench)
+
+	for app_name in app._get_dependencies():
+		dep_app = App(app_name, bench=bench)
+		if dep_app.repo in resolution:
+			click.secho(f"{dep_app.repo} is already resolved skipping", fg="yellow")
+			continue
 		resolution[dep_app.repo] = dep_app
 		resolution.update(make_resolution_plan(dep_app, bench))
-		if app_name in resolution:
-			print("Resolve this conflict!")
 	return resolution
-
 
 
 def add_to_appstxt(app, bench_path="."):
@@ -332,7 +333,7 @@ def get_app(
 	verbose=False,
 	overwrite=False,
 	init_bench=False,
-	resolve=False,
+	resolve_deps=False,
 ):
 	"""bench get-app clones a Frappe App from remote (GitHub or any other git server),
 	and installs it on the current bench. This also resolves dependencies based on the
@@ -341,9 +342,9 @@ def get_app(
 	If the bench_path is not a bench directory, a new bench is created named using the
 	git_url parameter.
 	"""
-	from bench.bench import Bench
 	import bench as _bench
 	import bench.cli as bench_cli
+	from bench.bench import Bench
 	from bench.utils.app import check_existing_dir
 
 	bench = Bench(bench_path)
@@ -354,7 +355,7 @@ def get_app(
 	bench_setup = False
 	frappe_path, frappe_branch = None, None
 
-	if resolve:
+	if resolve_deps:
 		resolution = make_resolution_plan(app, bench)
 		if "frappe" in resolution:
 			# Todo: Make frappe a terminal dependency for all frappe apps.
@@ -386,7 +387,7 @@ def get_app(
 			"color": None,
 		})
 
-	if resolve:
+	if resolve_deps:
 		install_resolved_deps(
 			resolution,
 			bench_path=bench_path,
