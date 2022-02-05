@@ -134,7 +134,7 @@ def drop(path):
 	"--init-bench", is_flag=True, default=False, help="Initialize Bench if not in one"
 )
 @click.option(
-	"--resolve/--no-resolve",
+	"--resolve-deps",
 	is_flag=True,
 	default=False,
 	help="Resolve dependencies before installing app",
@@ -146,7 +146,7 @@ def get_app(
 	overwrite=False,
 	skip_assets=False,
 	init_bench=False,
-	resolve=False,
+	resolve_deps=False,
 ):
 	"clone an app from the internet and set it up in your bench"
 	from bench.app import get_app
@@ -157,7 +157,7 @@ def get_app(
 		skip_assets=skip_assets,
 		overwrite=overwrite,
 		init_bench=init_bench,
-		resolve=resolve,
+		resolve_deps=resolve_deps,
 	)
 
 @click.command("new-app", help="Create a new Frappe application under apps folder")
