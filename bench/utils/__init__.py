@@ -50,9 +50,11 @@ def is_frappe_app(directory: str) -> bool:
 
 
 def is_valid_frappe_branch(frappe_path: str, frappe_branch: str):
-	url = frappe_path
-	url += "/tree/" + frappe_branch if frappe_branch else ""
-	return requests.get(url).status_code != 404
+	if "http" in frappe_path:
+		url = frappe_path
+		url += "/tree/" + frappe_branch if frappe_branch else ""
+		return requests.get(url).status_code != 404
+	return True
 
 
 def log(message, level=0, no_log=False):
