@@ -107,7 +107,6 @@ class AppMeta:
 		self.tag = self.tag or self.branch
 
 	def _setup_details_from_installed_apps(self):
-		self.branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"])
 		self.org, self.repo, self.tag = os.path.split(
 			os.path.join(self.bench.name, "apps", self.name)
 		)[-2:] + (self.branch,)
@@ -183,24 +182,25 @@ class App(AppMeta):
 		shutil.move(active_app_path, archived_app_path)
 
 	@step(title="Installing App {repo}", success="App {repo} Installed")
-	def install(self, skip_assets=False, verbose=False, restart_bench=True):
+	def install(self, skip_assets=False, verbose=False, restart_bench=True, resolved=False):
 		import bench.cli
 		from bench.utils.app import get_app_name
 
 		verbose = bench.cli.verbose or verbose
 		app_name = get_app_name(self.bench.name, self.repo)
-
-		# TODO: this should go inside install_app only tho - issue: default/resolved branch
-		setup_app_dependencies(
-			repo_name=self.repo,
-			bench_path=self.bench.name,
-			branch=self.tag,
-			verbose=verbose,
-			skip_assets=skip_assets,
-		)
+		if not resolved:
+			# TODO: this should go inside install_app only tho - issue: default/resolved branch
+			setup_app_dependencies(
+				repo_name=self.repo,
+				bench_path=self.bench.name,
+				branch=self.tag,
+				verbose=verbose,
+				skip_assets=skip_assets,
+			)
 
 		install_app(
 			app=app_name,
+			tag=self.tag,
 			bench_path=self.bench.name,
 			verbose=verbose,
 			skip_assets=skip_assets,
@@ -211,7 +211,6 @@ class App(AppMeta):
 	def install_resolved_apps(self, *args, **kwargs):
 		self.get()
 		self.install(*args, **kwargs, resolved=True)
-		self.bench.apps.update_apps_states(self.repo, self.tag)
 
 	@step(title="Uninstalling App {repo}", success="App {repo} Uninstalled")
 	def uninstall(self):
@@ -226,10 +225,8 @@ class App(AppMeta):
 			lines = [x for x in f.split("\n") if x.strip().startswith("required_apps")]
 			required_apps = eval(lines[0].strip("required_apps").strip().lstrip("=").strip())
 			return required_apps
-		except Exception as e:
+		except Exception:
 			return []
-
-		return info_file["required_apps"] if info_file  else {}
 
 def make_resolution_plan(app: App, bench: "Bench"):
 	"""
@@ -482,6 +479,7 @@ def new_app(app, no_git=None, bench_path="."):
 
 def install_app(
 	app,
+	tag,
 	bench_path=".",
 	verbose=False,
 	no_cache=False,
@@ -513,6 +511,7 @@ def install_app(
 		bench.run("yarn install", cwd=app_path)
 
 	bench.apps.sync()
+	bench.apps.update_apps_states(app, tag)
 
 	if not skip_assets:
 		build_assets(bench_path=bench_path, app=app)
