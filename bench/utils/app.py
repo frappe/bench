@@ -208,6 +208,10 @@ def get_app_name(bench_path, repo_name):
 
 	return repo_name
 
+def check_existing_dir(bench_path, repo_name):
+	cloned_path = os.path.join(bench_path, "apps", repo_name)
+	dir_already_exists = os.path.isdir(cloned_path)
+	return dir_already_exists, cloned_path
 
 def get_current_version(app, bench_path="."):
 	current_version = None

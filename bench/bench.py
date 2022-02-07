@@ -57,7 +57,6 @@ class Bench(Base, Validator):
 	def __init__(self, path):
 		self.name = path
 		self.cwd = os.path.abspath(path)
-		self.apps_states = os.path.join(self.name, "sites", "apps_states.json")
 		self.exists = is_bench_directory(self.name)
 
 		self.setup = BenchSetup(self)
@@ -151,19 +150,20 @@ class Bench(Base, Validator):
 class BenchApps(MutableSequence):
 	def __init__(self, bench: Bench):
 		self.bench = bench
+		self.states_path = os.path.join(self.bench.name, "sites", "apps_states.json")
 		self.initialize_apps()
 
-	def initialize_states(self):
+	def set_states(self):
 		try:
-			with open(self.bench.apps_states, "r") as f:
+			with open(self.states_path, "r") as f:
 				self.states = json.loads(f.read() or "{}")
 		except FileNotFoundError:
-			with open(self.bench.apps_states, "w") as f:
+			with open(self.states_path, "w+") as f:
 				self.states = json.loads(f.read() or "{}")
 
 	def update_apps_states(self, app_name: str = None, resolution: str = None):
-		self.initialize_states()
 		self.initialize_apps()
+		self.set_states()
 		apps_to_remove = []
 		for app in self.states:
 			if app not in self.apps:
@@ -172,14 +172,14 @@ class BenchApps(MutableSequence):
 		for app in apps_to_remove:
 			del self.states[app]
 
-		if app_name and resolution:
-			version = get_current_version(app_name)
+		if app_name:
+			version = get_current_version(app_name, self.bench.name)
 			self.states[app_name] = {
 				"resolution": resolution,
 				"version": version,
 			}
 
-		with open(self.bench.apps_states, "w") as f:
+		with open(self.states_path, "w") as f:
 			f.write(json.dumps(self.states, indent=4))
 
 	def sync(self):
