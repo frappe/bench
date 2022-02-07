@@ -352,11 +352,13 @@ def get_app(
 	repo_name = app.repo
 	branch = app.tag
 	bench_setup = False
-	apps_to_install = make_resolution_plan(app, bench)
+	frappe_path, frappe_branch = None, None
 
 	if resolve:
 		resolution = make_resolution_plan(app, bench)
-		frappe_path, frappe_branch = resolution["frappe"].url, resolution["frappe"].tag
+		if "frappe" in resolution:
+			# Todo: Make frappe a terminal dependency for all frappe apps.
+			frappe_path, frappe_branch = resolution["frappe"].url, resolution["frappe"].tag
 
 	if not is_bench_directory(bench_path):
 		if not init_bench:
@@ -367,12 +369,11 @@ def get_app(
 
 		from bench.utils.system import init
 
-		frappe_app = apps_to_install["frappe"]
 		bench_path = get_available_folder_name(f"{app.repo}-bench", bench_path)
 		init(
 			path=bench_path,
-			frappe_path=frappe_path if resolve else None,
-			frappe_branch=frappe_branch if resolve else branch,
+			frappe_path=frappe_path,
+			frappe_branch=frappe_branch if frappe_branch else branch,
 		)
 		os.chdir(bench_path)
 		bench_setup = True

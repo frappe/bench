@@ -152,7 +152,6 @@ class BenchApps(MutableSequence):
 	def __init__(self, bench: Bench):
 		self.bench = bench
 		self.initialize_apps()
-		self.initialize_states()
 
 	def initialize_states(self):
 		try:
@@ -163,9 +162,7 @@ class BenchApps(MutableSequence):
 				self.states = json.loads(f.read() or "{}")
 
 	def update_apps_states(self, app_name: str = None, resolution: str = None):
-		# Only tracking for app state for apps installed via `bench resolve-and-install`,
-		# Not all states can be maintained as some apps may not be install via bench resolve-and-install
-		# or may not be compatible with versioning
+		self.initialize_states()
 		self.initialize_apps()
 		apps_to_remove = []
 		for app in self.states:
