@@ -107,6 +107,20 @@ class TestBenchInit(TestBenchBase):
 		app_installed_in_env = TEST_FRAPPE_APP in subprocess.check_output(["bench", "pip", "freeze"], cwd=bench_path).decode('utf8')
 		self.assertTrue(app_installed_in_env)
 
+	def test_get_app_resolve_deps(self):
+		FRAPPE_APP = "healthcare"
+		self.init_bench("test-bench")
+		bench_path = os.path.join(self.benches_path, "test-bench")
+		exec_cmd(f"bench get-app {FRAPPE_APP} --resolve-deps", cwd=bench_path)
+		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", FRAPPE_APP)))
+
+		states_path = os.path.join(bench_path, "sites", "apps_states.json")
+		self.assert_(os.path.exists(states_path))
+
+		with open(states_path, "r") as f:
+			states = json.load(f)
+
+		self.assert_(FRAPPE_APP in states)
 
 	def test_install_app(self):
 		bench_name = "test-bench"
