@@ -143,6 +143,14 @@ class Bench(Base, Validator):
 		if systemd and conf.get("restart_systemd_on_update"):
 			restart_systemd_processes(bench_path=self.name, web_workers=web)
 
+	def get_installed_apps(self) -> List:
+		"""Returns list of installed apps on bench, not in excluded_apps.txt
+		"""
+		apps = [app for app in self.apps if app not in self.excluded_apps]
+		apps.remove("frappe")
+		apps.insert(0, "frappe")
+		return apps
+
 
 class BenchApps(MutableSequence):
 	def __init__(self, bench: Bench):
@@ -317,14 +325,6 @@ class BenchSetup(Base):
 
 		logger.log("backups were set up")
 
-	def __get_installed_apps(self) -> List:
-		"""Returns list of installed apps on bench, not in excluded_apps.txt
-		"""
-		apps = [app for app in self.bench.apps if app not in self.bench.excluded_apps]
-		apps.remove("frappe")
-		apps.insert(0, "frappe")
-		return apps
-
 	@job(title="Setting Up Bench Dependencies", success="Bench Dependencies Set Up")
 	def requirements(self, apps=None):
 		"""Install and upgrade all installed apps on given Bench if apps not specified
@@ -332,7 +332,7 @@ class BenchSetup(Base):
 		from bench.app import App
 
 		if not apps:
-			apps = self.__get_installed_apps()
+			apps = self.bench.get_installed_apps()
 
 		self.pip()
 
@@ -347,7 +347,7 @@ class BenchSetup(Base):
 		import bench.cli
 
 		if not apps:
-			apps = self.__get_installed_apps()
+			apps = self.bench.get_installed_apps()
 
 		quiet_flag = "" if bench.cli.verbose else "--quiet"
 

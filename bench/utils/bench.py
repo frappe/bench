@@ -75,7 +75,7 @@ def install_python_dev_dependencies(bench_path=".", apps=None, verbose=False):
 	if isinstance(apps, str):
 		apps = [apps]
 	elif apps is None:
-		apps = [app for app in bench.apps if app not in bench.excluded_apps]
+		apps = bench.get_installed_apps()
 
 	for app in apps:
 		app_path = os.path.join(bench_path, "apps", app)
@@ -92,7 +92,7 @@ def update_yarn_packages(bench_path=".", apps=None):
 	bench = Bench(bench_path)
 
 	if not apps:
-		apps = [app for app in bench.apps if app not in bench.excluded_apps]
+		apps = bench.get_installed_apps()
 
 	apps_dir = os.path.join(bench.name, "apps")
 
