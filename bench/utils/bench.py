@@ -48,7 +48,7 @@ def get_venv_path():
 	return venv or log("virtualenv cannot be found", level=2)
 
 
-def update_node_packages(bench_path="."):
+def update_node_packages(bench_path=".", apps=None):
 	print("Updating node packages...")
 	from bench.utils.app import get_develop_version
 	from distutils.version import LooseVersion
@@ -58,9 +58,9 @@ def update_node_packages(bench_path="."):
 	# After rollup was merged, frappe_version = 10.1
 	# if develop_verion is 11 and up, only then install yarn
 	if v < LooseVersion("11.x.x-develop"):
-		update_npm_packages(bench_path)
+		update_npm_packages(bench_path, apps=apps)
 	else:
-		update_yarn_packages(bench_path)
+		update_yarn_packages(bench_path, apps=apps)
 
 
 def install_python_dev_dependencies(bench_path=".", apps=None, verbose=False):
@@ -86,11 +86,14 @@ def install_python_dev_dependencies(bench_path=".", apps=None, verbose=False):
 			bench.run(f"{bench.python} -m pip install {quiet_flag} --upgrade -r {dev_requirements_path}")
 
 
-def update_yarn_packages(bench_path="."):
+def update_yarn_packages(bench_path=".", apps=None):
 	from bench.bench import Bench
 
 	bench = Bench(bench_path)
-	apps = [app for app in bench.apps if app not in bench.excluded_apps]
+
+	if not apps:
+		apps = [app for app in bench.apps if app not in bench.excluded_apps]
+
 	apps_dir = os.path.join(bench.name, "apps")
 
 	# TODO: Check for stuff like this early on only??
@@ -106,11 +109,14 @@ def update_yarn_packages(bench_path="."):
 			bench.run("yarn install", cwd=app_path)
 
 
-def update_npm_packages(bench_path="."):
+def update_npm_packages(bench_path=".", apps=None):
 	apps_dir = os.path.join(bench_path, "apps")
 	package_json = {}
 
-	for app in os.listdir(apps_dir):
+	if not apps:
+		apps = os.listdir(apps_dir)
+
+	for app in apps:
 		package_json_path = os.path.join(apps_dir, app, "package.json")
 
 		if os.path.exists(package_json_path):

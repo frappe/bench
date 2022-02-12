@@ -135,23 +135,26 @@ def setup_socketio():
 @click.option("--node", help="Update only Node packages", default=False, is_flag=True)
 @click.option("--python", help="Update only Python packages", default=False, is_flag=True)
 @click.option("--dev", help="Install optional python development dependencies", default=False, is_flag=True)
-def setup_requirements(node=False, python=False, dev=False):
+@click.option("--app", help="setup requirements for a specific app")
+def setup_requirements(node=False, python=False, dev=False, app=None):
 	from bench.bench import Bench
 
 	bench = Bench(".")
 
+	apps = [app] if app else None
+
 	if not (node or python or dev):
-		bench.setup.requirements()
+		bench.setup.requirements(apps=apps)
 
 	elif not node and not dev:
-		bench.setup.python()
+		bench.setup.python(apps=apps)
 
 	elif not python and not dev:
-		bench.setup.node()
+		bench.setup.node(apps=apps)
 
 	else:
 		from bench.utils.bench import install_python_dev_dependencies
-		install_python_dev_dependencies()
+		install_python_dev_dependencies(apps=apps)
 
 		if node:
 			click.secho("--dev flag only supports python dependencies. All node development dependencies are installed by default.", fg="yellow")
