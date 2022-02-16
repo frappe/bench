@@ -135,7 +135,7 @@ def setup_socketio():
 @click.option("--node", help="Update only Node packages", default=False, is_flag=True)
 @click.option("--python", help="Update only Python packages", default=False, is_flag=True)
 @click.option("--dev", help="Install optional python development dependencies", default=False, is_flag=True)
-@click.option("--app", help="setup requirements for a specific app")
+@click.option("--app", help="Setup requirements for a specific app")
 def setup_requirements(node=False, python=False, dev=False, app=None):
 	from bench.bench import Bench
 
