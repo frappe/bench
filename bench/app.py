@@ -470,7 +470,7 @@ def new_app(app, no_git=None, bench_path="."):
 
 def install_app(
 	app,
-	tag,
+	tag=None,
 	bench_path=".",
 	verbose=False,
 	no_cache=False,
