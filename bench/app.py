@@ -352,6 +352,8 @@ def get_app(
 
 	if resolve_deps:
 		resolution = make_resolution_plan(app, bench)
+		click.secho("Apps to be installed:", fg="yellow")
+		print("\n".join([app.name for app in reversed(resolution.values())]))
 		if "frappe" in resolution:
 			# Todo: Make frappe a terminal dependency for all frappe apps.
 			frappe_path, frappe_branch = resolution["frappe"].url, resolution["frappe"].tag
