@@ -339,7 +339,7 @@ class BenchSetup(Base):
 		print(f"Installing {len(apps)} applications...")
 
 		for app in apps:
-			App(app, bench=self.bench, to_clone=False).install()
+			App(app, bench=self.bench, to_clone=False).install( skip_assets=True, restart_bench=False)
 
 	def python(self, apps=None):
 		"""Install and upgrade Python dependencies for installed apps on given Bench if app not specified

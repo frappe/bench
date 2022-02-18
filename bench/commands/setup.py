@@ -131,17 +131,20 @@ def setup_procfile():
 def setup_socketio():
 	return
 
-@click.command("requirements", help="Setup Python and Node dependencies")
+@click.command("requirements")
 @click.option("--node", help="Update only Node packages", default=False, is_flag=True)
 @click.option("--python", help="Update only Python packages", default=False, is_flag=True)
 @click.option("--dev", help="Install optional python development dependencies", default=False, is_flag=True)
-@click.option("--app", help="Setup requirements for a specific app")
-def setup_requirements(node=False, python=False, dev=False, app=None):
+@click.argument("apps", nargs=-1)
+def setup_requirements(node=False, python=False, dev=False, apps=None):
+	"""
+	Setup Python and Node dependencies.
+
+	You can optionally specify one or more apps to specify dependencies for.
+	"""
 	from bench.bench import Bench
 
 	bench = Bench(".")
-
-	apps = [app] if app else None
 
 	if not (node or python or dev):
 		bench.setup.requirements(apps=apps)
