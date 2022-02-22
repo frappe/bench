@@ -176,7 +176,9 @@ class App(AppMeta):
 		shutil.move(active_app_path, archived_app_path)
 
 	@step(title="Installing App {repo}", success="App {repo} Installed")
-	def install(self, skip_assets=False, verbose=False, resolved=False):
+	def install(
+		self, skip_assets=False, verbose=False, resolved=False, restart_bench=True
+	):
 		import bench.cli
 		from bench.utils.app import get_app_name
 
@@ -193,7 +195,12 @@ class App(AppMeta):
 			)
 
 		install_app(
-			app=app_name, tag=self.tag, bench_path=self.bench.name, verbose=verbose, skip_assets=skip_assets,
+			app=app_name,
+			tag=self.tag,
+			bench_path=self.bench.name,
+			verbose=verbose,
+			skip_assets=skip_assets,
+			restart_bench=restart_bench,
 		)
 
 	@step(title="Cloning and installing {repo}", success="App {repo} Installed")

@@ -146,6 +146,14 @@ class Bench(Base, Validator):
 		if systemd and conf.get("restart_systemd_on_update"):
 			restart_systemd_processes(bench_path=self.name, web_workers=web)
 
+	def get_installed_apps(self) -> List:
+		"""Returns list of installed apps on bench, not in excluded_apps.txt
+		"""
+		apps = [app for app in self.apps if app not in self.excluded_apps]
+		apps.remove("frappe")
+		apps.insert(0, "frappe")
+		return apps
+
 
 class BenchApps(MutableSequence):
 	def __init__(self, bench: Bench):
@@ -350,35 +358,29 @@ class BenchSetup(Base):
 
 		logger.log("backups were set up")
 
-	def __get_installed_apps(self) -> List:
-		"""Returns list of installed apps on bench, not in excluded_apps.txt
-		"""
-		apps = [app for app in self.bench.apps if app not in self.bench.excluded_apps]
-		apps.remove("frappe")
-		apps.insert(0, "frappe")
-		return apps
-
 	@job(title="Setting Up Bench Dependencies", success="Bench Dependencies Set Up")
-	def requirements(self):
-		"""Install and upgrade all installed apps on given Bench
+	def requirements(self, apps=None):
+		"""Install and upgrade all installed apps on given Bench if apps not specified
 		"""
 		from bench.app import App
 
-		apps = self.__get_installed_apps()
+		if not apps:
+			apps = self.bench.get_installed_apps()
 
 		self.pip()
 
 		print(f"Installing {len(apps)} applications...")
 
 		for app in apps:
-			App(app, bench=self.bench, to_clone=False).install()
+			App(app, bench=self.bench, to_clone=False).install( skip_assets=True, restart_bench=False)
 
-	def python(self):
-		"""Install and upgrade Python dependencies for installed apps on given Bench
+	def python(self, apps=None):
+		"""Install and upgrade Python dependencies for installed apps on given Bench if app not specified
 		"""
 		import bench.cli
 
-		apps = self.__get_installed_apps()
+		if not apps:
+			apps = self.bench.get_installed_apps()
 
 		quiet_flag = "" if bench.cli.verbose else "--quiet"
 
@@ -389,12 +391,12 @@ class BenchSetup(Base):
 			log(f"\nInstalling python dependencies for {app}", level=3, no_log=True)
 			self.run(f"{self.bench.python} -m pip install {quiet_flag} --upgrade -e {app_path}")
 
-	def node(self):
-		"""Install and upgrade Node dependencies for all apps on given Bench
+	def node(self, apps=None):
+		"""Install and upgrade Node dependencies for all apps on given Bench if app not specified
 		"""
 		from bench.utils.bench import update_node_packages
 
-		return update_node_packages(bench_path=self.bench.name)
+		return update_node_packages(bench_path=self.bench.name, apps=apps)
 
 
 class BenchTearDown:
