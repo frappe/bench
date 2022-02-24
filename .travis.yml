@@ -48,17 +48,17 @@ matrix:
   - name: "Python 3.7 Tests"
     python: 3.7
     env: TEST=bench
-    script: python -m unittest -v bench.tests.test_init && python -m unittest -v bench.tests.test_utils
+    script: python -m unittest -v bench.tests.test_utils && python -m unittest -v bench.tests.test_init
 
   - name: "Python 3.8 Tests"
     python: 3.8
     env: TEST=bench
-    script: python -m unittest -v bench.tests.test_init && python -m unittest -v bench.tests.test_utils
+    script: python -m unittest -v bench.tests.test_utils && python -m unittest -v bench.tests.test_init
 
   - name: "Python 3.9 Tests"
     python: 3.9
     env: TEST=bench
-    script: python -m unittest -v bench.tests.test_init && python -m unittest -v bench.tests.test_utils
+    script: python -m unittest -v bench.tests.test_utils && python -m unittest -v bench.tests.test_init
 
   - name: "Python 3.7 Easy Install"
     python: 3.7
