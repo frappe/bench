@@ -140,7 +140,7 @@ def setup_requirements(node=False, python=False, dev=False, apps=None):
 	"""
 	Setup Python and Node dependencies.
 
-	You can optionally specify one or more apps to specify dependencies for.
+	You can optionally specify one or more apps to setup dependencies for.
 	"""
 	from bench.bench import Bench
 

@@ -360,7 +360,7 @@ class BenchSetup(Base):
 
 	@job(title="Setting Up Bench Dependencies", success="Bench Dependencies Set Up")
 	def requirements(self, apps=None):
-		"""Install and upgrade all installed apps on given Bench if apps not specified
+		"""Install and upgrade specified / all installed apps on given Bench
 		"""
 		from bench.app import App
 
@@ -375,7 +375,7 @@ class BenchSetup(Base):
 			App(app, bench=self.bench, to_clone=False).install( skip_assets=True, restart_bench=False)
 
 	def python(self, apps=None):
-		"""Install and upgrade Python dependencies for installed apps on given Bench if app not specified
+		"""Install and upgrade Python dependencies for specified / all installed apps on given Bench
 		"""
 		import bench.cli
 
@@ -392,7 +392,7 @@ class BenchSetup(Base):
 			self.run(f"{self.bench.python} -m pip install {quiet_flag} --upgrade -e {app_path}")
 
 	def node(self, apps=None):
-		"""Install and upgrade Node dependencies for all apps on given Bench if app not specified
+		"""Install and upgrade Node dependencies for specified / all apps on given Bench
 		"""
 		from bench.utils.bench import update_node_packages
 

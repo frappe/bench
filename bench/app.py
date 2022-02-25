@@ -10,6 +10,7 @@ import sys
 import typing
 from collections import OrderedDict
 from datetime import date
+from urllib.parse import urlparse
 
 # imports - third party imports
 import click
@@ -65,6 +66,9 @@ class AppMeta:
 		self.from_apps = False
 		self.is_url = False
 		self.branch = branch
+		self.mount_path = os.path.abspath(
+			os.path.join(urlparse(self.name).netloc, urlparse(self.name).path)
+		)
 		self.setup_details()
 
 	def setup_details(self):
@@ -78,7 +82,7 @@ class AppMeta:
 			self._setup_details_from_installed_apps()
 
 		# fetch meta for repo on mounted disk
-		elif os.path.exists(self.name):
+		elif os.path.exists(self.mount_path):
 			self.on_disk = True
 			self._setup_details_from_mounted_disk()
 
@@ -94,7 +98,9 @@ class AppMeta:
 			self._setup_details_from_name_tag()
 
 	def _setup_details_from_mounted_disk(self):
-		self.org, self.repo, self.tag = os.path.split(self.name)[-2:] + (self.branch,)
+		self.org, self.repo, self.tag = os.path.split(self.mount_path)[-2:] + (
+			self.branch,
+		)
 
 	def _setup_details_from_name_tag(self):
 		self.org, self.repo, self.tag = fetch_details_from_tag(self.name)
@@ -125,7 +131,7 @@ class AppMeta:
 			return os.path.abspath(os.path.join("apps", self.name))
 
 		if self.on_disk:
-			return os.path.abspath(self.name)
+			return self.mount_path
 
 		if self.is_url:
 			return self.name
