@@ -189,13 +189,9 @@ class App(AppMeta):
 		verbose = bench.cli.verbose or verbose
 		app_name = get_app_name(self.bench.name, self.repo)
 		if not resolved:
-			# TODO: this should go inside install_app only tho - issue: default/resolved branch
-			setup_app_dependencies(
-				repo_name=self.repo,
-				bench_path=self.bench.name,
-				branch=self.tag,
-				verbose=verbose,
-				skip_assets=skip_assets,
+			click.secho(
+				f"Ignoring dependencies of {self.name} to install dependencies use --resolve-deps",
+				fg="yellow",
 			)
 
 		install_app(
@@ -301,35 +297,6 @@ def remove_from_excluded_apps_txt(app, bench_path="."):
 		return write_excluded_apps_txt(apps, bench_path=bench_path)
 
 
-def setup_app_dependencies(
-	repo_name, bench_path=".", branch=None, skip_assets=False, verbose=False
-):
-	# branch kwarg is somewhat of a hack here; since we're assuming the same branches for all apps
-	# for eg: if you're installing erpnext@develop, you'll want frappe@develop and healthcare@develop too
-	import glob
-	import bench.cli
-	from bench.bench import Bench
-
-	verbose = bench.cli.verbose or verbose
-	apps_path = os.path.join(os.path.abspath(bench_path), "apps")
-	files = glob.glob(os.path.join(apps_path, repo_name, "**", "hooks.py"))
-
-	if files:
-		with open(files[0]) as f:
-			lines = [x for x in f.read().split("\n") if x.strip().startswith("required_apps")]
-		if lines:
-			required_apps = eval(lines[0].strip("required_apps").strip().lstrip("=").strip())
-			# TODO: when the time comes, add version check here
-			for app in required_apps:
-				if app not in Bench(bench_path).apps:
-					get_app(
-						app,
-						bench_path=bench_path,
-						branch=branch,
-						skip_assets=skip_assets,
-						verbose=verbose,
-					)
-
 
 def get_app(
 	git_url,
@@ -364,7 +331,9 @@ def get_app(
 	if resolve_deps:
 		resolution = make_resolution_plan(app, bench)
 		click.secho("Apps to be installed:", fg="yellow")
-		print("\n".join([app.name for app in reversed(resolution.values())]))
+		for idx, app in enumerate(reversed(resolution.values()), start=1):
+			print(f"{idx}. {app.name}")
+
 		if "frappe" in resolution:
 			# Todo: Make frappe a terminal dependency for all frappe apps.
 			frappe_path, frappe_branch = resolution["frappe"].url, resolution["frappe"].tag
