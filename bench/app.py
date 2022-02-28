@@ -190,7 +190,7 @@ class App(AppMeta):
 
 		verbose = bench.cli.verbose or verbose
 		app_name = get_app_name(self.bench.name, self.repo)
-		if not resolved:
+		if not resolved and self.repo != "frappe":
 			click.secho(
 				f"Ignoring dependencies of {self.name} to install dependencies use --resolve-deps",
 				fg="yellow",
