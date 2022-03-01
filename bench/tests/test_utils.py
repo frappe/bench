@@ -35,3 +35,10 @@ class TestUtils(unittest.TestCase):
 			),
 			"https://raw.github.com/frappe/frappe/version-13/frappe/hooks.py",
 		)
+
+	def test_is_valid_frappe_branch(self):
+		self.assertTrue(is_valid_frappe_branch("https://github.com/frappe/frappe", frappe_branch=""))
+		self.assertTrue(is_valid_frappe_branch("https://github.com/frappe/frappe", frappe_branch="develop"))
+		self.assertTrue(is_valid_frappe_branch("https://github.com/frappe/erpnext", frappe_branch="version-13"))
+		self.assertFalse(is_valid_frappe_branch("https://github.com/frappe/erpnext", frappe_branch="version-1"))
+
