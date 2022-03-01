@@ -107,7 +107,9 @@ def switch_to_develop(apps=None, bench_path=".", upgrade=True):
 
 
 def get_version_from_string(contents, field="__version__"):
-	match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % field, contents)
+	match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])" % field, contents, flags=(re.S | re.M))
+	if not match:
+		raise Exception("No match was found")
 	return match.group(2)
 
 
@@ -164,13 +166,15 @@ def get_current_branch(app, bench_path="."):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	return get_cmd_output("basename $(git symbolic-ref -q HEAD)", cwd=repo_dir)
 
+
 def get_required_deps_url(git_url, repo_name, branch, deps="hooks.py"):
 	git_url = (
 		git_url.replace(".git", "").replace("github.com", "raw.github.com")
 	)
 	branch = branch if branch else "develop"
-	git_url +=  f"/{branch}/{repo_name}/{deps}"
+	git_url += f"/{branch}/{repo_name}/{deps}"
 	return git_url
+
 
 def get_remote(app, bench_path="."):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
@@ -208,10 +212,12 @@ def get_app_name(bench_path, repo_name):
 
 	return repo_name
 
+
 def check_existing_dir(bench_path, repo_name):
 	cloned_path = os.path.join(bench_path, "apps", repo_name)
 	dir_already_exists = os.path.isdir(cloned_path)
 	return dir_already_exists, cloned_path
+
 
 def get_current_version(app, bench_path="."):
 	current_version = None
