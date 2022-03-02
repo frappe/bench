@@ -215,16 +215,25 @@ class App(AppMeta):
 		self.bench.run(f"{self.bench.python} -m pip uninstall -y {self.repo}")
 
 	def _get_dependencies(self):
-		from bench.utils.app import get_required_deps_url
+		from bench.utils.app import get_required_deps
 
-		required_url = get_required_deps_url(git_url=self.url, repo_name=self.repo, branch=self.tag)
 		try:
-			f = requests.get(required_url).text
-			lines = [x for x in f.split("\n") if x.strip().startswith("required_apps")]
-			required_apps = eval(lines[0].strip("required_apps").strip().lstrip("=").strip())
-			return required_apps
+			required_deps = get_required_deps(
+				self.org, self.repo, self.tag or self.branch
+			)
+			lines = [
+				x
+				for x in required_deps.split("\n")
+				if x.strip().startswith("required_apps")
+			]
+			required_apps = eval(
+				lines[0].strip("required_apps").strip().lstrip("=").strip()
+			)
 		except Exception:
 			return []
+
+		return required_apps
+
 
 def make_resolution_plan(app: App, bench: "Bench"):
 	"""
