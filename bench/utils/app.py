@@ -166,6 +166,7 @@ def get_current_branch(app, bench_path="."):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	return get_cmd_output("basename $(git symbolic-ref -q HEAD)", cwd=repo_dir)
 
+
 def get_required_deps(org, name, branch, deps="hooks.py"):
 	import requests
 	import base64
@@ -174,15 +175,6 @@ def get_required_deps(org, name, branch, deps="hooks.py"):
 	params = {"branch": branch or "develop"}
 	res = requests.get(url=url, params=params).json()
 	return base64.decodebytes(res["content"].encode()).decode()
-
-
-def get_required_deps_url(git_url, repo_name, branch, deps="hooks.py"):
-	git_url = (
-		git_url.replace(".git", "").replace("github.com", "raw.github.com")
-	)
-	branch = branch if branch else "develop"
-	git_url += f"/{branch}/{repo_name}/{deps}"
-	return git_url
 
 
 def get_remote(app, bench_path="."):
@@ -220,11 +212,6 @@ def get_app_name(bench_path, repo_name):
 		return app_name
 
 	return repo_name
-
-def check_existing_dir(bench_path, repo_name):
-	cloned_path = os.path.join(bench_path, "apps", repo_name)
-	dir_already_exists = os.path.isdir(cloned_path)
-	return dir_already_exists, cloned_path
 
 def check_existing_dir(bench_path, repo_name):
 	cloned_path = os.path.join(bench_path, "apps", repo_name)
