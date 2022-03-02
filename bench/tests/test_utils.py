@@ -4,8 +4,7 @@ import unittest
 
 from bench.app import App
 from bench.bench import Bench
-from bench.utils import exec_cmd, is_valid_frappe_branch
-from bench.utils.app import get_required_deps_url
+from bench.utils import is_valid_frappe_branch
 
 
 class TestUtils(unittest.TestCase):
@@ -25,18 +24,6 @@ class TestUtils(unittest.TestCase):
 					app.url == git_url,
 				]
 			)
-		)
-
-	def test_get_required_deps_url(self):
-		self.assertEqual(
-			get_required_deps_url(git_url="https://github.com/frappe/frappe.git", branch=None, repo_name="frappe"),
-			"https://raw.github.com/frappe/frappe/develop/frappe/hooks.py",
-		)
-		self.assertEqual(
-			get_required_deps_url(
-				git_url="https://github.com/frappe/frappe.git", branch="version-13", repo_name="frappe"
-			),
-			"https://raw.github.com/frappe/frappe/version-13/frappe/hooks.py",
 		)
 
 	def test_is_valid_frappe_branch(self):
