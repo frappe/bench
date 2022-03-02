@@ -78,3 +78,9 @@ class TestUtils(unittest.TestCase):
 		self.assertEqual("11.0", fake_bench.apps.states["frappe"]["version"])
 
 		shutil.rmtree(bench_dir)
+
+	def test_get_dependencies(self):
+		fake_app = App("frappe/healthcare@develop")
+		self.assertIn("erpnext", fake_app._get_dependencies())
+		fake_app = App("frappe/not_healthcare@not-a-branch")
+		self.assertTrue(len(fake_app._get_dependencies()) == 0)
