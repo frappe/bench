@@ -5,7 +5,7 @@ import unittest
 from bench.app import App
 from bench.bench import Bench
 from bench.utils import is_valid_frappe_branch
-
+from bench.exceptions import InvalidRemoteException
 
 class TestUtils(unittest.TestCase):
 	def test_app_utils(self):
@@ -27,10 +27,11 @@ class TestUtils(unittest.TestCase):
 		)
 
 	def test_is_valid_frappe_branch(self):
-		self.assertTrue(is_valid_frappe_branch("https://github.com/frappe/frappe", frappe_branch=""))
-		self.assertTrue(is_valid_frappe_branch("https://github.com/frappe/frappe", frappe_branch="develop"))
-		self.assertTrue(is_valid_frappe_branch("https://github.com/frappe/erpnext", frappe_branch="version-13"))
-		self.assertFalse(is_valid_frappe_branch("https://github.com/frappe/erpnext", frappe_branch="version-1"))
+		with self.assertRaises(InvalidRemoteException):
+			is_valid_frappe_branch("https://github.com/frappe/frappe.git", frappe_branch="random-branch")
+			is_valid_frappe_branch("https://github.com/random/random.git", frappe_branch="random-branch")
+
+		is_valid_frappe_branch("https://github.com/frappe/frappe.git", frappe_branch="develop")
 
 	def test_app_states(self):
 		bench_dir = "./sandbox"
