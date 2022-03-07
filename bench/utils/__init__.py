@@ -49,12 +49,17 @@ def is_frappe_app(directory: str) -> bool:
 	return bool(is_frappe_app)
 
 
-def is_valid_frappe_branch(frappe_path: str, frappe_branch: str):
+def is_valid_frappe_branch(frappe_path, frappe_branch):
 	if "http" in frappe_path:
-		url = frappe_path
-		url += "/tree/" + frappe_branch if frappe_branch else ""
-		return requests.get(url).status_code != 404
-	return True
+		frappe_path = frappe_path.replace(".git", "")
+		try:
+			owner, repo = frappe_path.split("/")[3], frappe_path.split("/")[4]
+		except IndexError:
+			raise InvalidRemoteException
+		git_api = f"https://api.github.com/repos/{owner}/{repo}/branches"
+		res = requests.get(git_api).json()
+		if "message" in res or frappe_branch not in [x["name"] for x in res]:
+			raise InvalidRemoteException
 
 
 def log(message, level=0, no_log=False):
