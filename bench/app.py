@@ -343,7 +343,7 @@ def get_app(
 
 	if resolve_deps:
 		resolution = make_resolution_plan(app, bench)
-		click.secho("Apps to be installed:", fg="yellow")
+		click.secho("Following apps will be installed", fg="yellow")
 		for idx, app in enumerate(reversed(resolution.values()), start=1):
 			print(f"{idx}. {app.name}")
 
@@ -379,6 +379,7 @@ def get_app(
 
 	if resolve_deps:
 		install_resolved_deps(
+			bench,
 			resolution,
 			bench_path=bench_path,
 			skip_assets=skip_assets,
@@ -412,6 +413,7 @@ def get_app(
 		app.install(verbose=verbose, skip_assets=skip_assets)
 
 def install_resolved_deps(
+	bench,
 	resolution,
 	bench_path=".",
 	skip_assets=False,
@@ -424,16 +426,19 @@ def install_resolved_deps(
 		del resolution["frappe"]
 
 	for repo_name, app in reversed(resolution.items()):
-		existing_dir, cloned_path = check_existing_dir(bench_path, repo_name)
+		existing_dir, _ = check_existing_dir(bench_path, repo_name)
 		if existing_dir:
-			if click.confirm(
-				f"A directory for the application '{repo_name}' already exists. "
-				"Do you want to continue and overwrite it?"
-			):
-				click.secho(f"Removing {repo_name}", fg="yellow")
-				shutil.rmtree(cloned_path)
+			if bench.apps.states[repo_name]["resolution"] != app.tag:
+				click.secho(
+					f"Incompatible version of {repo_name} is already installed",
+					fg="yellow",
+				)
 				app.install_resolved_apps(skip_assets=skip_assets, verbose=verbose)
-
+			else:
+				click.secho(
+					f"Compatible version of {repo_name} is already installed",
+					fg="yellow",
+				)
 			continue
 		app.install_resolved_apps(skip_assets=skip_assets, verbose=verbose)
 

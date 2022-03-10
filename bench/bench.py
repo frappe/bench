@@ -160,18 +160,16 @@ class BenchApps(MutableSequence):
 		self.bench = bench
 		self.states_path = os.path.join(self.bench.name, "sites", "apps_states.json")
 		self.initialize_apps()
+		self.set_states()
 
 	def set_states(self):
 		try:
 			with open(self.states_path, "r") as f:
 				self.states = json.loads(f.read() or "{}")
 		except FileNotFoundError:
-			with open(self.states_path, "w+") as f:
-				self.states = json.loads(f.read() or "{}")
+			self.states = {}
 
 	def update_apps_states(self, app_name: str = None, resolution: str = None):
-		self.initialize_apps()
-		self.set_states()
 		apps_to_remove = []
 		for app in self.states:
 			if app not in self.apps:
@@ -281,6 +279,9 @@ class BenchSetup(Base):
 		- install frappe python dependencies
 		"""
 		import bench.cli
+		import click
+
+		click.secho("Setting Up Environment", fg="yellow")
 
 		frappe = os.path.join(self.bench.name, "apps", "frappe")
 		virtualenv = get_venv_path()
