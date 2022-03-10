@@ -50,7 +50,6 @@ class AppMeta:
 			3. frappe/healthcare@develop
 			4. healthcare
 			5. healthcare@develop, healthcare@v13.12.1
-			6. erpnext
 
 		References for Version Identifiers:
 		 * https://www.python.org/dev/peps/pep-0440/#version-specifiers
@@ -59,7 +58,7 @@ class AppMeta:
 		class Healthcare(AppConfig):
 			dependencies = [{"frappe/erpnext": "~13.17.0"}]
 		"""
-		self.name = name.rstrip('/')
+		self.name = name.rstrip("/")
 		self.remote_server = "github.com"
 		self.to_clone = to_clone
 		self.on_disk = False
@@ -67,9 +66,7 @@ class AppMeta:
 		self.from_apps = False
 		self.is_url = False
 		self.branch = branch
-		self.mount_path = os.path.abspath(
-			os.path.join(urlparse(self.name).netloc, urlparse(self.name).path)
-		)
+		self.mount_path = os.path.abspath(os.path.join(urlparse(self.name).netloc, urlparse(self.name).path))
 		self.setup_details()
 
 	def setup_details(self):
@@ -99,9 +96,7 @@ class AppMeta:
 			self._setup_details_from_name_tag()
 
 	def _setup_details_from_mounted_disk(self):
-		self.org, self.repo, self.tag = os.path.split(self.mount_path)[-2:] + (
-			self.branch,
-		)
+		self.org, self.repo, self.tag = os.path.split(self.mount_path)[-2:] + (self.branch,)
 
 	def _setup_details_from_name_tag(self):
 		self.org, self.repo, self.tag = fetch_details_from_tag(self.name)
@@ -151,9 +146,7 @@ class AppMeta:
 
 @functools.lru_cache(maxsize=None)
 class App(AppMeta):
-	def __init__(
-		self, name: str, branch: str = None, bench: "Bench" = None, *args, **kwargs
-	):
+	def __init__(self, name: str, branch: str = None, bench: "Bench" = None, *args, **kwargs):
 		self.bench = bench
 		self.required_by = None
 		super().__init__(name, branch, *args, **kwargs)
@@ -176,17 +169,13 @@ class App(AppMeta):
 	def remove(self):
 		active_app_path = os.path.join("apps", self.repo)
 		archived_path = os.path.join("archived", "apps")
-		archived_name = get_available_folder_name(
-			f"{self.repo}-{date.today()}", archived_path
-		)
+		archived_name = get_available_folder_name(f"{self.repo}-{date.today()}", archived_path)
 		archived_app_path = os.path.join(archived_path, archived_name)
 		log(f"App moved from {active_app_path} to {archived_app_path}")
 		shutil.move(active_app_path, archived_app_path)
 
 	@step(title="Installing App {repo}", success="App {repo} Installed")
-	def install(
-		self, skip_assets=False, verbose=False, resolved=False, restart_bench=True
-	):
+	def install(self, skip_assets=False, verbose=False, resolved=False, restart_bench=True):
 		import bench.cli
 		from bench.utils.app import get_app_name
 
@@ -220,17 +209,9 @@ class App(AppMeta):
 		from bench.utils.app import get_required_deps
 
 		try:
-			required_deps = get_required_deps(
-				self.org, self.repo, self.tag or self.branch
-			)
-			lines = [
-				x
-				for x in required_deps.split("\n")
-				if x.strip().startswith("required_apps")
-			]
-			required_apps = eval(
-				lines[0].strip("required_apps").strip().lstrip("=").strip()
-			)
+			required_deps = get_required_deps(self.org, self.repo, self.tag or self.branch)
+			lines = [x for x in required_deps.split("\n") if x.strip().startswith("required_apps")]
+			required_apps = eval(lines[0].strip("required_apps").strip().lstrip("=").strip())
 		except Exception:
 			return []
 
@@ -312,7 +293,6 @@ def remove_from_excluded_apps_txt(app, bench_path="."):
 		return write_excluded_apps_txt(apps, bench_path=bench_path)
 
 
-
 def get_app(
 	git_url,
 	branch=None,
@@ -372,12 +352,14 @@ def get_app(
 		bench_setup = True
 
 	if bench_setup and bench_cli.from_command_line and bench_cli.dynamic_feed:
-		_bench.LOG_BUFFER.append({
-			"message": f"Fetching App {repo_name}",
-			"prefix": click.style('⏼', fg='bright_yellow'),
-			"is_parent": True,
-			"color": None,
-		})
+		_bench.LOG_BUFFER.append(
+			{
+				"message": f"Fetching App {repo_name}",
+				"prefix": click.style("⏼", fg="bright_yellow"),
+				"is_parent": True,
+				"color": None,
+			}
+		)
 
 	if resolve_deps:
 		install_resolved_deps(
@@ -413,6 +395,7 @@ def get_app(
 		or click.confirm("Do you want to reinstall the existing application?")
 	):
 		app.install(verbose=verbose, skip_assets=skip_assets)
+
 
 def install_resolved_deps(
 	bench,
@@ -459,11 +442,10 @@ def install_resolved_deps(
 			continue
 		app.install_resolved_apps(skip_assets=skip_assets, verbose=verbose)
 
+
 def new_app(app, no_git=None, bench_path="."):
 	if bench.FRAPPE_VERSION in (0, None):
-		raise NotInBenchDirectoryError(
-			f"{os.path.realpath(bench_path)} is not a valid bench directory."
-		)
+		raise NotInBenchDirectoryError(f"{os.path.realpath(bench_path)} is not a valid bench directory.")
 
 	# For backwards compatibility
 	app = app.lower().replace(" ", "_").replace("-", "_")
@@ -471,10 +453,7 @@ def new_app(app, no_git=None, bench_path="."):
 	args = ["make-app", apps, app]
 	if no_git:
 		if bench.FRAPPE_VERSION < 14:
-			click.secho(
-				"Frappe v14 or greater is needed for '--no-git' flag",
-				fg="red"
-			)
+			click.secho("Frappe v14 or greater is needed for '--no-git' flag", fg="red")
 			return
 		args.append(no_git)
 
@@ -524,6 +503,7 @@ def install_app(
 
 	if restart_bench:
 		bench.reload()
+
 
 def pull_apps(apps=None, bench_path=".", reset=False):
 	"""Check all apps if there no local changes, pull"""
@@ -615,7 +595,10 @@ def install_apps_from_path(path, bench_path="."):
 	apps = get_apps_json(path)
 	for app in apps:
 		get_app(
-			app["url"], branch=app.get("branch"), bench_path=bench_path, skip_assets=True,
+			app["url"],
+			branch=app.get("branch"),
+			bench_path=bench_path,
+			skip_assets=True,
 		)
 
 
