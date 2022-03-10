@@ -428,19 +428,34 @@ def install_resolved_deps(
 		del resolution["frappe"]
 
 	for repo_name, app in reversed(resolution.items()):
-		existing_dir, _ = check_existing_dir(bench_path, repo_name)
+		existing_dir, path_to_app = check_existing_dir(bench_path, repo_name)
 		if existing_dir:
-			if bench.apps.states[repo_name]["resolution"]["branch"] != app.tag:
-				click.secho(
-					f"Incompatible version of {repo_name} is already installed",
-					fg="yellow",
+			is_compatible = False
+
+			installed_branch = bench.apps.states[repo_name]["resolution"]["branch"].strip()
+			if app.tag is None:
+				current_remote = (
+					subprocess.check_output(f"git config branch.{installed_branch}.remote", shell=True, cwd=path_to_app)
+					.decode("utf-8")
+					.rstrip()
 				)
-				app.install_resolved_apps(skip_assets=skip_assets, verbose=verbose)
+
+				default_branch = (
+					subprocess.check_output(
+						f"git symbolic-ref refs/remotes/{current_remote}/HEAD", shell=True, cwd=path_to_app
+					)
+					.decode("utf-8")
+					.rsplit("/")[-1]
+					.strip()
+				)
+				is_compatible = default_branch == installed_branch
 			else:
-				click.secho(
-					f"Compatible version of {repo_name} is already installed",
-					fg="yellow",
-				)
+				is_compatible = bench.apps.states[repo_name]["resolution"]["branch"] == app.tag
+
+			click.secho(
+				f"{'C' if is_compatible else 'Inc'}ompatible version of {repo_name} is already installed",
+				fg="yellow",
+			)
 			continue
 		app.install_resolved_apps(skip_assets=skip_assets, verbose=verbose)
 
