@@ -155,6 +155,7 @@ class App(AppMeta):
 		self, name: str, branch: str = None, bench: "Bench" = None, *args, **kwargs
 	):
 		self.bench = bench
+		self.required_by = None
 		super().__init__(name, branch, *args, **kwargs)
 
 	@step(title="Fetching App {repo}", success="App {repo} Fetched")
@@ -246,6 +247,7 @@ def make_resolution_plan(app: App, bench: "Bench"):
 	for app_name in app._get_dependencies():
 		dep_app = App(app_name, bench=bench)
 		is_valid_frappe_branch(dep_app.url, dep_app.branch)
+		dep_app.required_by = app.name
 		if dep_app.repo in resolution:
 			click.secho(f"{dep_app.repo} is already resolved skipping", fg="yellow")
 			continue
@@ -345,7 +347,7 @@ def get_app(
 		resolution = make_resolution_plan(app, bench)
 		click.secho("Following apps will be installed", fg="yellow")
 		for idx, app in enumerate(reversed(resolution.values()), start=1):
-			print(f"{idx}. {app.name}")
+			print(f"{idx}. {app.name} {f'required by {app.required_by}' if app.required_by else ''}")
 
 		if "frappe" in resolution:
 			# Todo: Make frappe a terminal dependency for all frappe apps.
