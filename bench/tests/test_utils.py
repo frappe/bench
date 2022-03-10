@@ -1,11 +1,14 @@
 import os
 import shutil
+import subprocess
 import unittest
+from tabnanny import check
 
 from bench.app import App
 from bench.bench import Bench
-from bench.utils import is_valid_frappe_branch
 from bench.exceptions import InvalidRemoteException
+from bench.utils import is_valid_frappe_branch
+
 
 class TestUtils(unittest.TestCase):
 	def test_app_utils(self):
@@ -42,22 +45,26 @@ class TestUtils(unittest.TestCase):
 
 		fake_bench = Bench(bench_dir)
 
-		fake_bench.apps.set_states()
-
 		self.assertTrue(hasattr(fake_bench.apps, "states"))
-		self.assertTrue(os.path.exists(os.path.join(sites_dir, "apps_states.json")))
 
-		fake_bench.apps.states = {"frappe": {"resolution": None, "version": "14.0.0-dev"}}
+		fake_bench.apps.states = {
+			"frappe": {"resolution": {"branch": "develop", "commit_hash": "234rwefd"}, "version": "14.0.0-dev"}
+		}
 		fake_bench.apps.update_apps_states()
 
 		self.assertEqual(fake_bench.apps.states, {})
 
-		frappe_path = os.path.join(bench_dir, "apps", "frappe", "frappe")
+		frappe_path = os.path.join(bench_dir, "apps", "frappe")
 
-		os.makedirs(frappe_path)
+		os.makedirs(os.path.join(frappe_path, "frappe"))
 
-		with open(os.path.join(frappe_path, "__init__.py"), "w+") as f:
+		subprocess.run(["git", "init"], cwd=frappe_path, capture_output=True, check=True)
+
+		with open(os.path.join(frappe_path, "frappe", "__init__.py"), "w+") as f:
 			f.write("__version__ = '11.0'")
+
+		subprocess.run(["git", "add", "."], cwd=frappe_path, capture_output=True, check=True)
+		subprocess.run(["git", "commit", "-m", "temp"], cwd=frappe_path, capture_output=True, check=True)
 
 		fake_bench.apps.update_apps_states("frappe")
 
