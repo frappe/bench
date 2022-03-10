@@ -24,6 +24,7 @@ from bench.utils import (
 	get_available_folder_name,
 	is_bench_directory,
 	is_git_url,
+	is_valid_frappe_branch,
 	log,
 	run_frappe_cmd,
 )
@@ -244,6 +245,7 @@ def make_resolution_plan(app: App, bench: "Bench"):
 
 	for app_name in app._get_dependencies():
 		dep_app = App(app_name, bench=bench)
+		is_valid_frappe_branch(dep_app.url, dep_app.branch)
 		if dep_app.repo in resolution:
 			click.secho(f"{dep_app.repo} is already resolved skipping", fg="yellow")
 			continue

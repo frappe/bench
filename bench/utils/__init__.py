@@ -58,7 +58,7 @@ def is_valid_frappe_branch(frappe_path, frappe_branch):
 			raise InvalidRemoteException
 		git_api = f"https://api.github.com/repos/{owner}/{repo}/branches"
 		res = requests.get(git_api).json()
-		if "message" in res or frappe_branch not in [x["name"] for x in res]:
+		if "message" in res or (frappe_branch and frappe_branch not in [x["name"] for x in res]):
 			raise InvalidRemoteException
 
 
@@ -76,9 +76,7 @@ def log(message, level=0, no_log=False):
 	color, prefix = levels.get(level, levels[0])
 
 	if bench.cli.from_command_line and bench.cli.dynamic_feed:
-		bench.LOG_BUFFER.append(
-			{"prefix": prefix, "message": message, "color": color}
-		)
+		bench.LOG_BUFFER.append({"prefix": prefix, "message": message, "color": color})
 
 	if no_log:
 		click.secho(message, fg=color)
@@ -196,9 +194,7 @@ def get_git_version() -> float:
 def get_cmd_output(cmd, cwd=".", _raise=True):
 	output = ""
 	try:
-		output = subprocess.check_output(
-			cmd, cwd=cwd, shell=True, stderr=subprocess.PIPE, encoding="utf-8"
-		).strip()
+		output = subprocess.check_output(cmd, cwd=cwd, shell=True, stderr=subprocess.PIPE, encoding="utf-8").strip()
 	except subprocess.CalledProcessError as e:
 		if e.output:
 			output = e.output
