@@ -159,7 +159,7 @@ class Bench(Base, Validator):
 class BenchApps(MutableSequence):
 	def __init__(self, bench: Bench):
 		self.bench = bench
-		self.states_path = os.path.join(self.bench.name, "sites", "apps_states.json")
+		self.states_path = os.path.join(self.bench.name, "sites", "apps.json")
 		self.apps_path = os.path.join(self.bench.name, "apps")
 		self.initialize_apps()
 		self.set_states()
