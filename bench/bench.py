@@ -1,11 +1,12 @@
 # imports - standard imports
+import subprocess
 import functools
 import os
 import shutil
 import json
 import sys
 import logging
-from typing import List, MutableSequence, TYPE_CHECKING
+from typing import List, MutableSequence, TYPE_CHECKING, Union
 
 # imports - module imports
 import bench
@@ -159,6 +160,7 @@ class BenchApps(MutableSequence):
 	def __init__(self, bench: Bench):
 		self.bench = bench
 		self.states_path = os.path.join(self.bench.name, "sites", "apps_states.json")
+		self.apps_path = os.path.join(self.bench.name, "apps")
 		self.initialize_apps()
 		self.set_states()
 
@@ -169,7 +171,7 @@ class BenchApps(MutableSequence):
 		except FileNotFoundError:
 			self.states = {}
 
-	def update_apps_states(self, app_name: str = None, resolution: str = None):
+	def update_apps_states(self, app_name: Union[str, None] = None, branch: Union[str, None] = None):
 		apps_to_remove = []
 		for app in self.states:
 			if app not in self.apps:
@@ -180,8 +182,23 @@ class BenchApps(MutableSequence):
 
 		if app_name:
 			version = get_current_version(app_name, self.bench.name)
+
+			app_dir = os.path.join(self.apps_path, app_name)
+			if not branch:
+				branch = (
+						subprocess
+						.check_output("git rev-parse --abbrev-ref HEAD", shell=True, cwd=app_dir)
+						.decode("utf-8")
+						.rstrip()
+						)
+
+			commit_hash = subprocess.check_output(f"git rev-parse {branch}", shell=True, cwd=app_dir).decode("utf-8").rstrip()
+
 			self.states[app_name] = {
-				"resolution": resolution,
+				"resolution": {
+					"commit_hash":commit_hash,
+					"branch": branch
+				},
 				"version": version,
 			}
 

@@ -428,7 +428,7 @@ def install_resolved_deps(
 	for repo_name, app in reversed(resolution.items()):
 		existing_dir, _ = check_existing_dir(bench_path, repo_name)
 		if existing_dir:
-			if bench.apps.states[repo_name]["resolution"] != app.tag:
+			if bench.apps.states[repo_name]["resolution"]["branch"] != app.tag:
 				click.secho(
 					f"Incompatible version of {repo_name} is already installed",
 					fg="yellow",
@@ -500,7 +500,7 @@ def install_app(
 		bench.run("yarn install", cwd=app_path)
 
 	bench.apps.sync()
-	bench.apps.update_apps_states(app, tag)
+	bench.apps.update_apps_states(app, branch=tag)
 
 	if not skip_assets:
 		build_assets(bench_path=bench_path, app=app)
