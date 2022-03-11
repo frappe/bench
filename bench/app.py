@@ -418,8 +418,14 @@ def install_resolved_deps(
 			try:
 				installed_branch = bench.apps.states[repo_name]["resolution"]["branch"].strip()
 			except:
-				installed_branch = None
-				
+				installed_branch = (
+					subprocess.
+					check_output("git rev-parse --abbrev-ref HEAD", shell=True, cwd=path_to_app)
+					.decode("utf-8")
+					.rstrip()
+					)
+
+			
 			if app.tag is None:
 				current_remote = (
 					subprocess.check_output(f"git config branch.{installed_branch}.remote", shell=True, cwd=path_to_app)
