@@ -149,6 +149,7 @@ class App(AppMeta):
 	def __init__(self, name: str, branch: str = None, bench: "Bench" = None, *args, **kwargs):
 		self.bench = bench
 		self.required_by = None
+		self.local_resolution = []
 		super().__init__(name, branch, *args, **kwargs)
 
 	@step(title="Fetching App {repo}", success="App {repo} Fetched")
@@ -194,6 +195,7 @@ class App(AppMeta):
 			verbose=verbose,
 			skip_assets=skip_assets,
 			restart_bench=restart_bench,
+			resolution = self.local_resolution
 		)
 
 	@step(title="Cloning and installing {repo}", success="App {repo} Installed")
@@ -217,6 +219,11 @@ class App(AppMeta):
 
 		return required_apps
 
+	def update_app_state(self):
+		from bench.bench import Bench
+		bench = Bench(self.bench.name)
+		bench.apps.sync(self.name, self.tag, self.local_resolution)
+
 
 def make_resolution_plan(app: App, bench: "Bench"):
 	"""
@@ -234,6 +241,7 @@ def make_resolution_plan(app: App, bench: "Bench"):
 			continue
 		resolution[dep_app.repo] = dep_app
 		resolution.update(make_resolution_plan(dep_app, bench))
+		app.local_resolution = [repo_name for repo_name, _ in reversed(resolution.items())]
 	return resolution
 
 
@@ -424,31 +432,33 @@ def install_resolved_deps(
 					.decode("utf-8")
 					.rstrip()
 					)
-
-			
-			if app.tag is None:
-				current_remote = (
-					subprocess.check_output(f"git config branch.{installed_branch}.remote", shell=True, cwd=path_to_app)
-					.decode("utf-8")
-					.rstrip()
-				)
-
-				default_branch = (
-					subprocess.check_output(
-						f"git symbolic-ref refs/remotes/{current_remote}/HEAD", shell=True, cwd=path_to_app
+			try:
+				if app.tag is None:
+					current_remote = (
+						subprocess.check_output(f"git config branch.{installed_branch}.remote", shell=True, cwd=path_to_app)
+						.decode("utf-8")
+						.rstrip()
 					)
-					.decode("utf-8")
-					.rsplit("/")[-1]
-					.strip()
-				)
-				is_compatible = default_branch == installed_branch
-			else:
-				is_compatible = installed_branch == app.tag
+
+					default_branch = (
+						subprocess.check_output(
+							f"git symbolic-ref refs/remotes/{current_remote}/HEAD", shell=True, cwd=path_to_app
+						)
+						.decode("utf-8")
+						.rsplit("/")[-1]
+						.strip()
+					)
+					is_compatible = default_branch == installed_branch
+				else:
+					is_compatible = installed_branch == app.tag
+			except:
+				is_compatible = False
 
 			click.secho(
 				f"{'C' if is_compatible else 'Inc'}ompatible version of {repo_name} is already installed",
 				fg="yellow",
 			)
+			app.update_app_state()
 			continue
 		app.install_resolved_apps(skip_assets=skip_assets, verbose=verbose)
 
@@ -480,6 +490,7 @@ def install_app(
 	no_cache=False,
 	restart_bench=True,
 	skip_assets=False,
+	resolution=[]
 ):
 	import bench.cli as bench_cli
 	from bench.bench import Bench
@@ -505,8 +516,7 @@ def install_app(
 	if os.path.exists(os.path.join(app_path, "package.json")):
 		bench.run("yarn install", cwd=app_path)
 
-	bench.apps.sync()
-	bench.apps.update_apps_states(app, branch=tag)
+	bench.apps.sync(app, required=resolution, branch=tag)
 
 	if not skip_assets:
 		build_assets(bench_path=bench_path, app=app)
