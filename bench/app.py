@@ -415,7 +415,11 @@ def install_resolved_deps(
 		if existing_dir:
 			is_compatible = False
 
-			installed_branch = bench.apps.states[repo_name]["resolution"]["branch"].strip()
+			try:
+				installed_branch = bench.apps.states[repo_name]["resolution"]["branch"].strip()
+			except:
+				installed_branch = None
+				
 			if app.tag is None:
 				current_remote = (
 					subprocess.check_output(f"git config branch.{installed_branch}.remote", shell=True, cwd=path_to_app)
@@ -433,7 +437,7 @@ def install_resolved_deps(
 				)
 				is_compatible = default_branch == installed_branch
 			else:
-				is_compatible = bench.apps.states[repo_name]["resolution"]["branch"] == app.tag
+				is_compatible = installed_branch == app.tag
 
 			click.secho(
 				f"{'C' if is_compatible else 'Inc'}ompatible version of {repo_name} is already installed",
