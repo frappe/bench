@@ -114,7 +114,7 @@ class TestBenchInit(TestBenchBase):
 		exec_cmd(f"bench get-app {FRAPPE_APP} --resolve-deps", cwd=bench_path)
 		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", FRAPPE_APP)))
 
-		states_path = os.path.join(bench_path, "sites", "apps_states.json")
+		states_path = os.path.join(bench_path, "sites", "apps.json")
 		self.assert_(os.path.exists(states_path))
 
 		with open(states_path, "r") as f:
