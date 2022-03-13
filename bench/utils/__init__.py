@@ -50,15 +50,22 @@ def is_frappe_app(directory: str) -> bool:
 
 
 def is_valid_frappe_branch(frappe_path, frappe_branch):
-	if "http" in frappe_path:
+	if "http" in frappe_path and frappe_branch:
 		frappe_path = frappe_path.replace(".git", "")
 		try:
 			owner, repo = frappe_path.split("/")[3], frappe_path.split("/")[4]
 		except IndexError:
 			raise InvalidRemoteException
-		git_api = f"https://api.github.com/repos/{owner}/{repo}/branches"
-		res = requests.get(git_api).json()
-		if "message" in res or (frappe_branch and frappe_branch not in [x["name"] for x in res]):
+		git_api_req = f"https://api.github.com/repos/{owner}/{repo}/branches"
+		res = requests.get(git_api_req).json()
+
+		if "message" in res:
+			# slower alternative with no rate limit
+			github_req = f'https://github.com/{owner}/{repo}/tree/{frappe_branch}'
+			if requests.get(github_req).status_code != 200:
+				raise InvalidRemoteException
+
+		elif frappe_branch not in [x["name"] for x in res]:
 			raise InvalidRemoteException
 
 
