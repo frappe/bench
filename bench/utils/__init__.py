@@ -49,7 +49,18 @@ def is_frappe_app(directory: str) -> bool:
 	return bool(is_frappe_app)
 
 
-def is_valid_frappe_branch(frappe_path, frappe_branch):
+def is_valid_frappe_branch(frappe_path:str, frappe_branch:str):
+	""" Check if a branch exists in a repo. Throws InvalidRemoteException if branch is not found
+
+	Uses github's api without auth to query branch.
+	If rate limited by gitapi, requests are sent to github.com
+
+	:param frappe_path: git url
+	:type frappe_path: str
+	:param frappe_branch: branch to check
+	:type frappe_branch: str
+	:raises InvalidRemoteException: branch for this repo doesn't exist
+	"""
 	if "http" in frappe_path and frappe_branch:
 		frappe_path = frappe_path.replace(".git", "")
 		try:
