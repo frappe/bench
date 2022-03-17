@@ -184,7 +184,7 @@ class App(AppMeta):
 		app_name = get_app_name(self.bench.name, self.repo)
 		if not resolved and self.repo != "frappe":
 			click.secho(
-				f"Ignoring dependencies of {self.name} to install dependencies use --resolve-deps",
+				f"Ignoring dependencies of {self.name}. To install dependencies use --resolve-deps",
 				fg="yellow",
 			)
 
@@ -333,9 +333,9 @@ def get_app(
 
 	if resolve_deps:
 		resolution = make_resolution_plan(app, bench)
-		click.secho("Following apps will be installed", fg="yellow")
+		click.secho("Following apps will be installed", fg="bright_blue")
 		for idx, app in enumerate(reversed(resolution.values()), start=1):
-			print(f"{idx}. {app.name} {f'required by {app.required_by}' if app.required_by else ''}")
+			print(f"{idx}. {app.name} {f'(required by {app.required_by})' if app.required_by else ''}")
 
 		if "frappe" in resolution:
 			# Todo: Make frappe a terminal dependency for all frappe apps.
@@ -454,9 +454,10 @@ def install_resolved_deps(
 			except:
 				is_compatible = False
 
+			prefix = 'C' if is_compatible else 'Inc'
 			click.secho(
-				f"{'C' if is_compatible else 'Inc'}ompatible version of {repo_name} is already installed",
-				fg="yellow",
+				f"{prefix}ompatible version of {repo_name} is already installed",
+				fg="green" if is_compatible else "red",
 			)
 			app.update_app_state()
 			continue
