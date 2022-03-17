@@ -109,7 +109,9 @@ def update_supervisord_config(user=None, yes=False):
 			supervisord_conf_changes += '\n' + action
 
 	if not supervisord_conf_changes:
-		logger.log("supervisord.conf not updated")
+		logger.error("supervisord.conf not updated")
+		contents = "\n".join(f"{x}={y}" for x, y in updated_values.items())
+		print(f"Update your {supervisord_conf} with the following values:\n[{section}]\n{contents}")
 		return
 
 	if not yes:
