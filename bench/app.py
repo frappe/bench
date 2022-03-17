@@ -425,7 +425,7 @@ def install_resolved_deps(
 
 			try:
 				installed_branch = bench.apps.states[repo_name]["resolution"]["branch"].strip()
-			except:
+			except Exception:
 				installed_branch = (
 					subprocess.
 					check_output("git rev-parse --abbrev-ref HEAD", shell=True, cwd=path_to_app)
@@ -451,7 +451,7 @@ def install_resolved_deps(
 					is_compatible = default_branch == installed_branch
 				else:
 					is_compatible = installed_branch == app.tag
-			except:
+			except Exception:
 				is_compatible = False
 
 			prefix = 'C' if is_compatible else 'Inc'
