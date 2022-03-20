@@ -460,7 +460,13 @@ def install_resolved_deps(
 				fg="green" if is_compatible else "red",
 			)
 			app.update_app_state()
-			continue
+			if click.confirm(
+				f"Do you wish to clone and install the already installed {prefix}ompatible app"
+			):
+				click.secho(f"Removing installed app {app.name}", fg="yellow")
+				shutil.rmtree(path_to_app)
+			else:
+				continue
 		app.install_resolved_apps(skip_assets=skip_assets, verbose=verbose)
 
 
