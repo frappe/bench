@@ -314,7 +314,13 @@ def find_benches(directory: str = None) -> List:
 		return
 
 	benches = []
-	for sub in os.listdir(directory):
+
+	try:
+		sub_directories = os.listdir(directory)
+	except PermissionError:
+		return benches
+
+	for sub in sub_directories:
 		sub = os.path.join(directory, sub)
 		if os.path.isdir(sub) and not os.path.islink(sub):
 			if is_bench_directory(sub):
