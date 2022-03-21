@@ -258,8 +258,10 @@ def restart_supervisor_processes(bench_path=".", web_workers=False):
 			supervisor_status = get_cmd_output("supervisorctl status", cwd=bench_path)
 		except Exception as e:
 			if e.returncode == 127:
-				sudo = "sudo "
-				supervisor_status = get_cmd_output("sudo supervisorctl status", cwd=bench_path)
+				log("restart failed: Couldn't find supervisorctl in PATH", level=3)
+				return
+			sudo = "sudo "
+			supervisor_status = get_cmd_output("sudo supervisorctl status", cwd=bench_path)
 
 		if web_workers and f"{bench_name}-web:" in supervisor_status:
 			group = f"{bench_name}-web:\t"

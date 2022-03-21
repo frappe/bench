@@ -133,7 +133,7 @@ def which(executable: str, raise_err: bool = False) -> str:
 	exec_ = which(executable)
 
 	if not exec_ and raise_err:
-		raise ValueError(f"{executable} not found.")
+		raise FileNotFoundError(f"{executable} not found in PATH")
 
 	return exec_
 
