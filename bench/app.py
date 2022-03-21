@@ -176,13 +176,20 @@ class App(AppMeta):
 		shutil.move(active_app_path, archived_app_path)
 
 	@step(title="Installing App {repo}", success="App {repo} Installed")
-	def install(self, skip_assets=False, verbose=False, resolved=False, restart_bench=True):
+	def install(
+		self,
+		skip_assets=False,
+		verbose=False,
+		resolved=False,
+		restart_bench=True,
+		ignore_resolution=False,
+	):
 		import bench.cli
 		from bench.utils.app import get_app_name
 
 		verbose = bench.cli.verbose or verbose
 		app_name = get_app_name(self.bench.name, self.repo)
-		if not resolved and self.repo != "frappe":
+		if not resolved and self.repo != "frappe" and not ignore_resolution:
 			click.secho(
 				f"Ignoring dependencies of {self.name}. To install dependencies use --resolve-deps",
 				fg="yellow",
@@ -195,7 +202,7 @@ class App(AppMeta):
 			verbose=verbose,
 			skip_assets=skip_assets,
 			restart_bench=restart_bench,
-			resolution = self.local_resolution
+			resolution=self.local_resolution
 		)
 
 	@step(title="Cloning and installing {repo}", success="App {repo} Installed")
