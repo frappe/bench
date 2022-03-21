@@ -174,8 +174,7 @@ def migrate_env(python, backup=False):
 		from datetime import datetime
 
 		parch = os.path.join(path, "archived", "envs")
-		if not os.path.exists(parch):
-			os.mkdir(parch)
+		os.makedirs(parch, exist_ok=True)
 
 		source = os.path.join(path, "env")
 		target = parch
