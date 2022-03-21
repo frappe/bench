@@ -163,7 +163,7 @@ def which(executable: str, raise_err: bool = False) -> str:
 	exec_ = which(executable)
 
 	if not exec_ and raise_err:
-		raise ValueError(f"{executable} not found.")
+		raise FileNotFoundError(f"{executable} not found in PATH")
 
 	return exec_
 
@@ -342,7 +342,13 @@ def find_benches(directory: str = None) -> List:
 		return
 
 	benches = []
-	for sub in os.listdir(directory):
+
+	try:
+		sub_directories = os.listdir(directory)
+	except PermissionError:
+		return benches
+
+	for sub in sub_directories:
 		sub = os.path.join(directory, sub)
 		if os.path.isdir(sub) and not os.path.islink(sub):
 			if is_bench_directory(sub):

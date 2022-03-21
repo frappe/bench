@@ -23,6 +23,9 @@ def start(no_dev, concurrency, procfile, no_prefix, man):
 @click.option('--systemd', is_flag=True, default=False)
 def restart(web, supervisor, systemd):
 	from bench.bench import Bench
+	if not systemd and not web:
+		supervisor = True
+
 	Bench(".").reload(web, supervisor, systemd)
 
 

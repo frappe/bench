@@ -409,7 +409,7 @@ def get_app(
 		or overwrite
 		or click.confirm("Do you want to reinstall the existing application?")
 	):
-		app.install(verbose=verbose, skip_assets=skip_assets)
+		app.install(verbose=verbose, skip_assets=skip_assets, restart_bench=restart_bench)
 
 
 def install_resolved_deps(
