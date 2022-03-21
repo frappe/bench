@@ -336,6 +336,7 @@ def get_app(
 	repo_name = app.repo
 	branch = app.tag
 	bench_setup = False
+	restart_bench = not init_bench
 	frappe_path, frappe_branch = None, None
 
 	if resolve_deps:
