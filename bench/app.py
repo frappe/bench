@@ -9,6 +9,7 @@ import subprocess
 import sys
 import typing
 from datetime import date
+from urllib.parse import urlparse
 
 # imports - third party imports
 import click
@@ -62,6 +63,9 @@ class AppMeta:
 		self.from_apps = False
 		self.is_url = False
 		self.branch = branch
+		self.mount_path = os.path.abspath(
+			os.path.join(urlparse(self.name).netloc, urlparse(self.name).path)
+		)
 		self.setup_details()
 
 	def setup_details(self):
@@ -75,7 +79,7 @@ class AppMeta:
 			self._setup_details_from_installed_apps()
 
 		# fetch meta for repo on mounted disk
-		elif os.path.exists(self.name):
+		elif os.path.exists(self.mount_path):
 			self.on_disk = True
 			self._setup_details_from_mounted_disk()
 
@@ -91,7 +95,9 @@ class AppMeta:
 			self._setup_details_from_name_tag()
 
 	def _setup_details_from_mounted_disk(self):
-		self.org, self.repo, self.tag = os.path.split(self.name)[-2:] + (self.branch,)
+		self.org, self.repo, self.tag = os.path.split(self.mount_path)[-2:] + (
+			self.branch,
+		)
 
 	def _setup_details_from_name_tag(self):
 		self.org, self.repo, self.tag = fetch_details_from_tag(self.name)
@@ -122,7 +128,7 @@ class AppMeta:
 			return os.path.abspath(os.path.join("apps", self.name))
 
 		if self.on_disk:
-			return os.path.abspath(self.name)
+			return self.mount_path
 
 		if self.is_url:
 			return self.name
@@ -173,7 +179,7 @@ class App(AppMeta):
 		shutil.move(active_app_path, archived_app_path)
 
 	@step(title="Installing App {repo}", success="App {repo} Installed")
-	def install(self, skip_assets=False, verbose=False):
+	def install(self, skip_assets=False, verbose=False, restart_bench=True):
 		import bench.cli
 		from bench.utils.app import get_app_name
 
@@ -190,7 +196,11 @@ class App(AppMeta):
 		)
 
 		install_app(
-			app=app_name, bench_path=self.bench.name, verbose=verbose, skip_assets=skip_assets,
+			app=app_name,
+			bench_path=self.bench.name,
+			verbose=verbose,
+			skip_assets=skip_assets,
+			restart_bench=restart_bench
 		)
 
 	@step(title="Uninstalling App {repo}", success="App {repo} Uninstalled")
@@ -310,6 +320,7 @@ def get_app(
 	repo_name = app.repo
 	branch = app.tag
 	bench_setup = False
+	restart_bench = not init_bench
 
 	if not is_bench_directory(bench_path):
 		if not init_bench:
@@ -332,7 +343,6 @@ def get_app(
 			"is_parent": True,
 			"color": None,
 		})
-
 
 	cloned_path = os.path.join(bench_path, "apps", repo_name)
 	dir_already_exists = os.path.isdir(cloned_path)
@@ -358,7 +368,7 @@ def get_app(
 		or overwrite
 		or click.confirm("Do you want to reinstall the existing application?")
 	):
-		app.install(verbose=verbose, skip_assets=skip_assets)
+		app.install(verbose=verbose, skip_assets=skip_assets, restart_bench=restart_bench)
 
 
 def new_app(app, no_git=None, bench_path="."):

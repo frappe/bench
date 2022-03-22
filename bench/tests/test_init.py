@@ -10,6 +10,7 @@ import git
 # imports - module imports
 from bench.utils import exec_cmd
 from bench.release import get_bumped_version
+from bench.app import App
 from bench.tests.test_base import FRAPPE_BRANCH, TestBenchBase
 
 
@@ -34,9 +35,10 @@ class TestBenchInit(TestBenchBase):
 	def test_utils(self):
 		self.assertEqual(subprocess.call("bench"), 0)
 
-
 	def test_init(self, bench_name="test-bench", **kwargs):
 		self.init_bench(bench_name, **kwargs)
+		app = App("file:///tmp/frappe")
+		self.assertEqual(app.url, "/tmp/frappe")
 		self.assert_folders(bench_name)
 		self.assert_virtual_env(bench_name)
 		self.assert_config(bench_name)
@@ -151,15 +153,21 @@ class TestBenchInit(TestBenchBase):
 		bench_path = os.path.join(self.benches_path, "test-bench")
 		app_path = os.path.join(bench_path, "apps", "frappe")
 
-		successful_switch = not exec_cmd("bench switch-to-branch version-13 frappe --upgrade", cwd=bench_path)
+		# * chore: change to 14 when avalible
+		prevoius_branch = "version-13"
+		if FRAPPE_BRANCH != "develop":
+			# assuming we follow `version-#`
+			prevoius_branch = f"version-{int(FRAPPE_BRANCH.split('-')[1]) - 1}"
+
+		successful_switch = not exec_cmd(f"bench switch-to-branch {prevoius_branch} frappe --upgrade", cwd=bench_path)
 		app_branch_after_switch = str(git.Repo(path=app_path).active_branch)
 		if successful_switch:
-			self.assertEqual("version-13", app_branch_after_switch)
+			self.assertEqual(prevoius_branch, app_branch_after_switch)
 
-		successful_switch = not exec_cmd("bench switch-to-branch develop frappe --upgrade", cwd=bench_path)
+		successful_switch = not exec_cmd(f"bench switch-to-branch {FRAPPE_BRANCH} frappe --upgrade", cwd=bench_path)
 		app_branch_after_second_switch = str(git.Repo(path=app_path).active_branch)
 		if successful_switch:
-			self.assertEqual("develop", app_branch_after_second_switch)
+			self.assertEqual(FRAPPE_BRANCH, app_branch_after_second_switch)
 
 
 if __name__ == '__main__':

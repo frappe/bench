@@ -48,7 +48,7 @@ def get_venv_path():
 	return venv or log("virtualenv cannot be found", level=2)
 
 
-def update_node_packages(bench_path="."):
+def update_node_packages(bench_path=".", apps=None):
 	print("Updating node packages...")
 	from bench.utils.app import get_develop_version
 	from distutils.version import LooseVersion
@@ -58,9 +58,9 @@ def update_node_packages(bench_path="."):
 	# After rollup was merged, frappe_version = 10.1
 	# if develop_verion is 11 and up, only then install yarn
 	if v < LooseVersion("11.x.x-develop"):
-		update_npm_packages(bench_path)
+		update_npm_packages(bench_path, apps=apps)
 	else:
-		update_yarn_packages(bench_path)
+		update_yarn_packages(bench_path, apps=apps)
 
 
 def install_python_dev_dependencies(bench_path=".", apps=None, verbose=False):
@@ -75,7 +75,7 @@ def install_python_dev_dependencies(bench_path=".", apps=None, verbose=False):
 	if isinstance(apps, str):
 		apps = [apps]
 	elif apps is None:
-		apps = [app for app in bench.apps if app not in bench.excluded_apps]
+		apps = bench.get_installed_apps()
 
 	for app in apps:
 		app_path = os.path.join(bench_path, "apps", app)
@@ -86,11 +86,14 @@ def install_python_dev_dependencies(bench_path=".", apps=None, verbose=False):
 			bench.run(f"{bench.python} -m pip install {quiet_flag} --upgrade -r {dev_requirements_path}")
 
 
-def update_yarn_packages(bench_path="."):
+def update_yarn_packages(bench_path=".", apps=None):
 	from bench.bench import Bench
 
 	bench = Bench(bench_path)
-	apps = [app for app in bench.apps if app not in bench.excluded_apps]
+
+	if not apps:
+		apps = bench.get_installed_apps()
+
 	apps_dir = os.path.join(bench.name, "apps")
 
 	# TODO: Check for stuff like this early on only??
@@ -106,11 +109,14 @@ def update_yarn_packages(bench_path="."):
 			bench.run("yarn install", cwd=app_path)
 
 
-def update_npm_packages(bench_path="."):
+def update_npm_packages(bench_path=".", apps=None):
 	apps_dir = os.path.join(bench_path, "apps")
 	package_json = {}
 
-	for app in os.listdir(apps_dir):
+	if not apps:
+		apps = os.listdir(apps_dir)
+
+	for app in apps:
 		package_json_path = os.path.join(apps_dir, app, "package.json")
 
 		if os.path.exists(package_json_path):
@@ -168,8 +174,7 @@ def migrate_env(python, backup=False):
 		from datetime import datetime
 
 		parch = os.path.join(path, "archived", "envs")
-		if not os.path.exists(parch):
-			os.mkdir(parch)
+		os.makedirs(parch, exist_ok=True)
 
 		source = os.path.join(path, "env")
 		target = parch
@@ -248,7 +253,15 @@ def restart_supervisor_processes(bench_path=".", web_workers=False):
 		bench.run(cmd)
 
 	else:
-		supervisor_status = get_cmd_output("supervisorctl status", cwd=bench_path)
+		sudo = ""
+		try:
+			supervisor_status = get_cmd_output("supervisorctl status", cwd=bench_path)
+		except Exception as e:
+			if e.returncode == 127:
+				log("restart failed: Couldn't find supervisorctl in PATH", level=3)
+				return
+			sudo = "sudo "
+			supervisor_status = get_cmd_output("sudo supervisorctl status", cwd=bench_path)
 
 		if web_workers and f"{bench_name}-web:" in supervisor_status:
 			group = f"{bench_name}-web:\t"
@@ -264,7 +277,7 @@ def restart_supervisor_processes(bench_path=".", web_workers=False):
 		else:
 			group = "frappe:"
 
-		bench.run(f"supervisorctl restart {group}")
+		bench.run(f"{sudo}supervisorctl restart {group}")
 
 
 def restart_systemd_processes(bench_path=".", web_workers=False):
