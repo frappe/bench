@@ -74,7 +74,7 @@ def install_python_dev_dependencies(bench_path=".", apps=None, verbose=False):
 
 	if isinstance(apps, str):
 		apps = [apps]
-	elif apps is None:
+	elif not apps:
 		apps = bench.get_installed_apps()
 
 	for app in apps:
