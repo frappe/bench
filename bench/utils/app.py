@@ -7,6 +7,7 @@ from bench.exceptions import (
 	InvalidRemoteException,
 	InvalidBranchException,
 	CommandFailedError,
+	VersionNotFound,
 )
 from bench.app import get_repo_dir
 
@@ -109,7 +110,7 @@ def switch_to_develop(apps=None, bench_path=".", upgrade=True):
 def get_version_from_string(contents, field="__version__"):
 	match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])" % field, contents, flags=(re.S | re.M))
 	if not match:
-		raise Exception("No match was found")
+		raise VersionNotFound(f"{contents} is not a valid version")
 	return match.group(2)
 
 
