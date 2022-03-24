@@ -282,6 +282,10 @@ def setup_app_dependencies(
 			lines = [x for x in f.read().split("\n") if x.strip().startswith("required_apps")]
 		if lines:
 			required_apps = eval(lines[0].strip("required_apps").strip().lstrip("=").strip())
+
+			if isinstance(required_apps, str):
+				required_apps = [required_apps]
+
 			# TODO: when the time comes, add version check here
 			for app in required_apps:
 				if app not in Bench(bench_path).apps:
