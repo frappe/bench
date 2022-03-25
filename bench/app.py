@@ -215,12 +215,19 @@ class App(AppMeta):
 		self.bench.run(f"{self.bench.python} -m pip uninstall -y {self.repo}")
 
 	def _get_dependencies(self):
-		from bench.utils.app import get_required_deps
+		from bench.utils.app import get_required_deps, required_apps_from_hooks
 
+		if self.on_disk:
+			required_deps = os.path.join(self.mount_path, self.repo,'hooks.py')
+			try:
+				print(required_apps_from_hooks(required_deps))
+			except IndexError:
+				print(f"No dependencies for {self.repo}")
+			finally:
+				return
 		try:
 			required_deps = get_required_deps(self.org, self.repo, self.tag or self.branch)
-			lines = [x for x in required_deps.split("\n") if x.strip().startswith("required_apps")]
-			required_apps = eval(lines[0].strip("required_apps").strip().lstrip("=").strip())
+			return required_apps_from_hooks(required_deps)
 		except Exception:
 			return []
 
