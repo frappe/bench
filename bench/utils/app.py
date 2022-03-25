@@ -183,9 +183,10 @@ def get_required_deps(org, name, branch, deps="hooks.py"):
 	return base64.decodebytes(res["content"].encode()).decode()
 
 
-def required_apps_from_hooks(required_deps):
-	with open(required_deps) as f:
-		required_deps = f.read()
+def required_apps_from_hooks(required_deps, local=False):
+	if local:
+		with open(required_deps) as f:
+			required_deps = f.read()
 	lines = [x for x in required_deps.split("\n") if x.strip().startswith("required_apps")]
 	required_apps = eval(lines[0].strip("required_apps").strip().lstrip("=").strip())
 	return required_apps

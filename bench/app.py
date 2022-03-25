@@ -220,7 +220,7 @@ class App(AppMeta):
 		if self.on_disk:
 			required_deps = os.path.join(self.mount_path, self.repo,'hooks.py')
 			try:
-				print(required_apps_from_hooks(required_deps))
+				print(required_apps_from_hooks(required_deps, local=True))
 			except IndexError:
 				print(f"No dependencies for {self.repo}")
 			finally:
@@ -230,8 +230,6 @@ class App(AppMeta):
 			return required_apps_from_hooks(required_deps)
 		except Exception:
 			return []
-
-		return required_apps
 
 	def update_app_state(self):
 		from bench.bench import Bench
