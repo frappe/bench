@@ -70,6 +70,11 @@ class AppMeta:
 		self.setup_details()
 
 	def setup_details(self):
+		if not urlparse(self.name).netloc and not os.path.exists(
+			os.path.realpath(self.name)
+		):
+			click.secho(f"{self.name} does not exist!", fg="yellow")
+			return
 		# fetch meta from installed apps
 		if (
 			not self.to_clone
@@ -220,11 +225,9 @@ class App(AppMeta):
 		if self.on_disk:
 			required_deps = os.path.join(self.mount_path, self.repo,'hooks.py')
 			try:
-				print(required_apps_from_hooks(required_deps, local=True))
+				return required_apps_from_hooks(required_deps, local=True)
 			except IndexError:
-				print(f"No dependencies for {self.repo}")
-			finally:
-				return
+				return []
 		try:
 			required_deps = get_required_deps(self.org, self.repo, self.tag or self.branch)
 			return required_apps_from_hooks(required_deps)
