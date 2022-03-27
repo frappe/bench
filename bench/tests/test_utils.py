@@ -75,7 +75,10 @@ class TestUtils(unittest.TestCase):
 		shutil.rmtree(bench_dir)
 
 	def test_get_dependencies(self):
-		fake_app = App("frappe/healthcare@develop")
+		git_url = "https://github.com/frappe/healthcare"
+		branch = "develop"
+		fake_app = App(git_url, branch=branch)
 		self.assertIn("erpnext", fake_app._get_dependencies())
-		fake_app = App("frappe/not_healthcare@not-a-branch")
+		git_url = git_url.replace("healthcare", "erpnext")
+		fake_app = App(git_url)
 		self.assertTrue(len(fake_app._get_dependencies()) == 0)
