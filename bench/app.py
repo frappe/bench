@@ -70,11 +70,6 @@ class AppMeta:
 		self.setup_details()
 
 	def setup_details(self):
-		if not urlparse(self.name).netloc and not os.path.exists(
-			os.path.realpath(self.name)
-		):
-			click.secho(f"{self.name} does not exist!", fg="yellow")
-			return
 		# fetch meta from installed apps
 		if (
 			not self.to_clone
