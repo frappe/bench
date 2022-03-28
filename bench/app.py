@@ -14,7 +14,6 @@ from urllib.parse import urlparse
 
 # imports - third party imports
 import click
-import requests
 
 # imports - module imports
 import bench
@@ -66,7 +65,9 @@ class AppMeta:
 		self.from_apps = False
 		self.is_url = False
 		self.branch = branch
-		self.mount_path = os.path.abspath(os.path.join(urlparse(self.name).netloc, urlparse(self.name).path))
+		self.mount_path = os.path.abspath(
+			os.path.join(urlparse(self.name).netloc, urlparse(self.name).path)
+		)
 		self.setup_details()
 
 	def setup_details(self):
