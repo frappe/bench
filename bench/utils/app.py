@@ -10,6 +10,7 @@ from bench.exceptions import (
 	VersionNotFound,
 )
 from bench.app import get_repo_dir
+from functools import lru_cache
 
 
 def is_version_upgrade(app="frappe", bench_path=".", branch=None):
@@ -168,6 +169,7 @@ def get_current_branch(app, bench_path="."):
 	return get_cmd_output("basename $(git symbolic-ref -q HEAD)", cwd=repo_dir)
 
 
+@lru_cache(maxsize=5)
 def get_required_deps(org, name, branch, deps="hooks.py"):
 	import requests
 	import base64
