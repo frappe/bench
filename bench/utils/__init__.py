@@ -422,7 +422,6 @@ def clear_command_cache(bench_path="."):
 		print("Bench command cache doesn't exist in this folder!")
 
 
-@lru_cache(maxsize=5)
 def find_org(org_repo):
 	import requests
 
@@ -430,7 +429,7 @@ def find_org(org_repo):
 
 	for org in ["frappe", "erpnext"]:
 		res = requests.head(f"https://api.github.com/repos/{org}/{org_repo}")
-		if "message" in res.json():
+		if res.status_code == 400:
 			res = requests.head(f"https://github.com/{org}/{org_repo}")
 		if res.ok:
 			return org, org_repo
