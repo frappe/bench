@@ -230,7 +230,6 @@ class BenchApps(MutableSequence):
 					and is_installed(x)
 				)
 			]
-			self.apps.sort()
 		except FileNotFoundError:
 			self.apps = []
 
