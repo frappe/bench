@@ -171,6 +171,22 @@ class BenchApps(MutableSequence):
 			self.states = {}
 
 	def update_apps_states(self, app_name: Union[str, None] = None, branch: Union[str, None] = None, required:List = []):
+		if self.apps and not os.path.exists(self.states_path):
+			# idx according to apps listed in apps.txt (backwards compatibility)
+			print("Found existing apps updating states...")
+			for idx, app in enumerate(self.apps, start=1):
+				self.states[app] = {
+					"resolution": {
+					"commit_hash": None,
+					"branch": None
+				},
+				"required": required,
+				"idx": idx,
+				"version": get_current_version(app, self.bench.name),
+				}
+		with open(self.states_path, "w") as f:
+			f.write(json.dumps(self.states, indent=4))
+
 		apps_to_remove = []
 		for app in self.states:
 			if app not in self.apps:
@@ -199,7 +215,7 @@ class BenchApps(MutableSequence):
 					"branch": branch
 				},
 				"required":required,
-				"order of install":len(self.states) + 1,
+				"idx":len(self.states) + 1,
 				"version": version,
 			}
 
