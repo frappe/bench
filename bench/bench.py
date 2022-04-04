@@ -173,6 +173,13 @@ class BenchApps(MutableSequence):
 	def update_apps_states(self, app_name: Union[str, None] = None, branch: Union[str, None] = None, required:List = []):
 		if self.apps and not os.path.exists(self.states_path):
 			# idx according to apps listed in apps.txt (backwards compatibility)
+			# Keeping frappe as the first app.
+			if "frappe" in self.apps:
+				self.apps.remove("frappe")
+				self.apps.insert(0, "frappe")
+				with open(self.bench.apps_txt, "w") as f:
+					f.write("\n".join(self.apps))
+
 			print("Found existing apps updating states...")
 			for idx, app in enumerate(self.apps, start=1):
 				self.states[app] = {
@@ -184,8 +191,6 @@ class BenchApps(MutableSequence):
 				"idx": idx,
 				"version": get_current_version(app, self.bench.name),
 				}
-		with open(self.states_path, "w") as f:
-			f.write(json.dumps(self.states, indent=4))
 
 		apps_to_remove = []
 		for app in self.states:
@@ -195,7 +200,7 @@ class BenchApps(MutableSequence):
 		for app in apps_to_remove:
 			del self.states[app]
 
-		if app_name:
+		if app_name and app_name not in self.states:
 			version = get_current_version(app_name, self.bench.name)
 
 			app_dir = os.path.join(self.apps_path, app_name)
