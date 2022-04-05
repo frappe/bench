@@ -7,8 +7,10 @@ from bench.exceptions import (
 	InvalidRemoteException,
 	InvalidBranchException,
 	CommandFailedError,
+	VersionNotFound,
 )
 from bench.app import get_repo_dir
+from functools import lru_cache
 
 
 def is_version_upgrade(app="frappe", bench_path=".", branch=None):
@@ -107,7 +109,9 @@ def switch_to_develop(apps=None, bench_path=".", upgrade=True):
 
 
 def get_version_from_string(contents, field="__version__"):
-	match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % field, contents)
+	match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])" % field, contents, flags=(re.S | re.M))
+	if not match:
+		raise VersionNotFound(f"{contents} is not a valid version")
 	return match.group(2)
 
 
@@ -165,6 +169,31 @@ def get_current_branch(app, bench_path="."):
 	return get_cmd_output("basename $(git symbolic-ref -q HEAD)", cwd=repo_dir)
 
 
+@lru_cache(maxsize=5)
+def get_required_deps(org, name, branch, deps="hooks.py"):
+	import requests
+	import base64
+
+	git_api_url = f"https://api.github.com/repos/{org}/{name}/contents/{name}/{deps}"
+	params = {"branch": branch or "develop"}
+	res = requests.get(url=git_api_url, params=params).json()
+
+	if "message" in res:
+		git_url = f"https://raw.githubusercontent.com/{org}/{name}/{params['branch']}/{deps}"
+		return requests.get(git_url).text
+
+	return base64.decodebytes(res["content"].encode()).decode()
+
+
+def required_apps_from_hooks(required_deps, local=False):
+	if local:
+		with open(required_deps) as f:
+			required_deps = f.read()
+	lines = [x for x in required_deps.split("\n") if x.strip().startswith("required_apps")]
+	required_apps = eval(lines[0].strip("required_apps").strip().lstrip("=").strip())
+	return required_apps
+
+
 def get_remote(app, bench_path="."):
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	contents = subprocess.check_output(
@@ -200,6 +229,11 @@ def get_app_name(bench_path, repo_name):
 		return app_name
 
 	return repo_name
+
+def check_existing_dir(bench_path, repo_name):
+	cloned_path = os.path.join(bench_path, "apps", repo_name)
+	dir_already_exists = os.path.isdir(cloned_path)
+	return dir_already_exists, cloned_path
 
 
 def get_current_version(app, bench_path="."):

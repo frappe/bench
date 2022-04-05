@@ -1,10 +1,12 @@
 # imports - standard imports
+import subprocess
 import functools
 import os
 import shutil
+import json
 import sys
 import logging
-from typing import List, MutableSequence, TYPE_CHECKING
+from typing import List, MutableSequence, TYPE_CHECKING, Union
 
 # imports - module imports
 import bench
@@ -30,6 +32,7 @@ from bench.utils.bench import (
 	get_env_cmd,
 )
 from bench.utils.render import job, step
+from bench.utils.app import get_current_version
 
 
 if TYPE_CHECKING:
@@ -155,12 +158,80 @@ class Bench(Base, Validator):
 class BenchApps(MutableSequence):
 	def __init__(self, bench: Bench):
 		self.bench = bench
+		self.states_path = os.path.join(self.bench.name, "sites", "apps.json")
+		self.apps_path = os.path.join(self.bench.name, "apps")
 		self.initialize_apps()
+		self.set_states()
 
-	def sync(self):
+	def set_states(self):
+		try:
+			with open(self.states_path, "r") as f:
+				self.states = json.loads(f.read() or "{}")
+		except FileNotFoundError:
+			self.states = {}
+
+	def update_apps_states(self, app_name: Union[str, None] = None, branch: Union[str, None] = None, required:List = []):
+		if self.apps and not os.path.exists(self.states_path):
+			# idx according to apps listed in apps.txt (backwards compatibility)
+			# Keeping frappe as the first app.
+			if "frappe" in self.apps:
+				self.apps.remove("frappe")
+				self.apps.insert(0, "frappe")
+				with open(self.bench.apps_txt, "w") as f:
+					f.write("\n".join(self.apps))
+
+			print("Found existing apps updating states...")
+			for idx, app in enumerate(self.apps, start=1):
+				self.states[app] = {
+					"resolution": {
+					"commit_hash": None,
+					"branch": None
+				},
+				"required": required,
+				"idx": idx,
+				"version": get_current_version(app, self.bench.name),
+				}
+
+		apps_to_remove = []
+		for app in self.states:
+			if app not in self.apps:
+				apps_to_remove.append(app)
+
+		for app in apps_to_remove:
+			del self.states[app]
+
+		if app_name and app_name not in self.states:
+			version = get_current_version(app_name, self.bench.name)
+
+			app_dir = os.path.join(self.apps_path, app_name)
+			if not branch:
+				branch = (
+						subprocess
+						.check_output("git rev-parse --abbrev-ref HEAD", shell=True, cwd=app_dir)
+						.decode("utf-8")
+						.rstrip()
+						)
+
+			commit_hash = subprocess.check_output(f"git rev-parse {branch}", shell=True, cwd=app_dir).decode("utf-8").rstrip()
+
+			self.states[app_name] = {
+				"resolution": {
+					"commit_hash":commit_hash,
+					"branch": branch
+				},
+				"required":required,
+				"idx":len(self.states) + 1,
+				"version": version,
+			}
+
+		with open(self.states_path, "w") as f:
+			f.write(json.dumps(self.states, indent=4))
+
+	def sync(self,app_name: Union[str, None] = None, branch: Union[str, None] = None, required:List = []):
 		self.initialize_apps()
 		with open(self.bench.apps_txt, "w") as f:
-			return f.write("\n".join(self.apps))
+			f.write("\n".join(self.apps))
+		self.update_apps_states(app_name, branch, required)
 
 	def initialize_apps(self):
 		is_installed = lambda app: app in installed_packages
@@ -180,7 +251,6 @@ class BenchApps(MutableSequence):
 					and is_installed(x)
 				)
 			]
-			self.apps.sort()
 		except FileNotFoundError:
 			self.apps = []
 
@@ -248,6 +318,9 @@ class BenchSetup(Base):
 		- install frappe python dependencies
 		"""
 		import bench.cli
+		import click
+
+		click.secho("Setting Up Environment", fg="yellow")
 
 		frappe = os.path.join(self.bench.name, "apps", "frappe")
 		virtualenv = get_venv_path()
@@ -339,7 +412,9 @@ class BenchSetup(Base):
 		print(f"Installing {len(apps)} applications...")
 
 		for app in apps:
-			App(app, bench=self.bench, to_clone=False).install( skip_assets=True, restart_bench=False)
+			App(app, bench=self.bench, to_clone=False).install(
+				skip_assets=True, restart_bench=False, ignore_resolution=True
+			)
 
 	def python(self, apps=None):
 		"""Install and upgrade Python dependencies for specified / all installed apps on given Bench
