@@ -14,6 +14,7 @@ from urllib.parse import urlparse
 
 # imports - third party imports
 import click
+from git import Repo
 
 # imports - module imports
 import bench
@@ -75,7 +76,7 @@ class AppMeta:
 		if (
 			not self.to_clone
 			and hasattr(self, "bench")
-			and os.path.exists(os.path.join(self.bench.name, "apps", self.name))
+			and os.path.exists(self.mount_path)
 		):
 			self.from_apps = True
 			self._setup_details_from_installed_apps()
@@ -97,27 +98,32 @@ class AppMeta:
 			self._setup_details_from_name_tag()
 
 	def _setup_details_from_mounted_disk(self):
-		self.org, self.repo, self.tag = os.path.split(self.mount_path)[-2:] + (self.branch,)
+		self.git_repo = Repo(self.mount_path)
+		self._setup_details_from_git_url(self.git_repo.remotes[0].url)
+		if not (self.branch or self.tag):
+			self.tag = self.branch = self.git_repo.active_branch.name
 
 	def _setup_details_from_name_tag(self):
 		self.org, self.repo, self.tag = fetch_details_from_tag(self.name)
 		self.tag = self.tag or self.branch
 
 	def _setup_details_from_installed_apps(self):
-		self.org, self.repo, self.tag = os.path.split(
-			os.path.join(self.bench.name, "apps", self.name)
-		)[-2:] + (self.branch,)
+		self.git_repo = Repo(self.mount_path)
+		self._setup_details_from_git_url(self.git_repo.remotes[0].url)
+		if not (self.branch or self.tag):
+			self.tag = self.branch = self.git_repo.active_branch.name
 
-	def _setup_details_from_git_url(self):
-		return self.__setup_details_from_git()
+	def _setup_details_from_git_url(self, url=None):
+		return self.__setup_details_from_git(url)
 
-	def __setup_details_from_git(self):
+	def __setup_details_from_git(self, url=None):
+		name = url if url else self.name
 		if self.use_ssh:
-			_first_part, _second_part = self.name.split(":")
+			_first_part, _second_part = name.split(":")
 			self.remote_server = _first_part.split("@")[-1]
 			self.org, _repo = _second_part.rsplit("/", 1)
 		else:
-			self.remote_server, self.org, _repo = self.name.rsplit("/", 2)
+			self.remote_server, self.org, _repo = name.rsplit("/", 2)
 
 		self.tag = self.branch
 		self.repo = _repo.split(".")[0]
