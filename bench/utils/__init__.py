@@ -71,7 +71,7 @@ def is_valid_frappe_branch(frappe_path:str, frappe_branch:str):
 			raise InvalidRemoteException("Invalid git url")
 
 		git_api_req = f"https://api.github.com/repos/{owner}/{repo}/branches/{frappe_branch}"
-		res = requests.get(git_api_req).json()
+		res = requests.get(git_api_req)
 
 		if res.status_code == 403:
 			# slower alternative with no rate limit
