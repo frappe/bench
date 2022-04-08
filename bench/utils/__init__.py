@@ -64,21 +64,26 @@ def is_valid_frappe_branch(frappe_path:str, frappe_branch:str):
 	"""
 	if "http" in frappe_path and frappe_branch:
 		frappe_path = frappe_path.replace(".git", "")
+
 		try:
 			owner, repo = frappe_path.split("/")[3], frappe_path.split("/")[4]
 		except IndexError:
 			raise InvalidRemoteException("Invalid git url")
-		git_api_req = f"https://api.github.com/repos/{owner}/{repo}/branches"
+
+		git_api_req = f"https://api.github.com/repos/{owner}/{repo}/branches/{frappe_branch}"
 		res = requests.get(git_api_req).json()
 
-		if "message" in res:
+		if res.status_code == 403:
 			# slower alternative with no rate limit
 			github_req = f'https://github.com/{owner}/{repo}/tree/{frappe_branch}'
 			if requests.get(github_req).status_code != 200:
 				raise InvalidRemoteException("Invalid git url")
 
-		elif frappe_branch not in [x["name"] for x in res]:
+		elif res.status_code == 404:
 			raise InvalidRemoteException("Frappe branch does not exist")
+
+		elif res.status_code == 301:
+			raise InvalidRemoteException("Frappe branch has been moved to another location")
 
 
 def log(message, level=0, no_log=False):
