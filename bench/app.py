@@ -79,7 +79,7 @@ class AppMeta:
 			and os.path.exists(self.mount_path)
 		):
 			self.from_apps = True
-			self._setup_details_from_installed_apps()
+			self._setup_details_from_mounted_disk()
 
 		# fetch meta for repo on mounted disk
 		elif os.path.exists(self.mount_path):
@@ -106,12 +106,6 @@ class AppMeta:
 	def _setup_details_from_name_tag(self):
 		self.org, self.repo, self.tag = fetch_details_from_tag(self.name)
 		self.tag = self.tag or self.branch
-
-	def _setup_details_from_installed_apps(self):
-		self.git_repo = Repo(self.mount_path)
-		self._setup_details_from_git_url(self.git_repo.remotes[0].url)
-		if not (self.branch or self.tag):
-			self.tag = self.branch = self.git_repo.active_branch.name
 
 	def _setup_details_from_git_url(self, url=None):
 		return self.__setup_details_from_git(url)
