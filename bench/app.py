@@ -488,6 +488,13 @@ def new_app(app, no_git=None, bench_path="."):
 
 	# For backwards compatibility
 	app = app.lower().replace(" ", "_").replace("-", "_")
+	if app[0].isdigit() or "." in app:
+		click.secho(
+			"App names cannot start with numbers(digits) or have dot(.) in them",
+			fg="red"
+		)
+		return
+
 	apps = os.path.abspath(os.path.join(bench_path, "apps"))
 	args = ["make-app", apps, app]
 	if no_git:
