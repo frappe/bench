@@ -73,12 +73,3 @@ class TestUtils(unittest.TestCase):
 		self.assertEqual("11.0", fake_bench.apps.states["frappe"]["version"])
 
 		shutil.rmtree(bench_dir)
-
-	def test_get_dependencies(self):
-		git_url = "https://github.com/frappe/healthcare"
-		branch = "develop"
-		fake_app = App(git_url, branch=branch)
-		self.assertIn("erpnext", fake_app._get_dependencies())
-		git_url = git_url.replace("healthcare", "erpnext")
-		fake_app = App(git_url)
-		self.assertTrue(len(fake_app._get_dependencies()) == 0)
