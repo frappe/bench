@@ -116,7 +116,8 @@ class AppMeta:
 			self.remote_server = _first_part.split("@")[-1]
 			self.org, _repo = _second_part.rsplit("/", 1)
 		else:
-			self.remote_server, self.org, _repo = name.rsplit("/", 2)
+			protocal = "https://" if "https://" in name else "http://"
+			self.remote_server, self.org, _repo = name.replace(protocal, "").rsplit("/", 2)
 
 		self.tag = self.branch
 		self.repo = _repo.split(".")[0]
