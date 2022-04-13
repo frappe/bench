@@ -89,8 +89,6 @@ class AppMeta:
 		# fetch meta for repo from remote git server - traditional get-app url
 		elif is_git_url(self.name):
 			self.is_url = True
-			if self.name.startswith("git@") or self.name.startswith("ssh://"):
-				self.use_ssh = True
 			self._setup_details_from_git_url()
 
 		# fetch meta from new styled name tags & first party apps on github
@@ -112,7 +110,8 @@ class AppMeta:
 
 	def __setup_details_from_git(self, url=None):
 		name = url if url else self.name
-		if self.use_ssh:
+		if name.startswith("git@") or name.startswith("ssh://"):
+			self.use_ssh = True
 			_first_part, _second_part = name.split(":")
 			self.remote_server = _first_part.split("@")[-1]
 			self.org, _repo = _second_part.rsplit("/", 1)
@@ -124,12 +123,6 @@ class AppMeta:
 
 	@property
 	def url(self):
-		if self.from_apps:
-			return os.path.abspath(os.path.join("apps", self.name))
-
-		if self.on_disk:
-			return self.mount_path
-
 		if self.is_url:
 			return self.name
 
