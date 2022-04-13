@@ -434,7 +434,7 @@ def find_org(org_repo):
 		if res.ok:
 			return org, org_repo
 
-	raise InvalidRemoteException(f"{org_repo} Not foung in frappe or erpnext")
+	click.secho(f"{org_repo} Not foung in frappe or erpnext", fg="Yellow")
 
 
 def fetch_details_from_tag(_tag: str) -> Tuple[str, str, str]:
