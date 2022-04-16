@@ -429,7 +429,7 @@ def find_org(org_repo):
 
 	for org in ["frappe", "erpnext"]:
 		res = requests.head(f"https://api.github.com/repos/{org}/{org_repo}")
-		if res.status_code == 400:
+		if res.status_code in (400, 403):
 			res = requests.head(f"https://github.com/{org}/{org_repo}")
 		if res.ok:
 			return org, org_repo
