@@ -412,7 +412,8 @@ class BenchSetup(Base):
 		print(f"Installing {len(apps)} applications...")
 
 		for app in apps:
-			App(app, bench=self.bench, to_clone=False).install(
+			path_to_app = os.path.join(self.bench.name, "apps", app)
+			App(path_to_app, bench=self.bench, to_clone=False).install(
 				skip_assets=True, restart_bench=False, ignore_resolution=True
 			)
 
