@@ -96,10 +96,14 @@ class AppMeta:
 			self._setup_details_from_name_tag()
 
 	def _setup_details_from_mounted_disk(self):
+		# If app is a git repo
 		self.git_repo = Repo(self.mount_path)
-		self._setup_details_from_git_url(self.git_repo.remotes[0].url)
-		if not (self.branch or self.tag):
-			self.tag = self.branch = self.git_repo.active_branch.name
+		try:
+			self._setup_details_from_git_url(self.git_repo.remotes[0].url)
+			if not (self.branch or self.tag):
+				self.tag = self.branch = self.git_repo.active_branch.name
+		except IndexError:
+			self.org, self.repo, self.tag = os.path.split(self.mount_path)[-2:] + (self.branch,)
 
 	def _setup_details_from_name_tag(self):
 		self.org, self.repo, self.tag = fetch_details_from_tag(self.name)
