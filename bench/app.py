@@ -14,6 +14,7 @@ from urllib.parse import urlparse
 
 # imports - third party imports
 import click
+from git import Repo
 
 # imports - module imports
 import bench
@@ -75,10 +76,10 @@ class AppMeta:
 		if (
 			not self.to_clone
 			and hasattr(self, "bench")
-			and os.path.exists(os.path.join(self.bench.name, "apps", self.name))
+			and os.path.exists(self.mount_path)
 		):
 			self.from_apps = True
-			self._setup_details_from_installed_apps()
+			self._setup_details_from_mounted_disk()
 
 		# fetch meta for repo on mounted disk
 		elif os.path.exists(self.mount_path):
@@ -88,8 +89,6 @@ class AppMeta:
 		# fetch meta for repo from remote git server - traditional get-app url
 		elif is_git_url(self.name):
 			self.is_url = True
-			if self.name.startswith("git@") or self.name.startswith("ssh://"):
-				self.use_ssh = True
 			self._setup_details_from_git_url()
 
 		# fetch meta from new styled name tags & first party apps on github
@@ -97,39 +96,38 @@ class AppMeta:
 			self._setup_details_from_name_tag()
 
 	def _setup_details_from_mounted_disk(self):
-		self.org, self.repo, self.tag = os.path.split(self.mount_path)[-2:] + (self.branch,)
+		# If app is a git repo
+		self.git_repo = Repo(self.mount_path)
+		try:
+			self._setup_details_from_git_url(self.git_repo.remotes[0].url)
+			if not (self.branch or self.tag):
+				self.tag = self.branch = self.git_repo.active_branch.name
+		except IndexError:
+			self.org, self.repo, self.tag = os.path.split(self.mount_path)[-2:] + (self.branch,)
 
 	def _setup_details_from_name_tag(self):
 		self.org, self.repo, self.tag = fetch_details_from_tag(self.name)
 		self.tag = self.tag or self.branch
 
-	def _setup_details_from_installed_apps(self):
-		self.org, self.repo, self.tag = os.path.split(
-			os.path.join(self.bench.name, "apps", self.name)
-		)[-2:] + (self.branch,)
+	def _setup_details_from_git_url(self, url=None):
+		return self.__setup_details_from_git(url)
 
-	def _setup_details_from_git_url(self):
-		return self.__setup_details_from_git()
-
-	def __setup_details_from_git(self):
-		if self.use_ssh:
-			_first_part, _second_part = self.name.split(":")
+	def __setup_details_from_git(self, url=None):
+		name = url if url else self.name
+		if name.startswith("git@") or name.startswith("ssh://"):
+			self.use_ssh = True
+			_first_part, _second_part = name.split(":")
 			self.remote_server = _first_part.split("@")[-1]
 			self.org, _repo = _second_part.rsplit("/", 1)
 		else:
-			self.remote_server, self.org, _repo = self.name.rsplit("/", 2)
+			protocal = "https://" if "https://" in name else "http://"
+			self.remote_server, self.org, _repo = name.replace(protocal, "").rsplit("/", 2)
 
 		self.tag = self.branch
 		self.repo = _repo.split(".")[0]
 
 	@property
 	def url(self):
-		if self.from_apps:
-			return os.path.abspath(os.path.join("apps", self.name))
-
-		if self.on_disk:
-			return self.mount_path
-
 		if self.is_url:
 			return self.name
 
