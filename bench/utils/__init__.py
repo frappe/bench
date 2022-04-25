@@ -51,7 +51,7 @@ def is_frappe_app(directory: str) -> bool:
 
 
 def is_valid_frappe_branch(frappe_path:str, frappe_branch:str):
-	""" Check if a branch exists in a repo. Throws InvalidRemoteException if branch is not found
+	"""Check if a branch exists in a repo. Throws InvalidRemoteException if branch is not found
 
 	Uses native git command to check for branches on a remote.
 
@@ -63,7 +63,6 @@ def is_valid_frappe_branch(frappe_path:str, frappe_branch:str):
 	"""
 	import subprocess
 
-	message = f"Invalid branch {frappe_branch} for remote {frappe_path}"
 	if frappe_branch:
 		try:
 			ret = subprocess.check_output(
@@ -77,9 +76,11 @@ def is_valid_frappe_branch(frappe_path:str, frappe_branch:str):
 				encoding="UTF-8",
 			)
 			if not ret:
-				raise InvalidRemoteException(message)
+				raise InvalidRemoteException(
+					f"Invalid {frappe_branch} for the remote {frappe_path}"
+				)
 		except subprocess.CalledProcessError:
-			raise InvalidRemoteException(message)
+			raise InvalidRemoteException(f"Invalid frappe path {frappe_path}")
 
 
 def log(message, level=0, no_log=False):
