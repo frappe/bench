@@ -5,13 +5,14 @@ import subprocess
 
 # imports - module imports
 import bench
-from bench.config.common_site_config import get_config
 
 
 def generate_config(bench_path):
 	from urllib.parse import urlparse
+	from bench.bench import Bench
 
-	config = get_config(bench_path)
+	config = Bench(bench_path).conf
+	redis_version = get_redis_version()
 
 	ports = {}
 	for key in ('redis_cache', 'redis_queue', 'redis_socketio'):
@@ -22,6 +23,7 @@ def generate_config(bench_path):
 		context={
 			"port": ports['redis_queue'],
 			"bench_path": os.path.abspath(bench_path),
+			"redis_version": redis_version
 		},
 		bench_path=bench_path
 	)
@@ -30,6 +32,7 @@ def generate_config(bench_path):
 		template_name='redis_socketio.conf',
 		context={
 			"port": ports['redis_socketio'],
+			"redis_version": redis_version
 		},
 		bench_path=bench_path
 	)
@@ -39,7 +42,7 @@ def generate_config(bench_path):
 		context={
 			"maxmemory": config.get('cache_maxmemory', get_max_redis_memory()),
 			"port": ports['redis_cache'],
-			"redis_version": get_redis_version(),
+			"redis_version": redis_version
 		},
 		bench_path=bench_path
 	)
@@ -49,11 +52,26 @@ def generate_config(bench_path):
 	if not os.path.exists(pid_path):
 		os.makedirs(pid_path)
 
+	# ACL feature is introduced in Redis 6.0
+	if redis_version < 6.0:
+		return
+
+	# make ACL files
+	acl_rq_path = os.path.join(bench_path, "config", "redis_queue.acl")
+	acl_redis_cache_path = os.path.join(bench_path, "config", "redis_cache.acl")
+	acl_redis_socketio_path = os.path.join(bench_path, "config", "redis_socketio.acl")
+	open(acl_rq_path, 'a').close()
+	open(acl_redis_cache_path, 'a').close()
+	open(acl_redis_socketio_path, 'a').close()
+
 def write_redis_config(template_name, context, bench_path):
 	template = bench.config.env().get_template(template_name)
 
+	if "config_path" not in context:
+		context["config_path"] = os.path.abspath(os.path.join(bench_path, "config"))
+
 	if "pid_path" not in context:
-		context["pid_path"] = os.path.abspath(os.path.join(bench_path, "config", "pids"))
+		context["pid_path"] = os.path.join(context["config_path"], "pids")
 
 	with open(os.path.join(bench_path, 'config', template_name), 'w') as f:
 		f.write(template.render(**context))

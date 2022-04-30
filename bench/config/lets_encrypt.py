@@ -6,13 +6,14 @@ import click
 
 # imports - module imports
 import bench
-from bench.config.common_site_config import get_config
 from bench.config.nginx import make_nginx_conf
 from bench.config.production_setup import service
 from bench.config.site_config import get_domains, remove_domain, update_site_config
-from bench.utils import CommandFailedError, exec_cmd, update_common_site_config
+from bench.bench import Bench
+from bench.utils import exec_cmd,
+from bench.utils.bench import update_common_site_config
+from bench.exceptions import CommandFailedError
 from distutils.spawn import find_executable
-
 
 def setup_letsencrypt(site, custom_domain, bench_path, interactive):
 
@@ -37,7 +38,7 @@ def setup_letsencrypt(site, custom_domain, bench_path, interactive):
 			'Do you want to continue?',
 			abort=True)
 
-	if not get_config(bench_path).get("dns_multitenant"):
+	if not Bench(bench_path).conf.get("dns_multitenant"):
 		print("You cannot setup SSL without DNS Multitenancy")
 		return
 
@@ -57,10 +58,10 @@ def create_config(site, custom_domain):
 
 def run_certbot_and_setup_ssl(site, custom_domain, bench_path, interactive=True):
 	service('nginx', 'stop')
-	
+
 	try:
 		interactive = '' if interactive else '-n'
-		exec_cmd("{path} certonly {interactive} -c /etc/letsencrypt/configs/{site}.cfg".format(path=get_certbot_path(), interactive=interactive, site=custom_domain or site))
+		exec_cmd(f"{get_certbot_path()} {interactive} --config /etc/letsencrypt/configs/{custom_domain or site}.cfg certonly")
 	except CommandFailedError:
 		service('nginx', 'start')
 		print("There was a problem trying to setup SSL for your site")
@@ -86,7 +87,7 @@ def run_certbot_and_setup_ssl(site, custom_domain, bench_path, interactive=True)
 def setup_crontab():
 	from crontab import CronTab
 
-	job_command = '{path} renew --nginx -q --renew-hook "systemctl reload nginx"'.format(path=get_certbot_path())
+	job_command = f'{get_certbot_path()} renew -a nginx --post-hook "systemctl reload nginx"'
 	job_comment = 'Renew lets-encrypt every month'
 	print(f"Setting Up cron job to {job_comment}")
 
@@ -140,7 +141,7 @@ def setup_wildcard_ssl(domain, email, bench_path, exclude_base_domain):
 
 		return domain_list
 
-	if not get_config(bench_path).get("dns_multitenant"):
+	if not Bench(bench_path).conf.get("dns_multitenant"):
 		print("You cannot setup SSL without DNS Multitenancy")
 		return
 

@@ -7,7 +7,8 @@ import os
 import bench
 from bench.app import use_rq
 from bench.utils import get_bench_name, which
-from bench.config.common_site_config import get_config, update_config, get_gunicorn_workers
+from bench.bench import Bench
+from bench.config.common_site_config import update_config, get_gunicorn_workers
 
 # imports - third party imports
 import click
@@ -21,8 +22,8 @@ def generate_supervisor_config(bench_path, user=None, yes=False, skip_redis=Fals
 	if not user:
 		user = getpass.getuser()
 
+	config = Bench(bench_path).conf
 	template = bench.config.env().get_template('supervisor.conf')
-	config = get_config(bench_path=bench_path)
 	bench_dir = os.path.abspath(bench_path)
 
 	config = template.render(**{
@@ -42,6 +43,7 @@ def generate_supervisor_config(bench_path, user=None, yes=False, skip_redis=Fals
 		"background_workers": config.get('background_workers') or 1,
 		"bench_cmd": which('bench'),
 		"skip_redis": skip_redis,
+		"workers": config.get("workers", {}),
 	})
 
 	conf_path = os.path.join(bench_path, 'config', 'supervisor.conf')
@@ -107,7 +109,9 @@ def update_supervisord_config(user=None, yes=False):
 			supervisord_conf_changes += '\n' + action
 
 	if not supervisord_conf_changes:
-		logger.log("supervisord.conf not updated")
+		logger.error("supervisord.conf not updated")
+		contents = "\n".join(f"{x}={y}" for x, y in updated_values.items())
+		print(f"Update your {supervisord_conf} with the following values:\n[{section}]\n{contents}")
 		return
 
 	if not yes:

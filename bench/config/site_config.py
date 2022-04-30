@@ -3,9 +3,6 @@ import json
 import os
 from collections import defaultdict
 
-# imports - module imports
-from bench.utils import get_sites
-
 
 def get_site_config(site, bench_path='.'):
 	config_path = os.path.join(bench_path, 'sites', site, 'site_config.json')
@@ -35,8 +32,9 @@ def set_ssl_certificate_key(site, ssl_certificate_key, bench_path='.', gen_confi
 
 def set_site_config_nginx_property(site, config, bench_path='.', gen_config=True):
 	from bench.config.nginx import make_nginx_conf
+	from bench.bench import Bench
 
-	if site not in get_sites(bench_path=bench_path):
+	if site not in Bench(bench_path).sites:
 		raise Exception("No such site")
 	update_site_config(site, config, bench_path=bench_path)
 	if gen_config:

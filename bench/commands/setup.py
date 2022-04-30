@@ -6,12 +6,7 @@ import sys
 import click
 
 # imports - module imports
-import bench.config.procfile
-import bench.config.redis
-import bench.config.site_config
-import bench.config.supervisor
-import bench.utils
-from bench.utils import exec_cmd, run_playbook
+from bench.utils import exec_cmd, run_playbook, which
 
 
 @click.group(help="Setup command group for enabling setting up a Frappe environment")
@@ -22,22 +17,23 @@ def setup():
 @click.command("sudoers", help="Add commands to sudoers list for execution without password")
 @click.argument("user")
 def setup_sudoers(user):
-	bench.utils.setup_sudoers(user)
+	from bench.utils.system import setup_sudoers
+	setup_sudoers(user)
 
 
 @click.command("nginx", help="Generate configuration files for NGINX")
 @click.option("--yes", help="Yes to regeneration of nginx config file", default=False, is_flag=True)
 def setup_nginx(yes=False):
-	import bench.config.nginx
+	from bench.config.nginx import make_nginx_conf
 
-	bench.config.nginx.make_nginx_conf(bench_path=".", yes=yes)
+	make_nginx_conf(bench_path=".", yes=yes)
 
 
 @click.command("reload-nginx", help="Checks NGINX config file and reloads service")
 def reload_nginx():
-	import bench.config.production_setup
+	from bench.config.production_setup import reload_nginx
 
-	bench.config.production_setup.reload_nginx()
+	reload_nginx()
 
 
 @click.command("supervisor", help="Generate configuration for supervisor")
@@ -45,38 +41,48 @@ def reload_nginx():
 @click.option("--yes", help="Yes to regeneration of supervisor config", is_flag=True, default=False)
 @click.option("--skip-redis", help="Skip redis configuration", is_flag=True, default=False)
 def setup_supervisor(user=None, yes=False, skip_redis=False):
-	bench.config.supervisor.update_supervisord_config(user=user, yes=yes)
-	bench.config.supervisor.generate_supervisor_config(bench_path=".", user=user, yes=yes, skip_redis=skip_redis)
+	from bench.utils import get_cmd_output
+	from bench.config.supervisor import update_supervisord_config, generate_supervisor_config
+
+	which("supervisorctl", raise_err=True)
+
+	if "Permission denied" in get_cmd_output("supervisorctl status"):
+		update_supervisord_config(user=user, yes=yes)
+
+	generate_supervisor_config(bench_path=".", user=user, yes=yes, skip_redis=skip_redis)
 
 
 @click.command("redis", help="Generates configuration for Redis")
 def setup_redis():
-	bench.config.redis.generate_config(".")
+	from bench.config.redis import generate_config
+	generate_config(".")
 
 
 @click.command("fonts", help="Add Frappe fonts to system")
 def setup_fonts():
-	bench.utils.setup_fonts()
+	from bench.utils.system import setup_fonts
+	setup_fonts()
 
 
 @click.command("production", help="Setup Frappe production environment for specific user")
 @click.argument("user")
 @click.option("--yes", help="Yes to regeneration config", is_flag=True, default=False)
 def setup_production(user, yes=False):
-	import bench.config.production_setup
-
-	bench.config.production_setup.setup_production(user=user, yes=yes)
+	from bench.config.production_setup import setup_production
+	setup_production(user=user, yes=yes)
 
 
 @click.command("backups", help="Add cronjob for bench backups")
 def setup_backups():
-	bench.utils.setup_backups()
+	from bench.bench import Bench
+	Bench(".").setup.backups()
 
 
 @click.command("env", help="Setup virtualenv for bench")
 @click.option("--python", type = str, default = "python3", help = "Path to Python Executable.")
 def setup_env(python="python3"):
-	bench.utils.setup_env(python=python)
+	from bench.bench import Bench
+	return Bench(".").setup.env(python=python)
 
 
 @click.command("firewall", help="Setup firewall for system")
@@ -107,9 +113,8 @@ def set_ssh_port(port, force=False):
 @click.option("--custom-domain")
 @click.option('-n', '--non-interactive', default=False, is_flag=True, help="Run command non-interactively. This flag restarts nginx and runs certbot non interactively. Shouldn't be used on 1'st attempt")
 def setup_letsencrypt(site, custom_domain, non_interactive):
-	import bench.config.lets_encrypt
-
-	bench.config.lets_encrypt.setup_letsencrypt(site, custom_domain, bench_path=".", interactive=not non_interactive)
+	from bench.config.lets_encrypt import setup_letsencrypt
+	setup_letsencrypt(site, custom_domain, bench_path=".", interactive=not non_interactive)
 
 
 @click.command("wildcard-ssl", help="Setup wildcard SSL certificate for multi-tenant bench")
@@ -117,36 +122,50 @@ def setup_letsencrypt(site, custom_domain, non_interactive):
 @click.option("--email")
 @click.option("--exclude-base-domain", default=False, is_flag=True, help="SSL Certificate not applicable for base domain")
 def setup_wildcard_ssl(domain, email, exclude_base_domain):
-	import bench.config.lets_encrypt
-
-	bench.config.lets_encrypt.setup_wildcard_ssl(domain, email, bench_path=".", exclude_base_domain=exclude_base_domain)
+	from bench.config.lets_encrypt import setup_wildcard_ssl
+	setup_wildcard_ssl(domain, email, bench_path=".", exclude_base_domain=exclude_base_domain)
 
 
 @click.command("procfile", help="Generate Procfile for bench start")
 def setup_procfile():
-	bench.config.procfile.setup_procfile(".")
+	from bench.config.procfile import setup_procfile
+	setup_procfile(".")
 
 
-@click.command("socketio", help="Setup node dependencies for socketio server")
+@click.command("socketio", help="[DEPRECATED] Setup node dependencies for socketio server")
 def setup_socketio():
-	bench.utils.setup_socketio()
+	return
 
-
-@click.command("requirements", help="Setup Python and Node dependencies")
+@click.command("requirements")
 @click.option("--node", help="Update only Node packages", default=False, is_flag=True)
 @click.option("--python", help="Update only Python packages", default=False, is_flag=True)
-def setup_requirements(node=False, python=False):
-	if not (node or python):
-		from bench.utils import update_requirements
-		update_requirements()
+@click.option("--dev", help="Install optional python development dependencies", default=False, is_flag=True)
+@click.argument("apps", nargs=-1)
+def setup_requirements(node=False, python=False, dev=False, apps=None):
+	"""
+	Setup Python and Node dependencies.
 
-	elif not node:
-		from bench.utils import update_python_packages
-		update_python_packages()
+	You can optionally specify one or more apps to setup dependencies for.
+	"""
+	from bench.bench import Bench
 
-	elif not python:
-		from bench.utils import update_node_packages
-		update_node_packages()
+	bench = Bench(".")
+
+	if not (node or python or dev):
+		bench.setup.requirements(apps=apps)
+
+	elif not node and not dev:
+		bench.setup.python(apps=apps)
+
+	elif not python and not dev:
+		bench.setup.node(apps=apps)
+
+	else:
+		from bench.utils.bench import install_python_dev_dependencies
+		install_python_dev_dependencies(apps=apps)
+
+		if node:
+			click.secho("--dev flag only supports python dependencies. All node development dependencies are installed by default.", fg="yellow")
 
 
 @click.command("manager", help="Setup bench-manager.local site with the bench_manager app installed on it")
@@ -154,8 +173,7 @@ def setup_requirements(node=False, python=False):
 @click.option("--port", help="Port on which you want to run bench manager", default=23624)
 @click.option("--domain", help="Domain on which you want to run bench manager")
 def setup_manager(yes=False, port=23624, domain=None):
-	from bench.utils import get_sites
-	from bench.config.common_site_config import get_config
+	from bench.bench import Bench
 	from bench.config.nginx import make_bench_manager_nginx_conf
 
 	create_new_site = True
@@ -174,15 +192,15 @@ def setup_manager(yes=False, port=23624, domain=None):
 	exec_cmd("bench --site bench-manager.local install-app bench_manager")
 
 	bench_path = "."
-	conf = get_config(bench_path)
+	bench = Bench(bench_path)
 
-	if conf.get("restart_supervisor_on_update") or conf.get("restart_systemd_on_update"):
+	if bench.conf.get("restart_supervisor_on_update") or bench.conf.get("restart_systemd_on_update"):
 		# implicates a production setup or so I presume
 		if not domain:
 			print("Please specify the site name on which you want to host bench-manager using the 'domain' flag")
 			sys.exit(1)
 
-		if domain not in get_sites(bench_path):
+		if domain not in bench.sites:
 			raise Exception("No such site")
 
 		make_bench_manager_nginx_conf(bench_path, yes=yes, port=port, domain=domain)
@@ -190,8 +208,8 @@ def setup_manager(yes=False, port=23624, domain=None):
 
 @click.command("config", help="Generate or over-write sites/common_site_config.json")
 def setup_config():
-	from bench.config.common_site_config import make_config
-	make_config(".")
+	from bench.config.common_site_config import setup_config
+	setup_config(".")
 
 
 @click.command("add-domain", help="Add a custom domain to a particular site")
@@ -205,7 +223,8 @@ def add_domain(domain, site=None, ssl_certificate=None, ssl_certificate_key=None
 		print("Please specify site")
 		sys.exit(1)
 
-	bench.config.site_config.add_domain(site, domain, ssl_certificate, ssl_certificate_key, bench_path=".")
+	from bench.config.site_config import add_domain
+	add_domain(site, domain, ssl_certificate, ssl_certificate_key, bench_path=".")
 
 
 @click.command("remove-domain", help="Remove custom domain from a site")
@@ -216,7 +235,8 @@ def remove_domain(domain, site=None):
 		print("Please specify site")
 		sys.exit(1)
 
-	bench.config.site_config.remove_domain(site, domain, bench_path=".")
+	from bench.config.site_config import remove_domain
+	remove_domain(site, domain, bench_path=".")
 
 
 @click.command("sync-domains", help="Check if there is a change in domains. If yes, updates the domains list.")
@@ -233,7 +253,8 @@ def sync_domains(domain=None, site=None):
 		print("Domains should be a json list of strings or dictionaries")
 		sys.exit(1)
 
-	changed = bench.config.site_config.sync_domains(site, domains, bench_path=".")
+	from bench.config.site_config import sync_domains
+	changed = sync_domains(site, domains, bench_path=".")
 
 	# if changed, success, else failure
 	sys.exit(0 if changed else 1)
