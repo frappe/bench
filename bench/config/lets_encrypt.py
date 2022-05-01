@@ -106,9 +106,7 @@ def create_dir_if_missing(path):
 
 
 def get_certbot_path():
-	if which("certbot"):
-		return which("certbot")
-	raise Exception("Please install certbot")
+	return which("certbot")
 
 def renew_certs():
 	# Needs to be run with sudo
