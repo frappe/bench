@@ -73,3 +73,7 @@ class TestUtils(unittest.TestCase):
 		self.assertEqual("11.0", fake_bench.apps.states["frappe"]["version"])
 
 		shutil.rmtree(bench_dir)
+
+	def test_ssh_ports(self):
+		app = App("git@github.com:22:frappe/frappe")
+		self.assertEqual((app.use_ssh, app.org, app.repo), (True, "frappe", "frappe"))
