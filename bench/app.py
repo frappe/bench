@@ -116,7 +116,7 @@ class AppMeta:
 		name = url if url else self.name
 		if name.startswith("git@") or name.startswith("ssh://"):
 			self.use_ssh = True
-			_first_part, _second_part = name.split(":")
+			_first_part, _second_part = self.name.rsplit(":", 1)
 			self.remote_server = _first_part.split("@")[-1]
 			self.org, _repo = _second_part.rsplit("/", 1)
 		else:
@@ -486,6 +486,13 @@ def new_app(app, no_git=None, bench_path="."):
 
 	# For backwards compatibility
 	app = app.lower().replace(" ", "_").replace("-", "_")
+	if app[0].isdigit() or "." in app:
+		click.secho(
+			"App names cannot start with numbers(digits) or have dot(.) in them",
+			fg="red"
+		)
+		return
+
 	apps = os.path.abspath(os.path.join(bench_path, "apps"))
 	args = ["make-app", apps, app]
 	if no_git:
