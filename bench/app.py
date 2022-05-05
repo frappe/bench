@@ -73,11 +73,10 @@ class AppMeta:
 
 	def setup_details(self):
 		# fetch meta from installed apps
-		if (
-			not self.to_clone
-			and hasattr(self, "bench")
-			and os.path.exists(self.mount_path)
+		if hasattr(self, "bench") and os.path.exists(
+			os.path.join(self.bench.name, "apps", self.name)
 		):
+			self.mount_path = os.path.join(self.bench.name, "apps", self.name)
 			self.from_apps = True
 			self._setup_details_from_mounted_disk()
 

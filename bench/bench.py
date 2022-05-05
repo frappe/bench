@@ -123,8 +123,7 @@ class Bench(Base, Validator):
 		from bench.app import App
 
 		self.validate_app_uninstall(app)
-		path_to_app = os.path.join(self.name, "apps", app)
-		self.apps.remove(App(path_to_app, bench=self, to_clone=False))
+		self.apps.remove(App(app, bench=self, to_clone=False))
 		self.apps.sync()
 		# self.build() - removed because it seems unnecessary
 		self.reload()
