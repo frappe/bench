@@ -51,10 +51,9 @@ def is_frappe_app(directory: str) -> bool:
 
 
 def is_valid_frappe_branch(frappe_path:str, frappe_branch:str):
-	""" Check if a branch exists in a repo. Throws InvalidRemoteException if branch is not found
+	"""Check if a branch exists in a repo. Throws InvalidRemoteException if branch is not found
 
-	Uses github's api without auth to query branch.
-	If rate limited by gitapi, requests are sent to github.com
+	Uses native git command to check for branches on a remote.
 
 	:param frappe_path: git url
 	:type frappe_path: str
@@ -62,23 +61,26 @@ def is_valid_frappe_branch(frappe_path:str, frappe_branch:str):
 	:type frappe_branch: str
 	:raises InvalidRemoteException: branch for this repo doesn't exist
 	"""
-	if "http" in frappe_path and frappe_branch:
-		frappe_path = frappe_path.replace(".git", "")
+	import subprocess
+
+	if frappe_branch:
 		try:
-			owner, repo = frappe_path.split("/")[3], frappe_path.split("/")[4]
-		except IndexError:
-			raise InvalidRemoteException("Invalid git url")
-		git_api_req = f"https://api.github.com/repos/{owner}/{repo}/branches"
-		res = requests.get(git_api_req).json()
-
-		if "message" in res:
-			# slower alternative with no rate limit
-			github_req = f'https://github.com/{owner}/{repo}/tree/{frappe_branch}'
-			if requests.get(github_req).status_code != 200:
-				raise InvalidRemoteException("Invalid git url")
-
-		elif frappe_branch not in [x["name"] for x in res]:
-			raise InvalidRemoteException("Frappe branch does not exist")
+			ret = subprocess.check_output(
+				(
+					"git",
+					"ls-remote",
+					"--heads",
+					frappe_path,
+					frappe_branch,
+				),
+				encoding="UTF-8",
+			)
+			if not ret:
+				raise InvalidRemoteException(
+					f"Invalid {frappe_branch} for the remote {frappe_path}"
+				)
+		except subprocess.CalledProcessError:
+			raise InvalidRemoteException(f"Invalid frappe path {frappe_path}")
 
 
 def log(message, level=0, no_log=False):
