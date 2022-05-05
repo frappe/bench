@@ -73,7 +73,7 @@ class AppMeta:
 
 	def setup_details(self):
 		# fetch meta from installed apps
-		if hasattr(self, "bench") and os.path.exists(
+		if self.bench and os.path.exists(
 			os.path.join(self.bench.name, "apps", self.name)
 		):
 			self.mount_path = os.path.join(self.bench.name, "apps", self.name)
