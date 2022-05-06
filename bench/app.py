@@ -115,7 +115,7 @@ class AppMeta:
 		name = url if url else self.name
 		if name.startswith("git@") or name.startswith("ssh://"):
 			self.use_ssh = True
-			_first_part, _second_part = self.name.rsplit(":", 1)
+			_first_part, _second_part = name.rsplit(":", 1)
 			self.remote_server = _first_part.split("@")[-1]
 			self.org, _repo = _second_part.rsplit("/", 1)
 		else:
