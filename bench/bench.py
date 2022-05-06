@@ -413,7 +413,7 @@ class BenchSetup(Base):
 
 		for app in apps:
 			path_to_app = os.path.join(self.bench.name, "apps", app)
-			App(path_to_app, bench=self.bench, to_clone=False).install(
+			app = App(path_to_app, bench=self.bench, to_clone=False).install(
 				skip_assets=True, restart_bench=False, ignore_resolution=True
 			)
 

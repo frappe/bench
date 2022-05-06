@@ -11,6 +11,7 @@ import typing
 from collections import OrderedDict
 from datetime import date
 from urllib.parse import urlparse
+import os
 
 # imports - third party imports
 import click
@@ -27,6 +28,7 @@ from bench.utils import (
 	is_valid_frappe_branch,
 	log,
 	run_frappe_cmd,
+	is_frappe_app,
 )
 from bench.utils.bench import (
 	build_assets,
@@ -66,6 +68,8 @@ class AppMeta:
 		self.from_apps = False
 		self.is_url = False
 		self.branch = branch
+		self.app_name = None
+		self.git_repo = None
 		self.mount_path = os.path.abspath(
 			os.path.join(urlparse(self.name).netloc, urlparse(self.name).path)
 		)
@@ -93,6 +97,13 @@ class AppMeta:
 		# fetch meta from new styled name tags & first party apps on github
 		else:
 			self._setup_details_from_name_tag()
+
+		if self.git_repo:
+			self.app_name = os.path.basename(
+				os.path.normpath(self.git_repo.working_tree_dir)
+			)
+		else:
+			self.app_name = self.repo
 
 	def _setup_details_from_mounted_disk(self):
 		# If app is a git repo
@@ -186,7 +197,7 @@ class App(AppMeta):
 		from bench.utils.app import get_app_name
 
 		verbose = bench.cli.verbose or verbose
-		app_name = get_app_name(self.bench.name, self.repo)
+		app_name = get_app_name(self.bench.name, self.app_name)
 		if not resolved and self.repo != "frappe" and not ignore_resolution:
 			click.secho(
 				f"Ignoring dependencies of {self.name}. To install dependencies use --resolve-deps",
