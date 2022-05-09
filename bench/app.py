@@ -28,7 +28,6 @@ from bench.utils import (
 	is_valid_frappe_branch,
 	log,
 	run_frappe_cmd,
-	is_frappe_app,
 )
 from bench.utils.bench import (
 	build_assets,
