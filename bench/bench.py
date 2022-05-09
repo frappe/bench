@@ -236,11 +236,24 @@ class BenchApps(MutableSequence):
 		with open(self.states_path, "w") as f:
 			f.write(json.dumps(self.states, indent=4))
 
-	def sync(self,app_name: Union[str, None] = None, branch: Union[str, None] = None, required:List = []):
+	def sync(
+		self,
+		app_name: Union[str, None] = None,
+		app_dir: Union[str, None] = None,
+		branch: Union[str, None] = None,
+		required: List = []
+	):
 		self.initialize_apps()
+
 		with open(self.bench.apps_txt, "w") as f:
 			f.write("\n".join(self.apps))
-		self.update_apps_states(app_name, branch, required)
+
+		self.update_apps_states(
+			app_name=app_name,
+			app_dir=app_dir,
+			branch=branch,
+			required=required
+		)
 
 	def initialize_apps(self):
 		is_installed = lambda app: app in installed_packages
