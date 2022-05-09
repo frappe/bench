@@ -550,7 +550,7 @@ def install_app(
 	if os.path.exists(os.path.join(app_path, "package.json")):
 		bench.run("yarn install", cwd=app_path)
 
-	bench.apps.sync(app, required=resolution, branch=tag)
+	bench.apps.sync(app_name=app, required=resolution, branch=tag, app_dir=app_path)
 
 	if not skip_assets:
 		build_assets(bench_path=bench_path, app=app)
