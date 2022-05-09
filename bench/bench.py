@@ -170,7 +170,13 @@ class BenchApps(MutableSequence):
 		except FileNotFoundError:
 			self.states = {}
 
-	def update_apps_states(self, app_dir, app_name: Union[str, None] = None,  branch: Union[str, None] = None, required:List = []):
+	def update_apps_states(
+			self,
+			app_dir: str = None,
+			app_name: Union[str, None] = None,
+			branch: Union[str, None] = None,
+			required: List = [],
+	):
 		if self.apps and not os.path.exists(self.states_path):
 			# idx according to apps listed in apps.txt (backwards compatibility)
 			# Keeping frappe as the first app.
@@ -199,6 +205,9 @@ class BenchApps(MutableSequence):
 
 		for app in apps_to_remove:
 			del self.states[app]
+
+		if app_name and not app_dir:
+			app_dir = app_name
 
 		if app_name and app_name not in self.states:
 			version = get_current_version(app_name, self.bench.name)

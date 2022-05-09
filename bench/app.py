@@ -241,7 +241,9 @@ class App(AppMeta):
 	def update_app_state(self):
 		from bench.bench import Bench
 		bench = Bench(self.bench.name)
-		bench.apps.sync(self.name, self.tag, self.local_resolution)
+		bench.apps.sync(app_dir=self.app_name, app_name=self.name,
+						branch=self.tag, required_list=self.local_resolution)
+
 
 
 def make_resolution_plan(app: App, bench: "Bench"):
