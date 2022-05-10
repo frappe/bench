@@ -66,7 +66,7 @@ class TestUtils(unittest.TestCase):
 		subprocess.run(["git", "add", "."], cwd=frappe_path, capture_output=True, check=True)
 		subprocess.run(["git", "commit", "-m", "temp"], cwd=frappe_path, capture_output=True, check=True)
 
-		fake_bench.apps.update_apps_states("frappe")
+		fake_bench.apps.update_apps_states(app_name="frappe")
 
 		self.assertIn("frappe", fake_bench.apps.states)
 		self.assertIn("version", fake_bench.apps.states["frappe"])

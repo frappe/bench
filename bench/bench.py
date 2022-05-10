@@ -170,7 +170,13 @@ class BenchApps(MutableSequence):
 		except FileNotFoundError:
 			self.states = {}
 
-	def update_apps_states(self, app_name: Union[str, None] = None, branch: Union[str, None] = None, required:List = []):
+	def update_apps_states(
+			self,
+			app_dir: str = None,
+			app_name: Union[str, None] = None,
+			branch: Union[str, None] = None,
+			required: List = [],
+	):
 		if self.apps and not os.path.exists(self.states_path):
 			# idx according to apps listed in apps.txt (backwards compatibility)
 			# Keeping frappe as the first app.
@@ -200,10 +206,13 @@ class BenchApps(MutableSequence):
 		for app in apps_to_remove:
 			del self.states[app]
 
+		if app_name and not app_dir:
+			app_dir = app_name
+
 		if app_name and app_name not in self.states:
 			version = get_current_version(app_name, self.bench.name)
 
-			app_dir = os.path.join(self.apps_path, app_name)
+			app_dir = os.path.join(self.apps_path, app_dir)
 			if not branch:
 				branch = (
 						subprocess
@@ -227,11 +236,24 @@ class BenchApps(MutableSequence):
 		with open(self.states_path, "w") as f:
 			f.write(json.dumps(self.states, indent=4))
 
-	def sync(self,app_name: Union[str, None] = None, branch: Union[str, None] = None, required:List = []):
+	def sync(
+		self,
+		app_name: Union[str, None] = None,
+		app_dir: Union[str, None] = None,
+		branch: Union[str, None] = None,
+		required: List = []
+	):
 		self.initialize_apps()
+
 		with open(self.bench.apps_txt, "w") as f:
 			f.write("\n".join(self.apps))
-		self.update_apps_states(app_name, branch, required)
+
+		self.update_apps_states(
+			app_name=app_name,
+			app_dir=app_dir,
+			branch=branch,
+			required=required
+		)
 
 	def initialize_apps(self):
 		is_installed = lambda app: app in installed_packages
@@ -413,7 +435,7 @@ class BenchSetup(Base):
 
 		for app in apps:
 			path_to_app = os.path.join(self.bench.name, "apps", app)
-			App(path_to_app, bench=self.bench, to_clone=False).install(
+			app = App(path_to_app, bench=self.bench, to_clone=False).install(
 				skip_assets=True, restart_bench=False, ignore_resolution=True
 			)
 
