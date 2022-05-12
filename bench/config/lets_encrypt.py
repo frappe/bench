@@ -107,7 +107,7 @@ def create_dir_if_missing(path):
 
 def get_certbot_path():
 	try:
-		return which("certbot", True)
+		return which("certbot", raise_err=True)
 	except FileNotFoundError:
 		raise CommandFailedError("Certbot is not installed on your system. Please visit https://certbot.eff.org/instructions for installation instructions, then try again.")
 
