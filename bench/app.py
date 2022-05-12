@@ -11,6 +11,7 @@ import typing
 from collections import OrderedDict
 from datetime import date
 from urllib.parse import urlparse
+import os
 
 # imports - third party imports
 import click
@@ -66,6 +67,8 @@ class AppMeta:
 		self.from_apps = False
 		self.is_url = False
 		self.branch = branch
+		self.app_name = None
+		self.git_repo = None
 		self.mount_path = os.path.abspath(
 			os.path.join(urlparse(self.name).netloc, urlparse(self.name).path)
 		)
@@ -73,11 +76,10 @@ class AppMeta:
 
 	def setup_details(self):
 		# fetch meta from installed apps
-		if (
-			not self.to_clone
-			and hasattr(self, "bench")
-			and os.path.exists(self.mount_path)
+		if self.bench and os.path.exists(
+			os.path.join(self.bench.name, "apps", self.name)
 		):
+			self.mount_path = os.path.join(self.bench.name, "apps", self.name)
 			self.from_apps = True
 			self._setup_details_from_mounted_disk()
 
@@ -94,6 +96,13 @@ class AppMeta:
 		# fetch meta from new styled name tags & first party apps on github
 		else:
 			self._setup_details_from_name_tag()
+
+		if self.git_repo:
+			self.app_name = os.path.basename(
+				os.path.normpath(self.git_repo.working_tree_dir)
+			)
+		else:
+			self.app_name = self.repo
 
 	def _setup_details_from_mounted_disk(self):
 		# If app is a git repo
@@ -116,7 +125,7 @@ class AppMeta:
 		name = url if url else self.name
 		if name.startswith("git@") or name.startswith("ssh://"):
 			self.use_ssh = True
-			_first_part, _second_part = name.split(":")
+			_first_part, _second_part = name.rsplit(":", 1)
 			self.remote_server = _first_part.split("@")[-1]
 			self.org, _repo = _second_part.rsplit("/", 1)
 		else:
@@ -187,7 +196,7 @@ class App(AppMeta):
 		from bench.utils.app import get_app_name
 
 		verbose = bench.cli.verbose or verbose
-		app_name = get_app_name(self.bench.name, self.repo)
+		app_name = get_app_name(self.bench.name, self.app_name)
 		if not resolved and self.repo != "frappe" and not ignore_resolution:
 			click.secho(
 				f"Ignoring dependencies of {self.name}. To install dependencies use --resolve-deps",
@@ -231,7 +240,9 @@ class App(AppMeta):
 	def update_app_state(self):
 		from bench.bench import Bench
 		bench = Bench(self.bench.name)
-		bench.apps.sync(self.name, self.tag, self.local_resolution)
+		bench.apps.sync(app_dir=self.app_name, app_name=self.name,
+						branch=self.tag, required_list=self.local_resolution)
+
 
 
 def make_resolution_plan(app: App, bench: "Bench"):
@@ -540,7 +551,7 @@ def install_app(
 	if os.path.exists(os.path.join(app_path, "package.json")):
 		bench.run("yarn install", cwd=app_path)
 
-	bench.apps.sync(app, required=resolution, branch=tag)
+	bench.apps.sync(app_name=app, required=resolution, branch=tag, app_dir=app_path)
 
 	if not skip_assets:
 		build_assets(bench_path=bench_path, app=app)

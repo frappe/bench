@@ -12,6 +12,7 @@ from bench.utils import exec_cmd
 from bench.release import get_bumped_version
 from bench.app import App
 from bench.tests.test_base import FRAPPE_BRANCH, TestBenchBase
+from bench.bench import Bench
 
 
 # changed from frappe_theme because it wasn't maintained and incompatible,
@@ -43,7 +44,9 @@ class TestBenchInit(TestBenchBase):
 		self.assert_folders(bench_name)
 		self.assert_virtual_env(bench_name)
 		self.assert_config(bench_name)
-
+		test_bench = Bench(bench_name)
+		app = App("frappe", bench=test_bench)
+		self.assertEqual(app.from_apps, True)
 
 	def basic(self):
 		try:
