@@ -70,7 +70,7 @@ def is_valid_frappe_branch(frappe_path:str, frappe_branch:str):
 			res = g.ls_remote("--heads", "--tags", frappe_path, frappe_branch)
 			if not res:
 				raise InvalidRemoteException(
-					f"Invalid branch: {frappe_branch} for the remote {frappe_path}"
+					f"Invalid branch or tag: {frappe_branch} for the remote {frappe_path}"
 				)
 		except git.exc.GitCommandError:
 			raise InvalidRemoteException(f"Invalid frappe path: {frappe_path}")
