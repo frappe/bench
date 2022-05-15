@@ -61,35 +61,19 @@ def is_valid_frappe_branch(frappe_path:str, frappe_branch:str):
 	:type frappe_branch: str
 	:raises InvalidRemoteException: branch for this repo doesn't exist
 	"""
-	import subprocess
+	import git
+
+	g = git.cmd.Git()
 
 	if frappe_branch:
 		try:
-			ret = subprocess.check_output(
-				(
-					"git",
-					"ls-remote",
-					"--heads",
-					frappe_path,
-					frappe_branch,
-				),
-				encoding="UTF-8",
-			) or subprocess.check_output(
-				(
-					"git",
-					"ls-remote",
-					"--tags",
-					frappe_path,
-					frappe_branch,
-				),
-				encoding="UTF-8",
-			)
-			if not ret:
+			res = g.ls_remote("--heads", "--tags", frappe_path, frappe_branch)
+			if not res:
 				raise InvalidRemoteException(
-					f"Invalid {frappe_branch} for the remote {frappe_path}"
+					f"Invalid branch: {frappe_branch} for the remote {frappe_path}"
 				)
-		except subprocess.CalledProcessError:
-			raise InvalidRemoteException(f"Invalid frappe path {frappe_path}")
+		except git.exc.GitCommandError:
+			raise InvalidRemoteException(f"Invalid frappe path: {frappe_path}")
 
 
 def log(message, level=0, no_log=False):
