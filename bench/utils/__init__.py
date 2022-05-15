@@ -74,6 +74,15 @@ def is_valid_frappe_branch(frappe_path:str, frappe_branch:str):
 					frappe_branch,
 				),
 				encoding="UTF-8",
+			) or subprocess.check_output(
+				(
+					"git",
+					"ls-remote",
+					"--tags",
+					frappe_path,
+					frappe_branch,
+				),
+				encoding="UTF-8",
 			)
 			if not ret:
 				raise InvalidRemoteException(
