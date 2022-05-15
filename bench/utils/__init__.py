@@ -50,6 +50,7 @@ def is_frappe_app(directory: str) -> bool:
 	return bool(is_frappe_app)
 
 
+@lru_cache(maxsize=None)
 def is_valid_frappe_branch(frappe_path:str, frappe_branch:str):
 	"""Check if a branch exists in a repo. Throws InvalidRemoteException if branch is not found
 
