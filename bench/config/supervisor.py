@@ -125,4 +125,6 @@ def update_supervisord_config(user=None, yes=False):
 		logger.log(f"Updating supervisord.conf failed due to '{e}'")
 
 	# Reread supervisor configuration, reload supervisord and supervisorctl, restart services that were started
-	service('supervisor', 'reload')
+	# Let's defer importing reload_supervisor() here to avoid a circular import
+	from bench.config.production_setup import reload_supervisor
+	reload_supervisor()
