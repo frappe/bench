@@ -2,6 +2,7 @@
 import os
 import logging
 import sys
+import re
 
 # imports - module imports
 import bench
@@ -55,7 +56,7 @@ def setup_production(user, bench_path='.', yes=False):
 
 	print("Setting Up symlinks and reloading services...")
 	if conf.get('restart_supervisor_on_update'):
-		supervisor_conf_extn = "ini" if is_centos7() else "conf"
+		supervisor_conf_extn = "ini" if is_centos7_or_newer() else "conf"
 		supervisor_conf = os.path.join(get_supervisor_confdir(), f'{bench_name}.{supervisor_conf_extn}')
 
 		# Check if symlink exists, If not then create it.
@@ -79,7 +80,7 @@ def disable_production(bench_path='.'):
 	conf = Bench(bench_path).conf
 
 	# supervisorctl
-	supervisor_conf_extn = "ini" if is_centos7() else "conf"
+	supervisor_conf_extn = "ini" if is_centos7_or_newer() else "conf"
 	supervisor_conf = os.path.join(get_supervisor_confdir(), f'{bench_name}.{supervisor_conf_extn}')
 
 	if os.path.islink(supervisor_conf):
@@ -99,10 +100,24 @@ def disable_production(bench_path='.'):
 
 def service(service_name, service_option):
 	if os.path.basename(which('systemctl') or '') == 'systemctl' and is_running_systemd():
-		exec_cmd(f"sudo systemctl {service_option} {service_name}")
+		status = exec_cmd(f"sudo systemctl {service_option} {service_name}", _raise=False)
+		if service_option == "status":
+			return status == 0
+		if service_option == "reload":
+			if status == 0:
+				exec_cmd(f"sudo systemctl {service_option} {service_name}")
+			else:
+				exec_cmd(f"sudo systemctl start {service_name}")
 
 	elif os.path.basename(which('service') or '') == 'service':
-		exec_cmd(f"sudo service {service_name} {service_option}")
+		status = exec_cmd(f"sudo service {service_name} {service_option}", _raise=False)
+		if service_option == "status":
+			return status == 0
+		if service_option == "reload":
+			if status == 0:
+				exec_cmd(f"sudo service {service_name} {service_option}")
+			else:
+				exec_cmd(f"sudo service start {service_option}")
 
 	else:
 		# look for 'service_manager' and 'service_manager_command' in environment
@@ -133,8 +148,16 @@ def remove_default_nginx_configs():
 			os.unlink(conf_file)
 
 
-def is_centos7():
-	return os.path.exists('/etc/redhat-release') and get_cmd_output("cat /etc/redhat-release | sed 's/Linux\ //g' | cut -d' ' -f3 | cut -d. -f1").strip() == '7'
+def is_centos7_or_newer():
+	distro_release = '/etc/redhat-release'
+	if os.path.exists(distro_release):
+		with open(distro_release, 'r') as file_handle:
+			try:
+				result = re.search(r"(?:(\d+)\.)?(?:(\d+)\.)?(\*|\d+)", file_handle.read(), re.MULTILINE)
+				return int(result.group(1)) >= 7
+			except AttributeError:
+				pass
+	return False
 
 
 def is_running_systemd():
@@ -150,34 +173,35 @@ def is_running_systemd():
 def reload_supervisor():
 	supervisorctl = which('supervisorctl')
 
-	try:
-		# first try reread/update
-		exec_cmd(f'{supervisorctl} reread')
-		exec_cmd(f'{supervisorctl} update')
-		return
-	except CommandFailedError:
-		pass
+	if is_centos7_or_newer():
+		service_name = 'supervisord'
+	else:
+		service_name = 'supervisor'
+	status = service(service_name, 'status')
 
-	try:
-		# something is wrong, so try reloading
-		exec_cmd(f'{supervisorctl} reload')
-		return
-	except CommandFailedError:
-		pass
+	if status:
+		try:
+			# first try reread/update
+			exec_cmd(f'{supervisorctl} reread', _raise=False)
+			exec_cmd(f'{supervisorctl} update', _raise=False)
+			return
+		except CommandFailedError:
+			pass
 
-	try:
-		# then try restart for centos
-		service('supervisord', 'restart')
-		return
-	except CommandFailedError:
-		pass
+		try:
+			# something is wrong, so try reloading
+			exec_cmd(f'{supervisorctl} reload', _raise=False)
+			return
+		except CommandFailedError:
+			pass
 
-	try:
-		# else try restart for ubuntu / debian
-		service('supervisor', 'restart')
-		return
-	except CommandFailedError:
-		pass
+		try:
+			service(service_name, 'restart')
+			return
+		except CommandFailedError:
+			pass
+	else:
+		service(service_name, 'start')
 
 def reload_nginx():
 	try:
