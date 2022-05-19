@@ -312,8 +312,7 @@ class BenchApps(MutableSequence):
 
 	def remove(self, app: "App", no_backup: bool = False):
 		app.uninstall()
-		if not no_backup:
-			app.remove()
+		app.remove(no_backup=no_backup)
 		super().remove(app.repo)
 
 	def append(self, app: "App"):

@@ -179,13 +179,19 @@ class App(AppMeta):
 		)
 
 	@step(title="Archiving App {repo}", success="App {repo} Archived")
-	def remove(self):
+	def remove(self, no_backup: bool = False):
 		active_app_path = os.path.join("apps", self.name)
-		archived_path = os.path.join("archived", "apps")
-		archived_name = get_available_folder_name(f"{self.repo}-{date.today()}", archived_path)
-		archived_app_path = os.path.join(archived_path, archived_name)
-		log(f"App moved from {active_app_path} to {archived_app_path}")
-		shutil.move(active_app_path, archived_app_path)
+
+		if no_backup:
+			shutil.rmtree(active_app_path)
+			log(f"App deleted from {active_app_path}")
+		else:
+			archived_path = os.path.join("archived", "apps")
+			archived_name = get_available_folder_name(f"{self.repo}-{date.today()}", archived_path)
+			archived_app_path = os.path.join(archived_path, archived_name)
+
+			shutil.move(active_app_path, archived_app_path)
+			log(f"App moved from {active_app_path} to {archived_app_path}")
 
 	@step(title="Installing App {repo}", success="App {repo} Installed")
 	def install(
