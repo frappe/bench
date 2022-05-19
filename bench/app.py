@@ -113,6 +113,10 @@ class AppMeta:
 				self.tag = self.branch = self.git_repo.active_branch.name
 		except IndexError:
 			self.org, self.repo, self.tag = os.path.split(self.mount_path)[-2:] + (self.branch,)
+		except TypeError:
+			# faced a "a detached symbolic reference as it points" in case you're in the middle of
+			# some git shenanigans
+			self.tag = self.branch = None
 
 	def _setup_details_from_name_tag(self):
 		self.org, self.repo, self.tag = fetch_details_from_tag(self.name)
