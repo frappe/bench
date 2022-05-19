@@ -180,7 +180,7 @@ class App(AppMeta):
 
 	@step(title="Archiving App {repo}", success="App {repo} Archived")
 	def remove(self):
-		active_app_path = os.path.join("apps", self.repo)
+		active_app_path = os.path.join("apps", self.name)
 		archived_path = os.path.join("archived", "apps")
 		archived_name = get_available_folder_name(f"{self.repo}-{date.today()}", archived_path)
 		archived_app_path = os.path.join(archived_path, archived_name)
@@ -224,7 +224,7 @@ class App(AppMeta):
 
 	@step(title="Uninstalling App {repo}", success="App {repo} Uninstalled")
 	def uninstall(self):
-		self.bench.run(f"{self.bench.python} -m pip uninstall -y {self.repo}")
+		self.bench.run(f"{self.bench.python} -m pip uninstall -y {self.name}")
 
 	def _get_dependencies(self):
 		from bench.utils.app import get_required_deps, required_apps_from_hooks
