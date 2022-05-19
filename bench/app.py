@@ -113,6 +113,10 @@ class AppMeta:
 				self.tag = self.branch = self.git_repo.active_branch.name
 		except IndexError:
 			self.org, self.repo, self.tag = os.path.split(self.mount_path)[-2:] + (self.branch,)
+		except TypeError:
+			# faced a "a detached symbolic reference as it points" in case you're in the middle of
+			# some git shenanigans
+			self.tag = self.branch = None
 
 	def _setup_details_from_name_tag(self):
 		self.org, self.repo, self.tag = fetch_details_from_tag(self.name)
@@ -175,13 +179,19 @@ class App(AppMeta):
 		)
 
 	@step(title="Archiving App {repo}", success="App {repo} Archived")
-	def remove(self):
-		active_app_path = os.path.join("apps", self.repo)
-		archived_path = os.path.join("archived", "apps")
-		archived_name = get_available_folder_name(f"{self.repo}-{date.today()}", archived_path)
-		archived_app_path = os.path.join(archived_path, archived_name)
-		log(f"App moved from {active_app_path} to {archived_app_path}")
-		shutil.move(active_app_path, archived_app_path)
+	def remove(self, no_backup: bool = False):
+		active_app_path = os.path.join("apps", self.name)
+
+		if no_backup:
+			shutil.rmtree(active_app_path)
+			log(f"App deleted from {active_app_path}")
+		else:
+			archived_path = os.path.join("archived", "apps")
+			archived_name = get_available_folder_name(f"{self.repo}-{date.today()}", archived_path)
+			archived_app_path = os.path.join(archived_path, archived_name)
+
+			shutil.move(active_app_path, archived_app_path)
+			log(f"App moved from {active_app_path} to {archived_app_path}")
 
 	@step(title="Installing App {repo}", success="App {repo} Installed")
 	def install(
@@ -220,7 +230,7 @@ class App(AppMeta):
 
 	@step(title="Uninstalling App {repo}", success="App {repo} Uninstalled")
 	def uninstall(self):
-		self.bench.run(f"{self.bench.python} -m pip uninstall -y {self.repo}")
+		self.bench.run(f"{self.bench.python} -m pip uninstall -y {self.name}")
 
 	def _get_dependencies(self):
 		from bench.utils.app import get_required_deps, required_apps_from_hooks

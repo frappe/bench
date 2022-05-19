@@ -180,12 +180,14 @@ def new_app(app_name, no_git=None):
 		"Completely remove app from bench and re-build assets if not installed on any site"
 	),
 )
+@click.option("--no-backup", is_flag=True, help="Do not backup app before removing")
+@click.option("--force", is_flag=True, help="Force remove app")
 @click.argument("app-name")
-def remove_app(app_name):
+def remove_app(app_name, no_backup=False, force=False):
 	from bench.bench import Bench
 
 	bench = Bench(".")
-	bench.uninstall(app_name)
+	bench.uninstall(app_name, no_backup=no_backup, force=force)
 
 
 @click.command("exclude-app", help="Exclude app from updating")

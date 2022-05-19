@@ -35,6 +35,7 @@ class TestUtils(unittest.TestCase):
 			is_valid_frappe_branch("https://github.com/random/random.git", frappe_branch="random-branch")
 
 		is_valid_frappe_branch("https://github.com/frappe/frappe.git", frappe_branch="develop")
+		is_valid_frappe_branch("https://github.com/frappe/frappe.git", frappe_branch="v13.29.0")
 
 	def test_app_states(self):
 		bench_dir = "./sandbox"
