@@ -17,7 +17,7 @@ import requests
 # imports - module imports
 from bench import PROJECT_NAME, VERSION
 
-from bench.exceptions import CommandFailedError, InvalidRemoteException, ValidationError
+from bench.exceptions import CommandFailedError, InvalidRemoteException, AppNotInstalledError
 
 
 logger = logging.getLogger(PROJECT_NAME)
@@ -294,7 +294,7 @@ def set_git_remote_url(git_url, bench_path="."):
 	app = git_url.rsplit("/", 1)[1].rsplit(".", 1)[0]
 
 	if app not in Bench(bench_path).apps:
-		raise ValidationError(f"No app named {app}")
+		raise AppNotInstalledError(f"No app named {app}")
 
 	app_dir = get_repo_dir(app, bench_path=bench_path)
 

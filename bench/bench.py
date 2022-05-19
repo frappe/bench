@@ -10,7 +10,7 @@ from typing import List, MutableSequence, TYPE_CHECKING, Union
 
 # imports - module imports
 import bench
-from bench.exceptions import ValidationError
+from bench.exceptions import AppNotInstalledError, InvalidRemoteException
 from bench.config.common_site_config import setup_config
 from bench.utils import (
 	paths_in_bench,
@@ -49,7 +49,7 @@ class Base:
 class Validator:
 	def validate_app_uninstall(self, app):
 		if app not in self.apps:
-			raise ValidationError(f"No app named {app}")
+			raise AppNotInstalledError(f"No app named {app}")
 		validate_app_installed_on_sites(app, bench_path=self.name)
 
 
@@ -119,11 +119,16 @@ class Bench(Base, Validator):
 		self.apps.append(app)
 		self.apps.sync()
 
-	def uninstall(self, app):
+	def uninstall(self, app, no_backup=False, force=False):
 		from bench.app import App
 
-		self.validate_app_uninstall(app)
-		self.apps.remove(App(app, bench=self, to_clone=False))
+		if not force:
+			self.validate_app_uninstall(app)
+		try:
+			self.apps.remove(App(app, bench=self, to_clone=False), no_backup=no_backup)
+		except InvalidRemoteException:
+			if not force:
+				raise
 		self.apps.sync()
 		# self.build() - removed because it seems unnecessary
 		self.reload()
@@ -305,9 +310,10 @@ class BenchApps(MutableSequence):
 		super().append(app.repo)
 		self.apps.sort()
 
-	def remove(self, app: "App"):
+	def remove(self, app: "App", no_backup: bool = False):
 		app.uninstall()
-		app.remove()
+		if not no_backup:
+			app.remove()
 		super().remove(app.repo)
 
 	def append(self, app: "App"):
