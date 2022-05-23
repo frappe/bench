@@ -108,6 +108,8 @@ def init(
 
 
 def setup_sudoers(user):
+	from bench.config.lets_encrypt import get_certbot_path
+
 	if not os.path.exists("/etc/sudoers.d"):
 		os.makedirs("/etc/sudoers.d")
 
@@ -128,6 +130,7 @@ def setup_sudoers(user):
 			"service": which("service"),
 			"systemctl": which("systemctl"),
 			"nginx": which("nginx"),
+			"certbot": get_certbot_path(),
 		}
 	)
 
