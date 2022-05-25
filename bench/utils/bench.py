@@ -33,27 +33,6 @@ def get_env_cmd(cmd, bench_path="."):
 	return os.path.abspath(os.path.join(bench_path, "env", "bin", cmd))
 
 
-def get_virtualenv_path(verbose=False):
-	virtualenv_path = which("virtualenv")
-
-	if not virtualenv_path and verbose:
-		log("virtualenv cannot be found", level=2)
-
-	return virtualenv_path
-
-
-def get_venv_path(verbose=False):
-	current_python = sys.executable
-	with open(os.devnull, "wb") as devnull:
-		is_venv_installed = not subprocess.call(
-			[current_python, "-m", "venv", "--help"], stdout=devnull
-		)
-	if is_venv_installed:
-		return f"{current_python} -m venv"
-	else:
-		log("virtualenv cannot be found", level=2)
-
-
 def update_node_packages(bench_path=".", apps=None):
 	print("Updating node packages...")
 	from bench.utils.app import get_develop_version
@@ -172,6 +151,15 @@ def update_npm_packages(bench_path=".", apps=None):
 
 	exec_cmd("npm install", cwd=bench_path)
 
+def create_venv(bench_path=".", python="python3", env_path="env"):
+	# Python's venv creation places venv contents into whatever directory provided.
+	# Therefore, need to explicitly state "env" folder in env_path argument.
+
+	logger.log(f"Creating virtual enviroment via venv at {env_path}")
+
+	python_path = which(python)
+
+	exec_cmd(f"{python_path} -m venv {env_path}", cwd=bench_path)
 
 def migrate_env(python, backup=False):
 	import shutil
@@ -182,7 +170,6 @@ def migrate_env(python, backup=False):
 	nvenv = "env"
 	path = os.getcwd()
 	python = which(python)
-	virtualenv = which("virtualenv")
 	pvenv = os.path.join(path, nvenv)
 
 	# Clear Cache before Bench Dies.
@@ -198,7 +185,7 @@ def migrate_env(python, backup=False):
 	except Exception:
 		logger.warning("Please ensure Redis Connections are running or Daemonized.")
 
-	# Backup venv: restore using `virtualenv --relocatable` if needed
+	# Backup venv
 	if backup:
 		from datetime import datetime
 
@@ -215,11 +202,11 @@ def migrate_env(python, backup=False):
 		os.rename(source, dest)
 		shutil.move(dest, target)
 
-	# Create virtualenv using specified python
+	# Create virtual enviroment using specified python
 	venv_creation, packages_setup = 1, 1
 	try:
 		logger.log(f"Setting up a New Virtual {python} Environment")
-		venv_creation = exec_cmd(f"{virtualenv} --python {python} {pvenv}")
+		create_venv(path, python, nvenv)
 
 		apps = " ".join([f"-e {os.path.join('apps', app)}" for app in bench.apps])
 		packages_setup = exec_cmd(f"{pvenv} -m pip install --upgrade {apps}")

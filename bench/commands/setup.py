@@ -78,7 +78,7 @@ def setup_backups():
 	Bench(".").setup.backups()
 
 
-@click.command("env", help="Setup virtualenv for bench")
+@click.command("env", help="Setup virtual enviroment for bench")
 @click.option("--python", type = str, default = "python3", help = "Path to Python Executable.")
 def setup_env(python="python3"):
 	from bench.bench import Bench

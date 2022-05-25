@@ -28,8 +28,7 @@ from bench.utils.bench import (
 	restart_systemd_processes,
 	restart_process_manager,
 	remove_backups_crontab,
-	get_venv_path,
-	get_virtualenv_path,
+	create_venv,
 	get_env_cmd,
 )
 from bench.utils.render import job, step
@@ -347,15 +346,12 @@ class BenchSetup(Base):
 		click.secho("Setting Up Environment", fg="yellow")
 
 		frappe = os.path.join(self.bench.name, "apps", "frappe")
-		virtualenv = get_virtualenv_path(verbose=verbose)
+
 		quiet_flag = "" if verbose else "--quiet"
 
 		if not os.path.exists(self.bench.python):
-			if virtualenv:
-				self.run(f"{virtualenv} {quiet_flag} env -p {python}")
-			else:
-				venv = get_venv_path(verbose=verbose)
-				self.run(f"{venv} env")
+			# Creates virtual enviroment at bench setup cwd under folder "env/"
+			create_venv(self.cwd, python)
 
 		self.pip()
 

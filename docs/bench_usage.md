@@ -130,7 +130,7 @@ The setup commands used for setting up the Frappe environment in context of the 
 
  - **sudoers**: Add commands to sudoers list for allowing bench commands execution without root password
 
- - **env**: Setup virtualenv for bench. This sets up a `env` folder under the root of the bench directory.
+ - **env**: Setup virtual enviroment for bench. This sets up a `env` folder under the root of the bench directory.
  - **redis**: Generates configuration for Redis
  - **fonts**: Add Frappe fonts to system
  - **config**: Generate or over-write sites/common_site_config.json

@@ -10,7 +10,7 @@ _bench_completion() {
         cd sites
 
         # All frappe commands are subcommands under "bench frappe"
-        # Frappe is only installed in virtualenv "env" so use appropriate python executable
+        # Frappe is only installed in virtual enviroment "env" so use appropriate python executable
         COMPREPLY+=( $( COMP_WORDS="bench frappe "${COMP_WORDS[@]:1} \
                         COMP_CWORD=$(($COMP_CWORD+1)) \
                         _BENCH_COMPLETE=complete ../env/bin/python ../apps/frappe/frappe/utils/bench_helper.py ) )
