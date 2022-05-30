@@ -29,6 +29,7 @@ from bench.utils.bench import (
 	restart_process_manager,
 	remove_backups_crontab,
 	get_venv_path,
+	get_virtualenv_path,
 	get_env_cmd,
 )
 from bench.utils.render import job, step
@@ -347,14 +348,20 @@ class BenchSetup(Base):
 		import bench.cli
 		import click
 
+		verbose = bench.cli.verbose
+
 		click.secho("Setting Up Environment", fg="yellow")
 
 		frappe = os.path.join(self.bench.name, "apps", "frappe")
-		virtualenv = get_venv_path()
-		quiet_flag = "" if bench.cli.verbose else "--quiet"
+		virtualenv = get_virtualenv_path(verbose=verbose)
+		quiet_flag = "" if verbose else "--quiet"
 
 		if not os.path.exists(self.bench.python):
-			self.run(f"{virtualenv} {quiet_flag} env -p {python}")
+			if virtualenv:
+				self.run(f"{virtualenv} {quiet_flag} env -p {python}")
+			else:
+				venv = get_venv_path(verbose=verbose)
+				self.run(f"{venv} env")
 
 		self.pip()
 

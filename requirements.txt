@@ -6,4 +6,3 @@ python-crontab~=2.4.0
 requests
 semantic-version~=2.8.2
 setuptools
-virtualenv
