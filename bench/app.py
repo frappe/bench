@@ -141,7 +141,7 @@ class AppMeta:
 
 	@property
 	def url(self):
-		if self.is_url:
+		if self.is_url or self.from_apps or self.on_disk:
 			return self.name
 
 		if self.use_ssh:
