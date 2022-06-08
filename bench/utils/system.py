@@ -14,6 +14,7 @@ from bench.utils import (
 	run_frappe_cmd,
 	sudoers_file,
 	which,
+	is_valid_frappe_branch,
 )
 from bench.utils.bench import build_assets, clone_apps_from
 from bench.utils.render import job
@@ -74,9 +75,14 @@ def init(
 	# remote apps
 	else:
 		frappe_path = frappe_path or "https://github.com/frappe/frappe.git"
-
+		is_valid_frappe_branch(frappe_path=frappe_path, frappe_branch=frappe_branch)
 		get_app(
-			frappe_path, branch=frappe_branch, bench_path=path, skip_assets=True, verbose=verbose
+			frappe_path,
+			branch=frappe_branch,
+			bench_path=path,
+			skip_assets=True,
+			verbose=verbose,
+			resolve_deps=False,
 		)
 
 		# fetch remote apps using config file - deprecate this!
@@ -86,7 +92,12 @@ def init(
 	# getting app on bench init using --install-app
 	if install_app:
 		get_app(
-			install_app, branch=frappe_branch, bench_path=path, skip_assets=True, verbose=verbose
+			install_app,
+			branch=frappe_branch,
+			bench_path=path,
+			skip_assets=True,
+			verbose=verbose,
+			resolve_deps=False,
 		)
 
 	if not skip_assets:
@@ -97,6 +108,8 @@ def init(
 
 
 def setup_sudoers(user):
+	from bench.config.lets_encrypt import get_certbot_path
+
 	if not os.path.exists("/etc/sudoers.d"):
 		os.makedirs("/etc/sudoers.d")
 
@@ -117,6 +130,7 @@ def setup_sudoers(user):
 			"service": which("service"),
 			"systemctl": which("systemctl"),
 			"nginx": which("nginx"),
+			"certbot": get_certbot_path(),
 		}
 	)
 

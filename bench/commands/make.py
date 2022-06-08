@@ -133,8 +133,20 @@ def drop(path):
 @click.option(
 	"--init-bench", is_flag=True, default=False, help="Initialize Bench if not in one"
 )
+@click.option(
+	"--resolve-deps",
+	is_flag=True,
+	default=False,
+	help="Resolve dependencies before installing app",
+)
 def get_app(
-	git_url, branch, name=None, overwrite=False, skip_assets=False, init_bench=False
+	git_url,
+	branch,
+	name=None,
+	overwrite=False,
+	skip_assets=False,
+	init_bench=False,
+	resolve_deps=False,
 ):
 	"clone an app from the internet and set it up in your bench"
 	from bench.app import get_app
@@ -145,8 +157,8 @@ def get_app(
 		skip_assets=skip_assets,
 		overwrite=overwrite,
 		init_bench=init_bench,
+		resolve_deps=resolve_deps,
 	)
-
 
 @click.command("new-app", help="Create a new Frappe application under apps folder")
 @click.option(
@@ -168,12 +180,14 @@ def new_app(app_name, no_git=None):
 		"Completely remove app from bench and re-build assets if not installed on any site"
 	),
 )
+@click.option("--no-backup", is_flag=True, help="Do not backup app before removing")
+@click.option("--force", is_flag=True, help="Force remove app")
 @click.argument("app-name")
-def remove_app(app_name):
+def remove_app(app_name, no_backup=False, force=False):
 	from bench.bench import Bench
 
 	bench = Bench(".")
-	bench.uninstall(app_name)
+	bench.uninstall(app_name, no_backup=no_backup, force=force)
 
 
 @click.command("exclude-app", help="Exclude app from updating")

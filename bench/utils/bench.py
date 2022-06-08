@@ -33,19 +33,25 @@ def get_env_cmd(cmd, bench_path="."):
 	return os.path.abspath(os.path.join(bench_path, "env", "bin", cmd))
 
 
-def get_venv_path():
-	venv = which("virtualenv")
+def get_virtualenv_path(verbose=False):
+	virtualenv_path = which("virtualenv")
 
-	if not venv:
-		current_python = sys.executable
-		with open(os.devnull, "wb") as devnull:
-			is_venv_installed = not subprocess.call(
-				[current_python, "-m", "venv", "--help"], stdout=devnull
-			)
-		if is_venv_installed:
-			venv = f"{current_python} -m venv"
+	if not virtualenv_path and verbose:
+		log("virtualenv cannot be found", level=2)
 
-	return venv or log("virtualenv cannot be found", level=2)
+	return virtualenv_path
+
+
+def get_venv_path(verbose=False):
+	current_python = sys.executable
+	with open(os.devnull, "wb") as devnull:
+		is_venv_installed = not subprocess.call(
+			[current_python, "-m", "venv", "--help"], stdout=devnull
+		)
+	if is_venv_installed:
+		return f"{current_python} -m venv"
+	else:
+		log("virtualenv cannot be found", level=2)
 
 
 def update_node_packages(bench_path=".", apps=None):
@@ -74,7 +80,7 @@ def install_python_dev_dependencies(bench_path=".", apps=None, verbose=False):
 
 	if isinstance(apps, str):
 		apps = [apps]
-	elif apps is None:
+	elif not apps:
 		apps = bench.get_installed_apps()
 
 	for app in apps:

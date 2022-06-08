@@ -12,6 +12,7 @@ from bench.utils import exec_cmd
 from bench.release import get_bumped_version
 from bench.app import App
 from bench.tests.test_base import FRAPPE_BRANCH, TestBenchBase
+from bench.bench import Bench
 
 
 # changed from frappe_theme because it wasn't maintained and incompatible,
@@ -38,11 +39,14 @@ class TestBenchInit(TestBenchBase):
 	def test_init(self, bench_name="test-bench", **kwargs):
 		self.init_bench(bench_name, **kwargs)
 		app = App("file:///tmp/frappe")
-		self.assertEqual(app.url, "/tmp/frappe")
+		self.assertEqual(app.mount_path, "/tmp/frappe")
+		self.assertEqual(app.url, "https://github.com/frappe/frappe.git")
 		self.assert_folders(bench_name)
 		self.assert_virtual_env(bench_name)
 		self.assert_config(bench_name)
-
+		test_bench = Bench(bench_name)
+		app = App("frappe", bench=test_bench)
+		self.assertEqual(app.from_apps, True)
 
 	def basic(self):
 		try:
@@ -107,6 +111,20 @@ class TestBenchInit(TestBenchBase):
 		app_installed_in_env = TEST_FRAPPE_APP in subprocess.check_output(["bench", "pip", "freeze"], cwd=bench_path).decode('utf8')
 		self.assertTrue(app_installed_in_env)
 
+	def test_get_app_resolve_deps(self):
+		FRAPPE_APP = "healthcare"
+		self.init_bench("test-bench")
+		bench_path = os.path.join(self.benches_path, "test-bench")
+		exec_cmd(f"bench get-app {FRAPPE_APP} --resolve-deps", cwd=bench_path)
+		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", FRAPPE_APP)))
+
+		states_path = os.path.join(bench_path, "sites", "apps.json")
+		self.assert_(os.path.exists(states_path))
+
+		with open(states_path, "r") as f:
+			states = json.load(f)
+
+		self.assert_(FRAPPE_APP in states)
 
 	def test_install_app(self):
 		bench_name = "test-bench"

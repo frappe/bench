@@ -8,14 +8,16 @@ import sys
 from glob import glob
 from shlex import split
 from typing import List, Tuple
+from functools import lru_cache
 
 # imports - third party imports
 import click
+import requests
 
 # imports - module imports
 from bench import PROJECT_NAME, VERSION
 
-from bench.exceptions import CommandFailedError, InvalidRemoteException, ValidationError
+from bench.exceptions import CommandFailedError, InvalidRemoteException, AppNotInstalledError
 
 
 logger = logging.getLogger(PROJECT_NAME)
@@ -48,6 +50,33 @@ def is_frappe_app(directory: str) -> bool:
 	return bool(is_frappe_app)
 
 
+@lru_cache(maxsize=None)
+def is_valid_frappe_branch(frappe_path:str, frappe_branch:str):
+	"""Check if a branch exists in a repo. Throws InvalidRemoteException if branch is not found
+
+	Uses native git command to check for branches on a remote.
+
+	:param frappe_path: git url
+	:type frappe_path: str
+	:param frappe_branch: branch to check
+	:type frappe_branch: str
+	:raises InvalidRemoteException: branch for this repo doesn't exist
+	"""
+	import git
+
+	g = git.cmd.Git()
+
+	if frappe_branch:
+		try:
+			res = g.ls_remote("--heads", "--tags", frappe_path, frappe_branch)
+			if not res:
+				raise InvalidRemoteException(
+					f"Invalid branch or tag: {frappe_branch} for the remote {frappe_path}"
+				)
+		except git.exc.GitCommandError:
+			raise InvalidRemoteException(f"Invalid frappe path: {frappe_path}")
+
+
 def log(message, level=0, no_log=False):
 	import bench
 	import bench.cli
@@ -62,9 +91,7 @@ def log(message, level=0, no_log=False):
 	color, prefix = levels.get(level, levels[0])
 
 	if bench.cli.from_command_line and bench.cli.dynamic_feed:
-		bench.LOG_BUFFER.append(
-			{"prefix": prefix, "message": message, "color": color}
-		)
+		bench.LOG_BUFFER.append({"prefix": prefix, "message": message, "color": color})
 
 	if no_log:
 		click.secho(message, fg=color)
@@ -182,9 +209,7 @@ def get_git_version() -> float:
 def get_cmd_output(cmd, cwd=".", _raise=True):
 	output = ""
 	try:
-		output = subprocess.check_output(
-			cmd, cwd=cwd, shell=True, stderr=subprocess.PIPE, encoding="utf-8"
-		).strip()
+		output = subprocess.check_output(cmd, cwd=cwd, shell=True, stderr=subprocess.PIPE, encoding="utf-8").strip()
 	except subprocess.CalledProcessError as e:
 		if e.output:
 			output = e.output
@@ -269,7 +294,7 @@ def set_git_remote_url(git_url, bench_path="."):
 	app = git_url.rsplit("/", 1)[1].rsplit(".", 1)[0]
 
 	if app not in Bench(bench_path).apps:
-		raise ValidationError(f"No app named {app}")
+		raise AppNotInstalledError(f"No app named {app}")
 
 	app_dir = get_repo_dir(app, bench_path=bench_path)
 
@@ -400,10 +425,12 @@ def find_org(org_repo):
 
 	for org in ["frappe", "erpnext"]:
 		res = requests.head(f"https://api.github.com/repos/{org}/{org_repo}")
+		if res.status_code in (400, 403):
+			res = requests.head(f"https://github.com/{org}/{org_repo}")
 		if res.ok:
 			return org, org_repo
 
-	raise InvalidRemoteException
+	raise InvalidRemoteException(f"{org_repo} not found in frappe or erpnext")
 
 
 def fetch_details_from_tag(_tag: str) -> Tuple[str, str, str]:
