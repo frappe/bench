@@ -10,10 +10,9 @@ from bench.config.nginx import make_nginx_conf
 from bench.config.production_setup import service
 from bench.config.site_config import get_domains, remove_domain, update_site_config
 from bench.bench import Bench
-from bench.utils import exec_cmd
+from bench.utils import exec_cmd, which
 from bench.utils.bench import update_common_site_config
 from bench.exceptions import CommandFailedError
-
 
 def setup_letsencrypt(site, custom_domain, bench_path, interactive):
 
@@ -58,7 +57,6 @@ def create_config(site, custom_domain):
 
 def run_certbot_and_setup_ssl(site, custom_domain, bench_path, interactive=True):
 	service('nginx', 'stop')
-	get_certbot()
 
 	try:
 		interactive = '' if interactive else '-n'
@@ -88,7 +86,7 @@ def run_certbot_and_setup_ssl(site, custom_domain, bench_path, interactive=True)
 def setup_crontab():
 	from crontab import CronTab
 
-	job_command = '/opt/certbot-auto renew -a nginx --post-hook "systemctl reload nginx"'
+	job_command = f'{get_certbot_path()} renew -a nginx --post-hook "systemctl reload nginx"'
 	job_comment = 'Renew lets-encrypt every month'
 	print(f"Setting Up cron job to {job_comment}")
 
@@ -107,20 +105,11 @@ def create_dir_if_missing(path):
 		os.makedirs(os.path.dirname(path))
 
 
-def get_certbot():
-	from urllib.request import urlretrieve
-
-	certbot_path = get_certbot_path()
-	create_dir_if_missing(certbot_path)
-
-	if not os.path.isfile(certbot_path):
-		urlretrieve("https://dl.eff.org/certbot-auto", certbot_path)
-		os.chmod(certbot_path, 0o744)
-
-
 def get_certbot_path():
-	return "/opt/certbot-auto"
-
+	try:
+		return which("certbot", raise_err=True)
+	except FileNotFoundError:
+		raise CommandFailedError("Certbot is not installed on your system. Please visit https://certbot.eff.org/instructions for installation instructions, then try again.")
 
 def renew_certs():
 	# Needs to be run with sudo
@@ -156,7 +145,6 @@ def setup_wildcard_ssl(domain, email, bench_path, exclude_base_domain):
 		print("You cannot setup SSL without DNS Multitenancy")
 		return
 
-	get_certbot()
 	domain_list = _get_domains(domain.strip())
 
 	email_param = ''

@@ -54,7 +54,7 @@ The setup for each of these installations can be achieved in multiple ways:
 
 We recommend using either the Docker Installation or the Easy Install Script to setup a Production Environment. For Development, you may choose either of the three methods to setup an instance.
 
-Otherwise, if you are looking to evaluate ERPNext, you can also download the [Virtual Machine Image](https://erpnext.com/download) or register for [a free trial on erpnext.com](https://erpnext.com/pricing).
+Otherwise, if you are looking to evaluate ERPNext, you can register for [a free trial on erpnext.com](https://erpnext.com/pricing).
 
 
 ### Containerized Installation
