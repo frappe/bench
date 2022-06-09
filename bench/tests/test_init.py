@@ -39,8 +39,10 @@ class TestBenchInit(TestBenchBase):
 	def test_init(self, bench_name="test-bench", **kwargs):
 		self.init_bench(bench_name, **kwargs)
 		app = App("file:///tmp/frappe")
-		self.assertEqual(app.mount_path, "/tmp/frappe")
-		self.assertEqual(app.url, "https://github.com/frappe/frappe.git")
+		self.assertTupleEqual(
+            (app.mount_path, app.url, app.repo, app.org),
+            ("/tmp/frappe", "file:///tmp/frappe", "frappe", "frappe"),
+        )
 		self.assert_folders(bench_name)
 		self.assert_virtual_env(bench_name)
 		self.assert_config(bench_name)
