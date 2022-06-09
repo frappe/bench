@@ -130,6 +130,7 @@ def drop(path):
 @click.option("--branch", default=None, help="branch to checkout")
 @click.option("--overwrite", is_flag=True, default=False)
 @click.option("--skip-assets", is_flag=True, default=False, help="Do not build assets")
+@click.option("--soft-link", is_flag=True, default=False, help="Create a soft link to git repo instead of clone.")
 @click.option(
 	"--init-bench", is_flag=True, default=False, help="Initialize Bench if not in one"
 )
@@ -145,6 +146,7 @@ def get_app(
 	name=None,
 	overwrite=False,
 	skip_assets=False,
+	soft_link=False,
 	init_bench=False,
 	resolve_deps=False,
 ):
@@ -156,6 +158,7 @@ def get_app(
 		branch=branch,
 		skip_assets=skip_assets,
 		overwrite=overwrite,
+		soft_link=soft_link,
 		init_bench=init_bench,
 		resolve_deps=resolve_deps,
 	)

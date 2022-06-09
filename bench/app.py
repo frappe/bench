@@ -13,6 +13,8 @@ from datetime import date
 from urllib.parse import urlparse
 import os
 
+from markupsafe import soft_str
+
 # imports - third party imports
 import click
 from git import Repo
@@ -141,7 +143,7 @@ class AppMeta:
 
 	@property
 	def url(self):
-		if self.is_url:
+		if self.is_url or self.from_apps or self.on_disk:
 			return self.name
 
 		if self.use_ssh:
@@ -158,8 +160,9 @@ class AppMeta:
 
 @functools.lru_cache(maxsize=None)
 class App(AppMeta):
-	def __init__(self, name: str, branch: str = None, bench: "Bench" = None, *args, **kwargs):
+	def __init__(self, name: str, branch: str = None, bench: "Bench" = None, soft_link : bool = False, *args, **kwargs):
 		self.bench = bench
+		self.soft_link = soft_link
 		self.required_by = None
 		self.local_resolution = []
 		super().__init__(name, branch, *args, **kwargs)
@@ -169,12 +172,19 @@ class App(AppMeta):
 		branch = f"--branch {self.tag}" if self.tag else ""
 		shallow = "--depth 1" if self.bench.shallow_clone else ""
 
+		if not self.soft_link:
+			cmd = "git clone"
+			args = f"{self.url} {branch} {shallow} --origin upstream"
+		else:
+			cmd = "ln -s"
+			args = f"{self.name}"
+
 		fetch_txt = f"Getting {self.repo}"
 		click.secho(fetch_txt, fg="yellow")
 		logger.log(fetch_txt)
 
 		self.bench.run(
-			f"git clone {self.url} {branch} {shallow} --origin upstream",
+			f"{cmd} {args}",
 			cwd=os.path.join(self.bench.name, "apps"),
 		)
 
@@ -338,6 +348,7 @@ def get_app(
 	skip_assets=False,
 	verbose=False,
 	overwrite=False,
+	soft_link=False,
 	init_bench=False,
 	resolve_deps=False,
 ):
@@ -354,7 +365,7 @@ def get_app(
 	from bench.utils.app import check_existing_dir
 
 	bench = Bench(bench_path)
-	app = App(git_url, branch=branch, bench=bench)
+	app = App(git_url, branch=branch, bench=bench, soft_link=soft_link)
 	git_url = app.url
 	repo_name = app.repo
 	branch = app.tag
