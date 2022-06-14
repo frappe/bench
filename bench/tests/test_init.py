@@ -9,7 +9,6 @@ import git
 
 # imports - module imports
 from bench.utils import exec_cmd
-from bench.release import get_bumped_version
 from bench.app import App
 from bench.tests.test_base import FRAPPE_BRANCH, TestBenchBase
 from bench.bench import Bench
@@ -21,18 +20,6 @@ from bench.bench import Bench
 TEST_FRAPPE_APP = "frappe_docs"
 
 class TestBenchInit(TestBenchBase):
-	def test_semantic_version(self):
-		self.assertEqual( get_bumped_version('11.0.4', 'major'), '12.0.0' )
-		self.assertEqual( get_bumped_version('11.0.4', 'minor'), '11.1.0' )
-		self.assertEqual( get_bumped_version('11.0.4', 'patch'), '11.0.5' )
-		self.assertEqual( get_bumped_version('11.0.4', 'prerelease'), '11.0.5-beta.1' )
-
-		self.assertEqual( get_bumped_version('11.0.5-beta.22', 'major'), '12.0.0' )
-		self.assertEqual( get_bumped_version('11.0.5-beta.22', 'minor'), '11.1.0' )
-		self.assertEqual( get_bumped_version('11.0.5-beta.22', 'patch'), '11.0.5' )
-		self.assertEqual( get_bumped_version('11.0.5-beta.22', 'prerelease'), '11.0.5-beta.23' )
-
-
 	def test_utils(self):
 		self.assertEqual(subprocess.call("bench"), 0)
 
