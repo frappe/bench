@@ -74,8 +74,6 @@ from bench.commands.utils import (
 	find_benches,
 	generate_command_cache,
 	migrate_env,
-	prepare_beta_release,
-	release,
 	renew_lets_encrypt,
 	restart,
 	set_mariadb_host,
@@ -102,11 +100,9 @@ bench_command.add_command(set_redis_socketio_host)
 bench_command.add_command(download_translations)
 bench_command.add_command(backup_site)
 bench_command.add_command(backup_all_sites)
-bench_command.add_command(release)
 bench_command.add_command(renew_lets_encrypt)
 bench_command.add_command(disable_production)
 bench_command.add_command(bench_src)
-bench_command.add_command(prepare_beta_release)
 bench_command.add_command(find_benches)
 bench_command.add_command(migrate_env)
 bench_command.add_command(generate_command_cache)
