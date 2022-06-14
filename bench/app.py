@@ -13,8 +13,6 @@ from datetime import date
 from urllib.parse import urlparse
 import os
 
-from markupsafe import soft_str
-
 # imports - third party imports
 import click
 from git import Repo
@@ -283,31 +281,6 @@ def make_resolution_plan(app: App, bench: "Bench"):
 		resolution.update(make_resolution_plan(dep_app, bench))
 		app.local_resolution = [repo_name for repo_name, _ in reversed(resolution.items())]
 	return resolution
-
-
-def add_to_appstxt(app, bench_path="."):
-	from bench.bench import Bench
-
-	apps = Bench(bench_path).apps
-
-	if app not in apps:
-		apps.append(app)
-		return write_appstxt(apps, bench_path=bench_path)
-
-
-def remove_from_appstxt(app, bench_path="."):
-	from bench.bench import Bench
-
-	apps = Bench(bench_path).apps
-
-	if app in apps:
-		apps.remove(app)
-		return write_appstxt(apps, bench_path=bench_path)
-
-
-def write_appstxt(apps, bench_path="."):
-	with open(os.path.join(bench_path, "sites", "apps.txt"), "w") as f:
-		return f.write("\n".join(apps))
 
 
 def get_excluded_apps(bench_path="."):
