@@ -128,29 +128,6 @@ def backup_all_sites():
 	backup_all_sites(bench_path='.')
 
 
-@click.command('release', help="Release a Frappe app (internal to the Frappe team)")
-@click.argument('app')
-@click.argument('bump-type', type=click.Choice(['major', 'minor', 'patch', 'stable', 'prerelease']))
-@click.option('--from-branch', default='develop')
-@click.option('--to-branch', default='master')
-@click.option('--remote', default='upstream')
-@click.option('--owner', default='frappe')
-@click.option('--repo-name')
-@click.option('--dont-frontport', is_flag=True, default=False, help='Front port fixes to new branches, example merging hotfix(v10) into staging-fixes(v11)')
-def release(app, bump_type, from_branch, to_branch, owner, repo_name, remote, dont_frontport):
-	from bench.release import release
-	frontport = not dont_frontport
-	release(bench_path='.', app=app, bump_type=bump_type, from_branch=from_branch, to_branch=to_branch, remote=remote, owner=owner, repo_name=repo_name, frontport=frontport)
-
-
-@click.command('prepare-beta-release', help="Prepare major beta release from develop branch")
-@click.argument('app')
-@click.option('--owner', default='frappe')
-def prepare_beta_release(app, owner):
-	from bench.prepare_beta_release import prepare_beta_release
-	prepare_beta_release(bench_path='.', app=app, owner=owner)
-
-
 @click.command('disable-production', help="Disables production environment for the bench.")
 def disable_production():
 	from bench.config.production_setup import disable_production
