@@ -1,6 +1,5 @@
 import os
 import re
-from setuptools.config import read_configuration
 import sys
 import subprocess
 from bench.exceptions import (
@@ -210,18 +209,36 @@ def get_remote(app, bench_path="."):
 		return contents.splitlines()[0].split()[0]
 
 
-def get_app_name(bench_path, folder_name):
+def get_app_name(bench_path: str, folder_name: str) -> str:
+	"""Retrieves `name` attribute of app - equivalent to distribution name
+	of python package. Fetches from pyproject.toml, setup.cfg or setup.py
+	whichever defines it in that order.
+	"""
 	app_name = None
 	apps_path = os.path.join(os.path.abspath(bench_path), "apps")
-	config_path = os.path.join(apps_path, folder_name, "setup.cfg")
-	if os.path.exists(config_path):
-		config = read_configuration(config_path)
+
+	pyproject_path = os.path.join(apps_path, folder_name, "pyproject.toml")
+	config_py_path = os.path.join(apps_path, folder_name, "setup.cfg")
+	setup_py_path = os.path.join(apps_path, folder_name, "setup.py")
+
+	if os.path.exists(pyproject_path):
+		try:
+			from tomli import load
+		except ImportError:
+			from tomllib import load
+
+		with open(pyproject_path, "rb") as f:
+			app_name = load(f).get("project", {}).get("name")
+
+	if not app_name and os.path.exists(config_py_path):
+		from setuptools.config import read_configuration
+
+		config = read_configuration(config_py_path)
 		app_name = config.get("metadata", {}).get("name")
 
 	if not app_name:
 		# retrieve app name from setup.py as fallback
-		app_path = os.path.join(apps_path, folder_name, "setup.py")
-		with open(app_path, "rb") as f:
+		with open(setup_py_path, "rb") as f:
 			app_name = re.search(r'name\s*=\s*[\'"](.*)[\'"]', f.read().decode("utf-8")).group(1)
 
 	if app_name and folder_name != app_name:
@@ -245,6 +262,8 @@ def get_current_version(app, bench_path="."):
 
 	try:
 		if os.path.exists(config_path):
+			from setuptools.config import read_configuration
+
 			config = read_configuration(config_path)
 			current_version = config.get("metadata", {}).get("version")
 		if not current_version:
