@@ -97,8 +97,7 @@ def update_yarn_packages(bench_path=".", apps=None):
 
 	bench = Bench(bench_path)
 
-	if not apps:
-		apps = bench.get_installed_apps()
+	apps = apps or bench.apps
 
 	apps_dir = os.path.join(bench.name, "apps")
 

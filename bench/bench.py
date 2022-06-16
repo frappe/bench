@@ -155,10 +155,13 @@ class Bench(Base, Validator):
 	def get_installed_apps(self) -> List:
 		"""Returns list of installed apps on bench, not in excluded_apps.txt
 		"""
-		apps = [app for app in self.apps if app not in self.excluded_apps]
-		apps.remove("frappe")
-		apps.insert(0, "frappe")
-		return apps
+		try:
+			installed_packages = get_cmd_output(f"{self.python} -m pip freeze", cwd=self.name)
+		except Exception:
+			installed_packages = []
+		is_installed = lambda app: app in installed_packages
+
+		return [app for app in self.apps if app not in self.excluded_apps and is_installed(app)]
 
 
 class BenchApps(MutableSequence):
@@ -262,23 +265,14 @@ class BenchApps(MutableSequence):
 		)
 
 	def initialize_apps(self):
-		is_installed = lambda app: app in installed_packages
-
-		try:
-			installed_packages = get_cmd_output(f"{self.bench.python} -m pip freeze", cwd=self.bench.name)
-		except Exception:
-			self.apps = []
-			return
-
 		try:
 			self.apps = [
 				x
 				for x in os.listdir(os.path.join(self.bench.name, "apps"))
-				if (
-					is_frappe_app(os.path.join(self.bench.name, "apps", x))
-					and is_installed(x)
-				)
+				if is_frappe_app(os.path.join(self.bench.name, "apps", x))
 			]
+			self.apps.remove("frappe")
+			self.apps.insert(0, "frappe")
 		except FileNotFoundError:
 			self.apps = []
 
@@ -438,8 +432,7 @@ class BenchSetup(Base):
 		"""
 		from bench.app import App
 
-		if not apps:
-			apps = self.bench.get_installed_apps()
+		apps = apps or self.bench.apps
 
 		self.pip()
 
@@ -456,8 +449,7 @@ class BenchSetup(Base):
 		"""
 		import bench.cli
 
-		if not apps:
-			apps = self.bench.get_installed_apps()
+		apps = apps or self.bench.apps
 
 		quiet_flag = "" if bench.cli.verbose else "--quiet"
 
