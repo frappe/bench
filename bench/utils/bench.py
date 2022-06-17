@@ -84,12 +84,36 @@ def install_python_dev_dependencies(bench_path=".", apps=None, verbose=False):
 		apps = bench.get_installed_apps()
 
 	for app in apps:
+		pyproject_deps = None
 		app_path = os.path.join(bench_path, "apps", app)
-
+		pyproject_path = os.path.join(app_path, "pyproject.toml")
 		dev_requirements_path = os.path.join(app_path, "dev-requirements.txt")
 
-		if os.path.exists(dev_requirements_path):
+		if os.path.exists(pyproject_path):
+			pyproject_deps = _generate_dev_deps_pattern(pyproject_path)
+			if pyproject_deps:
+				bench.run(f"{bench.python} -m pip install {quiet_flag} --upgrade {pyproject_deps}")
+
+		if not pyproject_deps and os.path.exists(dev_requirements_path):
 			bench.run(f"{bench.python} -m pip install {quiet_flag} --upgrade -r {dev_requirements_path}")
+
+
+def _generate_dev_deps_pattern(pyproject_path):
+	try:
+		from tomli import loads
+	except ImportError:
+		from tomllib import loads
+
+	requirements_pattern = ""
+	pyroject_config = loads(open(pyproject_path).read())
+
+	try:
+		for pkg, version in pyroject_config['tool']['bench']['dev-dependencies'].items():
+			op = "=" if "=" not in version else ""
+			requirements_pattern += f"{pkg}{op}{version} "
+	except KeyError:
+		pass
+	return requirements_pattern
 
 
 def update_yarn_packages(bench_path=".", apps=None):
@@ -97,8 +121,7 @@ def update_yarn_packages(bench_path=".", apps=None):
 
 	bench = Bench(bench_path)
 
-	if not apps:
-		apps = bench.get_installed_apps()
+	apps = apps or bench.apps
 
 	apps_dir = os.path.join(bench.name, "apps")
 
