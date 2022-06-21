@@ -6,3 +6,4 @@ python-crontab~=2.4.0
 requests
 semantic-version~=2.8.2
 setuptools
+tomli;python_version<"3.11"

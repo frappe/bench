@@ -2,7 +2,6 @@ import os
 import shutil
 import subprocess
 import unittest
-from tabnanny import check
 
 from bench.app import App
 from bench.bench import Bench
