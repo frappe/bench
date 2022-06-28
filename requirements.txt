@@ -5,5 +5,5 @@ Jinja2~=3.0.3
 python-crontab~=2.4.0
 requests
 semantic-version~=2.8.2
-setuptools
+setuptools==44.0.0
 tomli;python_version<"3.11"
