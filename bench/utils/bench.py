@@ -33,25 +33,12 @@ def get_env_cmd(cmd, bench_path="."):
 	return os.path.abspath(os.path.join(bench_path, "env", "bin", cmd))
 
 
-def get_virtualenv_path(verbose=False):
-	virtualenv_path = which("virtualenv")
+def create_env(bench_path: str = ".", python: str = "python", env_path: str = "env"):
+	"""Creates virtual environment using built in venv"""
+	log("Creating virtual environment", level=0)
 
-	if not virtualenv_path and verbose:
-		log("virtualenv cannot be found", level=2)
-
-	return virtualenv_path
-
-
-def get_venv_path(verbose=False):
-	current_python = sys.executable
-	with open(os.devnull, "wb") as devnull:
-		is_venv_installed = not subprocess.call(
-			[current_python, "-m", "venv", "--help"], stdout=devnull
-		)
-	if is_venv_installed:
-		return f"{current_python} -m venv"
-	else:
-		log("virtualenv cannot be found", level=2)
+	python_path = which(python)
+	return exec_cmd(f"{python_path} -m venv {env_path}", cwd=bench_path)
 
 
 def update_node_packages(bench_path=".", apps=None):
@@ -182,7 +169,6 @@ def migrate_env(python, backup=False):
 	nvenv = "env"
 	path = os.getcwd()
 	python = which(python)
-	virtualenv = which("virtualenv")
 	pvenv = os.path.join(path, nvenv)
 
 	# Clear Cache before Bench Dies.
@@ -198,7 +184,7 @@ def migrate_env(python, backup=False):
 	except Exception:
 		logger.warning("Please ensure Redis Connections are running or Daemonized.")
 
-	# Backup venv: restore using `virtualenv --relocatable` if needed
+
 	if backup:
 		from datetime import datetime
 
@@ -215,11 +201,11 @@ def migrate_env(python, backup=False):
 		os.rename(source, dest)
 		shutil.move(dest, target)
 
-	# Create virtualenv using specified python
+	# Create virtual environment using specified python
 	venv_creation, packages_setup = 1, 1
 	try:
 		logger.log(f"Setting up a New Virtual {python} Environment")
-		venv_creation = exec_cmd(f"{virtualenv} --python {python} {pvenv}")
+		venv_creation = create_env(bench_path=bench.name, python=python, env_path=nvenv)
 
 		apps = " ".join([f"-e {os.path.join('apps', app)}" for app in bench.apps])
 		packages_setup = exec_cmd(f"{pvenv} -m pip install --upgrade {apps}")
