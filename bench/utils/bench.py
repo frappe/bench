@@ -109,7 +109,7 @@ def _generate_dev_deps_pattern(pyproject_path):
 
 	try:
 		for pkg, version in pyroject_config['tool']['bench']['dev-dependencies'].items():
-			op = "=" if "=" not in version else ""
+			op = "==" if "=" not in version else ""
 			requirements_pattern += f"{pkg}{op}{version} "
 	except KeyError:
 		pass
