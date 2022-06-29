@@ -158,7 +158,15 @@ class AppMeta:
 
 @functools.lru_cache(maxsize=None)
 class App(AppMeta):
-	def __init__(self, name: str, branch: str = None, bench: "Bench" = None, soft_link : bool = False, *args, **kwargs):
+	def __init__(
+		self,
+		name: str,
+		branch: str = None,
+		bench: "Bench" = None,
+		soft_link: bool = False,
+		*args,
+		**kwargs,
+	):
 		self.bench = bench
 		self.soft_link = soft_link
 		self.required_by = None
@@ -257,9 +265,14 @@ class App(AppMeta):
 
 	def update_app_state(self):
 		from bench.bench import Bench
+
 		bench = Bench(self.bench.name)
-		bench.apps.sync(app_dir=self.app_name, app_name=self.name,
-						branch=self.tag, required_list=self.local_resolution)
+		bench.apps.sync(
+			app_dir=self.app_name,
+			app_name=self.name,
+			branch=self.tag,
+			required=self.local_resolution,
+		)
 
 
 
