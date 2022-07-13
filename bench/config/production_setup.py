@@ -17,9 +17,11 @@ logger = logging.getLogger(bench.PROJECT_NAME)
 
 
 def setup_production_prerequisites():
-	"""Installs ansible, fail2banc, NGINX and supervisor"""
+	"""Installs ansible, gunicorn, fail2banc, NGINX and supervisor"""
 	if not which("ansible"):
 		exec_cmd(f"sudo {sys.executable} -m pip install ansible")
+	if not which("gunicorn"):
+		exec_cmd(f"bench pip install gunicorn")
 	if not which("fail2ban-client"):
 		exec_cmd("bench setup role fail2ban")
 	if not which("nginx"):
