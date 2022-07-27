@@ -54,7 +54,7 @@ class Rendering:
 			return
 
 		_prefix = click.style("⏼", fg="bright_yellow")
-		_hierarchy = "  " if not self.is_parent else ""
+		_hierarchy = "" if self.is_parent else "  "
 		self._title = self.title.format(**self.kw)
 		click.secho(f"{_hierarchy}{_prefix} {self._title}")
 
@@ -83,7 +83,7 @@ class Rendering:
 			if l["message"] == self._title:
 				l["prefix"] = self._prefix
 				l["message"] = self._success
-			_hierarchy = "  " if not l["is_parent"] else ""
+			_hierarchy = "" if l.get("is_parent") else "  "
 			click.secho(f'{_hierarchy}{l["prefix"]} {l["message"]}', fg=l["color"])
 
 

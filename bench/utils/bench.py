@@ -1,4 +1,5 @@
 # imports - standard imports
+import contextlib
 import json
 import logging
 import os
@@ -99,12 +100,10 @@ def _generate_dev_deps_pattern(pyproject_path):
 	requirements_pattern = ""
 	pyroject_config = loads(open(pyproject_path).read())
 
-	try:
+	with contextlib.suppress(KeyError):
 		for pkg, version in pyroject_config["tool"]["bench"]["dev-dependencies"].items():
 			op = "==" if "=" not in version else ""
 			requirements_pattern += f"{pkg}{op}{version} "
-	except KeyError:
-		pass
 	return requirements_pattern
 
 
@@ -222,9 +221,8 @@ def migrate_env(python, backup=False):
 
 
 def validate_upgrade(from_ver, to_ver, bench_path="."):
-	if to_ver >= 6:
-		if not which("npm") and not (which("node") or which("nodejs")):
-			raise Exception("Please install nodejs and npm")
+	if to_ver >= 6 and not which("npm") and not which("node") and not which("nodejs"):
+		raise Exception("Please install nodejs and npm")
 
 
 def post_upgrade(from_ver, to_ver, bench_path="."):

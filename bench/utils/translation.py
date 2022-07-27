@@ -43,7 +43,7 @@ def update_translations(app, lang):
 	import requests
 
 	translations_dir = os.path.join("apps", app, app, "translations")
-	csv_file = os.path.join(translations_dir, lang + ".csv")
+	csv_file = os.path.join(translations_dir, f"{lang}.csv")
 	url = f"https://translate.erpnext.com/files/{app}-{lang}.csv"
 	r = requests.get(url, stream=True)
 	r.raise_for_status()
