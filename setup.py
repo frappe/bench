@@ -1,11 +1,11 @@
+import pathlib
+
 from setuptools import find_packages, setup
+
 from bench import PROJECT_NAME, VERSION
 
-with open("requirements.txt") as f:
-	install_requires = f.read().strip().split("\n")
-
-with open("README.md") as f:
-	long_description = f.read()
+install_requires = pathlib.Path("requirements.txt").read_text().strip().split("\n")
+long_description = pathlib.Path("README.md").read_text()
 
 setup(
 	name=PROJECT_NAME,
@@ -34,7 +34,7 @@ setup(
 		"Topic :: System :: Installation/Setup",
 	],
 	packages=find_packages(),
-	python_requires="~=3.6",
+	python_requires=">=3.7",
 	zip_safe=False,
 	include_package_data=True,
 	install_requires=install_requires,

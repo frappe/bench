@@ -32,5 +32,6 @@ ignore =
     E131, # continuation line unaligned for hanging indent
     E123, # closing bracket does not match indentation of opening bracket's line
     E101, # ensured by use of black
+    B009, # allow usage of getattr
 
 max-line-length = 200

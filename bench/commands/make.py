@@ -37,9 +37,7 @@ import click
 	help="Skip redis config generation if already specifying the common-site-config file",
 )
 @click.option("--skip-assets", is_flag=True, default=False, help="Do not build assets")
-@click.option(
-	"--install-app", help="Install particular app after initialization"
-)
+@click.option("--install-app", help="Install particular app after initialization")
 @click.option("--verbose", is_flag=True, help="Verbose output during install")
 def init(
 	path,
@@ -69,7 +67,7 @@ def init(
 	try:
 		init(
 			path,
-			apps_path=apps_path, # can be used from --config flag? Maybe config file could have more info?
+			apps_path=apps_path,  # can be used from --config flag? Maybe config file could have more info?
 			no_procfile=no_procfile,
 			no_backups=no_backups,
 			frappe_path=frappe_path,
@@ -130,7 +128,12 @@ def drop(path):
 @click.option("--branch", default=None, help="branch to checkout")
 @click.option("--overwrite", is_flag=True, default=False)
 @click.option("--skip-assets", is_flag=True, default=False, help="Do not build assets")
-@click.option("--soft-link", is_flag=True, default=False, help="Create a soft link to git repo instead of clone.")
+@click.option(
+	"--soft-link",
+	is_flag=True,
+	default=False,
+	help="Create a soft link to git repo instead of clone.",
+)
 @click.option(
 	"--init-bench", is_flag=True, default=False, help="Initialize Bench if not in one"
 )
@@ -163,12 +166,13 @@ def get_app(
 		resolve_deps=resolve_deps,
 	)
 
+
 @click.command("new-app", help="Create a new Frappe application under apps folder")
 @click.option(
 	"--no-git",
 	is_flag=True,
 	flag_value="--no-git",
-	help="Do not initialize git repository for the app (available in Frappe v14+)"
+	help="Do not initialize git repository for the app (available in Frappe v14+)",
 )
 @click.argument("app-name")
 def new_app(app_name, no_git=None):

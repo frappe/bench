@@ -44,8 +44,8 @@ def init(
 	* setup config (dir/pids/redis/procfile) for the bench
 	* setup patches.txt for bench
 	* clone & install frappe
-		* install python & node dependencies
-		* build assets
+	        * install python & node dependencies
+	        * build assets
 	* setup backups crontab
 	"""
 
