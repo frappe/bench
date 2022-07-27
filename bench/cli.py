@@ -109,19 +109,30 @@ def cli():
 	):
 		log("Command not being executed in bench directory", level=3)
 
-	if in_bench and len(sys.argv) > 1:
-		if sys.argv[1] == "--help":
-			print(click.Context(bench_command).get_help())
+	if len(sys.argv) == 1 or sys.argv[1] == "--help":
+		print(click.Context(bench_command).get_help())
+		if in_bench:
 			print(get_frappe_help())
-			return
+		return
 
-		if cmd_from_sys in bench_command.commands:
-			with execute_cmd(check_for_update=not is_cli_command, command=command, logger=logger):
-				bench_command()
-		elif cmd_from_sys in get_frappe_commands():
+	_opts = [x.opts + x.secondary_opts for x in bench_command.params]
+	opts = {item for sublist in _opts for item in sublist}
+
+	# handle usages like `--use-feature='feat-x'` and `--use-feature 'feat-x'`
+	if cmd_from_sys and cmd_from_sys.split("=", 1)[0].strip() in opts:
+		bench_command()
+
+	if cmd_from_sys in bench_command.commands:
+		with execute_cmd(check_for_update=not is_cli_command, command=command, logger=logger):
+			bench_command()
+
+	if in_bench:
+		if cmd_from_sys in get_frappe_commands():
 			frappe_cmd()
 		else:
 			app_cmd()
+
+	bench_command()
 
 
 def check_uid():
