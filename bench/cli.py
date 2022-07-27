@@ -1,6 +1,8 @@
 # imports - standard imports
 import atexit
+from contextlib import contextmanager
 import json
+from logging import Logger
 import os
 import pwd
 import sys
@@ -25,7 +27,7 @@ from bench.utils import (
 	is_root,
 	log,
 	setup_logging,
-	parse_sys_argv,
+	get_cmd_from_sysargv,
 )
 from bench.utils.bench import get_env_cmd
 
@@ -35,23 +37,41 @@ verbose = False
 is_envvar_warn_set = None
 from_command_line = False # set when commands are executed via the CLI
 bench.LOG_BUFFER = []
-sys_argv = None
 
 change_uid_msg = "You should not run this command as root"
 src = os.path.dirname(__file__)
 
 
+@contextmanager
+def execute_cmd(check_for_update=True, command: str = None, logger: Logger = None):
+	if check_for_update:
+		atexit.register(check_latest_version)
+
+	try:
+		yield
+	except BaseException as e:
+		return_code = getattr(e, "code", 1)
+
+		if isinstance(e, Exception):
+			click.secho(f"ERROR: {e}", fg="red")
+
+		if return_code:
+			logger.warning(f"{command} executed with exit code {return_code}")
+
+		raise e
+
+
 def cli():
-	global from_command_line, bench_config, is_envvar_warn_set, verbose, sys_argv
+	global from_command_line, bench_config, is_envvar_warn_set, verbose
 
 	from_command_line = True
 	command = " ".join(sys.argv)
 	argv = set(sys.argv)
 	is_envvar_warn_set = not (os.environ.get("BENCH_DEVELOPER") or os.environ.get("CI"))
 	is_cli_command = len(sys.argv) > 1 and not argv.intersection({"src", "--version"})
-	sys_argv = parse_sys_argv()
+	cmd_from_sys = get_cmd_from_sysargv()
 
-	if "--verbose" in sys_argv.options:
+	if "--verbose" in argv:
 		verbose = True
 
 	change_working_directory()
@@ -69,8 +89,8 @@ def cli():
 	if (
 		is_envvar_warn_set
 		and is_cli_command
-		and is_dist_editable(bench.PROJECT_NAME)
 		and not bench_config.get("developer_mode")
+		and is_dist_editable(bench.PROJECT_NAME)
 	):
 		log(
 			"bench is installed in editable mode!\n\nThis is not the recommended mode"
@@ -89,36 +109,30 @@ def cli():
 	):
 		log("Command not being executed in bench directory", level=3)
 
-	if in_bench and len(sys.argv) > 1:
-		if sys.argv[1] == "--help":
-			print(click.Context(bench_command).get_help())
+	if len(sys.argv) == 1 or sys.argv[1] == "--help":
+		print(click.Context(bench_command).get_help())
+		if in_bench:
 			print(get_frappe_help())
-			return
+		return
 
-		if (
-			sys_argv.commands.intersection(get_cached_frappe_commands())
-			or sys_argv.commands.intersection(get_frappe_commands())
-		):
+	_opts = [x.opts + x.secondary_opts for x in bench_command.params]
+	opts = {item for sublist in _opts for item in sublist}
+
+	# handle usages like `--use-feature='feat-x'` and `--use-feature 'feat-x'`
+	if cmd_from_sys and cmd_from_sys.split("=", 1)[0].strip() in opts:
+		bench_command()
+
+	if cmd_from_sys in bench_command.commands:
+		with execute_cmd(check_for_update=not is_cli_command, command=command, logger=logger):
+			bench_command()
+
+	if in_bench:
+		if cmd_from_sys in get_frappe_commands():
 			frappe_cmd()
-
-		if sys.argv[1] in Bench(".").apps:
+		else:
 			app_cmd()
 
-	if not is_cli_command:
-		atexit.register(check_latest_version)
-
-	try:
-		bench_command()
-	except BaseException as e:
-		return_code = getattr(e, "code", 1)
-
-		if isinstance(e, Exception):
-			click.secho(f"ERROR: {e}", fg="red")
-
-		if return_code:
-			logger.warning(f"{command} executed with exit code {return_code}")
-
-		raise e
+	bench_command()
 
 
 def check_uid():
