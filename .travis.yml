@@ -5,11 +5,6 @@ sudo: true
 git:
   depth: 1
 
-cache:
-  - pip
-  - npm
-  - yarn
-
 addons:
   mariadb: '10.3'
 
@@ -61,20 +56,18 @@ matrix:
     script: python -m unittest -v bench.tests.test_utils && python -m unittest -v bench.tests.test_init
 
 install:
-  - pip3 install urllib3 pyOpenSSL ndg-httpsclient pyasn1
+  - python -m pip install urllib3 pyOpenSSL ndg-httpsclient pyasn1
 
   - if [ $TEST == "bench" ];then
-        wget -q -O /tmp/wkhtmltox.tar.xz https://github.com/frappe/wkhtmltopdf/raw/master/wkhtmltox-0.12.3_linux-generic-amd64.tar.xz;
-        tar -xf /tmp/wkhtmltox.tar.xz -C /tmp;
-        sudo mv /tmp/wkhtmltox/bin/wkhtmltopdf /usr/local/bin/wkhtmltopdf;
-        sudo chmod o+x /usr/local/bin/wkhtmltopdf;
+      wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb;
+      sudo apt install ./wkhtmltox_0.12.6-1.focal_amd64.deb;
 
       nvm install 14;
       nvm use 14;
 
       mkdir -p ~/.bench;
       cp -r $TRAVIS_BUILD_DIR/* ~/.bench;
-      pip3 install -q -U -e ~/.bench;
+      python -m pip install -U -e ~/.bench;
 
       mysql -u root -e "SET GLOBAL character_set_server = 'utf8mb4'";
       mysql -u root -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'";

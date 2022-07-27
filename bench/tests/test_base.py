@@ -17,10 +17,10 @@ PYTHON_VER = sys.version_info
 
 FRAPPE_BRANCH = "version-12"
 if PYTHON_VER.major == 3:
-	if PYTHON_VER.minor in [6, 7]:
-		FRAPPE_BRANCH = "version-13"
-	else:
+	if PYTHON_VER.minor >= 10:
 		FRAPPE_BRANCH = "develop"
+	if 7 >= PYTHON_VER.minor >= 9:
+		FRAPPE_BRANCH = "version-13"
 
 
 class TestBenchBase(unittest.TestCase):
@@ -134,5 +134,4 @@ class TestBenchBase(unittest.TestCase):
 	def get_traceback(self):
 		exc_type, exc_value, exc_tb = sys.exc_info()
 		trace_list = traceback.format_exception(exc_type, exc_value, exc_tb)
-		body = "".join(str(t) for t in trace_list)
-		return body
+		return "".join(str(t) for t in trace_list)

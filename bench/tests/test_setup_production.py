@@ -1,6 +1,7 @@
 # imports - standard imports
 import getpass
 import os
+import pathlib
 import re
 import subprocess
 import time
@@ -76,9 +77,7 @@ class TestSetupProduction(TestBenchBase):
 		if os.environ.get("CI"):
 			sudoers = subprocess.check_output(["sudo", "cat", sudoers_file]).decode("utf-8")
 		else:
-			with open(sudoers_file) as f:
-				sudoers = f.read()
-
+			sudoers = pathlib.Path(sudoers_file).read_text()
 		self.assertTrue(f"{user} ALL = (root) NOPASSWD: {service} nginx *" in sudoers)
 		self.assertTrue(f"{user} ALL = (root) NOPASSWD: {nginx}" in sudoers)
 

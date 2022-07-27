@@ -184,15 +184,15 @@ class TestBenchInit(TestBenchBase):
 		successful_switch = not exec_cmd(
 			f"bench switch-to-branch {prevoius_branch} frappe --upgrade", cwd=bench_path
 		)
-		app_branch_after_switch = str(git.Repo(path=app_path).active_branch)
 		if successful_switch:
+			app_branch_after_switch = str(git.Repo(path=app_path).active_branch)
 			self.assertEqual(prevoius_branch, app_branch_after_switch)
 
 		successful_switch = not exec_cmd(
 			f"bench switch-to-branch {FRAPPE_BRANCH} frappe --upgrade", cwd=bench_path
 		)
-		app_branch_after_second_switch = str(git.Repo(path=app_path).active_branch)
 		if successful_switch:
+			app_branch_after_second_switch = str(git.Repo(path=app_path).active_branch)
 			self.assertEqual(FRAPPE_BRANCH, app_branch_after_second_switch)
 
 
