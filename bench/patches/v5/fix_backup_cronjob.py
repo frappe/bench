@@ -4,10 +4,10 @@ from crontab import CronTab
 
 def execute(bench_path):
 	"""
-		This patch fixes a cron job that would backup sites every minute per 6 hours
+	This patch fixes a cron job that would backup sites every minute per 6 hours
 	"""
 
-	user = get_config(bench_path=bench_path).get('frappe_user')
+	user = get_config(bench_path=bench_path).get("frappe_user")
 	user_crontab = CronTab(user=user)
 
 	for job in user_crontab.find_comment("bench auto backups set for every 6 hours"):

@@ -9,7 +9,6 @@ import traceback
 import unittest
 
 # imports - module imports
-import bench
 from bench.utils import paths_in_bench, exec_cmd
 from bench.utils.system import init
 from bench.bench import Bench
@@ -23,6 +22,7 @@ if PYTHON_VER.major == 3:
 	else:
 		FRAPPE_BRANCH = "develop"
 
+
 class TestBenchBase(unittest.TestCase):
 	def setUp(self):
 		self.benches_path = "."
@@ -32,11 +32,26 @@ class TestBenchBase(unittest.TestCase):
 		for bench_name in self.benches:
 			bench_path = os.path.join(self.benches_path, bench_name)
 			bench = Bench(bench_path)
-			mariadb_password = "travis" if os.environ.get("CI") else getpass.getpass(prompt="Enter MariaDB root Password: ")
+			mariadb_password = (
+				"travis"
+				if os.environ.get("CI")
+				else getpass.getpass(prompt="Enter MariaDB root Password: ")
+			)
 
 			if bench.exists:
 				for site in bench.sites:
-					subprocess.call(["bench", "drop-site", site, "--force", "--no-backup", "--root-password", mariadb_password], cwd=bench_path)
+					subprocess.call(
+						[
+							"bench",
+							"drop-site",
+							site,
+							"--force",
+							"--no-backup",
+							"--root-password",
+							mariadb_password,
+						],
+						cwd=bench_path,
+					)
 				shutil.rmtree(bench_path, ignore_errors=True)
 
 	def assert_folders(self, bench_name):
@@ -55,18 +70,21 @@ class TestBenchBase(unittest.TestCase):
 		for config, search_key in (
 			("redis_queue.conf", "redis_queue.rdb"),
 			("redis_socketio.conf", "redis_socketio.rdb"),
-			("redis_cache.conf", "redis_cache.rdb")):
+			("redis_cache.conf", "redis_cache.rdb"),
+		):
 
 			self.assert_exists(bench_name, "config", config)
 
-			with open(os.path.join(bench_name, "config", config), "r") as f:
+			with open(os.path.join(bench_name, "config", config)) as f:
 				self.assertTrue(search_key in f.read())
 
 	def assert_common_site_config(self, bench_name, expected_config):
-		common_site_config_path = os.path.join(self.benches_path, bench_name, 'sites', 'common_site_config.json')
+		common_site_config_path = os.path.join(
+			self.benches_path, bench_name, "sites", "common_site_config.json"
+		)
 		self.assertTrue(os.path.exists(common_site_config_path))
 
-		with open(common_site_config_path, "r") as f:
+		with open(common_site_config_path) as f:
 			config = json.load(f)
 
 		for key, value in list(expected_config.items()):
@@ -78,7 +96,7 @@ class TestBenchBase(unittest.TestCase):
 	def new_site(self, site_name, bench_name):
 		new_site_cmd = ["bench", "new-site", site_name, "--admin-password", "admin"]
 
-		if os.environ.get('CI'):
+		if os.environ.get("CI"):
 			new_site_cmd.extend(["--mariadb-root-password", "travis"])
 
 		subprocess.call(new_site_cmd, cwd=os.path.join(self.benches_path, bench_name))
@@ -88,18 +106,25 @@ class TestBenchBase(unittest.TestCase):
 		frappe_tmp_path = "/tmp/frappe"
 
 		if not os.path.exists(frappe_tmp_path):
-			exec_cmd(f"git clone https://github.com/frappe/frappe -b {FRAPPE_BRANCH} --depth 1 --origin upstream {frappe_tmp_path}")
+			exec_cmd(
+				f"git clone https://github.com/frappe/frappe -b {FRAPPE_BRANCH} --depth 1 --origin upstream {frappe_tmp_path}"
+			)
 
-		kwargs.update(dict(
-			python=sys.executable,
-			no_procfile=True,
-			no_backups=True,
-			frappe_path=frappe_tmp_path
-		))
+		kwargs.update(
+			dict(
+				python=sys.executable,
+				no_procfile=True,
+				no_backups=True,
+				frappe_path=frappe_tmp_path,
+			)
+		)
 
 		if not os.path.exists(os.path.join(self.benches_path, bench_name)):
 			init(bench_name, **kwargs)
-			exec_cmd("git remote set-url upstream https://github.com/frappe/frappe", cwd=os.path.join(self.benches_path, bench_name, "apps", "frappe"))
+			exec_cmd(
+				"git remote set-url upstream https://github.com/frappe/frappe",
+				cwd=os.path.join(self.benches_path, bench_name, "apps", "frappe"),
+			)
 
 	def file_exists(self, path):
 		if os.environ.get("CI"):

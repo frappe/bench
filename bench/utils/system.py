@@ -44,8 +44,8 @@ def init(
 	* setup config (dir/pids/redis/procfile) for the bench
 	* setup patches.txt for bench
 	* clone & install frappe
-		* install python & node dependencies
-		* build assets
+	        * install python & node dependencies
+	        * build assets
 	* setup backups crontab
 	"""
 
@@ -113,10 +113,7 @@ def setup_sudoers(user):
 	if not os.path.exists("/etc/sudoers.d"):
 		os.makedirs("/etc/sudoers.d")
 
-		set_permissions = False
-		if not os.path.exists("/etc/sudoers"):
-			set_permissions = True
-
+		set_permissions = not os.path.exists("/etc/sudoers")
 		with open("/etc/sudoers", "a") as f:
 			f.write("\n#includedir /etc/sudoers.d\n")
 
@@ -142,11 +139,7 @@ def setup_sudoers(user):
 
 
 def start(no_dev=False, concurrency=None, procfile=None, no_prefix=False, procman=None):
-	if procman:
-		program = which(procman)
-	else:
-		program = get_process_manager()
-
+	program = which(procman) if procman else get_process_manager()
 	if not program:
 		raise Exception("No process manager found")
 
