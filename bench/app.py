@@ -209,6 +209,9 @@ class App(AppMeta):
 			shutil.move(active_app_path, archived_app_path)
 			log(f"App moved from {active_app_path} to {archived_app_path}")
 
+		self.from_apps = False
+		self.on_disk = False
+
 	@step(title="Installing App {repo}", success="App {repo} Installed")
 	def install(
 		self,
@@ -419,7 +422,7 @@ def get_app(
 			"Do you want to continue and overwrite it?"
 		)
 	):
-		shutil.rmtree(cloned_path)
+		app.remove()
 		to_clone = True
 
 	if to_clone:
