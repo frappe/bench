@@ -56,7 +56,7 @@ matrix:
     script: python -m unittest -v bench.tests.test_utils && python -m unittest -v bench.tests.test_init
 
 install:
-  - python -m pip install urllib3 pyOpenSSL ndg-httpsclient pyasn1
+  - python -m pip install -U --no-cache-dir --force-reinstall urllib3 pyOpenSSL ndg-httpsclient pyasn1 wheel setuptools pip
 
   - if [ $TEST == "bench" ];then
       wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb;
