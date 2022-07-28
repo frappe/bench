@@ -106,6 +106,7 @@ class TestBenchInit(TestBenchBase):
 		).decode("utf8")
 		self.assertTrue(app_installed_in_env)
 
+	@unittest.skipIf(FRAPPE_BRANCH != "develop", "only for develop branch")
 	def test_get_app_resolve_deps(self):
 		FRAPPE_APP = "healthcare"
 		self.init_bench("test-bench")
