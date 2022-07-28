@@ -354,7 +354,7 @@ class BenchSetup(Base):
 			if virtualenv:
 				self.run(f"{virtualenv} {quiet_flag} env -p {python}")
 			else:
-				venv = get_venv_path(verbose=verbose)
+				venv = get_venv_path(verbose=verbose, python=python)
 				self.run(f"{venv} env")
 
 		self.pip()
