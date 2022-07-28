@@ -32,14 +32,13 @@ def get_virtualenv_path(verbose=False):
 	return virtualenv_path
 
 
-def get_venv_path(verbose=False):
-	current_python = sys.executable
+def get_venv_path(verbose=False, python="python3"):
 	with open(os.devnull, "wb") as devnull:
 		is_venv_installed = not subprocess.call(
-			[current_python, "-m", "venv", "--help"], stdout=devnull
+			[python, "-m", "venv", "--help"], stdout=devnull
 		)
 	if is_venv_installed:
-		return f"{current_python} -m venv"
+		return f"{python} -m venv"
 	else:
 		log("virtualenv cannot be found", level=2)
 
