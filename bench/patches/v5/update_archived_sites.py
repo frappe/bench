@@ -17,7 +17,7 @@ from semantic_version import Version
 
 
 def execute(bench_path):
-	frappe_version = Version(get_current_version('frappe'))
+	frappe_version = Version(get_current_version("frappe"))
 
 	if frappe_version.major < 14 or os.name != "posix":
 		# Returning False means patch has been skipped

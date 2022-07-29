@@ -1,5 +1,8 @@
 <div align="center">
-	<img src="https://github.com/frappe/design/raw/master/logos/png/bench-logo.png" height="128">
+	<picture>
+		<source media="(prefers-color-scheme: dark)" srcset="https://github.com/frappe/design/raw/master/logos/png/bench-logo-dark.png">
+		<img src="https://github.com/frappe/design/raw/master/logos/png/bench-logo.png" height="128">
+	</picture>
 	<h2>Bench</h2>
 </div>
 

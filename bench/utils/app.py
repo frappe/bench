@@ -1,7 +1,13 @@
+# imports - standard imports
 import os
+import pathlib
 import re
 import sys
 import subprocess
+from typing import List
+from functools import lru_cache
+
+# imports - module imports
 from bench.exceptions import (
 	InvalidRemoteException,
 	InvalidBranchException,
@@ -9,7 +15,6 @@ from bench.exceptions import (
 	VersionNotFound,
 )
 from bench.app import get_repo_dir
-from functools import lru_cache
 
 
 def is_version_upgrade(app="frappe", bench_path=".", branch=None):
@@ -108,7 +113,9 @@ def switch_to_develop(apps=None, bench_path=".", upgrade=True):
 
 
 def get_version_from_string(contents, field="__version__"):
-	match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])" % field, contents, flags=(re.S | re.M))
+	match = re.search(
+		r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])" % field, contents, flags=(re.S | re.M)
+	)
 	if not match:
 		raise VersionNotFound(f"{contents} is not a valid version")
 	return match.group(2)
@@ -157,7 +164,7 @@ def get_upstream_version(app, branch=None, bench_path="."):
 def get_current_frappe_version(bench_path="."):
 	try:
 		return get_major_version(get_current_version("frappe", bench_path=bench_path))
-	except IOError:
+	except OSError:
 		return 0
 
 
@@ -184,13 +191,17 @@ def get_required_deps(org, name, branch, deps="hooks.py"):
 	return base64.decodebytes(res["content"].encode()).decode()
 
 
-def required_apps_from_hooks(required_deps, local=False):
+def required_apps_from_hooks(required_deps: str, local: bool = False) -> List:
+	import ast
+
+	required_apps_re = re.compile(r"required_apps\s+=\s+(.*)")
+
 	if local:
-		with open(required_deps) as f:
-			required_deps = f.read()
-	lines = [x for x in required_deps.split("\n") if x.strip().startswith("required_apps")]
-	required_apps = eval(lines[0].strip("required_apps").strip().lstrip("=").strip())
-	return required_apps
+		required_deps = pathlib.Path(required_deps).read_text()
+
+	_req_apps_tag = required_apps_re.search(required_deps)
+	req_apps_tag = _req_apps_tag[1]
+	return ast.literal_eval(req_apps_tag)
 
 
 def get_remote(app, bench_path="."):
@@ -246,6 +257,7 @@ def get_app_name(bench_path: str, folder_name: str) -> str:
 		return app_name
 
 	return folder_name
+
 
 def check_existing_dir(bench_path, repo_name):
 	cloned_path = os.path.join(bench_path, "apps", repo_name)
