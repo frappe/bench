@@ -53,5 +53,10 @@ path = "bench/__init__.py"
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "/bench",
+  "/bench"
+]
+
+[tool.hatch.build.targets.wheel]
+include = [
+  "/bench"
 ]
