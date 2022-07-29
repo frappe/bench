@@ -10,7 +10,7 @@
 		],
 		[
 			"@semantic-release/exec", {
-				"prepareCmd": "python setup.py bdist_wheel --universal"
+				"prepareCmd": "hatch build -t sdist -t wheel"
 			}
 		],
 		[
