@@ -1,4 +1,5 @@
 # imports - standard imports
+import contextlib
 import os
 import logging
 import sys
@@ -181,40 +182,25 @@ def is_running_systemd():
 def reload_supervisor():
 	supervisorctl = which("supervisorctl")
 
-	try:
+	with contextlib.suppress(CommandFailedError):
 		# first try reread/update
 		exec_cmd(f"{supervisorctl} reread")
 		exec_cmd(f"{supervisorctl} update")
 		return
-	except CommandFailedError:
-		pass
-
-	try:
+	with contextlib.suppress(CommandFailedError):
 		# something is wrong, so try reloading
 		exec_cmd(f"{supervisorctl} reload")
 		return
-	except CommandFailedError:
-		pass
-
-	try:
+	with contextlib.suppress(CommandFailedError):
 		# then try restart for centos
 		service("supervisord", "restart")
 		return
-	except CommandFailedError:
-		pass
-
-	try:
+	with contextlib.suppress(CommandFailedError):
 		# else try restart for ubuntu / debian
 		service("supervisor", "restart")
 		return
-	except CommandFailedError:
-		pass
 
 
 def reload_nginx():
-	try:
-		exec_cmd(f"sudo {which('nginx')} -t")
-	except Exception:
-		raise
-
+	exec_cmd(f"sudo {which('nginx')} -t")
 	service("nginx", "reload")
