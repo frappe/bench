@@ -250,7 +250,7 @@ def get_app_name(bench_path: str, folder_name: str) -> str:
 	if not app_name:
 		# retrieve app name from setup.py as fallback
 		with open(setup_py_path, "rb") as f:
-			app_name = re.search(r'name\s*=\s*[\'"](.*)[\'"]', f.read().decode("utf-8")).group(1)
+			app_name = re.search(r'name\s*=\s*[\'"](.*)[\'"]', f.read().decode("utf-8"))[1]
 
 	if app_name and folder_name != app_name:
 		os.rename(os.path.join(apps_path, folder_name), os.path.join(apps_path, app_name))
