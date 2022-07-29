@@ -10,7 +10,7 @@ Bench is a command-line utility that helps you to install, update, and manage mu
 
 <div align="center">
 	<a target="_blank" href="https://www.python.org/downloads/" title="Python version">
-		<img src="https://img.shields.io/badge/python-%3E=_3.6-green.svg">
+		<img src="https://img.shields.io/badge/python-%3E=_3.7-green.svg">
 	</a>
 	<a target="_blank" href="https://app.travis-ci.com/github/frappe/bench" title="CI Status">
 		<img src="https://app.travis-ci.com/frappe/bench.svg?branch=develop">
