@@ -13,6 +13,7 @@ import bench
 from bench.exceptions import AppNotInstalledError, InvalidRemoteException
 from bench.config.common_site_config import setup_config
 from bench.utils import (
+	UNSET_ARG,
 	paths_in_bench,
 	exec_cmd,
 	is_bench_directory,
@@ -141,8 +142,7 @@ class Bench(Base, Validator):
 
 	@step(title="Reloading Bench Processes", success="Bench Processes Reloaded")
 	def reload(self, web=False, supervisor=True, systemd=True):
-		"""If web is True, only web workers are restarted
-		"""
+		"""If web is True, only web workers are restarted"""
 		conf = self.conf
 
 		if conf.get("developer_mode"):
@@ -153,15 +153,17 @@ class Bench(Base, Validator):
 			restart_systemd_processes(bench_path=self.name, web_workers=web)
 
 	def get_installed_apps(self) -> List:
-		"""Returns list of installed apps on bench, not in excluded_apps.txt
-		"""
+		"""Returns list of installed apps on bench, not in excluded_apps.txt"""
 		try:
 			installed_packages = get_cmd_output(f"{self.python} -m pip freeze", cwd=self.name)
 		except Exception:
 			installed_packages = []
-		is_installed = lambda app: app in installed_packages
 
-		return [app for app in self.apps if app not in self.excluded_apps and is_installed(app)]
+		return [
+			app
+			for app in self.apps
+			if app not in self.excluded_apps and app in installed_packages
+		]
 
 
 class BenchApps(MutableSequence):
@@ -174,18 +176,20 @@ class BenchApps(MutableSequence):
 
 	def set_states(self):
 		try:
-			with open(self.states_path, "r") as f:
+			with open(self.states_path) as f:
 				self.states = json.loads(f.read() or "{}")
 		except FileNotFoundError:
 			self.states = {}
 
 	def update_apps_states(
-			self,
-			app_dir: str = None,
-			app_name: Union[str, None] = None,
-			branch: Union[str, None] = None,
-			required: List = [],
+		self,
+		app_dir: str = None,
+		app_name: Union[str, None] = None,
+		branch: Union[str, None] = None,
+		required: List = UNSET_ARG,
 	):
+		if required == UNSET_ARG:
+			required = []
 		if self.apps and not os.path.exists(self.states_path):
 			# idx according to apps listed in apps.txt (backwards compatibility)
 			# Keeping frappe as the first app.
@@ -198,13 +202,10 @@ class BenchApps(MutableSequence):
 			print("Found existing apps updating states...")
 			for idx, app in enumerate(self.apps, start=1):
 				self.states[app] = {
-					"resolution": {
-					"commit_hash": None,
-					"branch": None
-				},
-				"required": required,
-				"idx": idx,
-				"version": get_current_version(app, self.bench.name),
+					"resolution": {"commit_hash": None, "branch": None},
+					"required": required,
+					"idx": idx,
+					"version": get_current_version(app, self.bench.name),
 				}
 
 		apps_to_remove = []
@@ -224,21 +225,21 @@ class BenchApps(MutableSequence):
 			app_dir = os.path.join(self.apps_path, app_dir)
 			if not branch:
 				branch = (
-						subprocess
-						.check_output("git rev-parse --abbrev-ref HEAD", shell=True, cwd=app_dir)
-						.decode("utf-8")
-						.rstrip()
-						)
+					subprocess.check_output("git rev-parse --abbrev-ref HEAD", shell=True, cwd=app_dir)
+					.decode("utf-8")
+					.rstrip()
+				)
 
-			commit_hash = subprocess.check_output(f"git rev-parse {branch}", shell=True, cwd=app_dir).decode("utf-8").rstrip()
+			commit_hash = (
+				subprocess.check_output(f"git rev-parse {branch}", shell=True, cwd=app_dir)
+				.decode("utf-8")
+				.rstrip()
+			)
 
 			self.states[app_name] = {
-				"resolution": {
-					"commit_hash":commit_hash,
-					"branch": branch
-				},
-				"required":required,
-				"idx":len(self.states) + 1,
+				"resolution": {"commit_hash": commit_hash, "branch": branch},
+				"required": required,
+				"idx": len(self.states) + 1,
 				"version": version,
 			}
 
@@ -250,18 +251,17 @@ class BenchApps(MutableSequence):
 		app_name: Union[str, None] = None,
 		app_dir: Union[str, None] = None,
 		branch: Union[str, None] = None,
-		required: List = []
+		required: List = UNSET_ARG,
 	):
+		if required == UNSET_ARG:
+			required = []
 		self.initialize_apps()
 
 		with open(self.bench.apps_txt, "w") as f:
 			f.write("\n".join(self.apps))
 
 		self.update_apps_states(
-			app_name=app_name,
-			app_dir=app_dir,
-			branch=branch,
-			required=required
+			app_name=app_name, app_dir=app_dir, branch=branch, required=required
 		)
 
 	def initialize_apps(self):
@@ -277,17 +277,17 @@ class BenchApps(MutableSequence):
 			self.apps = []
 
 	def __getitem__(self, key):
-		""" retrieves an item by its index, key"""
+		"""retrieves an item by its index, key"""
 		return self.apps[key]
 
 	def __setitem__(self, key, value):
-		""" set the item at index, key, to value """
+		"""set the item at index, key, to value"""
 		# should probably not be allowed
 		# self.apps[key] = value
 		raise NotImplementedError
 
 	def __delitem__(self, key):
-		""" removes the item at index, key """
+		"""removes the item at index, key"""
 		# TODO: uninstall and delete app from bench
 		del self.apps[key]
 
@@ -295,7 +295,7 @@ class BenchApps(MutableSequence):
 		return len(self.apps)
 
 	def insert(self, key, value):
-		""" add an item, value, at index, key. """
+		"""add an item, value, at index, key."""
 		# TODO: fetch and install app to bench
 		self.apps.insert(key, value)
 
@@ -354,7 +354,7 @@ class BenchSetup(Base):
 			if virtualenv:
 				self.run(f"{virtualenv} {quiet_flag} env -p {python}")
 			else:
-				venv = get_venv_path(verbose=verbose)
+				venv = get_venv_path(verbose=verbose, python=python)
 				self.run(f"{venv} env")
 
 		self.pip()
@@ -382,8 +382,7 @@ class BenchSetup(Base):
 
 	@step(title="Updating pip", success="Updated pip")
 	def pip(self, verbose=False):
-		"""Updates env pip; assumes that env is setup
-		"""
+		"""Updates env pip; assumes that env is setup"""
 		import bench.cli
 
 		verbose = bench.cli.verbose or verbose
@@ -428,8 +427,7 @@ class BenchSetup(Base):
 
 	@job(title="Setting Up Bench Dependencies", success="Bench Dependencies Set Up")
 	def requirements(self, apps=None):
-		"""Install and upgrade specified / all installed apps on given Bench
-		"""
+		"""Install and upgrade specified / all installed apps on given Bench"""
 		from bench.app import App
 
 		apps = apps or self.bench.apps
@@ -445,8 +443,7 @@ class BenchSetup(Base):
 			)
 
 	def python(self, apps=None):
-		"""Install and upgrade Python dependencies for specified / all installed apps on given Bench
-		"""
+		"""Install and upgrade Python dependencies for specified / all installed apps on given Bench"""
 		import bench.cli
 
 		apps = apps or self.bench.apps
@@ -461,8 +458,7 @@ class BenchSetup(Base):
 			self.run(f"{self.bench.python} -m pip install {quiet_flag} --upgrade -e {app_path}")
 
 	def node(self, apps=None):
-		"""Install and upgrade Node dependencies for specified / all apps on given Bench
-		"""
+		"""Install and upgrade Node dependencies for specified / all apps on given Bench"""
 		from bench.utils.bench import update_node_packages
 
 		return update_node_packages(bench_path=self.bench.name, apps=apps)
