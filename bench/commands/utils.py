@@ -1,6 +1,5 @@
 # imports - standard imports
 import os
-import sys
 
 # imports - third party imports
 import click
@@ -133,18 +132,6 @@ def renew_lets_encrypt():
 	from bench.config.lets_encrypt import renew_certs
 
 	renew_certs()
-
-
-@click.command("backup", help="Backup single site")
-@click.argument("site")
-def backup_site(site):
-	from bench.bench import Bench
-	from bench.utils.system import backup_site
-
-	if site not in Bench(".").sites:
-		print(f"Site `{site}` not found")
-		sys.exit(1)
-	backup_site(site, bench_path=".")
 
 
 @click.command("backup-all-sites", help="Backup all sites in current bench")
