@@ -6,6 +6,7 @@ import shutil
 import json
 import sys
 import logging
+from glob import glob
 from typing import List, MutableSequence, TYPE_CHECKING, Union
 
 # imports - module imports
@@ -71,6 +72,11 @@ class Bench(Base, Validator):
 
 	@property
 	def python(self) -> str:
+		existing_python_bins = glob(f"{self.name}/env/bin/python*")
+
+		if existing_python_bins:
+			return existing_python_bins[0]
+
 		return get_env_cmd("python", bench_path=self.name)
 
 	@property

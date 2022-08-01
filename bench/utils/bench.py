@@ -40,7 +40,7 @@ def get_venv_path(verbose=False, python="python3"):
 	if is_venv_installed:
 		return f"{python} -m venv"
 	else:
-		log("virtualenv cannot be found", level=2)
+		log("venv cannot be found", level=2)
 
 
 def update_node_packages(bench_path=".", apps=None):
