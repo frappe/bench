@@ -80,7 +80,6 @@ class TestBenchInit(TestBenchBase):
 		site_config_path = os.path.join(site_path, "site_config.json")
 
 		self.init_bench(bench_name)
-		exec_cmd("bench setup requirements --node", cwd=bench_path)
 		self.new_site(site_name, bench_name)
 
 		self.assertTrue(os.path.exists(site_path))
@@ -99,7 +98,7 @@ class TestBenchInit(TestBenchBase):
 	def test_get_app(self):
 		self.init_bench("test-bench")
 		bench_path = os.path.join(self.benches_path, "test-bench")
-		exec_cmd(f"bench get-app {TEST_FRAPPE_APP}", cwd=bench_path)
+		exec_cmd(f"bench get-app {TEST_FRAPPE_APP} --skip-assets", cwd=bench_path)
 		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", TEST_FRAPPE_APP)))
 		app_installed_in_env = TEST_FRAPPE_APP in subprocess.check_output(
 			["bench", "pip", "freeze"], cwd=bench_path
@@ -111,7 +110,7 @@ class TestBenchInit(TestBenchBase):
 		FRAPPE_APP = "healthcare"
 		self.init_bench("test-bench")
 		bench_path = os.path.join(self.benches_path, "test-bench")
-		exec_cmd(f"bench get-app {FRAPPE_APP} --resolve-deps", cwd=bench_path)
+		exec_cmd(f"bench get-app {FRAPPE_APP} --resolve-deps --skip-assets", cwd=bench_path)
 		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", FRAPPE_APP)))
 
 		states_path = os.path.join(bench_path, "sites", "apps.json")
@@ -128,9 +127,9 @@ class TestBenchInit(TestBenchBase):
 		bench_path = os.path.join(self.benches_path, "test-bench")
 
 		self.init_bench(bench_name)
-		exec_cmd("bench setup requirements --node", cwd=bench_path)
-		exec_cmd("bench build", cwd=bench_path)
-		exec_cmd(f"bench get-app {TEST_FRAPPE_APP} --branch master", cwd=bench_path)
+		exec_cmd(
+			f"bench get-app {TEST_FRAPPE_APP} --branch master --skip-assets", cwd=bench_path
+		)
 
 		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", TEST_FRAPPE_APP)))
 
@@ -158,9 +157,9 @@ class TestBenchInit(TestBenchBase):
 		self.init_bench("test-bench")
 		bench_path = os.path.join(self.benches_path, "test-bench")
 
-		exec_cmd("bench setup requirements --node", cwd=bench_path)
 		exec_cmd(
-			f"bench get-app {TEST_FRAPPE_APP} --branch master --overwrite", cwd=bench_path
+			f"bench get-app {TEST_FRAPPE_APP} --branch master --overwrite --skip-assets",
+			cwd=bench_path,
 		)
 		exec_cmd(f"bench remove-app {TEST_FRAPPE_APP}", cwd=bench_path)
 
