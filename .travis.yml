@@ -6,48 +6,40 @@ git:
   depth: 1
 
 addons:
-  mariadb: '10.3'
+  mariadb: '10.6'
 
 matrix:
   include:
   - name: "Python 3.7 Basic Setup"
     python: 3.7
-    env: TEST=bench
     script: python bench/tests/test_init.py TestBenchInit.basic
 
   - name: "Python 3.8 Basic Setup"
     python: 3.8
-    env: TEST=bench
     script: python bench/tests/test_init.py TestBenchInit.basic
 
   - name: "Python 3.9 Basic Setup"
     python: 3.9
-    env: TEST=bench
     script: python bench/tests/test_init.py TestBenchInit.basic
 
   - name: "Python 3.10 Basic Setup"
     python: "3.10"
-    env: TEST=bench
     script: python bench/tests/test_init.py TestBenchInit.basic
 
   - name: "Python 3.7 Production Setup"
     python: 3.7
-    env: TEST=bench
     script: python bench/tests/test_setup_production.py TestSetupProduction.production
 
   - name: "Python 3.10 Production Setup"
     python: "3.10"
-    env: TEST=bench
     script: python bench/tests/test_setup_production.py TestSetupProduction.production
 
   - name: "Python 3.7 Tests"
     python: 3.7
-    env: TEST=bench
     script: python -m unittest -v bench.tests.test_utils && python -m unittest -v bench.tests.test_init
 
   - name: "Python 3.10 Tests"
     python: "3.10"
-    env: TEST=bench
     script: python -m unittest -v bench.tests.test_utils && python -m unittest -v bench.tests.test_init
 
 install:
@@ -62,7 +54,7 @@ install:
     python -m pip install -U --no-cache-dir --force-reinstall urllib3 pyOpenSSL ndg-httpsclient pyasn1 wheel setuptools pip;
     python -m pip install -U -e ~/.bench;
 
-  - mysql -u root -e "SET GLOBAL character_set_server = 'utf8mb4'";
-    mysql -u root -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'";
-    mysql -u root -e "UPDATE mysql.user SET Password=PASSWORD('travis') WHERE User='root'";
-    mysql -u root -e "FLUSH PRIVILEGES";
+  - mariadb --host 127.0.0.1 --port 3306 -u root -e "UPDATE mysql.user SET Password=PASSWORD('travis') WHERE User='root'";
+    mariadb --host 127.0.0.1 --port 3306 -u root -ptravis -e "SET GLOBAL character_set_server = 'utf8mb4'";
+    mariadb --host 127.0.0.1 --port 3306 -u root -ptravis -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'";
+    mariadb --host 127.0.0.1 --port 3306 -u root -ptravis -e "FLUSH PRIVILEGES";
