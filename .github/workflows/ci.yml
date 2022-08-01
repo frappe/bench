@@ -87,7 +87,6 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    needs: [base_setup]
 
     strategy:
       matrix:
