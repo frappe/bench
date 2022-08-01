@@ -1,0 +1,39 @@
+name: Linters
+
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches: [ develop ]
+
+permissions:
+  contents: read
+
+jobs:
+  linter:
+    name: 'Pre Commit Hooks'
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - uses: pre-commit/action@v3.0.0
+        with:
+          extra_args: --files 'bench/'
+
+  deps-vulnerable-check:
+    name: 'Vulnerable Dependency Check'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - uses: actions/checkout@v3
+      - name: 'Pip Audit'
+        run: |
+          pip install pip-audit
+          pip-audit ${GITHUB_WORKSPACE}

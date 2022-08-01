@@ -76,6 +76,18 @@ class TestUtils(unittest.TestCase):
 
 		subprocess.run(["git", "add", "."], cwd=frappe_path, capture_output=True, check=True)
 		subprocess.run(
+			["git", "config", "user.email", "bench-test_app_states@gha.com"],
+			cwd=frappe_path,
+			capture_output=True,
+			check=True,
+		)
+		subprocess.run(
+			["git", "config", "user.name", "App States Test"],
+			cwd=frappe_path,
+			capture_output=True,
+			check=True,
+		)
+		subprocess.run(
 			["git", "commit", "-m", "temp"], cwd=frappe_path, capture_output=True, check=True
 		)
 
