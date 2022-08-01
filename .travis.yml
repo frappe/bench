@@ -1,5 +1,5 @@
 language: python
-dist: bionic
+dist: focal
 sudo: true
 
 git:
@@ -51,26 +51,18 @@ matrix:
     script: python -m unittest -v bench.tests.test_utils && python -m unittest -v bench.tests.test_init
 
 install:
-  - python -m pip install -U --no-cache-dir --force-reinstall urllib3 pyOpenSSL ndg-httpsclient pyasn1 wheel setuptools pip
+  - wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb;
+    sudo apt install ./wkhtmltox_0.12.6-1.focal_amd64.deb;
 
-  - if [ $TEST == "bench" ];then
-      wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb;
-      sudo apt install ./wkhtmltox_0.12.6-1.focal_amd64.deb;
+  - nvm install 14;
+    nvm use 14;
 
-      nvm install 14;
-      nvm use 14;
+  - mkdir -p ~/.bench;
+    cp -r $TRAVIS_BUILD_DIR/* ~/.bench;
+    python -m pip install -U --no-cache-dir --force-reinstall urllib3 pyOpenSSL ndg-httpsclient pyasn1 wheel setuptools pip;
+    python -m pip install -U -e ~/.bench;
 
-      mkdir -p ~/.bench;
-      cp -r $TRAVIS_BUILD_DIR/* ~/.bench;
-      python -m pip install -U -e ~/.bench;
-
-      mysql -u root -e "SET GLOBAL character_set_server = 'utf8mb4'";
-      mysql -u root -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'";
-      mysql -u root -e "UPDATE mysql.user SET Password=PASSWORD('travis') WHERE User='root'";
-      mysql -u root -e "FLUSH PRIVILEGES";
-    fi
-
-  - if [ $TEST == "easy_install" ];then
-      mkdir -p /tmp/.bench;
-      cp -r $TRAVIS_BUILD_DIR/* /tmp/.bench;
-    fi
+  - mysql -u root -e "SET GLOBAL character_set_server = 'utf8mb4'";
+    mysql -u root -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'";
+    mysql -u root -e "UPDATE mysql.user SET Password=PASSWORD('travis') WHERE User='root'";
+    mysql -u root -e "FLUSH PRIVILEGES";
