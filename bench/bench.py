@@ -71,7 +71,7 @@ class Bench(Base, Validator):
 
 	@property
 	def python(self) -> str:
-		return get_env_cmd("python3", bench_path=self.name)
+		return get_env_cmd("python", bench_path=self.name)
 
 	@property
 	def shallow_clone(self) -> bool:
@@ -352,15 +352,18 @@ class BenchSetup(Base):
 
 		if not os.path.exists(self.bench.python):
 			if virtualenv:
-				self.run(f"{virtualenv} {quiet_flag} env -p {python}")
+				self.run(f"{virtualenv} {quiet_flag} env -p {python}", cwd=self.bench.name)
 			else:
 				venv = get_venv_path(verbose=verbose, python=python)
-				self.run(f"{venv} env")
+				self.run(f"{venv} env", cwd=self.bench.name)
 
 		self.pip()
 
 		if os.path.exists(frappe):
-			self.run(f"{self.bench.python} -m pip install {quiet_flag} --upgrade -e {frappe}")
+			self.run(
+				f"{self.bench.python} -m pip install {quiet_flag} --upgrade -e {frappe}",
+				cwd=self.bench.name,
+			)
 
 	@step(title="Setting Up Bench Config", success="Bench Config Set Up")
 	def config(self, redis=True, procfile=True):
@@ -388,7 +391,9 @@ class BenchSetup(Base):
 		verbose = bench.cli.verbose or verbose
 		quiet_flag = "" if verbose else "--quiet"
 
-		return self.run(f"{self.bench.python} -m pip install {quiet_flag} --upgrade pip")
+		return self.run(
+			f"{self.bench.python} -m pip install {quiet_flag} --upgrade pip", cwd=self.bench.name
+		)
 
 	def logging(self):
 		from bench.utils import setup_logging
