@@ -227,5 +227,5 @@ def pip(ctx, args):
 
 	from bench.utils.bench import get_env_cmd
 
-	env_py = get_env_cmd("python")
+	env_py = get_env_cmd("python*")
 	os.execv(env_py, (env_py, "-m", "pip") + args)

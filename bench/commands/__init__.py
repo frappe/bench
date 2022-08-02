@@ -74,11 +74,9 @@ bench_command.add_command(switch_to_develop)
 from bench.commands.utils import (
 	backup_all_sites,
 	bench_src,
-	clear_command_cache,
 	disable_production,
 	download_translations,
 	find_benches,
-	generate_command_cache,
 	migrate_env,
 	renew_lets_encrypt,
 	restart,
@@ -110,8 +108,6 @@ bench_command.add_command(disable_production)
 bench_command.add_command(bench_src)
 bench_command.add_command(find_benches)
 bench_command.add_command(migrate_env)
-bench_command.add_command(generate_command_cache)
-bench_command.add_command(clear_command_cache)
 
 from bench.commands.setup import setup
 
