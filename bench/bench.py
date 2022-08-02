@@ -1,6 +1,6 @@
 # imports - standard imports
 import subprocess
-import functools
+from functools import lru_cache
 import os
 import shutil
 import json
@@ -54,7 +54,7 @@ class Validator:
 		validate_app_installed_on_sites(app, bench_path=self.name)
 
 
-@functools.lru_cache(maxsize=None)
+@lru_cache(maxsize=None)
 class Bench(Base, Validator):
 	def __init__(self, path):
 		self.name = path
