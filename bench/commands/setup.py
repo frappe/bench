@@ -96,7 +96,7 @@ def setup_backups():
 	Bench(".").setup.backups()
 
 
-@click.command("env", help="Setup virtualenv for bench")
+@click.command("env", help="Setup Python environment for bench")
 @click.option(
 	"--python", type=str, default="python3", help="Path to Python Executable."
 )

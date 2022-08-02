@@ -22,7 +22,6 @@ from bench.exceptions import (
 )
 
 logger = logging.getLogger(PROJECT_NAME)
-bench_cache_file = ".bench.cmd"
 paths_in_app = ("hooks.py", "modules.txt", "patches.txt")
 paths_in_bench = ("apps", "sites", "config", "logs", "config/pids")
 sudoers_file = "/etc/sudoers.d/frappe"
@@ -231,10 +230,10 @@ def run_frappe_cmd(*args, **kwargs):
 	from bench.utils.bench import get_env_cmd
 
 	bench_path = kwargs.get("bench_path", ".")
-	f = get_env_cmd("python", bench_path=bench_path)
+	f = get_env_cmd("python*", bench_path=bench_path)
 	sites_dir = os.path.join(bench_path, "sites")
 
-	is_async = False if from_command_line else True
+	is_async = not from_command_line
 	if is_async:
 		stderr = stdout = subprocess.PIPE
 	else:
@@ -247,11 +246,7 @@ def run_frappe_cmd(*args, **kwargs):
 		stderr=stderr,
 	)
 
-	if is_async:
-		return_code = print_output(p)
-	else:
-		return_code = p.wait()
-
+	return_code = print_output(p) if is_async else p.wait()
 	if return_code > 0:
 		sys.exit(return_code)
 
@@ -384,42 +379,27 @@ def find_parent_bench(path: str) -> str:
 		return find_parent_bench(parent_dir)
 
 
-def generate_command_cache(bench_path=".") -> List:
+def get_env_frappe_commands(bench_path=".") -> List:
 	"""Caches all available commands (even custom apps) via Frappe
 	Default caching behaviour: generated the first time any command (for a specific bench directory)
 	"""
 	from bench.utils.bench import get_env_cmd
 
-	python = get_env_cmd("python", bench_path=bench_path)
+	python = get_env_cmd("python*", bench_path=bench_path)
 	sites_path = os.path.join(bench_path, "sites")
 
-	if os.path.exists(bench_cache_file):
-		os.remove(bench_cache_file)
-
 	try:
-		output = get_cmd_output(
-			f"{python} -m frappe.utils.bench_helper get-frappe-commands", cwd=sites_path
+		return json.loads(
+			get_cmd_output(
+				f"{python} -m frappe.utils.bench_helper get-frappe-commands", cwd=sites_path
+			)
 		)
-		with open(bench_cache_file, "w") as f:
-			json.dump(eval(output), f)
-		return json.loads(output)
 
 	except subprocess.CalledProcessError as e:
 		if hasattr(e, "stderr"):
 			print(e.stderr)
 
 	return []
-
-
-def clear_command_cache(bench_path="."):
-	"""Clears commands cached
-	Default invalidation behaviour: destroyed on each run of `bench update`
-	"""
-
-	if os.path.exists(bench_cache_file):
-		os.remove(bench_cache_file)
-	else:
-		print("Bench command cache doesn't exist in this folder!")
 
 
 def find_org(org_repo):

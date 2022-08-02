@@ -1,6 +1,6 @@
 # imports - standard imports
 import subprocess
-import functools
+from functools import lru_cache
 import os
 import shutil
 import json
@@ -30,7 +30,6 @@ from bench.utils.bench import (
 	restart_process_manager,
 	remove_backups_crontab,
 	get_venv_path,
-	get_virtualenv_path,
 	get_env_cmd,
 )
 from bench.utils.render import job, step
@@ -55,7 +54,7 @@ class Validator:
 		validate_app_installed_on_sites(app, bench_path=self.name)
 
 
-@functools.lru_cache(maxsize=None)
+@lru_cache(maxsize=None)
 class Bench(Base, Validator):
 	def __init__(self, path):
 		self.name = path
@@ -71,7 +70,7 @@ class Bench(Base, Validator):
 
 	@property
 	def python(self) -> str:
-		return get_env_cmd("python", bench_path=self.name)
+		return get_env_cmd("python*", bench_path=self.name)
 
 	@property
 	def shallow_clone(self) -> bool:
@@ -347,20 +346,19 @@ class BenchSetup(Base):
 		click.secho("Setting Up Environment", fg="yellow")
 
 		frappe = os.path.join(self.bench.name, "apps", "frappe")
-		virtualenv = get_virtualenv_path(verbose=verbose)
 		quiet_flag = "" if verbose else "--quiet"
 
 		if not os.path.exists(self.bench.python):
-			if virtualenv:
-				self.run(f"{virtualenv} {quiet_flag} env -p {python}")
-			else:
-				venv = get_venv_path(verbose=verbose, python=python)
-				self.run(f"{venv} env")
+			venv = get_venv_path(verbose=verbose, python=python)
+			self.run(f"{venv} env", cwd=self.bench.name)
 
 		self.pip()
 
 		if os.path.exists(frappe):
-			self.run(f"{self.bench.python} -m pip install {quiet_flag} --upgrade -e {frappe}")
+			self.run(
+				f"{self.bench.python} -m pip install {quiet_flag} --upgrade -e {frappe}",
+				cwd=self.bench.name,
+			)
 
 	@step(title="Setting Up Bench Config", success="Bench Config Set Up")
 	def config(self, redis=True, procfile=True):
@@ -388,7 +386,9 @@ class BenchSetup(Base):
 		verbose = bench.cli.verbose or verbose
 		quiet_flag = "" if verbose else "--quiet"
 
-		return self.run(f"{self.bench.python} -m pip install {quiet_flag} --upgrade pip")
+		return self.run(
+			f"{self.bench.python} -m pip install {quiet_flag} --upgrade pip", cwd=self.bench.name
+		)
 
 	def logging(self):
 		from bench.utils import setup_logging

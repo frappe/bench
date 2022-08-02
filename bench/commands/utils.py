@@ -176,17 +176,3 @@ def migrate_env(python, backup=True):
 	from bench.utils.bench import migrate_env
 
 	migrate_env(python=python, backup=backup)
-
-
-@click.command("generate-command-cache", help="Caches Frappe Framework commands")
-def generate_command_cache(bench_path="."):
-	from bench.utils import generate_command_cache
-
-	return generate_command_cache(bench_path=bench_path)
-
-
-@click.command("clear-command-cache", help="Clears Frappe Framework cached commands")
-def clear_command_cache(bench_path="."):
-	from bench.utils import clear_command_cache
-
-	return clear_command_cache(bench_path=bench_path)

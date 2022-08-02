@@ -1,7 +1,6 @@
 # imports - standard imports
 import atexit
 from contextlib import contextmanager
-import json
 from logging import Logger
 import os
 import pwd
@@ -16,11 +15,10 @@ from bench.bench import Bench
 from bench.commands import bench_command
 from bench.config.common_site_config import get_config
 from bench.utils import (
-	bench_cache_file,
 	check_latest_version,
 	drop_privileges,
 	find_parent_bench,
-	generate_command_cache,
+	get_env_frappe_commands,
 	get_cmd_output,
 	is_bench_directory,
 	is_dist_editable,
@@ -190,33 +188,26 @@ def change_uid():
 
 
 def app_cmd(bench_path="."):
-	f = get_env_cmd("python", bench_path=bench_path)
+	f = get_env_cmd("python*", bench_path=bench_path)
 	os.chdir(os.path.join(bench_path, "sites"))
 	os.execv(f, [f] + ["-m", "frappe.utils.bench_helper"] + sys.argv[1:])
 
 
 def frappe_cmd(bench_path="."):
-	f = get_env_cmd("python", bench_path=bench_path)
+	f = get_env_cmd("python*", bench_path=bench_path)
 	os.chdir(os.path.join(bench_path, "sites"))
 	os.execv(f, [f] + ["-m", "frappe.utils.bench_helper", "frappe"] + sys.argv[1:])
-
-
-def get_cached_frappe_commands():
-	if os.path.exists(bench_cache_file):
-		command_dump = open(bench_cache_file).read() or "[]"
-		return set(json.loads(command_dump))
-	return set()
 
 
 def get_frappe_commands():
 	if not is_bench_directory():
 		return set()
 
-	return set(generate_command_cache())
+	return set(get_env_frappe_commands())
 
 
 def get_frappe_help(bench_path="."):
-	python = get_env_cmd("python", bench_path=bench_path)
+	python = get_env_cmd("python*", bench_path=bench_path)
 	sites_path = os.path.join(bench_path, "sites")
 	try:
 		out = get_cmd_output(
@@ -245,6 +236,7 @@ def setup_clear_cache():
 
 	def _chdir(*args, **kwargs):
 		Bench.cache_clear()
+		get_env_cmd.cache_clear()
 		return f(*args, **kwargs)
 
 	os.chdir = _chdir
