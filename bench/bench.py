@@ -30,7 +30,6 @@ from bench.utils.bench import (
 	restart_process_manager,
 	remove_backups_crontab,
 	get_venv_path,
-	get_virtualenv_path,
 	get_env_cmd,
 )
 from bench.utils.render import job, step
@@ -71,7 +70,7 @@ class Bench(Base, Validator):
 
 	@property
 	def python(self) -> str:
-		return get_env_cmd("python", bench_path=self.name)
+		return get_env_cmd("python*", bench_path=self.name)
 
 	@property
 	def shallow_clone(self) -> bool:
@@ -347,15 +346,11 @@ class BenchSetup(Base):
 		click.secho("Setting Up Environment", fg="yellow")
 
 		frappe = os.path.join(self.bench.name, "apps", "frappe")
-		virtualenv = get_virtualenv_path(verbose=verbose)
 		quiet_flag = "" if verbose else "--quiet"
 
 		if not os.path.exists(self.bench.python):
-			if virtualenv:
-				self.run(f"{virtualenv} {quiet_flag} env -p {python}", cwd=self.bench.name)
-			else:
-				venv = get_venv_path(verbose=verbose, python=python)
-				self.run(f"{venv} env", cwd=self.bench.name)
+			venv = get_venv_path(verbose=verbose, python=python)
+			self.run(f"{venv} env", cwd=self.bench.name)
 
 		self.pip()
 

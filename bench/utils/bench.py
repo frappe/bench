@@ -172,6 +172,9 @@ def migrate_env(python, backup=False):
 	path = os.getcwd()
 	python = which(python)
 	virtualenv = which("virtualenv")
+	if not virtualenv:
+		raise FileNotFoundError("`virtualenv` not found. Install it and try again.")
+
 	pvenv = os.path.join(path, nvenv)
 
 	# Clear Cache before Bench Dies.
