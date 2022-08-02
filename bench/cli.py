@@ -245,6 +245,7 @@ def setup_clear_cache():
 
 	def _chdir(*args, **kwargs):
 		Bench.cache_clear()
+		get_env_cmd.cache_clear()
 		return f(*args, **kwargs)
 
 	os.chdir = _chdir
