@@ -30,10 +30,10 @@ def get_env_cmd(cmd: str, bench_path: str = ".") -> str:
 	)
 
 	if existing_python_bins:
-		return existing_python_bins[0]
+		return os.path.abspath(existing_python_bins[0])
 
 	cmd = cmd.strip("*")
-	return os.path.join(bench_path, "env", "bin", cmd)
+	return os.path.abspath(os.path.join(bench_path, "env", "bin", cmd))
 
 
 def get_venv_path(verbose=False, python="python3"):
