@@ -1,5 +1,5 @@
 # imports - standard imports
-import functools
+from functools import lru_cache
 import json
 import logging
 import os
@@ -149,7 +149,7 @@ class AppMeta:
 		return f"git@{self.remote_server}:{self.org}/{self.repo}.git"
 
 
-@functools.lru_cache(maxsize=None)
+@lru_cache(maxsize=None)
 class App(AppMeta):
 	def __init__(
 		self,

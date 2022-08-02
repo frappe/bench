@@ -231,10 +231,10 @@ def run_frappe_cmd(*args, **kwargs):
 	from bench.utils.bench import get_env_cmd
 
 	bench_path = kwargs.get("bench_path", ".")
-	f = get_env_cmd("python", bench_path=bench_path)
+	f = get_env_cmd("python*", bench_path=bench_path)
 	sites_dir = os.path.join(bench_path, "sites")
 
-	is_async = False if from_command_line else True
+	is_async = not from_command_line
 	if is_async:
 		stderr = stdout = subprocess.PIPE
 	else:
@@ -247,11 +247,7 @@ def run_frappe_cmd(*args, **kwargs):
 		stderr=stderr,
 	)
 
-	if is_async:
-		return_code = print_output(p)
-	else:
-		return_code = p.wait()
-
+	return_code = print_output(p) if is_async else p.wait()
 	if return_code > 0:
 		sys.exit(return_code)
 
@@ -390,7 +386,7 @@ def generate_command_cache(bench_path=".") -> List:
 	"""
 	from bench.utils.bench import get_env_cmd
 
-	python = get_env_cmd("python", bench_path=bench_path)
+	python = get_env_cmd("python*", bench_path=bench_path)
 	sites_path = os.path.join(bench_path, "sites")
 
 	if os.path.exists(bench_cache_file):

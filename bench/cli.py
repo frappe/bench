@@ -190,13 +190,13 @@ def change_uid():
 
 
 def app_cmd(bench_path="."):
-	f = get_env_cmd("python", bench_path=bench_path)
+	f = get_env_cmd("python*", bench_path=bench_path)
 	os.chdir(os.path.join(bench_path, "sites"))
 	os.execv(f, [f] + ["-m", "frappe.utils.bench_helper"] + sys.argv[1:])
 
 
 def frappe_cmd(bench_path="."):
-	f = get_env_cmd("python", bench_path=bench_path)
+	f = get_env_cmd("python*", bench_path=bench_path)
 	os.chdir(os.path.join(bench_path, "sites"))
 	os.execv(f, [f] + ["-m", "frappe.utils.bench_helper", "frappe"] + sys.argv[1:])
 
@@ -216,7 +216,7 @@ def get_frappe_commands():
 
 
 def get_frappe_help(bench_path="."):
-	python = get_env_cmd("python", bench_path=bench_path)
+	python = get_env_cmd("python*", bench_path=bench_path)
 	sites_path = os.path.join(bench_path, "sites")
 	try:
 		out = get_cmd_output(
@@ -245,6 +245,7 @@ def setup_clear_cache():
 
 	def _chdir(*args, **kwargs):
 		Bench.cache_clear()
+		get_env_cmd.cache_clear()
 		return f(*args, **kwargs)
 
 	os.chdir = _chdir
