@@ -280,7 +280,7 @@ def restart_supervisor_processes(bench_path=".", web_workers=False):
 		sudo = ""
 		try:
 			supervisor_status = get_cmd_output("supervisorctl status", cwd=bench_path)
-		except Exception as e:
+		except subprocess.CalledProcessError as e:
 			if e.returncode == 127:
 				log("restart failed: Couldn't find supervisorctl in PATH", level=3)
 				return
