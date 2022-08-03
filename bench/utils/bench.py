@@ -280,7 +280,7 @@ def restart_supervisor_processes(bench_path=".", web_workers=False):
 		sudo = ""
 		try:
 			supervisor_status = get_cmd_output("supervisorctl status", cwd=bench_path)
-		except Exception as e:
+		except subprocess.CalledProcessError as e:
 			if e.returncode == 127:
 				log("restart failed: Couldn't find supervisorctl in PATH", level=3)
 				return
@@ -385,7 +385,6 @@ def update(
 	from bench.bench import Bench
 	from bench.config.common_site_config import update_config
 	from bench.exceptions import CannotUpdateReleaseBench
-	from bench.utils import clear_command_cache
 	from bench.utils.app import is_version_upgrade
 	from bench.utils.system import backup_all_sites
 
@@ -393,8 +392,6 @@ def update(
 	bench = Bench(bench_path)
 	patches.run(bench_path=bench_path)
 	conf = bench.conf
-
-	clear_command_cache(bench_path=".")
 
 	if conf.get("release_bench"):
 		raise CannotUpdateReleaseBench("Release bench detected, cannot update!")
