@@ -13,6 +13,7 @@ from bench.utils import exec_cmd, get_bench_name, get_cmd_output
 def is_sudoers_set():
 	"""Check if bench sudoers is set"""
 	cmd = ["sudo", "-n", "bench"]
+	bench_warn = False
 
 	with open(os.devnull, "wb") as f:
 		return_code_check = not subprocess.call(cmd, stdout=f)
