@@ -26,12 +26,15 @@ def setup_sudoers(user):
 
 @click.command("nginx", help="Generate configuration files for NGINX")
 @click.option(
+	"--logging", default="combined", type=click.Choice(["none", "site", "combined"])
+)
+@click.option(
 	"--yes", help="Yes to regeneration of nginx config file", default=False, is_flag=True
 )
-def setup_nginx(yes=False):
+def setup_nginx(yes=False, logging="combined"):
 	from bench.config.nginx import make_nginx_conf
 
-	make_nginx_conf(bench_path=".", yes=yes)
+	make_nginx_conf(bench_path=".", yes=yes, logging=logging)
 
 
 @click.command("reload-nginx", help="Checks NGINX config file and reloads service")

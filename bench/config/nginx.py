@@ -13,7 +13,7 @@ from bench.bench import Bench
 from bench.utils import get_bench_name
 
 
-def make_nginx_conf(bench_path, yes=False):
+def make_nginx_conf(bench_path, yes=False, logging=None):
 	conf_path = os.path.join(bench_path, "config", "nginx.conf")
 
 	if not yes and os.path.exists(conf_path):
@@ -43,6 +43,7 @@ def make_nginx_conf(bench_path, yes=False):
 		"allow_rate_limiting": allow_rate_limiting,
 		# for nginx map variable
 		"random_string": "".join(random.choice(string.ascii_lowercase) for i in range(7)),
+		"logging": logging,
 	}
 
 	if allow_rate_limiting:
