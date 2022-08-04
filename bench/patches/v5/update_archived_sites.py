@@ -38,8 +38,7 @@ def execute(bench_path):
 	if not os.path.exists(new_directory):
 		os.makedirs(new_directory)
 
-	for archived_site_path in old_directory.glob("*"):
-		archived_site_path.rename(new_directory)
+	old_directory.rename(new_directory)
 
 	click.secho(f"Archived sites are now stored under {new_directory}")
 
