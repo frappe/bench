@@ -49,7 +49,13 @@ def reload_nginx():
 @click.option(
 	"--skip-redis", help="Skip redis configuration", is_flag=True, default=False
 )
-def setup_supervisor(user=None, yes=False, skip_redis=False):
+@click.option(
+	"--skip-supervisord",
+	help="Skip supervisord configuration",
+	is_flag=True,
+	default=False,
+)
+def setup_supervisor(user=None, yes=False, skip_redis=False, skip_supervisord=False):
 	from bench.utils import get_cmd_output
 	from bench.config.supervisor import (
 		update_supervisord_config,
@@ -58,8 +64,10 @@ def setup_supervisor(user=None, yes=False, skip_redis=False):
 
 	which("supervisorctl", raise_err=True)
 
-	if "Permission denied" in get_cmd_output("supervisorctl status"):
-		update_supervisord_config(user=user, yes=yes)
+	if not skip_supervisord and "Permission denied" in get_cmd_output(
+		"supervisorctl status"
+	):
+		update_supervisord_config(user=user)
 
 	generate_supervisor_config(bench_path=".", user=user, yes=yes, skip_redis=skip_redis)
 
