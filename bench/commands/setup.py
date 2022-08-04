@@ -7,6 +7,7 @@ import click
 
 # imports - module imports
 from bench.utils import exec_cmd, run_playbook, which
+from bench.utils.cli import SugaredOption
 
 
 @click.group(help="Setup command group for enabling setting up a Frappe environment")
@@ -26,12 +27,22 @@ def setup_sudoers(user):
 
 @click.command("nginx", help="Generate configuration files for NGINX")
 @click.option(
+	"--logging", default="combined", type=click.Choice(["none", "site", "combined"])
+)
+@click.option(
+	"--log_format",
+	help="Specify the log_format for nginx. Use none or '' to not set a value.",
+	only_if_set=["logging"],
+	cls=SugaredOption,
+	default="main",
+)
+@click.option(
 	"--yes", help="Yes to regeneration of nginx config file", default=False, is_flag=True
 )
-def setup_nginx(yes=False):
+def setup_nginx(yes=False, logging="combined", log_format=None):
 	from bench.config.nginx import make_nginx_conf
 
-	make_nginx_conf(bench_path=".", yes=yes)
+	make_nginx_conf(bench_path=".", yes=yes, logging=logging, log_format=log_format)
 
 
 @click.command("reload-nginx", help="Checks NGINX config file and reloads service")
@@ -49,17 +60,25 @@ def reload_nginx():
 @click.option(
 	"--skip-redis", help="Skip redis configuration", is_flag=True, default=False
 )
-def setup_supervisor(user=None, yes=False, skip_redis=False):
+@click.option(
+	"--skip-supervisord",
+	help="Skip supervisord configuration",
+	is_flag=True,
+	default=False,
+)
+def setup_supervisor(user=None, yes=False, skip_redis=False, skip_supervisord=False):
 	from bench.utils import get_cmd_output
 	from bench.config.supervisor import (
-		update_supervisord_config,
+		check_supervisord_config,
 		generate_supervisor_config,
 	)
 
 	which("supervisorctl", raise_err=True)
 
-	if "Permission denied" in get_cmd_output("supervisorctl status"):
-		update_supervisord_config(user=user, yes=yes)
+	if not skip_supervisord and "Permission denied" in get_cmd_output(
+		"supervisorctl status"
+	):
+		check_supervisord_config(user=user)
 
 	generate_supervisor_config(bench_path=".", user=user, yes=yes, skip_redis=skip_redis)
 

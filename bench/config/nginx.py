@@ -9,11 +9,12 @@ import click
 
 # imports - module imports
 import bench
+import bench.config
 from bench.bench import Bench
 from bench.utils import get_bench_name
 
 
-def make_nginx_conf(bench_path, yes=False):
+def make_nginx_conf(bench_path, yes=False, logging=None, log_format=None):
 	conf_path = os.path.join(bench_path, "config", "nginx.conf")
 
 	if not yes and os.path.exists(conf_path):
@@ -44,6 +45,12 @@ def make_nginx_conf(bench_path, yes=False):
 		# for nginx map variable
 		"random_string": "".join(random.choice(string.ascii_lowercase) for i in range(7)),
 	}
+
+	if logging and logging != "none":
+		_log_format = ""
+		if log_format and log_format != "none":
+			_log_format = log_format
+		template_vars["logging"] = {"level": logging, "log_format": _log_format}
 
 	if allow_rate_limiting:
 		template_vars.update(
@@ -280,8 +287,6 @@ def use_wildcard_certificate(bench_path, ret):
 
 
 def get_error_pages():
-	import bench
-
 	bench_app_path = os.path.abspath(bench.__path__[0])
 	templates = os.path.join(bench_app_path, "config", "templates")
 
