@@ -79,10 +79,11 @@ def get_supervisord_conf():
 			return possibility
 
 
-def update_supervisord_config(user=None, yes=False):
+def update_supervisord_config(user=None):
 	"""From bench v5.x, we're moving to supervisor running as user"""
+	# i don't think bench should be responsible for this but we're way past this now...
+	# removed updating supervisord conf & reload in Aug 2022 - gavin@frappe.io
 	import configparser
-	from bench.config.production_setup import service
 
 	if not user:
 		user = getpass.getuser()
@@ -125,20 +126,3 @@ def update_supervisord_config(user=None, yes=False):
 		print(
 			f"Update your {supervisord_conf} with the following values:\n[{section}]\n{contents}"
 		)
-		return
-
-	if not yes:
-		click.confirm(
-			f"{supervisord_conf} will be updated with the following values:\n{supervisord_conf_changes}\nDo you want to continue?",
-			abort=True,
-		)
-
-	try:
-		with open(supervisord_conf, "w") as f:
-			config.write(f)
-			logger.log(f"Updated supervisord.conf at '{supervisord_conf}'")
-	except Exception as e:
-		logger.log(f"Updating supervisord.conf failed due to '{e}'")
-
-	# Reread supervisor configuration, reload supervisord and supervisorctl, restart services that were started
-	service("supervisor", "reload")
