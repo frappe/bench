@@ -58,7 +58,7 @@ def reload_nginx():
 def setup_supervisor(user=None, yes=False, skip_redis=False, skip_supervisord=False):
 	from bench.utils import get_cmd_output
 	from bench.config.supervisor import (
-		update_supervisord_config,
+		check_supervisord_config,
 		generate_supervisor_config,
 	)
 
@@ -67,7 +67,7 @@ def setup_supervisor(user=None, yes=False, skip_redis=False, skip_supervisord=Fa
 	if not skip_supervisord and "Permission denied" in get_cmd_output(
 		"supervisorctl status"
 	):
-		update_supervisord_config(user=user)
+		check_supervisord_config(user=user)
 
 	generate_supervisor_config(bench_path=".", user=user, yes=yes, skip_redis=skip_redis)
 
