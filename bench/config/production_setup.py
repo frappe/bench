@@ -9,7 +9,7 @@ import bench
 from bench.config.nginx import make_nginx_conf
 from bench.config.supervisor import (
 	generate_supervisor_config,
-	update_supervisord_config,
+	check_supervisord_config,
 )
 from bench.config.systemd import generate_systemd_config
 from bench.bench import Bench
@@ -48,7 +48,7 @@ def setup_production(user, bench_path=".", yes=False):
 		generate_systemd_config(bench_path=bench_path, user=user, yes=yes)
 	else:
 		print("Setting Up supervisor...")
-		update_supervisord_config(user=user, yes=yes)
+		check_supervisord_config(user=user)
 		generate_supervisor_config(bench_path=bench_path, user=user, yes=yes)
 
 	print("Setting Up NGINX...")
