@@ -231,7 +231,7 @@ def run_frappe_cmd(*args, **kwargs):
 	from bench.utils.bench import get_env_cmd
 
 	bench_path = kwargs.get("bench_path", ".")
-	f = get_env_cmd("python*", bench_path=bench_path)
+	f = get_env_cmd("python", bench_path=bench_path)
 	sites_dir = os.path.join(bench_path, "sites")
 
 	is_async = not from_command_line
@@ -386,7 +386,7 @@ def get_env_frappe_commands(bench_path=".") -> List:
 	"""
 	from bench.utils.bench import get_env_cmd
 
-	python = get_env_cmd("python*", bench_path=bench_path)
+	python = get_env_cmd("python", bench_path=bench_path)
 	sites_path = os.path.join(bench_path, "sites")
 
 	try:
