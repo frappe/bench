@@ -70,7 +70,7 @@ class Bench(Base, Validator):
 
 	@property
 	def python(self) -> str:
-		return get_env_cmd("python*", bench_path=self.name)
+		return get_env_cmd("python", bench_path=self.name)
 
 	@property
 	def shallow_clone(self) -> bool:
