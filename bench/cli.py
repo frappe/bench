@@ -123,7 +123,7 @@ def cli():
 		bench_command()
 
 	if cmd_from_sys in bench_command.commands:
-		with execute_cmd(check_for_update=not is_cli_command, command=command, logger=logger):
+		with execute_cmd(check_for_update=is_cli_command, command=command, logger=logger):
 			bench_command()
 
 	if in_bench:
