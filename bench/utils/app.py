@@ -181,7 +181,7 @@ def get_required_deps(org, name, branch, deps="hooks.py"):
 	import base64
 
 	git_api_url = f"https://api.github.com/repos/{org}/{name}/contents/{name}/{deps}"
-	params = {"branch": branch or "develop"}
+	params = {"ref": branch or "develop"}
 	res = requests.get(url=git_api_url, params=params).json()
 
 	if "message" in res:
