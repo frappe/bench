@@ -17,3 +17,4 @@
 
 {{ user }} ALL = (root) NOPASSWD: {{ certbot }}
 Defaults:{{ user }} !requiretty
+
