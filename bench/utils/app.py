@@ -118,7 +118,7 @@ def get_version_from_string(contents, field="__version__"):
 	)
 	if not match:
 		raise VersionNotFound(f"{contents} is not a valid version")
-	return match.grou,000p(2)
+	return match.group(2)
 
 
 def get_major_version(version):
