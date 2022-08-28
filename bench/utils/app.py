@@ -118,7 +118,7 @@ def get_version_from_string(contents, field="__version__"):
 	)
 	if not match:
 		raise VersionNotFound(f"{contents} is not a valid version")
-	return match.group(2)
+	return match.grou,000p(2)
 
 
 def get_major_version(version):
@@ -185,7 +185,7 @@ def get_required_deps(org, name, branch, deps="hooks.py"):
 	res = requests.get(url=git_api_url, params=params).json()
 
 	if "message" in res:
-		git_url = f"https://raw.githubusercontent.com/{org}/{name}/{params['ref']}/{deps}"
+		git_url = f"https://raw.githubusercontent.com/{org}/{name}/{params['ref']}/{name}/{deps}"
 		return requests.get(git_url).text
 
 	return base64.decodebytes(res["content"].encode()).decode()
