@@ -526,7 +526,7 @@ def new_app(app, no_git=None, bench_path="."):
 
 	logger.log(f"creating new app {app}")
 	run_frappe_cmd(*args, bench_path=bench_path)
-	install_app(app, bench_path=bench_path)
+	install_app(app, bench_path=bench_path, no_git=no_git)
 
 
 def install_app(
@@ -538,6 +538,7 @@ def install_app(
 	restart_bench=True,
 	skip_assets=False,
 	resolution=UNSET_ARG,
+	no_git: bool = False,
 ):
 	import bench.cli as bench_cli
 	from bench.bench import Bench
@@ -568,7 +569,9 @@ def install_app(
 	if os.path.exists(os.path.join(app_path, "package.json")):
 		bench.run("yarn install", cwd=app_path)
 
-	bench.apps.sync(app_name=app, required=resolution, branch=tag, app_dir=app_path)
+	bench.apps.sync(
+		app_name=app, required=resolution, branch=tag, app_dir=app_path, no_git=no_git
+	)
 
 	if not skip_assets:
 		build_assets(bench_path=bench_path, app=app)

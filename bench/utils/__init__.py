@@ -125,7 +125,10 @@ def check_latest_version():
 		local_version = Version(VERSION)
 
 		if pypi_version > local_version:
-			log(f"A newer version of bench is available: {local_version} → {pypi_version}", stderr=True)
+			log(
+				f"A newer version of bench is available: {local_version} → {pypi_version}",
+				stderr=True,
+			)
 
 
 def pause_exec(seconds=10):

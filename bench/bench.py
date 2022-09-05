@@ -186,6 +186,7 @@ class BenchApps(MutableSequence):
 		app_name: Union[str, None] = None,
 		branch: Union[str, None] = None,
 		required: List = UNSET_ARG,
+		no_git: bool = False,
 	):
 		if required == UNSET_ARG:
 			required = []
@@ -222,21 +223,27 @@ class BenchApps(MutableSequence):
 			version = get_current_version(app_name, self.bench.name)
 
 			app_dir = os.path.join(self.apps_path, app_dir)
-			if not branch:
-				branch = (
-					subprocess.check_output("git rev-parse --abbrev-ref HEAD", shell=True, cwd=app_dir)
+			if not no_git:
+				if not branch:
+					branch = (
+						subprocess.check_output(
+							"git rev-parse --abbrev-ref HEAD", shell=True, cwd=app_dir
+						)
+						.decode("utf-8")
+						.rstrip()
+					)
+
+				commit_hash = (
+					subprocess.check_output(f"git rev-parse {branch}", shell=True, cwd=app_dir)
 					.decode("utf-8")
 					.rstrip()
 				)
 
-			commit_hash = (
-				subprocess.check_output(f"git rev-parse {branch}", shell=True, cwd=app_dir)
-				.decode("utf-8")
-				.rstrip()
-			)
-
 			self.states[app_name] = {
-				"resolution": {"commit_hash": commit_hash, "branch": branch},
+				"is_repo": not no_git,
+				"resolution": "not a repo"
+				if no_git
+				else {"commit_hash": commit_hash, "branch": branch},
 				"required": required,
 				"idx": len(self.states) + 1,
 				"version": version,
@@ -251,6 +258,7 @@ class BenchApps(MutableSequence):
 		app_dir: Union[str, None] = None,
 		branch: Union[str, None] = None,
 		required: List = UNSET_ARG,
+		no_git: bool = False,
 	):
 		if required == UNSET_ARG:
 			required = []
@@ -260,7 +268,7 @@ class BenchApps(MutableSequence):
 			f.write("\n".join(self.apps))
 
 		self.update_apps_states(
-			app_name=app_name, app_dir=app_dir, branch=branch, required=required
+			app_name=app_name, app_dir=app_dir, branch=branch, required=required, no_git=no_git
 		)
 
 	def initialize_apps(self):
