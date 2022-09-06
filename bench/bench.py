@@ -34,6 +34,7 @@ from bench.utils.bench import (
 )
 from bench.utils.render import job, step
 from bench.utils.app import get_current_version
+from bench.app import is_git_repo
 
 
 if TYPE_CHECKING:
@@ -186,7 +187,6 @@ class BenchApps(MutableSequence):
 		app_name: Union[str, None] = None,
 		branch: Union[str, None] = None,
 		required: List = UNSET_ARG,
-		no_git: bool = False,
 	):
 		if required == UNSET_ARG:
 			required = []
@@ -223,7 +223,8 @@ class BenchApps(MutableSequence):
 			version = get_current_version(app_name, self.bench.name)
 
 			app_dir = os.path.join(self.apps_path, app_dir)
-			if not no_git:
+			is_repo = is_git_repo(app_dir)
+			if is_repo:
 				if not branch:
 					branch = (
 						subprocess.check_output(
@@ -240,9 +241,9 @@ class BenchApps(MutableSequence):
 				)
 
 			self.states[app_name] = {
-				"is_repo": not no_git,
+				"is_repo": is_repo,
 				"resolution": "not a repo"
-				if no_git
+				if not is_repo
 				else {"commit_hash": commit_hash, "branch": branch},
 				"required": required,
 				"idx": len(self.states) + 1,
@@ -258,7 +259,6 @@ class BenchApps(MutableSequence):
 		app_dir: Union[str, None] = None,
 		branch: Union[str, None] = None,
 		required: List = UNSET_ARG,
-		no_git: bool = False,
 	):
 		if required == UNSET_ARG:
 			required = []
@@ -268,7 +268,7 @@ class BenchApps(MutableSequence):
 			f.write("\n".join(self.apps))
 
 		self.update_apps_states(
-			app_name=app_name, app_dir=app_dir, branch=branch, required=required, no_git=no_git
+			app_name=app_name, app_dir=app_dir, branch=branch, required=required
 		)
 
 	def initialize_apps(self):
