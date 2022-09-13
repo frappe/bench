@@ -5,6 +5,9 @@
   vars_files:
     - ../defaults/main.yml
   tasks:
+ 
+    - name: Setup filter
+      template: src="../templates/nginx-proxy-filter.conf.j2" dest="/etc/fail2ban/filter.d/nginx-proxy.conf"
     - name: Setup jail
       template: src="../templates/nginx-proxy-jail.conf.j2" dest="/etc/fail2ban/jail.d/nginx-proxy.conf"
     - name: restart service

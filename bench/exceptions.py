@@ -21,12 +21,22 @@ class BenchNotFoundError(Exception):
 class ValidationError(Exception):
 	pass
 
+
+class AppNotInstalledError(ValidationError):
+	pass
+
+
 class CannotUpdateReleaseBench(ValidationError):
 	pass
+
 
 class FeatureDoesNotExistError(CommandFailedError):
 	pass
 
 
 class NotInBenchDirectoryError(Exception):
+	pass
+
+
+class VersionNotFound(Exception):
 	pass

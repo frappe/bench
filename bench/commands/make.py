@@ -37,9 +37,7 @@ import click
 	help="Skip redis config generation if already specifying the common-site-config file",
 )
 @click.option("--skip-assets", is_flag=True, default=False, help="Do not build assets")
-@click.option(
-	"--install-app", help="Install particular app after initialization"
-)
+@click.option("--install-app", help="Install particular app after initialization")
 @click.option("--verbose", is_flag=True, help="Verbose output during install")
 def init(
 	path,
@@ -69,7 +67,7 @@ def init(
 	try:
 		init(
 			path,
-			apps_path=apps_path, # can be used from --config flag? Maybe config file could have more info?
+			apps_path=apps_path,  # can be used from --config flag? Maybe config file could have more info?
 			no_procfile=no_procfile,
 			no_backups=no_backups,
 			frappe_path=frappe_path,
@@ -131,10 +129,29 @@ def drop(path):
 @click.option("--overwrite", is_flag=True, default=False)
 @click.option("--skip-assets", is_flag=True, default=False, help="Do not build assets")
 @click.option(
+	"--soft-link",
+	is_flag=True,
+	default=False,
+	help="Create a soft link to git repo instead of clone.",
+)
+@click.option(
 	"--init-bench", is_flag=True, default=False, help="Initialize Bench if not in one"
 )
+@click.option(
+	"--resolve-deps",
+	is_flag=True,
+	default=False,
+	help="Resolve dependencies before installing app",
+)
 def get_app(
-	git_url, branch, name=None, overwrite=False, skip_assets=False, init_bench=False
+	git_url,
+	branch,
+	name=None,
+	overwrite=False,
+	skip_assets=False,
+	soft_link=False,
+	init_bench=False,
+	resolve_deps=False,
 ):
 	"clone an app from the internet and set it up in your bench"
 	from bench.app import get_app
@@ -144,7 +161,9 @@ def get_app(
 		branch=branch,
 		skip_assets=skip_assets,
 		overwrite=overwrite,
+		soft_link=soft_link,
 		init_bench=init_bench,
+		resolve_deps=resolve_deps,
 	)
 
 
@@ -153,7 +172,7 @@ def get_app(
 	"--no-git",
 	is_flag=True,
 	flag_value="--no-git",
-	help="Do not initialize git repository for the app (available in Frappe v14+)"
+	help="Do not initialize git repository for the app (available in Frappe v14+)",
 )
 @click.argument("app-name")
 def new_app(app_name, no_git=None):
@@ -168,12 +187,14 @@ def new_app(app_name, no_git=None):
 		"Completely remove app from bench and re-build assets if not installed on any site"
 	),
 )
+@click.option("--no-backup", is_flag=True, help="Do not backup app before removing")
+@click.option("--force", is_flag=True, help="Force remove app")
 @click.argument("app-name")
-def remove_app(app_name):
+def remove_app(app_name, no_backup=False, force=False):
 	from bench.bench import Bench
 
 	bench = Bench(".")
-	bench.uninstall(app_name)
+	bench.uninstall(app_name, no_backup=no_backup, force=force)
 
 
 @click.command("exclude-app", help="Exclude app from updating")

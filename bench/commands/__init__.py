@@ -19,10 +19,17 @@ from bench.utils.cli import (
 	expose_value=False,
 )
 @click.option(
-	"--use-feature", is_eager=True, callback=use_experimental_feature, expose_value=False,
+	"--use-feature",
+	is_eager=True,
+	callback=use_experimental_feature,
+	expose_value=False,
 )
 @click.option(
-	"-v", "--verbose", is_flag=True, callback=setup_verbosity, expose_value=False,
+	"-v",
+	"--verbose",
+	is_flag=True,
+	callback=setup_verbosity,
+	expose_value=False,
 )
 def bench_command(bench_path="."):
 	import bench
@@ -66,16 +73,11 @@ bench_command.add_command(switch_to_develop)
 
 from bench.commands.utils import (
 	backup_all_sites,
-	backup_site,
 	bench_src,
-	clear_command_cache,
 	disable_production,
 	download_translations,
 	find_benches,
-	generate_command_cache,
 	migrate_env,
-	prepare_beta_release,
-	release,
 	renew_lets_encrypt,
 	restart,
 	set_mariadb_host,
@@ -100,17 +102,12 @@ bench_command.add_command(set_redis_cache_host)
 bench_command.add_command(set_redis_queue_host)
 bench_command.add_command(set_redis_socketio_host)
 bench_command.add_command(download_translations)
-bench_command.add_command(backup_site)
 bench_command.add_command(backup_all_sites)
-bench_command.add_command(release)
 bench_command.add_command(renew_lets_encrypt)
 bench_command.add_command(disable_production)
 bench_command.add_command(bench_src)
-bench_command.add_command(prepare_beta_release)
 bench_command.add_command(find_benches)
 bench_command.add_command(migrate_env)
-bench_command.add_command(generate_command_cache)
-bench_command.add_command(clear_command_cache)
 
 from bench.commands.setup import setup
 

@@ -1,12 +1,18 @@
+# imports - standard imports
 import os
+import pathlib
 import re
-from setuptools.config import read_configuration
 import sys
 import subprocess
+from typing import List
+from functools import lru_cache
+
+# imports - module imports
 from bench.exceptions import (
 	InvalidRemoteException,
 	InvalidBranchException,
 	CommandFailedError,
+	VersionNotFound,
 )
 from bench.app import get_repo_dir
 
@@ -107,7 +113,11 @@ def switch_to_develop(apps=None, bench_path=".", upgrade=True):
 
 
 def get_version_from_string(contents, field="__version__"):
-	match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % field, contents)
+	match = re.search(
+		r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])" % field, contents, flags=(re.S | re.M)
+	)
+	if not match:
+		raise VersionNotFound(f"{contents} is not a valid version")
 	return match.group(2)
 
 
@@ -154,7 +164,7 @@ def get_upstream_version(app, branch=None, bench_path="."):
 def get_current_frappe_version(bench_path="."):
 	try:
 		return get_major_version(get_current_version("frappe", bench_path=bench_path))
-	except IOError:
+	except OSError:
 		return 0
 
 
@@ -163,6 +173,35 @@ def get_current_branch(app, bench_path="."):
 
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
 	return get_cmd_output("basename $(git symbolic-ref -q HEAD)", cwd=repo_dir)
+
+
+@lru_cache(maxsize=5)
+def get_required_deps(org, name, branch, deps="hooks.py"):
+	import requests
+	import base64
+
+	git_api_url = f"https://api.github.com/repos/{org}/{name}/contents/{name}/{deps}"
+	params = {"ref": branch or "develop"}
+	res = requests.get(url=git_api_url, params=params).json()
+
+	if "message" in res:
+		git_url = f"https://raw.githubusercontent.com/{org}/{name}/{params['ref']}/{name}/{deps}"
+		return requests.get(git_url).text
+
+	return base64.decodebytes(res["content"].encode()).decode()
+
+
+def required_apps_from_hooks(required_deps: str, local: bool = False) -> List:
+	import ast
+
+	required_apps_re = re.compile(r"required_apps\s+=\s+(.*)")
+
+	if local:
+		required_deps = pathlib.Path(required_deps).read_text()
+
+	_req_apps_tag = required_apps_re.search(required_deps)
+	req_apps_tag = _req_apps_tag[1]
+	return ast.literal_eval(req_apps_tag)
 
 
 def get_remote(app, bench_path="."):
@@ -181,25 +220,49 @@ def get_remote(app, bench_path="."):
 		return contents.splitlines()[0].split()[0]
 
 
-def get_app_name(bench_path, repo_name):
+def get_app_name(bench_path: str, folder_name: str) -> str:
+	"""Retrieves `name` attribute of app - equivalent to distribution name
+	of python package. Fetches from pyproject.toml, setup.cfg or setup.py
+	whichever defines it in that order.
+	"""
 	app_name = None
 	apps_path = os.path.join(os.path.abspath(bench_path), "apps")
-	config_path = os.path.join(apps_path, repo_name, "setup.cfg")
-	if os.path.exists(config_path):
-		config = read_configuration(config_path)
+
+	pyproject_path = os.path.join(apps_path, folder_name, "pyproject.toml")
+	config_py_path = os.path.join(apps_path, folder_name, "setup.cfg")
+	setup_py_path = os.path.join(apps_path, folder_name, "setup.py")
+
+	if os.path.exists(pyproject_path):
+		try:
+			from tomli import load
+		except ImportError:
+			from tomllib import load
+
+		with open(pyproject_path, "rb") as f:
+			app_name = load(f).get("project", {}).get("name")
+
+	if not app_name and os.path.exists(config_py_path):
+		from setuptools.config import read_configuration
+
+		config = read_configuration(config_py_path)
 		app_name = config.get("metadata", {}).get("name")
 
 	if not app_name:
 		# retrieve app name from setup.py as fallback
-		app_path = os.path.join(apps_path, repo_name, "setup.py")
-		with open(app_path, "rb") as f:
-			app_name = re.search(r'name\s*=\s*[\'"](.*)[\'"]', f.read().decode("utf-8")).group(1)
+		with open(setup_py_path, "rb") as f:
+			app_name = re.search(r'name\s*=\s*[\'"](.*)[\'"]', f.read().decode("utf-8"))[1]
 
-	if app_name and repo_name != app_name:
-		os.rename(os.path.join(apps_path, repo_name), os.path.join(apps_path, app_name))
+	if app_name and folder_name != app_name:
+		os.rename(os.path.join(apps_path, folder_name), os.path.join(apps_path, app_name))
 		return app_name
 
-	return repo_name
+	return folder_name
+
+
+def check_existing_dir(bench_path, repo_name):
+	cloned_path = os.path.join(bench_path, "apps", repo_name)
+	dir_already_exists = os.path.isdir(cloned_path)
+	return dir_already_exists, cloned_path
 
 
 def get_current_version(app, bench_path="."):
@@ -211,6 +274,8 @@ def get_current_version(app, bench_path="."):
 
 	try:
 		if os.path.exists(config_path):
+			from setuptools.config import read_configuration
+
 			config = read_configuration(config_path)
 			current_version = config.get("metadata", {}).get("version")
 		if not current_version:

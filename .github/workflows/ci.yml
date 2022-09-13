@@ -1,0 +1,122 @@
+name: 'CI'
+
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches: [ develop ]
+
+permissions:
+  contents: read
+
+jobs:
+  base_setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    strategy:
+      matrix:
+        python-version: [ '3.7', '3.8', '3.9', '3.10' ]
+
+    name: Base (${{ matrix.python-version }})
+
+    services:
+      mariadb:
+        image: mariadb:10.6
+        env:
+          MARIADB_ROOT_PASSWORD: travis
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 14
+      - run: |
+          wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb;
+          sudo apt install ./wkhtmltox_0.12.6-1.focal_amd64.deb;
+          sudo apt install redis-server
+
+          python -m pip install -U --no-cache-dir --force-reinstall urllib3 pyOpenSSL ndg-httpsclient pyasn1 wheel setuptools pip;
+          python -m pip install -U -e ${GITHUB_WORKSPACE};
+
+      - run: python ${GITHUB_WORKSPACE}/bench/tests/test_init.py TestBenchInit.basic
+
+  production_setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    strategy:
+      matrix:
+        python-version: [ '3.7', '3.10' ]
+
+    name: Production (${{ matrix.python-version }})
+
+    services:
+      mariadb:
+        image: mariadb:10.6
+        env:
+          MARIADB_ROOT_PASSWORD: travis
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 14
+      - run: |
+          wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb;
+          sudo apt install ./wkhtmltox_0.12.6-1.focal_amd64.deb;
+          sudo apt install redis-server
+
+          python -m pip install -U --no-cache-dir --force-reinstall urllib3 pyOpenSSL ndg-httpsclient pyasn1 wheel setuptools pip;
+          python -m pip install -U -e ${GITHUB_WORKSPACE};
+
+      - run: python bench/tests/test_setup_production.py TestSetupProduction.production
+
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    strategy:
+      matrix:
+        python-version: [ '3.7', '3.10' ]
+
+    name: Tests (${{ matrix.python-version }})
+
+    services:
+      mariadb:
+        image: mariadb:10.6
+        env:
+          MARIADB_ROOT_PASSWORD: travis
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 14
+      - run: |
+          wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb;
+          sudo apt install ./wkhtmltox_0.12.6-1.focal_amd64.deb;
+          sudo apt install redis-server
+
+          python -m pip install -U --no-cache-dir --force-reinstall urllib3 pyOpenSSL ndg-httpsclient pyasn1 wheel setuptools pip;
+          python -m pip install -U -e ${GITHUB_WORKSPACE};
+
+      - run: python -m unittest -v bench.tests.test_utils && python -m unittest -v bench.tests.test_init
