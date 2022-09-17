@@ -201,7 +201,10 @@ class App(AppMeta):
 		active_app_path = os.path.join("apps", self.name)
 
 		if no_backup:
-			shutil.rmtree(active_app_path)
+			if not os.path.islink(active_app_path):
+				shutil.rmtree(active_app_path)
+			else:
+				os.remove(active_app_path)
 			log(f"App deleted from {active_app_path}")
 		else:
 			archived_path = os.path.join("archived", "apps")
