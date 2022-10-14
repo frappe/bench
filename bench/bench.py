@@ -34,6 +34,7 @@ from bench.utils.bench import (
 )
 from bench.utils.render import job, step
 from bench.utils.app import get_current_version
+from bench.app import is_git_repo
 
 
 if TYPE_CHECKING:
@@ -222,21 +223,28 @@ class BenchApps(MutableSequence):
 			version = get_current_version(app_name, self.bench.name)
 
 			app_dir = os.path.join(self.apps_path, app_dir)
-			if not branch:
-				branch = (
-					subprocess.check_output("git rev-parse --abbrev-ref HEAD", shell=True, cwd=app_dir)
+			is_repo = is_git_repo(app_dir)
+			if is_repo:
+				if not branch:
+					branch = (
+						subprocess.check_output(
+							"git rev-parse --abbrev-ref HEAD", shell=True, cwd=app_dir
+						)
+						.decode("utf-8")
+						.rstrip()
+					)
+
+				commit_hash = (
+					subprocess.check_output(f"git rev-parse {branch}", shell=True, cwd=app_dir)
 					.decode("utf-8")
 					.rstrip()
 				)
 
-			commit_hash = (
-				subprocess.check_output(f"git rev-parse {branch}", shell=True, cwd=app_dir)
-				.decode("utf-8")
-				.rstrip()
-			)
-
 			self.states[app_name] = {
-				"resolution": {"commit_hash": commit_hash, "branch": branch},
+				"is_repo": is_repo,
+				"resolution": "not a repo"
+				if not is_repo
+				else {"commit_hash": commit_hash, "branch": branch},
 				"required": required,
 				"idx": len(self.states) + 1,
 				"version": version,
