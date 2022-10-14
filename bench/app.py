@@ -1,5 +1,4 @@
 # imports - standard imports
-from functools import lru_cache
 import json
 import logging
 import os
@@ -10,11 +9,12 @@ import sys
 import typing
 from collections import OrderedDict
 from datetime import date
+from functools import lru_cache
 from urllib.parse import urlparse
 
 # imports - third party imports
 import click
-from git import Repo
+import git
 
 # imports - module imports
 import bench
@@ -66,12 +66,21 @@ class AppMeta:
 		self.branch = branch
 		self.app_name = None
 		self.git_repo = None
+		self.is_repo = (
+			is_git_repo(app_path=get_repo_dir(self.name))
+			if os.path.exists(get_repo_dir(self.name))
+			else True
+		)
 		self.mount_path = os.path.abspath(
 			os.path.join(urlparse(self.name).netloc, urlparse(self.name).path)
 		)
 		self.setup_details()
 
 	def setup_details(self):
+		# support for --no-git
+		if not self.is_repo:
+			self.repo = self.app_name = self.name
+			return
 		# fetch meta from installed apps
 		if self.bench and os.path.exists(os.path.join(self.bench.name, "apps", self.name)):
 			self.mount_path = os.path.join(self.bench.name, "apps", self.name)
@@ -99,7 +108,7 @@ class AppMeta:
 
 	def _setup_details_from_mounted_disk(self):
 		# If app is a git repo
-		self.git_repo = Repo(self.mount_path)
+		self.git_repo = git.Repo(self.mount_path)
 		try:
 			self._setup_details_from_git_url(self.git_repo.remotes[0].url)
 			if not (self.branch or self.tag):
@@ -192,7 +201,10 @@ class App(AppMeta):
 		active_app_path = os.path.join("apps", self.name)
 
 		if no_backup:
-			shutil.rmtree(active_app_path)
+			if not os.path.islink(active_app_path):
+				shutil.rmtree(active_app_path)
+			else:
+				os.remove(active_app_path)
 			log(f"App deleted from {active_app_path}")
 		else:
 			archived_path = os.path.join("archived", "apps")
@@ -661,6 +673,14 @@ def use_rq(bench_path):
 
 def get_repo_dir(app, bench_path="."):
 	return os.path.join(bench_path, "apps", app)
+
+
+def is_git_repo(app_path):
+	try:
+		git.Repo(app_path, search_parent_directories=False)
+		return True
+	except git.exc.InvalidGitRepositoryError:
+		return False
 
 
 def install_apps_from_path(path, bench_path="."):
