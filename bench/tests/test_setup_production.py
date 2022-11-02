@@ -103,7 +103,6 @@ class TestSetupProduction(TestBenchBase):
 				f"program:{bench_name}-frappe-web",
 				f"program:{bench_name}-redis-cache",
 				f"program:{bench_name}-redis-queue",
-				f"program:{bench_name}-redis-socketio",
 				f"group:{bench_name}-web",
 				f"group:{bench_name}-workers",
 				f"group:{bench_name}-redis",
@@ -150,7 +149,6 @@ class TestSetupProduction(TestBenchBase):
 			# "{bench_name}-web:{bench_name}-node-socketio[\s]+RUNNING",
 			r"{bench_name}-redis:{bench_name}-redis-cache[\s]+RUNNING",
 			r"{bench_name}-redis:{bench_name}-redis-queue[\s]+RUNNING",
-			r"{bench_name}-redis:{bench_name}-redis-socketio[\s]+RUNNING",
 		]
 
 		if use_rq:

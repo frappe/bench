@@ -36,7 +36,6 @@ def generate_supervisor_config(bench_path, user=None, yes=False, skip_redis=Fals
 			"redis_server": which("redis-server"),
 			"node": which("node") or which("nodejs"),
 			"redis_cache_config": os.path.join(bench_dir, "config", "redis_cache.conf"),
-			"redis_socketio_config": os.path.join(bench_dir, "config", "redis_socketio.conf"),
 			"redis_queue_config": os.path.join(bench_dir, "config", "redis_queue.conf"),
 			"webserver_port": config.get("webserver_port", 8000),
 			"gunicorn_workers": config.get(

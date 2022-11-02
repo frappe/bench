@@ -84,7 +84,7 @@ def make_ports(bench_path):
 		"socketio_port": 9000,
 		"file_watcher_port": 6787,
 		"redis_queue": 11000,
-		"redis_socketio": 12000,
+		"redis_socketio": 13000,
 		"redis_cache": 13000,
 	}
 
