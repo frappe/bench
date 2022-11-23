@@ -9,7 +9,12 @@ import click
 import bench
 from bench.app import use_rq
 from bench.bench import Bench
-from bench.config.common_site_config import get_gunicorn_workers, update_config, get_default_max_requests, compute_max_requests_jitter
+from bench.config.common_site_config import (
+	get_gunicorn_workers,
+	update_config,
+	get_default_max_requests,
+	compute_max_requests_jitter,
+)
 from bench.utils import exec_cmd, which, get_bench_name
 
 
@@ -61,8 +66,12 @@ def generate_systemd_config(
 			get_bench_name(bench_path) + "-frappe-long-worker@" + str(i + 1) + ".service"
 		)
 
-	web_worker_count = config.get("gunicorn_workers", get_gunicorn_workers()["gunicorn_workers"])
-	max_requests = config.get("gunicorn_max_requests", get_default_max_requests(web_worker_count))
+	web_worker_count = config.get(
+		"gunicorn_workers", get_gunicorn_workers()["gunicorn_workers"]
+	)
+	max_requests = config.get(
+		"gunicorn_max_requests", get_default_max_requests(web_worker_count)
+	)
 
 	bench_info = {
 		"bench_dir": bench_dir,

@@ -8,7 +8,12 @@ import bench
 from bench.app import use_rq
 from bench.utils import get_bench_name, which
 from bench.bench import Bench
-from bench.config.common_site_config import update_config, get_gunicorn_workers, get_default_max_requests, compute_max_requests_jitter
+from bench.config.common_site_config import (
+	update_config,
+	get_gunicorn_workers,
+	get_default_max_requests,
+	compute_max_requests_jitter,
+)
 
 # imports - third party imports
 import click
@@ -26,8 +31,12 @@ def generate_supervisor_config(bench_path, user=None, yes=False, skip_redis=Fals
 	template = bench.config.env().get_template("supervisor.conf")
 	bench_dir = os.path.abspath(bench_path)
 
-	web_worker_count = config.get("gunicorn_workers", get_gunicorn_workers()["gunicorn_workers"])
-	max_requests = config.get("gunicorn_max_requests", get_default_max_requests(web_worker_count))
+	web_worker_count = config.get(
+		"gunicorn_workers", get_gunicorn_workers()["gunicorn_workers"]
+	)
+	max_requests = config.get(
+		"gunicorn_max_requests", get_default_max_requests(web_worker_count)
+	)
 
 	config = template.render(
 		**{

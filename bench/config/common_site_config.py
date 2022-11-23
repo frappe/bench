@@ -17,6 +17,7 @@ default_config = {
 
 DEFAULT_MAX_REQUESTS = 5000
 
+
 def setup_config(bench_path):
 	make_pid_folder(bench_path)
 	bench_config = get_config(bench_path)
@@ -62,8 +63,10 @@ def get_gunicorn_workers():
 
 	return {"gunicorn_workers": multiprocessing.cpu_count() * 2 + 1}
 
+
 def compute_max_requests_jitter(max_requests: int) -> int:
 	return int(max_requests * 0.1)
+
 
 def get_default_max_requests(worker_count: int):
 	"""Get max requests and jitter config based on number of available workers."""
@@ -73,7 +76,6 @@ def get_default_max_requests(worker_count: int):
 		# can be annoying. Hence not enabled by default.
 		return 0
 	return DEFAULT_MAX_REQUESTS
-
 
 
 def update_config_for_frappe(config, bench_path):
