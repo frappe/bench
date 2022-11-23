@@ -398,6 +398,9 @@ def update(
 
 	if not (pull or patch or build or requirements):
 		pull, patch, build, requirements = True, True, True, True
+		
+		if not restart_supervisor and not restart_systemd:
+			restart_supervisor, restart_systemd = True, True
 
 	if apps and pull:
 		apps = [app.strip() for app in re.split(",| ", apps) if app]
