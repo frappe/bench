@@ -9,7 +9,12 @@ import click
 import bench
 from bench.app import use_rq
 from bench.bench import Bench
-from bench.config.common_site_config import get_gunicorn_workers, update_config
+from bench.config.common_site_config import (
+	get_gunicorn_workers,
+	update_config,
+	get_default_max_requests,
+	compute_max_requests_jitter,
+)
 from bench.utils import exec_cmd, which, get_bench_name
 
 
@@ -61,6 +66,13 @@ def generate_systemd_config(
 			get_bench_name(bench_path) + "-frappe-long-worker@" + str(i + 1) + ".service"
 		)
 
+	web_worker_count = config.get(
+		"gunicorn_workers", get_gunicorn_workers()["gunicorn_workers"]
+	)
+	max_requests = config.get(
+		"gunicorn_max_requests", get_default_max_requests(web_worker_count)
+	)
+
 	bench_info = {
 		"bench_dir": bench_dir,
 		"sites_dir": os.path.join(bench_dir, "sites"),
@@ -73,9 +85,9 @@ def generate_systemd_config(
 		"redis_socketio_config": os.path.join(bench_dir, "config", "redis_socketio.conf"),
 		"redis_queue_config": os.path.join(bench_dir, "config", "redis_queue.conf"),
 		"webserver_port": config.get("webserver_port", 8000),
-		"gunicorn_workers": config.get(
-			"gunicorn_workers", get_gunicorn_workers()["gunicorn_workers"]
-		),
+		"gunicorn_workers": web_worker_count,
+		"gunicorn_max_requests": max_requests,
+		"gunicorn_max_requests_jitter": compute_max_requests_jitter(max_requests),
 		"bench_name": get_bench_name(bench_path),
 		"worker_target_wants": " ".join(background_workers),
 		"bench_cmd": which("bench"),
