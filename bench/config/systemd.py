@@ -105,7 +105,7 @@ def generate_systemd_config(
 	setup_web_config(bench_info, bench_path)
 	setup_redis_config(bench_info, bench_path)
 
-	update_config({"restart_systemd_on_update": True}, bench_path=bench_path)
+	update_config({"restart_systemd_on_update": False}, bench_path=bench_path)
 	update_config({"restart_supervisor_on_update": False}, bench_path=bench_path)
 
 
