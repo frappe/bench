@@ -11,9 +11,7 @@ watch: bench watch
 {% endif %}
 {% if use_rq -%}
 schedule: bench schedule
-worker_short: bench worker --queue short 1>> logs/worker.log 2>> logs/worker.error.log
-worker_long: bench worker --queue long 1>> logs/worker.log 2>> logs/worker.error.log
-worker_default: bench worker --queue default 1>> logs/worker.log 2>> logs/worker.error.log
+worker: bench worker 1>> logs/worker.log 2>> logs/worker.error.log
 {% for worker_name, worker_details in workers.items() %}
 worker_{{ worker_name }}: bench worker --queue {{ worker_name }} 1>> logs/worker.log 2>> logs/worker.error.log
 {% endfor %}
