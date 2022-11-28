@@ -198,7 +198,7 @@ class App(AppMeta):
 
 	@step(title="Archiving App {repo}", success="App {repo} Archived")
 	def remove(self, no_backup: bool = False):
-		active_app_path = os.path.join("apps", self.name)
+		active_app_path = os.path.join("apps", self.repo)
 
 		if no_backup:
 			if not os.path.islink(active_app_path):
