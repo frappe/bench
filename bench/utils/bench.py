@@ -218,7 +218,7 @@ def migrate_env(python, backup=False):
 		venv_creation = exec_cmd(f"{virtualenv} --python {python} {pvenv}")
 
 		apps = " ".join([f"-e {os.path.join('apps', app)}" for app in bench.apps])
-		packages_setup = exec_cmd(f"{pvenv} -m pip install --upgrade {apps}")
+		packages_setup = exec_cmd(f"{pvenv}/bin/python -m pip install --upgrade {apps}")
 
 		logger.log(f"Migration Successful to {python}")
 	except Exception:
