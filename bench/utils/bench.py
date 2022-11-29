@@ -175,11 +175,16 @@ def migrate_env(python, backup=False):
 	nvenv = "env"
 	path = os.getcwd()
 	python = which(python)
-	virtualenv = which("virtualenv")
-	if not virtualenv:
-		raise FileNotFoundError("`virtualenv` not found. Install it and try again.")
-
 	pvenv = os.path.join(path, nvenv)
+
+	if python.startswith(pvenv):
+		# The supplied python version is in active virtualenv which we are about to nuke.
+		click.secho(
+			"Python version supplied is present in currently sourced virtual environment.\n"
+			"`deactiviate` the current virtual environment before migrating environments.",
+			fg="yellow",
+		)
+		sys.exit(1)
 
 	# Clear Cache before Bench Dies.
 	try:
@@ -212,18 +217,24 @@ def migrate_env(python, backup=False):
 		shutil.move(dest, target)
 
 	# Create virtualenv using specified python
-	venv_creation, packages_setup = 1, 1
+	def _install_app(app):
+		app_path = f"-e {os.path.join('apps', app)}"
+		exec_cmd(f"{pvenv}/bin/python -m pip install --upgrade {app_path}")
+
 	try:
 		logger.log(f"Setting up a New Virtual {python} Environment")
-		venv_creation = exec_cmd(f"{virtualenv} --python {python} {pvenv}")
+		exec_cmd(f"{python} -m venv {pvenv}")
 
-		apps = " ".join([f"-e {os.path.join('apps', app)}" for app in bench.apps])
-		packages_setup = exec_cmd(f"{pvenv} -m pip install --upgrade {apps}")
+		# Install frappe first
+		_install_app("frappe")
+		for app in bench.apps:
+			if str(app) != "frappe":
+				_install_app(app)
 
 		logger.log(f"Migration Successful to {python}")
 	except Exception:
-		if venv_creation or packages_setup:
-			logger.warning("Migration Error")
+		logger.warning("Python env migration Error", exc_info=True)
+		raise
 
 
 def validate_upgrade(from_ver, to_ver, bench_path="."):
