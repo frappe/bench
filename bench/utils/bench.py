@@ -175,10 +175,6 @@ def migrate_env(python, backup=False):
 	nvenv = "env"
 	path = os.getcwd()
 	python = which(python)
-	virtualenv = which("virtualenv")
-	if not virtualenv:
-		raise FileNotFoundError("`virtualenv` not found. Install it and try again.")
-
 	pvenv = os.path.join(path, nvenv)
 
 	# Clear Cache before Bench Dies.
@@ -218,7 +214,7 @@ def migrate_env(python, backup=False):
 
 	try:
 		logger.log(f"Setting up a New Virtual {python} Environment")
-		exec_cmd(f"{virtualenv} --python {python} {pvenv}")
+		exec_cmd(f"{python} -m venv {pvenv}")
 
 		# Install frappe first
 		_install_app("frappe")
