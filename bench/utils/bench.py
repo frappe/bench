@@ -212,18 +212,23 @@ def migrate_env(python, backup=False):
 		shutil.move(dest, target)
 
 	# Create virtualenv using specified python
-	venv_creation, packages_setup = 1, 1
+	def _install_app(app):
+		app_path = f"-e {os.path.join('apps', app)}"
+		exec_cmd(f"{pvenv}/bin/python -m pip install --upgrade {app_path}")
+
 	try:
 		logger.log(f"Setting up a New Virtual {python} Environment")
-		venv_creation = exec_cmd(f"{virtualenv} --python {python} {pvenv}")
+		exec_cmd(f"{virtualenv} --python {python} {pvenv}")
 
-		apps = " ".join([f"-e {os.path.join('apps', app)}" for app in bench.apps])
-		packages_setup = exec_cmd(f"{pvenv}/bin/python -m pip install --upgrade {apps}")
+		# Install frappe first
+		_install_app("frappe")
+		for app in bench.apps:
+			if str(app) != "frappe":
+				_install_app(app)
 
 		logger.log(f"Migration Successful to {python}")
 	except Exception:
-		if venv_creation or packages_setup:
-			logger.warning("Migration Error", exc_info=True)
+		logger.warning("Python env migration Error", exc_info=True)
 		raise
 
 
