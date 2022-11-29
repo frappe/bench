@@ -223,7 +223,8 @@ def migrate_env(python, backup=False):
 		logger.log(f"Migration Successful to {python}")
 	except Exception:
 		if venv_creation or packages_setup:
-			logger.warning("Migration Error")
+			logger.warning("Migration Error", exc_info=True)
+		raise
 
 
 def validate_upgrade(from_ver, to_ver, bench_path="."):
