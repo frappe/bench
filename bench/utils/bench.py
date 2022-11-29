@@ -177,6 +177,15 @@ def migrate_env(python, backup=False):
 	python = which(python)
 	pvenv = os.path.join(path, nvenv)
 
+	if python.startswith(pvenv):
+		# The supplied python version is in active virtualenv which we are about to nuke.
+		click.secho(
+			"Python version supplied is present in currently sourced virtual environment.\n"
+			"`deactiviate` the current virtual environment before migrating environments.",
+			fg="yellow",
+		)
+		sys.exit(1)
+
 	# Clear Cache before Bench Dies.
 	try:
 		config = bench.conf
