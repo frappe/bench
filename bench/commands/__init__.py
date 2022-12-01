@@ -89,6 +89,7 @@ from bench.commands.utils import (
 	set_ssl_certificate_key,
 	set_url_root,
 	start,
+	print_logs
 )
 
 bench_command.add_command(start)
@@ -108,6 +109,7 @@ bench_command.add_command(disable_production)
 bench_command.add_command(bench_src)
 bench_command.add_command(find_benches)
 bench_command.add_command(migrate_env)
+bench_command.add_command(print_logs)
 
 from bench.commands.setup import setup
 

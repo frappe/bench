@@ -176,3 +176,10 @@ def migrate_env(python, backup=True):
 	from bench.utils.bench import migrate_env
 
 	migrate_env(python=python, backup=backup)
+
+@click.command("log",help="Show tail of logs")
+@click.argument("log-file")
+@click.option("-n","--number",type=int,default=20)
+def print_logs(log_file,number):
+	from bench.utils.bench import get_logs
+	get_logs(log_file,number)

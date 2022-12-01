@@ -630,3 +630,10 @@ To switch to your required branch, run the following commands: bench switch-to-b
 			)
 
 			sys.exit(1)
+
+def get_logs(_log,n):
+	log_path = os.path.join(os.path.abspath('.'),"logs",f"{_log}.log")
+	if os.path.exists(log_path):
+		subprocess.run([which("tail"),"-n",str(n),log_path])
+	else:
+		log(f"No log file of {_log}.log found",level=2)
