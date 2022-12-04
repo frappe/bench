@@ -4,67 +4,113 @@ import subprocess
 import os
 import sys
 import time
-from shutil import which
+import urllib.request
+from shutil import which, unpack_archive, move
 import platform
-from secrets import token_bytes
-from base64 import b64encode
+from hashlib import sha224
+import logging
 
-CRED = "\033[31m"
-CEND = "\033[0m"
-CGRN = "\33[92m"
-CYLW = "\33[93m"
+logging.basicConfig(
+    filename="easy-install.log",
+    filemode="w",
+    format="%(levelname)s - %(message)s",
+    level=logging.INFO,
+)
+
+
+def cprint(*args, level: int = 1):
+    """
+    logs colorful messages
+    level = 1 : RED
+    level = 2 : GREEN
+    level = 3 : YELLOW
+
+    default level = 1
+    """
+    CRED = "\033[31m"
+    CGRN = "\33[92m"
+    CYLW = "\33[93m"
+    reset = "\033[0m"
+    message = " ".join(map(str, args))
+    if level == 1:
+        print(CRED, message, reset)
+    if level == 2:
+        print(CGRN, message, reset)
+    if level == 3:
+        print(CYLW, message, reset)
 
 
 def clone_frappe_docker_repo() -> None:
     try:
-        subprocess.run(
-            ["git", "clone", "https://github.com/frappe/frappe_docker"], check=True
+        urllib.request.urlretrieve(
+            "https://github.com/frappe/frappe_docker/archive/refs/heads/main.zip",
+            "frappe_docker.zip",
         )
+        logging.info("Downloaded frappe_docker zip file from GitHub")
+        unpack_archive(
+            "frappe_docker.zip", "."
+        )  # Unzipping the frappe_docker.zip creates a folder "frappe_docker-main"
+        move("frappe_docker-main", "frappe_docker")
+        logging.info("Unzipped and Renamed frappe_docker")
+        os.remove("frappe_docker.zip")
+        logging.info("Removed the downloaded zip file")
     except Exception as e:
-        print(f"\n{CRED}Cloning frappe_docker Failed{CEND}\n\n", e)
+        logging.error("Download and unzip failed", exc_info=True)
+        cprint("\nCloning frappe_docker Failed\n\n", "[ERROR]: ", e, level=1)
 
 
-def write_to_env(wd, site,db_pass,email):
-    site_name = site if site != "" else ""
+def write_to_env(wd: str, site: str, db_pass: str, admin_pass: str, email: str) -> None:
+    site_name = site or ""
     with open(os.path.join(wd, ".env"), "w") as f:
         f.writelines(
             [
-                "FRAPPE_VERSION=v14.17.1\n",
-                "ERPNEXT_VERSION=v14.9.0\n",
+                "FRAPPE_VERSION=v14\n",  # Defaults to latest version of Frappe
+                "ERPNEXT_VERSION=v14\n",  # defaults to latest version of ERPNext
                 f"DB_PASSWORD={db_pass}\n",
                 "DB_HOST=db\n",
                 "DB_PORT=3306\n",
                 "REDIS_CACHE=redis-cache:6379\n",
                 "REDIS_QUEUE=redis-queue:6379\n",
                 "REDIS_SOCKETIO=redis-socketio:6379\n",
-                f"LETSENCRYPT_EMAIL={email}\n"
-                f"FRAPPE_SITE_NAME_HEADER={site_name}",
+                f"LETSENCRYPT_EMAIL={email}\n",
+                f"FRAPPE_SITE_NAME_HEADER={site_name}\n",
+                f"SITE_ADMIN_PASS={admin_pass}",
             ]
         )
 
-def generate_pass(length:int=9) -> str:
-    return b64encode(token_bytes(length)).decode()
-    
+
+def generate_pass(length: int = 12) -> str:
+    return sha224(repr(time.time()).encode()).hexdigest()[:length]
+
 
 def check_repo_exists() -> bool:
     return os.path.exists(os.path.join(os.getcwd(), "frappe_docker"))
 
 
-def setup_prod(project: str, sitename: str,email:str):
+def setup_prod(project: str, sitename: str, email: str) -> None:
     if check_repo_exists():
-        compose_file_name = os.path.join(os.path.expanduser("~"), f"{project}-compose.yml")
+        compose_file_name = os.path.join(
+            os.path.expanduser("~"), f"{project}-compose.yml"
+        )
         docker_repo_path = os.path.join(os.getcwd(), "frappe_docker")
-        admin_pass = generate_pass()
-        db_pass = generate_pass(6)
-        print(
-            f"\n{CYLW}Please refer to .example.env file in the frappe_docker folder to know which keys to set{CEND}\n\n"
+        cprint(
+            "\nPlease refer to .example.env file in the frappe_docker folder to know which keys to set\n\n",
+            level=3,
         )
         with open(compose_file_name, "w") as f:
-            if not os.path.exists(os.path.join(docker_repo_path, "/.env")):
-                write_to_env(docker_repo_path, sitename,db_pass,email)
-                print(
-                    f"\n{CYLW}A .env file is generated with basic configs. Please edit it to fit your needs {CEND}\n"
+            admin_pass = generate_pass()
+            db_pass = generate_pass(9)
+            if not os.path.exists(os.path.join(docker_repo_path, ".env")):
+                write_to_env(docker_repo_path, sitename, db_pass, admin_pass, email)
+                cprint(
+                    "\nA .env file is generated with basic configs. Please edit it to fit to your needs \n",
+                    level=3,
                 )
+                with open(
+                    os.path.join(os.path.expanduser("~"), "passwords.txt"), "w"
+                ) as en:
+                    en.writelines(f"Administrator:{admin_pass}\n")
+                    en.writelines(f"MariaDB Root Password:{db_pass}\n")
             try:
                 # TODO: Include flags for non-https and non-erpnext installation
                 subprocess.run(
@@ -94,7 +140,9 @@ def setup_prod(project: str, sitename: str,email:str):
                 )
 
             except Exception as e:
-                print(f"\n{CRED}Generating Compose File failed{CEND}\n")
+                logging.error("Docker Compose generation failed", exc_info=True)
+                cprint("\nGenerating Compose File failed\n")
+                sys.exit(1)
         try:
             subprocess.run(
                 [
@@ -109,34 +157,43 @@ def setup_prod(project: str, sitename: str,email:str):
                 ],
                 check=True,
             )
-            
+            logging.info(f"Docker Compose file generated at ~/{project}-compose.yml")
+
         except Exception as e:
-            print(
-                f"{CRED} Docker Compose failed, please check the container logs{CEND}\n",
-                e,
-            )
-        print(f"\n{CGRN}Creating site: {sitename} {CEND}\n")
-        with open(os.path.join(os.path.expanduser("~"),"passwords.txt"),"w") as f:
-            f.writelines(f"Administrator:{admin_pass}\n")
-            f.writelines(f"MariaDB Root Password:{db_pass}\n")
+            logging.error("Prod docker-compose failed", exc_info=True)
+            cprint(" Docker Compose failed, please check the container logs\n", e)
+
+        cprint(f"\nCreating site: {sitename} \n", level=3)
+
         try:
-            subprocess.run([
-                which("docker"),"compose",
-                "-p",project,"exec","backend",
-                "bench","new-site",sitename,
-                "--db-root-password",db_pass,
-                "--admin-password",admin_pass,
-                "--install-app","erpnext"
-                ],check=True)
-        except Exception as e:
-            print(
-                f"{CRED} Bench Site creation failed{CEND}\n",
-                e,
+            subprocess.run(
+                [
+                    which("docker"),
+                    "compose",
+                    "-p",
+                    project,
+                    "exec",
+                    "backend",
+                    "bench",
+                    "new-site",
+                    sitename,
+                    "--db-root-password",
+                    db_pass,
+                    "--admin-password",
+                    admin_pass,
+                    "--install-app",
+                    "erpnext",
+                ],
+                check=True,
             )
+            logging.info("New site creation completed")
+        except Exception as e:
+            logging.error("Bench site creation failed", exc_info=True)
+            cprint("Bench Site creation failed\n", e)
     else:
         install_docker()
         clone_frappe_docker_repo()
-        setup_prod(project, sitename,email)  # Recursive
+        setup_prod(project, sitename, email)  # Recursive
 
 
 def setup_dev_instance(project: str):
@@ -156,11 +213,14 @@ def setup_dev_instance(project: str):
                 cwd=os.path.join(os.getcwd(), "frappe_docker"),
                 check=True,
             )
-            print(
-                f"{CYLW}Please go through the Development Documentation: https://github.com/frappe/frappe_docker/tree/main/development to fully complete the setup.{CEND}"
+            cprint(
+                "Please go through the Development Documentation: https://github.com/frappe/frappe_docker/tree/main/development to fully complete the setup.",
+                level=2,
             )
+            logging.info("Development Setup completed")
         except Exception as e:
-            print(f"{CRED}Setting Up Development Environment Failed\n{CEND}", e)
+            logging.error("Dev Environment setup failed", exc_info=True)
+            cprint("Setting Up Development Environment Failed\n", e)
     else:
         install_docker()
         clone_frappe_docker_repo()
@@ -168,39 +228,37 @@ def setup_dev_instance(project: str):
 
 
 def install_docker():
-    if which("docker") is None:
-        print(f"{CGRN}Docker is not installed, Installing Docker...{CEND}")
-        if platform.system() == "Darwin" or platform.system() == "Windows":
-            print(
-                f"""{CRED}
-                This script doesn't install Docker on {"Mac" if platform.system()=="Darwin" else "Windows"}.
-
-                Please go through the Docker Installation docs for your system and run this script again{CEND}"""
-            )
-            exit(1)
-        try:
-            ps = subprocess.run(
-                ["curl", "-fsSL", "https://get.docker.com"],
-                capture_output=True,
-                check=True,
-            )
-            subprocess.run(["/bin/bash"], input=ps.stdout, capture_output=True)
-            subprocess.run(
-                ["sudo", "usermod", "-aG", "docker", str(os.getenv("USER"))], check=True
-            )
-            print(f"{CYLW}Waiting Docker to start{CEND}")
-            time.sleep(10)
-            subprocess.run(
-                ["sudo", "systemctl", "restart", "docker.service"], check=True
-            )
-        except Exception as e:
-            print(f"{CRED}Failed to Install Docker{CYLW}\n", e)
-            print(
-                f"\n\n {CYLW}Try Installing Docker Manually and re-run this script again{CEND}\n\n"
-            )
-            exit(1)
-    else:
+    if which("docker") is not None:
         return
+    cprint("Docker is not installed, Installing Docker...", level=3)
+    logging.info("Docker not found, installing Docker")
+    if platform.system() == "Darwin" or platform.system() == "Windows":
+        print(
+            f"""
+            This script doesn't install Docker on {"Mac" if platform.system()=="Darwin" else "Windows"}.
+
+            Please go through the Docker Installation docs for your system and run this script again"""
+        )
+        logging.debug("Docker setup failed due to platform is not Linux")
+        sys.exit(1)
+    try:
+        ps = subprocess.run(
+            ["curl", "-fsSL", "https://get.docker.com"],
+            capture_output=True,
+            check=True,
+        )
+        subprocess.run(["/bin/bash"], input=ps.stdout, capture_output=True)
+        subprocess.run(
+            ["sudo", "usermod", "-aG", "docker", str(os.getenv("USER"))], check=True
+        )
+        cprint("Waiting Docker to start", level=3)
+        time.sleep(10)
+        subprocess.run(["sudo", "systemctl", "restart", "docker.service"], check=True)
+    except Exception as e:
+        logging.error("Installing Docker failed", exc_info=True)
+        cprint("Failed to Install Docker\n", e)
+        cprint("\n Try Installing Docker Manually and re-run this script again\n")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
@@ -217,23 +275,19 @@ if __name__ == "__main__":
         help="The Site Name for your production site",
         default="site1.local",
     )
+    parser.add_argument("-n", "--project", help="Project Name", default="frappe")
     parser.add_argument(
-        "-n",
-        "--project",
-        help="Project Name",
-        default="frappe",
-    )
-    parser.add_argument(
-        "--email",
-        help="Add email for the SSL.",
-        required="--prod" in sys.argv
+        "--email", help="Add email for the SSL.", required="--prod" in sys.argv
     )
     args = parser.parse_args()
     if args.dev:
-        print(f"\n{CGRN}Setting Up Development Instance{CEND}\n")
+        cprint("\nSetting Up Development Instance\n", level=2)
+        logging.info("Running Development Setup")
         setup_dev_instance(args.project)
     elif args.prod:
-        print(f"\n{CGRN}Setting Up Production Instance{CEND}\n")
+        cprint("\nSetting Up Production Instance\n", level=2)
+        logging.info("Running Production Setup")
         if "example.com" in args.email:
-            print(f"{CRED} Emails with example.com not acceptable{CEND}")
+            cprint("Emails with example.com not acceptable", level=1)
+            sys.exit(1)
         setup_prod(args.project, args.sitename, args.email)
