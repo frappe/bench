@@ -5,10 +5,11 @@ import os
 import sys
 import time
 import urllib.request
-from shutil import which, unpack_archive, move
-import platform
-from hashlib import sha224
 import logging
+import platform
+from shutil import which, unpack_archive, move
+from hashlib import sha224
+from typing import Dict
 
 logging.basicConfig(
     filename="easy-install.log",
@@ -58,14 +59,24 @@ def clone_frappe_docker_repo() -> None:
         logging.error("Download and unzip failed", exc_info=True)
         cprint("\nCloning frappe_docker Failed\n\n", "[ERROR]: ", e, level=1)
 
+def get_latest_version(dir) -> Dict:
+    env_vars ={}
+    with open(os.path.join(dir,"example.env")) as f:
+        for line in f:
+            if line.startswith('#') or not line.strip():
+                continue
+            key, value = line.strip().split('=', 1)
+            env_vars[key] = value
+    return env_vars
 
 def write_to_env(wd: str, site: str, db_pass: str, admin_pass: str, email: str) -> None:
     site_name = site or ""
+    example_env = get_latest_version(wd)
     with open(os.path.join(wd, ".env"), "w") as f:
         f.writelines(
             [
-                "FRAPPE_VERSION=v14\n",  # Defaults to latest version of Frappe
-                "ERPNEXT_VERSION=v14\n",  # defaults to latest version of ERPNext
+                f"FRAPPE_VERSION={example_env['FRAPPE_VERSION']}\n",  # Defaults to latest version of Frappe
+                f"ERPNEXT_VERSION={example_env['ERPNEXT_VERSION']}\n",  # defaults to latest version of ERPNext
                 f"DB_PASSWORD={db_pass}\n",
                 "DB_HOST=db\n",
                 "DB_PORT=3306\n",
@@ -98,9 +109,10 @@ def setup_prod(project: str, sitename: str, email: str) -> None:
             level=3,
         )
         with open(compose_file_name, "w") as f:
-            admin_pass = generate_pass()
-            db_pass = generate_pass(9)
+            # Writing to compose file
             if not os.path.exists(os.path.join(docker_repo_path, ".env")):
+                admin_pass = generate_pass()
+                db_pass = generate_pass(9)
                 write_to_env(docker_repo_path, sitename, db_pass, admin_pass, email)
                 cprint(
                     "\nA .env file is generated with basic configs. Please edit it to fit to your needs \n",
@@ -144,6 +156,7 @@ def setup_prod(project: str, sitename: str, email: str) -> None:
                 cprint("\nGenerating Compose File failed\n")
                 sys.exit(1)
         try:
+            # Starting with generated compose file
             subprocess.run(
                 [
                     which("docker"),
