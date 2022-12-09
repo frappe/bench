@@ -35,6 +35,7 @@ def init(
 	skip_assets=False,
 	python="python3",
 	install_app=None,
+	no_restart=False,
 ):
 	"""Initialize a new bench directory
 
@@ -83,6 +84,7 @@ def init(
 			skip_assets=True,
 			verbose=verbose,
 			resolve_deps=False,
+			no_restart=no_restart,
 		)
 
 		# fetch remote apps using config file - deprecate this!

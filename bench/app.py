@@ -346,6 +346,7 @@ def get_app(
 	soft_link=False,
 	init_bench=False,
 	resolve_deps=False,
+	no_restart=False,
 ):
 	"""bench get-app clones a Frappe App from remote (GitHub or any other git server),
 	and installs it on the current bench. This also resolves dependencies based on the
@@ -366,6 +367,8 @@ def get_app(
 	branch = app.tag
 	bench_setup = False
 	restart_bench = not init_bench
+	if no_restart:
+		restart_bench = False
 	frappe_path, frappe_branch = None, None
 
 	if resolve_deps:

@@ -38,6 +38,7 @@ import click
 )
 @click.option("--skip-assets", is_flag=True, default=False, help="Do not build assets")
 @click.option("--install-app", help="Install particular app after initialization")
+@click.option("--no-restart", is_flag=True, default=False, help="Stops bench reload after installing app")
 @click.option("--verbose", is_flag=True, help="Verbose output during install")
 def init(
 	path,
@@ -50,6 +51,7 @@ def init(
 	verbose,
 	skip_redis_config_generation,
 	clone_without_update,
+	no_restart,
 	ignore_exist=False,
 	skip_assets=False,
 	python="python3",
@@ -79,6 +81,7 @@ def init(
 			skip_assets=skip_assets,
 			python=python,
 			verbose=verbose,
+			no_restart=no_restart,
 		)
 		log(f"Bench {path} initialized", level=1)
 	except SystemExit:
@@ -143,9 +146,11 @@ def drop(path):
 	default=False,
 	help="Resolve dependencies before installing app",
 )
+@click.option("--no-restart", is_flag=True, default=False, help="Stops bench reload after installing app")
 def get_app(
 	git_url,
 	branch,
+	no_restart,
 	name=None,
 	overwrite=False,
 	skip_assets=False,
@@ -164,6 +169,7 @@ def get_app(
 		soft_link=soft_link,
 		init_bench=init_bench,
 		resolve_deps=resolve_deps,
+		no_restart=no_restart,
 	)
 
 
