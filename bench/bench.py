@@ -44,8 +44,8 @@ logger = logging.getLogger(bench.PROJECT_NAME)
 
 
 class Base:
-	def run(self, cmd, cwd=None):
-		return exec_cmd(cmd, cwd=cwd or self.cwd)
+	def run(self, cmd, cwd=None, _raise=True):
+		return exec_cmd(cmd, cwd=cwd or self.cwd, _raise=_raise)
 
 
 class Validator:
@@ -133,7 +133,7 @@ class Bench(Base, Validator):
 				raise
 		self.apps.sync()
 		# self.build() - removed because it seems unnecessary
-		self.reload()
+		self.reload(_raise=False)
 
 	@step(title="Building Bench Assets", success="Bench Assets Built")
 	def build(self):
@@ -141,16 +141,16 @@ class Bench(Base, Validator):
 		run_frappe_cmd("build", bench_path=self.name)
 
 	@step(title="Reloading Bench Processes", success="Bench Processes Reloaded")
-	def reload(self, web=False, supervisor=True, systemd=True):
+	def reload(self, web=False, supervisor=True, systemd=True, _raise=True):
 		"""If web is True, only web workers are restarted"""
 		conf = self.conf
 
 		if conf.get("developer_mode"):
 			restart_process_manager(bench_path=self.name, web_workers=web)
 		if supervisor or conf.get("restart_supervisor_on_update"):
-			restart_supervisor_processes(bench_path=self.name, web_workers=web)
+			restart_supervisor_processes(bench_path=self.name, web_workers=web, _raise=_raise)
 		if systemd and conf.get("restart_systemd_on_update"):
-			restart_systemd_processes(bench_path=self.name, web_workers=web)
+			restart_systemd_processes(bench_path=self.name, web_workers=web, _raise=_raise)
 
 	def get_installed_apps(self) -> List:
 		"""Returns list of installed apps on bench, not in excluded_apps.txt"""
