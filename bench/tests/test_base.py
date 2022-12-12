@@ -15,12 +15,10 @@ from bench.bench import Bench
 
 PYTHON_VER = sys.version_info
 
-FRAPPE_BRANCH = "version-12"
+FRAPPE_BRANCH = "version-13-hotfix"
 if PYTHON_VER.major == 3:
 	if PYTHON_VER.minor >= 10:
 		FRAPPE_BRANCH = "develop"
-	if 7 >= PYTHON_VER.minor >= 9:
-		FRAPPE_BRANCH = "version-13"
 
 
 class TestBenchBase(unittest.TestCase):
