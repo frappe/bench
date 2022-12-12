@@ -586,7 +586,9 @@ def install_app(
 		build_assets(bench_path=bench_path, app=app)
 
 	if restart_bench:
-		bench.reload()
+		# Avoiding exceptions here as production might not be set-up
+		# OR we might just be generating docker images.
+		bench.reload(_raise=False)
 
 
 def pull_apps(apps=None, bench_path=".", reset=False):

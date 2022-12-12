@@ -276,7 +276,7 @@ def patch_sites(bench_path="."):
 			raise PatchError
 
 
-def restart_supervisor_processes(bench_path=".", web_workers=False):
+def restart_supervisor_processes(bench_path=".", web_workers=False, _raise=False):
 	from bench.bench import Bench
 
 	bench = Bench(bench_path)
@@ -285,7 +285,7 @@ def restart_supervisor_processes(bench_path=".", web_workers=False):
 	bench_name = get_bench_name(bench_path)
 
 	if cmd:
-		bench.run(cmd)
+		bench.run(cmd, _raise=_raise)
 
 	else:
 		sudo = ""
@@ -312,18 +312,22 @@ def restart_supervisor_processes(bench_path=".", web_workers=False):
 		else:
 			group = "frappe:"
 
-		bench.run(f"{sudo}supervisorctl restart {group}")
+		failure = bench.run(f"{sudo}supervisorctl restart {group}", _raise=_raise)
+		if failure:
+			log("restarting supervisor failed. Use `bench restart` to retry.", level=3)
 
 
-def restart_systemd_processes(bench_path=".", web_workers=False):
+def restart_systemd_processes(bench_path=".", web_workers=False, _raise=True):
 	bench_name = get_bench_name(bench_path)
 	exec_cmd(
 		f"sudo systemctl stop -- $(systemctl show -p Requires {bench_name}.target | cut"
-		" -d= -f2)"
+		" -d= -f2)",
+		_raise=_raise,
 	)
 	exec_cmd(
 		f"sudo systemctl start -- $(systemctl show -p Requires {bench_name}.target |"
-		" cut -d= -f2)"
+		" cut -d= -f2)",
+		_raise=_raise,
 	)
 
 
