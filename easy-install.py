@@ -14,7 +14,7 @@ from typing import Dict
 logging.basicConfig(
     filename="easy-install.log",
     filemode="w",
-    format="%(levelname)s - %(message)s",
+    format="%(asctime)s - %(levelname)s - %(message)s",
     level=logging.INFO,
 )
 
@@ -91,7 +91,14 @@ def write_to_env(wd: str, site: str, db_pass: str, admin_pass: str, email: str) 
 
 
 def generate_pass(length: int = 12) -> str:
-    return sha224(repr(time.time()).encode()).hexdigest()[:length]
+	"""Generate random hash using best available randomness source."""
+	import math
+	import secrets
+
+	if not length:
+		length = 56
+
+	return secrets.token_hex(math.ceil(length / 2))[:length]
 
 
 def check_repo_exists() -> bool:
@@ -108,11 +115,11 @@ def setup_prod(project: str, sitename: str, email: str) -> None:
             "\nPlease refer to .example.env file in the frappe_docker folder to know which keys to set\n\n",
             level=3,
         )
+        admin_pass = generate_pass()
+        db_pass = generate_pass(9)
         with open(compose_file_name, "w") as f:
             # Writing to compose file
             if not os.path.exists(os.path.join(docker_repo_path, ".env")):
-                admin_pass = generate_pass()
-                db_pass = generate_pass(9)
                 write_to_env(docker_repo_path, sitename, db_pass, admin_pass, email)
                 cprint(
                     "\nA .env file is generated with basic configs. Please edit it to fit to your needs \n",
@@ -121,8 +128,8 @@ def setup_prod(project: str, sitename: str, email: str) -> None:
                 with open(
                     os.path.join(os.path.expanduser("~"), "passwords.txt"), "w"
                 ) as en:
-                    en.writelines(f"Administrator:{admin_pass}\n")
-                    en.writelines(f"MariaDB Root Password:{db_pass}\n")
+                    en.writelines(f"ADMINISTRATOR_PASSWORD={admin_pass}\n")
+                    en.writelines(f"MARIADB_ROOT_PASSWORD={db_pass}\n")
             try:
                 # TODO: Include flags for non-https and non-erpnext installation
                 subprocess.run(
