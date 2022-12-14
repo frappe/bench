@@ -59,9 +59,9 @@ def clone_frappe_docker_repo() -> None:
         logging.error("Download and unzip failed", exc_info=True)
         cprint("\nCloning frappe_docker Failed\n\n", "[ERROR]: ", e, level=1)
 
-def get_latest_version(dir) -> Dict:
+def get_from_env(dir,file) -> Dict:
     env_vars ={}
-    with open(os.path.join(dir,"example.env")) as f:
+    with open(os.path.join(dir,file)) as f:
         for line in f:
             if line.startswith('#') or not line.strip():
                 continue
@@ -69,9 +69,10 @@ def get_latest_version(dir) -> Dict:
             env_vars[key] = value
     return env_vars
 
+
 def write_to_env(wd: str, site: str, db_pass: str, admin_pass: str, email: str) -> None:
     site_name = site or ""
-    example_env = get_latest_version(wd)
+    example_env = get_from_env(wd,"example.env")
     with open(os.path.join(wd, ".env"), "w") as f:
         f.writelines(
             [
@@ -115,11 +116,13 @@ def setup_prod(project: str, sitename: str, email: str) -> None:
             "\nPlease refer to .example.env file in the frappe_docker folder to know which keys to set\n\n",
             level=3,
         )
-        admin_pass = generate_pass()
-        db_pass = generate_pass(9)
+        admin_pass = ""
+        db_pass = ""
         with open(compose_file_name, "w") as f:
             # Writing to compose file
             if not os.path.exists(os.path.join(docker_repo_path, ".env")):
+                admin_pass = generate_pass()
+                db_pass = generate_pass(9)
                 write_to_env(docker_repo_path, sitename, db_pass, admin_pass, email)
                 cprint(
                     "\nA .env file is generated with basic configs. Please edit it to fit to your needs \n",
@@ -130,6 +133,10 @@ def setup_prod(project: str, sitename: str, email: str) -> None:
                 ) as en:
                     en.writelines(f"ADMINISTRATOR_PASSWORD={admin_pass}\n")
                     en.writelines(f"MARIADB_ROOT_PASSWORD={db_pass}\n")
+            else:
+                env = get_from_env(docker_repo_path,".env")
+                admin_pass = env['SITE_ADMIN_PASS']
+                db_pass = env['DB_PASSWORD']
             try:
                 # TODO: Include flags for non-https and non-erpnext installation
                 subprocess.run(
@@ -182,6 +189,7 @@ def setup_prod(project: str, sitename: str, email: str) -> None:
         except Exception as e:
             logging.error("Prod docker-compose failed", exc_info=True)
             cprint(" Docker Compose failed, please check the container logs\n", e)
+            sys.exit(1)
 
         cprint(f"\nCreating site: {sitename} \n", level=3)
 
@@ -203,6 +211,7 @@ def setup_prod(project: str, sitename: str, email: str) -> None:
                     admin_pass,
                     "--install-app",
                     "erpnext",
+                    "--set-default"
                 ],
                 check=True,
             )
@@ -210,6 +219,7 @@ def setup_prod(project: str, sitename: str, email: str) -> None:
         except Exception as e:
             logging.error("Bench site creation failed", exc_info=True)
             cprint("Bench Site creation failed\n", e)
+            sys.exit(1)
     else:
         install_docker()
         clone_frappe_docker_repo()
