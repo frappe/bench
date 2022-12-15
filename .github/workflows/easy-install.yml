@@ -1,10 +1,14 @@
-name: 'Easy Install Test'
+name: "Easy Install Test"
 
 on:
   pull_request:
   workflow_dispatch:
   push:
-    branches: [ develop ]
+    branches: [develop]
+
+concurrency:
+  group: easy-install-develop-${{ github.event_name }}-${{ github.event.number }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -17,7 +21,8 @@ jobs:
     name: Easy Install Test
     steps:
       - uses: actions/checkout@v3
-      - run: |
+      - name: Perform production easy install
+        run: |
           python3 ${GITHUB_WORKSPACE}/easy-install.py -p -n actions_test --email test@frappe.io
           docker compose -p actions_test exec backend bench version --format json
           docker compose -p actions_test exec backend bench --site site1.local list-apps --format json
