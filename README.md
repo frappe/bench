@@ -87,7 +87,7 @@ Download the Easy Install script and execute it:
 
 ```sh
 $ wget https://raw.githubusercontent.com/frappe/bench/develop/easy-install.py
-$ python3 install.py --prod
+$ python3 easy-install.py --prod
 ```
 
 This script will install docker on your system and will fetch the required containers, setup bench and a default ERPNext instance.
