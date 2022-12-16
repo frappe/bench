@@ -318,3 +318,5 @@ if __name__ == "__main__":
 			cprint("Emails with example.com not acceptable", level=1)
 			sys.exit(1)
 		setup_prod(args.project, args.sitename, args.email)
+	else:
+		parser.print_help()
