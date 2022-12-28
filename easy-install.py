@@ -200,6 +200,7 @@ def setup_prod(project: str, sitename: str, email: str) -> None:
 					"bench",
 					"new-site",
 					sitename,
+					"--no-mariadb-socket",
 					"--db-root-password",
 					db_pass,
 					"--admin-password",
