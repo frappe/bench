@@ -150,8 +150,6 @@ def setup_prod(project: str, sitename: str, email: str) -> None:
 						"overrides/compose.redis.yaml",
 						# "-f", "overrides/compose.noproxy.yaml", TODO: Add support for local proxying without HTTPs
 						"-f",
-						"overrides/compose.erpnext.yaml",
-						"-f",
 						"overrides/compose.https.yaml",
 						"--env-file",
 						".env",
