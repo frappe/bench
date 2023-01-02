@@ -6,6 +6,10 @@ on:
   push:
     branches: [ develop ]
 
+concurrency:
+  group: ci-develop-${{ github.event_name }}-${{ github.event.number }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 

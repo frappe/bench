@@ -28,17 +28,21 @@ Bench is a command-line utility that helps you to install, update, and manage mu
 
 ## Table of Contents
 
- - [Installation](#installation)
+- [Table of Contents](#table-of-contents)
+- [Installation](#installation)
 	- [Containerized Installation](#containerized-installation)
+	- [Easy Install Script](#easy-install-script)
+		- [Setup](#setup)
+		- [Arguments](#arguments)
+		- [Troubleshooting](#troubleshooting)
 	- [Manual Installation](#manual-installation)
- - [Usage](#basic-usage)
- - [Custom Bench commands](#custom-bench-commands)
- - [Bench Manager](#bench-manager)
- - [Guides](#guides)
- - [Resources](#resources)
- - [Development](#development)
- - [Releases](#releases)
- - [License](#license)
+- [Basic Usage](#basic-usage)
+- [Custom Bench Commands](#custom-bench-commands)
+- [Guides](#guides)
+- [Resources](#resources)
+- [Development](#development)
+- [Releases](#releases)
+- [License](#license)
 
 
 ## Installation
@@ -50,7 +54,7 @@ The setup for each of these installations can be achieved in multiple ways:
  - [Containerized Installation](#containerized-installation)
  - [Manual Installation](#manual-installation)
 
-We recommend using either the Docker Installation to setup a Production Environment. For Development, you may choose either of the two methods to setup an instance.
+We recommend using Docker Installation to setup a Production Environment. For Development, you may choose either of the two methods to setup an instance.
 
 Otherwise, if you are looking to evaluate Frappe apps without hassle of hosting, you can try them [on frappecloud.com](https://frappecloud.com/).
 
@@ -68,6 +72,53 @@ $ cd frappe_docker
 
 A quick setup guide for both the environments can be found below. For more details, check out the [Frappe/ERPNext Docker Repository](https://github.com/frappe/frappe_docker).
 
+### Easy Install Script
+
+The Easy Install script should get you going with a Frappe/ERPNext setup with minimal manual intervention and effort.
+
+This script uses Docker with the [Frappe/ERPNext Docker Repository](https://github.com/frappe/frappe_docker) and can be used for both Development setup and Production setup.
+
+#### Setup
+
+Download the Easy Install script and execute it:
+
+```sh
+$ wget https://raw.githubusercontent.com/frappe/bench/develop/easy-install.py
+$ python3 easy-install.py --prod
+```
+
+This script will install docker on your system and will fetch the required containers, setup bench and a default ERPNext instance.
+
+The script will generate MySQL root password and an Administrator password for the Frappe/ERPNext instance, which will then be saved under `$HOME/passwords.txt` of the user used to setup the instance.
+It will also generate a new compose file under `$HOME/<project-name>-compose.yml`.
+
+When the setup is complete, you will be able to access the system at `http://<your-server-ip>`, wherein you can use the Administrator password to login.
+
+#### Arguments
+
+Here are the arguments for the easy-install script
+
+```txt
+usage: easy-install.py [-h] [-p] [-d] [-s SITENAME] [-n PROJECT] [--email EMAIL]
+
+Install Frappe with Docker
+
+options:
+  -h, --help            show this help message and exit
+  -p, --prod            Setup Production System
+  -d, --dev             Setup Development System
+  -s SITENAME, --sitename SITENAME
+                        The Site Name for your production site
+  -n PROJECT, --project PROJECT
+                        Project Name
+  --email EMAIL         Add email for the SSL.
+```
+
+#### Troubleshooting
+
+In case the setup fails, the log file is saved under `$HOME/easy-install.log`. You may then
+
+- Create an Issue in this repository with the log file attached.
 
 ### Manual Installation
 

@@ -46,7 +46,7 @@ class TestBenchInit(TestBenchBase):
 
 	def test_multiple_benches(self):
 		for bench_name in ("test-bench-1", "test-bench-2"):
-			self.init_bench(bench_name)
+			self.init_bench(bench_name, skip_assets=True)
 
 		self.assert_common_site_config(
 			"test-bench-1",
@@ -96,7 +96,7 @@ class TestBenchInit(TestBenchBase):
 				self.assertTrue(site_config[key])
 
 	def test_get_app(self):
-		self.init_bench("test-bench")
+		self.init_bench("test-bench", skip_assets=True)
 		bench_path = os.path.join(self.benches_path, "test-bench")
 		exec_cmd(f"bench get-app {TEST_FRAPPE_APP} --skip-assets", cwd=bench_path)
 		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", TEST_FRAPPE_APP)))
@@ -108,7 +108,7 @@ class TestBenchInit(TestBenchBase):
 	@unittest.skipIf(FRAPPE_BRANCH != "develop", "only for develop branch")
 	def test_get_app_resolve_deps(self):
 		FRAPPE_APP = "healthcare"
-		self.init_bench("test-bench")
+		self.init_bench("test-bench", skip_assets=True)
 		bench_path = os.path.join(self.benches_path, "test-bench")
 		exec_cmd(f"bench get-app {FRAPPE_APP} --resolve-deps --skip-assets", cwd=bench_path)
 		self.assertTrue(os.path.exists(os.path.join(bench_path, "apps", FRAPPE_APP)))
@@ -126,7 +126,7 @@ class TestBenchInit(TestBenchBase):
 		site_name = "install-app.test"
 		bench_path = os.path.join(self.benches_path, "test-bench")
 
-		self.init_bench(bench_name)
+		self.init_bench(bench_name, skip_assets=True)
 		exec_cmd(
 			f"bench get-app {TEST_FRAPPE_APP} --branch master --skip-assets", cwd=bench_path
 		)
@@ -154,7 +154,7 @@ class TestBenchInit(TestBenchBase):
 			self.assertTrue(TEST_FRAPPE_APP in app_installed_on_site)
 
 	def test_remove_app(self):
-		self.init_bench("test-bench")
+		self.init_bench("test-bench", skip_assets=True)
 		bench_path = os.path.join(self.benches_path, "test-bench")
 
 		exec_cmd(
@@ -172,7 +172,7 @@ class TestBenchInit(TestBenchBase):
 		self.assertFalse(os.path.exists(os.path.join(bench_path, "apps", TEST_FRAPPE_APP)))
 
 	def test_switch_to_branch(self):
-		self.init_bench("test-bench")
+		self.init_bench("test-bench", skip_assets=True)
 		bench_path = os.path.join(self.benches_path, "test-bench")
 		app_path = os.path.join(bench_path, "apps", "frappe")
 
