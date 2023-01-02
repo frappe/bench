@@ -284,7 +284,7 @@ def get_current_version(app, bench_path="."):
 			with open(init_path) as f:
 				current_version = get_version_from_string(f.read())
 
-	except AttributeError:
+	except (AttributeError, VersionNotFound):
 		# backward compatibility
 		with open(setup_path) as f:
 			current_version = get_version_from_string(f.read(), field="version")
