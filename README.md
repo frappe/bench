@@ -107,14 +107,12 @@ usage: easy-install.py [-h] [-p] [-d] [-s SITENAME] [-n PROJECT] [--email EMAIL]
 Install Frappe with Docker
 
 options:
-  -h, --help            show this help message and exit
-  -p, --prod            Setup Production System
-  -d, --dev             Setup Development System
-  -s SITENAME, --sitename SITENAME
-                        The Site Name for your production site
-  -n PROJECT, --project PROJECT
-                        Project Name
-  --email EMAIL         Add email for the SSL.
+  -h, --help            		show this help message and exit
+  -p, --prod            		Setup Production System
+  -d, --dev             		Setup Development System
+  -s SITENAME, --sitename SITENAME      The Site Name for your production site
+  -n PROJECT, --project PROJECT         Project Name
+  --email EMAIL         		Add email for the SSL.
 ```
 
 #### Troubleshooting
