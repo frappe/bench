@@ -177,9 +177,15 @@ def migrate_env(python, backup=True):
 
 	migrate_env(python=python, backup=backup)
 
-@click.command("log",help="Show tail of logs")
-@click.argument("log-file")
-@click.option("-n","--number",type=int,default=20)
-def print_logs(log_file,number):
+
+@click.command("log", help="Show tail of logs")
+@click.argument("log-file", default="frappe")
+@click.option("-ls", is_flag=True)
+@click.option("-n", "--number", type=int, default=20)
+def print_logs(log_file, number, ls):
 	from bench.utils.bench import get_logs
-	get_logs(log_file,number)
+
+	if ls:
+		get_logs(log_file, number, ls)
+	else:
+		get_logs(log_file, number, ls)

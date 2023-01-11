@@ -89,7 +89,7 @@ from bench.commands.utils import (
 	set_ssl_certificate_key,
 	set_url_root,
 	start,
-	print_logs
+	print_logs,
 )
 
 bench_command.add_command(start)
