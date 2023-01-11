@@ -185,7 +185,4 @@ def migrate_env(python, backup=True):
 def print_logs(log_file, number, ls):
 	from bench.utils.bench import get_logs
 
-	if ls:
-		get_logs(log_file, number, ls)
-	else:
-		get_logs(log_file, number, ls)
+	get_logs(log_file, number, ls)

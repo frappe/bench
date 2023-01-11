@@ -632,7 +632,7 @@ To switch to your required branch, run the following commands: bench switch-to-b
 			sys.exit(1)
 
 
-def get_logs(_log, n, list=False):
+def get_logs(_log:str, n:int, list=False):
 	if list:
 		for entry in os.scandir(os.path.join(os.path.abspath("."), "logs")):
 			print(entry.name)
