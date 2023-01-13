@@ -17,7 +17,6 @@ from bench.utils import (
 	paths_in_bench,
 	exec_cmd,
 	is_bench_directory,
-	is_frappe_app,
 	get_cmd_output,
 	get_git_version,
 	log,
@@ -62,12 +61,12 @@ class Bench(Base, Validator):
 		self.cwd = os.path.abspath(path)
 		self.exists = is_bench_directory(self.name)
 
+		self.apps_txt = os.path.join(self.name, "sites", "apps.txt")
+		self.excluded_apps_txt = os.path.join(self.name, "sites", "excluded_apps.txt")
+
 		self.setup = BenchSetup(self)
 		self.teardown = BenchTearDown(self)
 		self.apps = BenchApps(self)
-
-		self.apps_txt = os.path.join(self.name, "sites", "apps.txt")
-		self.excluded_apps_txt = os.path.join(self.name, "sites", "excluded_apps.txt")
 
 	@property
 	def python(self) -> str:
@@ -132,7 +131,6 @@ class Bench(Base, Validator):
 			if not force:
 				raise
 		self.apps.sync()
-		# self.build() - removed because it seems unnecessary
 		self.reload(_raise=False)
 
 	@step(title="Building Bench Assets", success="Bench Assets Built")
@@ -262,7 +260,6 @@ class BenchApps(MutableSequence):
 	):
 		if required == UNSET_ARG:
 			required = []
-		self.initialize_apps()
 
 		with open(self.bench.apps_txt, "w") as f:
 			f.write("\n".join(self.apps))
@@ -273,15 +270,16 @@ class BenchApps(MutableSequence):
 
 	def initialize_apps(self):
 		try:
-			self.apps = [
-				x
-				for x in os.listdir(os.path.join(self.bench.name, "apps"))
-				if is_frappe_app(os.path.join(self.bench.name, "apps", x))
-			]
-			self.apps.remove("frappe")
-			self.apps.insert(0, "frappe")
-		except FileNotFoundError:
 			self.apps = []
+			# TODO: Read from bench dir not cwd
+			with open(self.bench.apps_txt) as f:
+				self.apps = [app.strip() for app in f.read().strip().split("\n") if app.strip()]
+
+			if "frappe" in self.apps:
+				self.apps.remove("frappe")
+				self.apps.insert(0, "frappe")
+		except FileNotFoundError:
+			pass
 
 	def __getitem__(self, key):
 		"""retrieves an item by its index, key"""
@@ -310,7 +308,6 @@ class BenchApps(MutableSequence):
 		app.get()
 		app.install()
 		super().append(app.repo)
-		self.apps.sort()
 
 	def remove(self, app: "App", no_backup: bool = False):
 		app.uninstall()

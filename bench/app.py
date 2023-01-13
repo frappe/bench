@@ -552,7 +552,7 @@ def install_app(
 	resolution=UNSET_ARG,
 ):
 	import bench.cli as bench_cli
-	from bench.bench import Bench
+	from bench.bench import Bench, BenchApps
 
 	install_text = f"Installing {app}"
 	click.secho(install_text, fg="yellow")
@@ -580,6 +580,9 @@ def install_app(
 	if os.path.exists(os.path.join(app_path, "package.json")):
 		bench.run("yarn install", cwd=app_path)
 
+	bench.apps.initialize_apps()
+	if app not in bench.apps:
+		super(BenchApps, bench.apps).append(app)
 	bench.apps.sync(app_name=app, required=resolution, branch=tag, app_dir=app_path)
 
 	if not skip_assets:
