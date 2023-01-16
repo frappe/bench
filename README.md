@@ -57,7 +57,7 @@ The setup for each of these installations can be achieved in multiple ways:
  - [Containerized Installation](#containerized-installation)
  - [Manual Installation](#manual-installation)
 
-We recommend using either the Docker Installation to setup a Production Environment. For Development, you may choose either of the two methods to setup an instance.
+We recommend using Docker Installation to setup a Production Environment. For Development, you may choose either of the two methods to setup an instance.
 
 Otherwise, if you are looking to evaluate Frappe apps without hassle of hosting, you can try them [on frappecloud.com](https://frappecloud.com/).
 
@@ -107,14 +107,12 @@ usage: easy-install.py [-h] [-p] [-d] [-s SITENAME] [-n PROJECT] [--email EMAIL]
 Install Frappe with Docker
 
 options:
-  -h, --help            show this help message and exit
-  -p, --prod            Setup Production System
-  -d, --dev             Setup Development System
-  -s SITENAME, --sitename SITENAME
-                        The Site Name for your production site
-  -n PROJECT, --project PROJECT
-                        Project Name
-  --email EMAIL         Add email for the SSL.
+  -h, --help            		show this help message and exit
+  -p, --prod            		Setup Production System
+  -d, --dev             		Setup Development System
+  -s SITENAME, --sitename SITENAME      The Site Name for your production site
+  -n PROJECT, --project PROJECT         Project Name
+  --email EMAIL         		Add email for the SSL.
 ```
 
 #### Troubleshooting
