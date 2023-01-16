@@ -77,7 +77,6 @@ def write_to_env(wd: str, site: str, db_pass: str, admin_pass: str, email: str) 
 	with open(os.path.join(wd, ".env"), "w") as f:
 		f.writelines(
 			[
-				f"FRAPPE_VERSION={example_env['FRAPPE_VERSION']}\n",  # Defaults to latest version of Frappe
 				f"ERPNEXT_VERSION={example_env['ERPNEXT_VERSION']}\n",  # defaults to latest version of ERPNext
 				f"DB_PASSWORD={db_pass}\n",
 				"DB_HOST=db\n",
