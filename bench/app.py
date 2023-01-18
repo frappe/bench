@@ -129,7 +129,7 @@ class AppMeta:
 
 	def __setup_details_from_git(self, url=None):
 		name = url if url else self.name
-		if name.startswith("git@") or name.startswith("ssh://"):
+		if "@" in name or name.startswith("ssh://"):
 			self.use_ssh = True
 			_first_part, _second_part = name.rsplit(":", 1)
 			self.remote_server = _first_part.split("@")[-1]
