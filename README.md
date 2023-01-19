@@ -102,17 +102,23 @@ When the setup is complete, you will be able to access the system at `http://<yo
 Here are the arguments for the easy-install script
 
 ```txt
-usage: easy-install.py [-h] [-p] [-d] [-s SITENAME] [-n PROJECT] [--email EMAIL]
+usage: easy-install.py [-h] [-p] [-d] [-s SITENAME] [-n PROJECT] [--email EMAIL] [-v VERSION] [--backup] [--files]
 
 Install Frappe with Docker
 
 options:
-  -h, --help            		show this help message and exit
-  -p, --prod            		Setup Production System
-  -d, --dev             		Setup Development System
-  -s SITENAME, --sitename SITENAME      The Site Name for your production site
-  -n PROJECT, --project PROJECT         Project Name
-  --email EMAIL         		Add email for the SSL.
+  -h, --help            show this help message and exit
+  -p, --prod            Setup Production System
+  -d, --dev             Setup Development System
+  -s SITENAME, --sitename SITENAME
+                        The Site Name for your production site
+  -n PROJECT, --project PROJECT
+                        Project Name
+  --email EMAIL         Add email for the SSL.
+  -v VERSION, --version VERSION
+                        ERPNext version to install, defaults to latest stable
+  --backup              Add a cron job for adding backups
+  --files               Add public and private files for backup
 ```
 
 #### Troubleshooting

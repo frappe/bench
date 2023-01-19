@@ -81,7 +81,7 @@ def write_to_env(
 ) -> None:
 	site_name = site or ""
 	example_env = get_from_env(wd, "example.env")
-	erpnext_version = erpnext_version or example_env['ERPNEXT_VERSION']
+	erpnext_version = erpnext_version or example_env["ERPNEXT_VERSION"]
 	with open(os.path.join(wd, ".env"), "w") as f:
 		f.writelines(
 			[
@@ -112,6 +112,38 @@ def generate_pass(length: int = 12) -> str:
 
 def check_repo_exists() -> bool:
 	return os.path.exists(os.path.join(os.getcwd(), "frappe_docker"))
+
+
+def setup_backup(project: str, files: bool = False):
+	"""
+	Add a entry to crontab to take backups every 6 hours
+	args: docker project_name
+	"""
+	cprint(f"Enabling Backups for {project}{' with files' if files else ''}", level=2)
+	cron_job = f"0 */6 * * * docker compose -p {project} exec backend bench --site all backup{' --with-files' if files else ''} > /dev/null"
+	if which("crontab") is None:
+		logging.error("crontab not found to setup backup cron job")
+		cprint("Setting up backup cronjob failed. Please check if you have crontab installed")
+		sys.exit(1)
+	else:
+		try:
+			subprocess.run(
+				f"{which('crontab')} -l | {{ cat; echo '{cron_job}'; }} | {which('crontab')} -",
+				shell=True,
+				check=True,
+			)
+			cron_jobs = subprocess.run(
+				[which("crontab"), "-l"], capture_output=True, text=True
+			)  # Verifying the cronjob exists
+			if cron_job in cron_jobs.stdout:
+				logging.info("Added Cron job for backups")
+				cprint("Backup Cron job added", level=2)
+		except Exception:
+			logging.error("Crontab entry failed", exc_info=True)
+			cprint(
+				"Crontab entry failed, please check the easy-install.log file for the traceback"
+			)
+			sys.exit(1)
 
 
 def setup_prod(project: str, sitename: str, email: str, version: str = None) -> None:
@@ -312,7 +344,15 @@ if __name__ == "__main__":
 	parser.add_argument(
 		"--email", help="Add email for the SSL.", required="--prod" in sys.argv
 	)
-	parser.add_argument("-v", "--version", help="ERPNext version to install, defaults to latest stable")
+	parser.add_argument(
+		"-v", "--version", help="ERPNext version to install, defaults to latest stable"
+	)
+	parser.add_argument(
+		"--backup", help="Add a cron job for adding backups", action="store_true"
+	)
+	parser.add_argument(
+		"--files", help="Add public and private files for backup", action="store_true"
+	)
 	args = parser.parse_args()
 	if args.dev:
 		cprint("\nSetting Up Development Instance\n", level=2)
@@ -325,5 +365,7 @@ if __name__ == "__main__":
 			cprint("Emails with example.com not acceptable", level=1)
 			sys.exit(1)
 		setup_prod(args.project, args.sitename, args.email, args.version)
+		if args.backup:
+			setup_backup(args.project, args.files)
 	else:
 		parser.print_help()
