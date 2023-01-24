@@ -81,7 +81,7 @@ def write_to_env(
 ) -> None:
 	site_name = site or ""
 	example_env = get_from_env(wd, "example.env")
-	erpnext_version = erpnext_version or example_env['ERPNEXT_VERSION']
+	erpnext_version = erpnext_version or example_env["ERPNEXT_VERSION"]
 	with open(os.path.join(wd, ".env"), "w") as f:
 		f.writelines(
 			[
@@ -312,7 +312,9 @@ if __name__ == "__main__":
 	parser.add_argument(
 		"--email", help="Add email for the SSL.", required="--prod" in sys.argv
 	)
-	parser.add_argument("-v", "--version", help="ERPNext version to install, defaults to latest stable")
+	parser.add_argument(
+		"-v", "--version", help="ERPNext version to install, defaults to latest stable"
+	)
 	args = parser.parse_args()
 	if args.dev:
 		cprint("\nSetting Up Development Instance\n", level=2)
