@@ -60,6 +60,7 @@ def execute_cmd(check_for_update=True, command: str = None, logger: Logger = Non
 
 
 def cli():
+	setup_clear_cache()
 	global from_command_line, bench_config, is_envvar_warn_set, verbose
 
 	from_command_line = True
@@ -75,7 +76,6 @@ def cli():
 	change_working_directory()
 	logger = setup_logging()
 	logger.info(command)
-	setup_clear_cache()
 
 	bench_config = get_config(".")
 

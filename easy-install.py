@@ -71,14 +71,21 @@ def get_from_env(dir, file) -> Dict:
 	return env_vars
 
 
-def write_to_env(wd: str, site: str, db_pass: str, admin_pass: str, email: str) -> None:
+def write_to_env(
+	wd: str,
+	site: str,
+	db_pass: str,
+	admin_pass: str,
+	email: str,
+	erpnext_version: str = None,
+) -> None:
 	site_name = site or ""
 	example_env = get_from_env(wd, "example.env")
+	erpnext_version = erpnext_version or example_env["ERPNEXT_VERSION"]
 	with open(os.path.join(wd, ".env"), "w") as f:
 		f.writelines(
 			[
-				f"FRAPPE_VERSION={example_env['FRAPPE_VERSION']}\n",  # Defaults to latest version of Frappe
-				f"ERPNEXT_VERSION={example_env['ERPNEXT_VERSION']}\n",  # defaults to latest version of ERPNext
+				f"ERPNEXT_VERSION={erpnext_version}\n",  # defaults to latest version of ERPNext
 				f"DB_PASSWORD={db_pass}\n",
 				"DB_HOST=db\n",
 				"DB_PORT=3306\n",
@@ -107,7 +114,7 @@ def check_repo_exists() -> bool:
 	return os.path.exists(os.path.join(os.getcwd(), "frappe_docker"))
 
 
-def setup_prod(project: str, sitename: str, email: str) -> None:
+def setup_prod(project: str, sitename: str, email: str, version: str = None) -> None:
 	if check_repo_exists():
 		compose_file_name = os.path.join(os.path.expanduser("~"), f"{project}-compose.yml")
 		docker_repo_path = os.path.join(os.getcwd(), "frappe_docker")
@@ -122,7 +129,7 @@ def setup_prod(project: str, sitename: str, email: str) -> None:
 			if not os.path.exists(os.path.join(docker_repo_path, ".env")):
 				admin_pass = generate_pass()
 				db_pass = generate_pass(9)
-				write_to_env(docker_repo_path, sitename, db_pass, admin_pass, email)
+				write_to_env(docker_repo_path, sitename, db_pass, admin_pass, email, version)
 				cprint(
 					"\nA .env file is generated with basic configs. Please edit it to fit to your needs \n",
 					level=3,
@@ -149,8 +156,6 @@ def setup_prod(project: str, sitename: str, email: str) -> None:
 						"-f",
 						"overrides/compose.redis.yaml",
 						# "-f", "overrides/compose.noproxy.yaml", TODO: Add support for local proxying without HTTPs
-						"-f",
-						"overrides/compose.erpnext.yaml",
 						"-f",
 						"overrides/compose.https.yaml",
 						"--env-file",
@@ -202,6 +207,7 @@ def setup_prod(project: str, sitename: str, email: str) -> None:
 					"bench",
 					"new-site",
 					sitename,
+					"--no-mariadb-socket",
 					"--db-root-password",
 					db_pass,
 					"--admin-password",
@@ -220,7 +226,7 @@ def setup_prod(project: str, sitename: str, email: str) -> None:
 	else:
 		install_docker()
 		clone_frappe_docker_repo()
-		setup_prod(project, sitename, email)  # Recursive
+		setup_prod(project, sitename, email, version)  # Recursive
 
 
 def setup_dev_instance(project: str):
@@ -306,6 +312,9 @@ if __name__ == "__main__":
 	parser.add_argument(
 		"--email", help="Add email for the SSL.", required="--prod" in sys.argv
 	)
+	parser.add_argument(
+		"-v", "--version", help="ERPNext version to install, defaults to latest stable"
+	)
 	args = parser.parse_args()
 	if args.dev:
 		cprint("\nSetting Up Development Instance\n", level=2)
@@ -317,6 +326,6 @@ if __name__ == "__main__":
 		if "example.com" in args.email:
 			cprint("Emails with example.com not acceptable", level=1)
 			sys.exit(1)
-		setup_prod(args.project, args.sitename, args.email)
+		setup_prod(args.project, args.sitename, args.email, args.version)
 	else:
 		parser.print_help()
