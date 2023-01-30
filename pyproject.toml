@@ -20,7 +20,7 @@ classifiers = [
 ]
 dependencies = [
     "Click>=7.0",
-    "GitPython~=2.1.15",
+    "GitPython~=3.1.30",
     "honcho",
     "Jinja2~=3.0.3",
     "python-crontab~=2.6.0",
