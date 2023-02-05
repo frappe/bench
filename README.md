@@ -39,6 +39,7 @@ Bench is a command-line utility that helps you to install, update, and manage mu
 		- [Arguments](#arguments)
 		- [Troubleshooting](#troubleshooting)
 	- [Manual Installation](#manual-installation)
+	- [Installation from Nixpkgs(#installation-from-nixpkgs)
 - [Basic Usage](#basic-usage)
 - [Custom Bench Commands](#custom-bench-commands)
 - [Guides](#guides)
@@ -56,6 +57,7 @@ The setup for each of these installations can be achieved in multiple ways:
 
  - [Containerized Installation](#containerized-installation)
  - [Manual Installation](#manual-installation)
+ - [Installation from Nixpkgs(#installation-from-nixpkgs)
 
 We recommend using Docker Installation to setup a Production Environment. For Development, you may choose either of the two methods to setup an instance.
 
@@ -130,6 +132,21 @@ You'll have to set up the system dependencies required for setting up a Frappe E
 
 ```sh
 $ pip install frappe-bench
+```
+
+### Installation from Nixpkgs
+
+You can quickly install `bench` from [Nixpkgs](https://github.com/nixos/nixpkgs).
+
+```sh
+$ nix run github:nixos/nixpkgs#frappe-bench -- --help
+```
+
+Or install into your profile:
+
+```sh
+$ nix profile install github:nixos/nixpkgs#frappe-bench
+$ bench --help
 ```
 
 
