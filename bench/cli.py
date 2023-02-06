@@ -26,6 +26,7 @@ from bench.utils import (
 	log,
 	setup_logging,
 	get_cmd_from_sysargv,
+	which,
 )
 from bench.utils.bench import get_env_cmd
 
@@ -62,6 +63,21 @@ def execute_cmd(check_for_update=True, command: str = None, logger: Logger = Non
 def cli():
 	setup_clear_cache()
 	global from_command_line, bench_config, is_envvar_warn_set, verbose
+
+	if which("nix") and not os.environ.get("NIX_WRAPPED"):
+		f = which("nix")
+		if bench.VERSION.endswith("dev"):
+			ref = "develop"
+		else:
+			ref = f"v{bench.VERSION}"
+		flake_uri = f"github:frappe/bench/{ref}"
+		# load re-run bench within the nix bin & python environment
+		os.execv(f, [f] + [
+			"run", f"{flake_uri}#bench",
+			"--extra-experimental-features", "flakes",
+			"--extra-experimental-features", "nix-command",
+			"--"
+		] + sys.argv[1:])
 
 	from_command_line = True
 	command = " ".join(sys.argv)

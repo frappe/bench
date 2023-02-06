@@ -1,4 +1,5 @@
 # imports - third party imports
+import os
 import click
 
 # imports - module imports
@@ -8,7 +9,6 @@ from bench.utils.cli import (
 	use_experimental_feature,
 	setup_verbosity,
 )
-
 
 @click.group(cls=MultiCommandGroup)
 @click.option(
@@ -109,9 +109,11 @@ bench_command.add_command(bench_src)
 bench_command.add_command(find_benches)
 bench_command.add_command(migrate_env)
 
-from bench.commands.setup import setup
 
-bench_command.add_command(setup)
+if not os.environ.get("NIX_WRAPPED"):
+	from bench.commands.setup import setup
+
+	bench_command.add_command(setup)
 
 
 from bench.commands.config import config
@@ -124,6 +126,7 @@ bench_command.add_command(remote_set_url)
 bench_command.add_command(remote_reset_url)
 bench_command.add_command(remote_urls)
 
-from bench.commands.install import install
+if not os.environ.get("NIX_WRAPPED"):
+	from bench.commands.install import install
 
-bench_command.add_command(install)
+	bench_command.add_command(install)
