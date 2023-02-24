@@ -45,4 +45,3 @@ and with context of the current bench, this command maybe executed simply as
 ➜ bench set-flags
 Flags are set to state: 'on'
 ```
-
