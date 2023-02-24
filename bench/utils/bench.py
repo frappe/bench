@@ -298,6 +298,12 @@ def restart_supervisor_processes(bench_path=".", web_workers=False, _raise=False
 			sudo = "sudo "
 			supervisor_status = get_cmd_output("sudo supervisorctl status", cwd=bench_path)
 
+		if (
+			"error: <class 'PermissionError'>, [Errno 13] Permission denied" in supervisor_status
+		):
+			sudo = "sudo "
+			supervisor_status = get_cmd_output("sudo supervisorctl status", cwd=bench_path)
+
 		if web_workers and f"{bench_name}-web:" in supervisor_status:
 			group = f"{bench_name}-web:\t"
 
