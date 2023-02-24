@@ -298,7 +298,7 @@ def restart_supervisor_processes(bench_path=".", web_workers=False, _raise=False
 			sudo = "sudo "
 			supervisor_status = get_cmd_output("sudo supervisorctl status", cwd=bench_path)
 
-		if (
+		if not sudo and (
 			"error: <class 'PermissionError'>, [Errno 13] Permission denied" in supervisor_status
 		):
 			sudo = "sudo "
