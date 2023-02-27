@@ -73,13 +73,13 @@ def get_from_env(dir, file) -> Dict:
 
 def write_to_env(
 	wd: str,
-	site: str,
+	sites: list[str],
 	db_pass: str,
 	admin_pass: str,
 	email: str,
 	erpnext_version: str = None,
 ) -> None:
-	site_name = site or ""
+	quoted_sites = ",".join([f"`{site}`" for site in sites]).strip(",")
 	example_env = get_from_env(wd, "example.env")
 	erpnext_version = erpnext_version or example_env["ERPNEXT_VERSION"]
 	with open(os.path.join(wd, ".env"), "w") as f:
@@ -93,8 +93,8 @@ def write_to_env(
 				"REDIS_QUEUE=redis-queue:6379\n",
 				"REDIS_SOCKETIO=redis-socketio:6379\n",
 				f"LETSENCRYPT_EMAIL={email}\n",
-				f"FRAPPE_SITE_NAME_HEADER={site_name}\n",
-				f"SITE_ADMIN_PASS={admin_pass}",
+				f"SITE_ADMIN_PASS={admin_pass}\n",
+				f"SITES={quoted_sites}\n",
 			]
 		)
 
@@ -114,7 +114,7 @@ def check_repo_exists() -> bool:
 	return os.path.exists(os.path.join(os.getcwd(), "frappe_docker"))
 
 
-def setup_prod(project: str, sitename: str, email: str, version: str = None) -> None:
+def setup_prod(project: str, sites: list[str], email: str, version: str = None) -> None:
 	if check_repo_exists():
 		compose_file_name = os.path.join(os.path.expanduser("~"), f"{project}-compose.yml")
 		docker_repo_path = os.path.join(os.getcwd(), "frappe_docker")
@@ -129,7 +129,7 @@ def setup_prod(project: str, sitename: str, email: str, version: str = None) -> 
 			if not os.path.exists(os.path.join(docker_repo_path, ".env")):
 				admin_pass = generate_pass()
 				db_pass = generate_pass(9)
-				write_to_env(docker_repo_path, sitename, db_pass, admin_pass, email, version)
+				write_to_env(docker_repo_path, sites, db_pass, admin_pass, email, version)
 				cprint(
 					"\nA .env file is generated with basic configs. Please edit it to fit to your needs \n",
 					level=3,
@@ -193,40 +193,13 @@ def setup_prod(project: str, sitename: str, email: str, version: str = None) -> 
 			cprint(" Docker Compose failed, please check the container logs\n", e)
 			sys.exit(1)
 
-		cprint(f"\nCreating site: {sitename} \n", level=3)
+		for sitename in sites:
+			create_site(sitename, project, db_pass, admin_pass)
 
-		try:
-			subprocess.run(
-				[
-					which("docker"),
-					"compose",
-					"-p",
-					project,
-					"exec",
-					"backend",
-					"bench",
-					"new-site",
-					sitename,
-					"--no-mariadb-socket",
-					"--db-root-password",
-					db_pass,
-					"--admin-password",
-					admin_pass,
-					"--install-app",
-					"erpnext",
-					"--set-default",
-				],
-				check=True,
-			)
-			logging.info("New site creation completed")
-		except Exception as e:
-			logging.error("Bench site creation failed", exc_info=True)
-			cprint("Bench Site creation failed\n", e)
-			sys.exit(1)
 	else:
 		install_docker()
 		clone_frappe_docker_repo()
-		setup_prod(project, sitename, email, version)  # Recursive
+		setup_prod(project, sites, email, version)  # Recursive
 
 
 def setup_dev_instance(project: str):
@@ -294,6 +267,43 @@ def install_docker():
 		sys.exit(1)
 
 
+def create_site(
+	sitename: str,
+	project: str,
+	db_pass: str,
+	admin_pass: str,
+):
+	cprint(f"\nCreating site: {sitename} \n", level=3)
+
+	try:
+		subprocess.run(
+			[
+				which("docker"),
+				"compose",
+				"-p",
+				project,
+				"exec",
+				"backend",
+				"bench",
+				"new-site",
+				sitename,
+				"--no-mariadb-socket",
+				"--db-root-password",
+				db_pass,
+				"--admin-password",
+				admin_pass,
+				"--install-app",
+				"erpnext",
+				"--set-default",
+			],
+			check=True,
+		)
+		logging.info("New site creation completed")
+	except Exception as e:
+		logging.error(f"Bench site creation failed for {sitename}", exc_info=True)
+		cprint(f"Bench Site creation failed for {sitename}\n", e)
+
+
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description="Install Frappe with Docker")
 	parser.add_argument(
@@ -305,8 +315,10 @@ if __name__ == "__main__":
 	parser.add_argument(
 		"-s",
 		"--sitename",
-		help="The Site Name for your production site",
-		default="site1.local",
+		help="Site Name(s) for your production bench",
+		default=["site1.localhost"],
+		action='append',
+		dest='sites'
 	)
 	parser.add_argument("-n", "--project", help="Project Name", default="frappe")
 	parser.add_argument(
@@ -326,6 +338,6 @@ if __name__ == "__main__":
 		if "example.com" in args.email:
 			cprint("Emails with example.com not acceptable", level=1)
 			sys.exit(1)
-		setup_prod(args.project, args.sitename, args.email, args.version)
+		setup_prod(args.project, args.sites, args.email, args.version)
 	else:
 		parser.print_help()
