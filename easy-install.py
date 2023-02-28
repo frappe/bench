@@ -351,7 +351,7 @@ if __name__ == "__main__":
 		"--no-backup", help="Don't include a cron job for adding backups", action="store_true"
 	)
 	parser.add_argument(
-		"--backup-with-files", help="Add public and private files for backup", action="store_true"
+		"--backup-with-files", help="Add public and private files in backup cron", action="store_true"
 	)
 	args = parser.parse_args()
 	if args.dev:

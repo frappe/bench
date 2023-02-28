@@ -117,8 +117,8 @@ options:
   --email EMAIL         Add email for the SSL.
   -v VERSION, --version VERSION
                         ERPNext version to install, defaults to latest stable
-  --backup              Add a cron job for adding backups
-  --files               Add public and private files for backup
+  --no-backup           Don't include a cron job for adding backups
+  --backup-with-files   Add public and private files in backup cron
 ```
 
 #### Troubleshooting
