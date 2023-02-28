@@ -87,7 +87,7 @@ Download the Easy Install script and execute it:
 
 ```sh
 $ wget https://raw.githubusercontent.com/frappe/bench/develop/easy-install.py
-$ python3 easy-install.py --prod
+$ python3 easy-install.py --prod --email your@email.tld
 ```
 
 This script will install docker on your system and will fetch the required containers, setup bench and a default ERPNext instance.
@@ -102,7 +102,7 @@ When the setup is complete, you will be able to access the system at `http://<yo
 Here are the arguments for the easy-install script
 
 ```txt
-usage: easy-install.py [-h] [-p] [-d] [-s SITENAME] [-n PROJECT] [--email EMAIL] [-v VERSION] [--backup] [--files]
+usage: easy-install.py [-h] [-p] [-d] [-s SITENAME] [-n PROJECT] [--email EMAIL] [-v VERSION] [--no-backup] [--backup-with-files]
 
 Install Frappe with Docker
 
