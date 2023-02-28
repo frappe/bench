@@ -348,10 +348,10 @@ if __name__ == "__main__":
 		"-v", "--version", help="ERPNext version to install, defaults to latest stable"
 	)
 	parser.add_argument(
-		"--backup", help="Add a cron job for adding backups", action="store_true"
+		"--no-backup", help="Don't include a cron job for adding backups", action="store_true"
 	)
 	parser.add_argument(
-		"--files", help="Add public and private files for backup", action="store_true"
+		"--backup-with-files", help="Add public and private files for backup", action="store_true"
 	)
 	args = parser.parse_args()
 	if args.dev:
@@ -365,7 +365,7 @@ if __name__ == "__main__":
 			cprint("Emails with example.com not acceptable", level=1)
 			sys.exit(1)
 		setup_prod(args.project, args.sitename, args.email, args.version)
-		if args.backup:
-			setup_backup(args.project, args.files)
+		if not args.no_backup: # Don't setup backups if the flag is passed
+			setup_backup(args.project, args.backup_with_files)
 	else:
 		parser.print_help()
