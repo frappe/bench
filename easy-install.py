@@ -73,7 +73,7 @@ def get_from_env(dir, file) -> Dict:
 
 def write_to_env(
 	wd: str,
-	sites: list[str],
+	sites,
 	db_pass: str,
 	admin_pass: str,
 	email: str,
@@ -317,8 +317,8 @@ if __name__ == "__main__":
 		"--sitename",
 		help="Site Name(s) for your production bench",
 		default=["site1.localhost"],
-		action='append',
-		dest='sites'
+		action="append",
+		dest="sites",
 	)
 	parser.add_argument("-n", "--project", help="Project Name", default="frappe")
 	parser.add_argument(
