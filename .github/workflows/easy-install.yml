@@ -21,6 +21,11 @@ jobs:
     name: Easy Install Test
     steps:
       - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+
       - name: Perform production easy install
         run: |
           python3 ${GITHUB_WORKSPACE}/easy-install.py -p -n actions_test --email test@frappe.io
