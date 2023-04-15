@@ -59,6 +59,7 @@ def generate_supervisor_config(bench_path, user=None, yes=False, skip_redis=Fals
 			"bench_cmd": which("bench"),
 			"skip_redis": skip_redis,
 			"workers": config.get("workers", {}),
+			"nice": which("nice"),
 		}
 	)
 
