@@ -118,6 +118,8 @@ def cli():
 	_opts = [x.opts + x.secondary_opts for x in bench_command.params]
 	opts = {item for sublist in _opts for item in sublist}
 
+	setup_exception_handler()
+
 	# handle usages like `--use-feature='feat-x'` and `--use-feature 'feat-x'`
 	if cmd_from_sys and cmd_from_sys.split("=", 1)[0].strip() in opts:
 		bench_command()
@@ -240,3 +242,17 @@ def setup_clear_cache():
 		return f(*args, **kwargs)
 
 	os.chdir = _chdir
+
+
+def setup_exception_handler():
+	from traceback import format_exception
+
+	def handle_exception(exc_type, exc_info, tb):
+		print("".join(generate_exc(exc_type, exc_info, tb)))
+
+	def generate_exc(exc_type, exc_info, tb):
+		for t in format_exception(exc_type, exc_info, tb):
+			if "/click/" not in t:
+				yield t
+
+	sys.excepthook = handle_exception
