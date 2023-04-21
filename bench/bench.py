@@ -131,6 +131,9 @@ class Bench(Base, Validator):
 		except InvalidRemoteException:
 			if not force:
 				raise
+		except ValueError:
+			pass
+
 		self.apps.sync()
 		# self.build() - removed because it seems unnecessary
 		self.reload(_raise=False)
