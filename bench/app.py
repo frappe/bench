@@ -81,16 +81,14 @@ class AppMeta:
 		if not self.is_repo:
 			self.repo = self.app_name = self.name
 			return
+
 		# fetch meta from installed apps
 		if self.bench and os.path.exists(os.path.join(self.bench.name, "apps", self.name)):
 			self.mount_path = os.path.join(self.bench.name, "apps", self.name)
 			self.from_apps = True
-			self._setup_details_from_mounted_disk()
-
-		# fetch meta for repo on mounted disk
-		elif os.path.exists(self.mount_path):
 			self.on_disk = True
 			self._setup_details_from_mounted_disk()
+
 
 		# fetch meta for repo from remote git server - traditional get-app url
 		elif is_git_url(self.name):
