@@ -82,15 +82,11 @@ class AppMeta:
 			self.repo = self.app_name = self.name
 			return
 
-		# fetch meta for repo on mounted disk
-		if os.path.exists(self.mount_path):
-			self.on_disk = True
-			self._setup_details_from_mounted_disk()
-
 		# fetch meta from installed apps
-		elif self.bench and os.path.exists(os.path.join(self.bench.name, "apps", self.name)):
+		if self.bench and os.path.exists(os.path.join(self.bench.name, "apps", self.name)):
 			self.mount_path = os.path.join(self.bench.name, "apps", self.name)
 			self.from_apps = True
+			self.on_disk = True
 			self._setup_details_from_mounted_disk()
 
 
