@@ -28,6 +28,8 @@ from bench.utils import (
 	get_cmd_from_sysargv,
 )
 from bench.utils.bench import get_env_cmd
+from importlib.util import find_spec
+
 
 # these variables are used to show dynamic outputs on the terminal
 dynamic_feed = False
@@ -38,6 +40,7 @@ bench.LOG_BUFFER = []
 
 change_uid_msg = "You should not run this command as root"
 src = os.path.dirname(__file__)
+SKIP_MODULE_TRACEBACK = ("click",)
 
 
 @contextmanager
@@ -246,13 +249,22 @@ def setup_clear_cache():
 
 def setup_exception_handler():
 	from traceback import format_exception
+	from bench.exceptions import CommandFailedError
 
 	def handle_exception(exc_type, exc_info, tb):
-		print("".join(generate_exc(exc_type, exc_info, tb)))
+		if exc_type == CommandFailedError:
+			print("".join(generate_exc(exc_type, exc_info, tb)))
+		else:
+			sys.__excepthook__(exc_type, exc_info, tb)
 
 	def generate_exc(exc_type, exc_info, tb):
-		for t in format_exception(exc_type, exc_info, tb):
-			if "/click/" not in t:
-				yield t
+		TB_SKIP = [
+			os.path.dirname(find_spec(module).origin) for module in SKIP_MODULE_TRACEBACK
+		]
+
+		for tb_line in format_exception(exc_type, exc_info, tb):
+			for skip_module in TB_SKIP:
+				if skip_module not in tb_line:
+					yield tb_line
 
 	sys.excepthook = handle_exception
