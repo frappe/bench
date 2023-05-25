@@ -146,7 +146,7 @@ def setup_backup(project: str, files: bool = False):
 			sys.exit(1)
 
 
-def setup_prod(project: str, sites: list[str], email: str, version: str = None) -> None:
+def setup_prod(project: str, sites, email: str, version: str = None) -> None:
 	if check_repo_exists():
 		compose_file_name = os.path.join(os.path.expanduser("~"), f"{project}-compose.yml")
 		docker_repo_path = os.path.join(os.getcwd(), "frappe_docker")

@@ -315,7 +315,7 @@ def get_excluded_apps(bench_path="."):
 
 def add_to_excluded_apps_txt(app, bench_path="."):
 	if app == "frappe":
-		raise ValueError("Frappe app cannot be excludeed from update")
+		raise ValueError("Frappe app cannot be excluded from update")
 	if app not in os.listdir("apps"):
 		raise ValueError(f"The app {app} does not exist")
 	apps = get_excluded_apps(bench_path=bench_path)
