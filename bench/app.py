@@ -268,7 +268,7 @@ class App(AppMeta):
 			except IndexError:
 				return []
 		try:
-			required_deps = get_required_deps(self.org, self.app_name, self.tag or self.branch)
+			required_deps = get_required_deps(self.org, self.repo, self.tag or self.branch)
 			return required_apps_from_hooks(required_deps)
 		except Exception:
 			return []
