@@ -131,6 +131,7 @@ class Bench(Base, Validator):
 		except InvalidRemoteException:
 			if not force:
 				raise
+
 		self.apps.sync()
 		# self.build() - removed because it seems unnecessary
 		self.reload(_raise=False)
@@ -309,13 +310,13 @@ class BenchApps(MutableSequence):
 	def add(self, app: "App"):
 		app.get()
 		app.install()
-		super().append(app.repo)
+		super().append(app.app_name)
 		self.apps.sort()
 
 	def remove(self, app: "App", no_backup: bool = False):
 		app.uninstall()
 		app.remove(no_backup=no_backup)
-		super().remove(app.repo)
+		super().remove(app.app_name)
 
 	def append(self, app: "App"):
 		return self.add(app)

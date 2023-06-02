@@ -28,8 +28,8 @@ class TestBenchInit(TestBenchBase):
 		self.init_bench(bench_name, **kwargs)
 		app = App("file:///tmp/frappe")
 		self.assertTupleEqual(
-			(app.mount_path, app.url, app.repo, app.org),
-			("/tmp/frappe", "file:///tmp/frappe", "frappe", "frappe"),
+			(app.mount_path, app.url, app.repo, app.app_name, app.org),
+			("/tmp/frappe", "file:///tmp/frappe", "frappe", "frappe", "frappe"),
 		)
 		self.assert_folders(bench_name)
 		self.assert_virtual_env(bench_name)
