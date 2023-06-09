@@ -155,7 +155,7 @@ def update_npm_packages(bench_path=".", apps=None):
 						else:
 							package_json[key] = value
 
-	if package_json is {}:
+	if package_json == {}:
 		with open(os.path.join(os.path.dirname(__file__), "package.json")) as f:
 			package_json = json.loads(f.read())
 

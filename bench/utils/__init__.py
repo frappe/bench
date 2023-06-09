@@ -155,7 +155,7 @@ def exec_cmd(cmd, cwd=".", env=None, _raise=True):
 	if return_code:
 		logger.warning(f"{cmd_log} executed with exit code {return_code}")
 		if _raise:
-			raise CommandFailedError from subprocess.CalledProcessError(return_code, cmd)
+			raise CommandFailedError(cmd) from subprocess.CalledProcessError(return_code, cmd)
 	return return_code
 
 
