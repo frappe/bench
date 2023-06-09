@@ -101,4 +101,6 @@ class TestUtils(unittest.TestCase):
 
 	def test_ssh_ports(self):
 		app = App("git@github.com:22:frappe/frappe")
-		self.assertEqual((app.use_ssh, app.org, app.repo), (True, "frappe", "frappe"))
+		self.assertEqual(
+			(app.use_ssh, app.org, app.repo, app.app_name), (True, "frappe", "frappe", "frappe")
+		)

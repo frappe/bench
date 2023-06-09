@@ -150,12 +150,12 @@ def exec_cmd(cmd, cwd=".", env=None, _raise=True):
 	cwd_info = f"cd {cwd} && " if cwd != "." else ""
 	cmd_log = f"{cwd_info}{cmd}"
 	logger.debug(cmd_log)
-	cmd = split(cmd)
-	return_code = subprocess.call(cmd, cwd=cwd, universal_newlines=True, env=env)
+	spl_cmd = split(cmd)
+	return_code = subprocess.call(spl_cmd, cwd=cwd, universal_newlines=True, env=env)
 	if return_code:
 		logger.warning(f"{cmd_log} executed with exit code {return_code}")
 		if _raise:
-			raise CommandFailedError
+			raise CommandFailedError(cmd) from subprocess.CalledProcessError(return_code, cmd)
 	return return_code
 
 

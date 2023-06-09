@@ -155,7 +155,7 @@ def update_npm_packages(bench_path=".", apps=None):
 						else:
 							package_json[key] = value
 
-	if package_json is {}:
+	if package_json == {}:
 		with open(os.path.join(os.path.dirname(__file__), "package.json")) as f:
 			package_json = json.loads(f.read())
 
@@ -295,6 +295,12 @@ def restart_supervisor_processes(bench_path=".", web_workers=False, _raise=False
 			if e.returncode == 127:
 				log("restart failed: Couldn't find supervisorctl in PATH", level=3)
 				return
+			sudo = "sudo "
+			supervisor_status = get_cmd_output("sudo supervisorctl status", cwd=bench_path)
+
+		if not sudo and (
+			"error: <class 'PermissionError'>, [Errno 13] Permission denied" in supervisor_status
+		):
 			sudo = "sudo "
 			supervisor_status = get_cmd_output("sudo supervisorctl status", cwd=bench_path)
 
