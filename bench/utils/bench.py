@@ -456,13 +456,6 @@ def update(
 	if version_upgrade[0] or (not version_upgrade[0] and force):
 		post_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
 
-	if pull and compile:
-		from compileall import compile_dir
-
-		print("Compiling Python files...")
-		apps_dir = os.path.join(bench_path, "apps")
-		compile_dir(apps_dir, quiet=1, rx=re.compile(".*node_modules.*"))
-
 	bench.reload(web=False, supervisor=restart_supervisor, systemd=restart_systemd)
 
 	conf.update({"maintenance_mode": 0, "pause_scheduler": 0})
