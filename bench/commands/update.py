@@ -33,7 +33,7 @@ from bench.utils.bench import post_upgrade, patch_sites, build_assets
 @click.option(
 	"--no-compile",
 	is_flag=True,
-	help="If set, Python bytecode won't be compiled before restarting the processes",
+	help="[DEPRECATED] This flag doesn't do anything now.",
 )
 @click.option("--force", is_flag=True, help="Forces major version upgrades")
 @click.option(
