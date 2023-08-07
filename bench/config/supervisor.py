@@ -3,21 +3,20 @@ import getpass
 import logging
 import os
 
-# imports - module imports
-import bench
-from bench.app import use_rq
-from bench.utils import get_bench_name, which
-from bench.bench import Bench
-from bench.config.common_site_config import (
-	update_config,
-	get_gunicorn_workers,
-	get_default_max_requests,
-	compute_max_requests_jitter,
-)
-
 # imports - third party imports
 import click
 
+# imports - module imports
+import bench
+from bench.app import use_rq
+from bench.bench import Bench
+from bench.config.common_site_config import (
+	compute_max_requests_jitter,
+	get_default_max_requests,
+	get_gunicorn_workers,
+	update_config,
+)
+from bench.utils import get_bench_name, which
 
 logger = logging.getLogger(bench.PROJECT_NAME)
 
@@ -58,6 +57,7 @@ def generate_supervisor_config(bench_path, user=None, yes=False, skip_redis=Fals
 			"bench_cmd": which("bench"),
 			"skip_redis": skip_redis,
 			"workers": config.get("workers", {}),
+			"multi_queue_consumption": can_enable_multi_queue_consumption(bench_path),
 		}
 	)
 
@@ -88,6 +88,21 @@ def get_supervisord_conf():
 	for possibility in possibilities:
 		if os.path.exists(possibility):
 			return possibility
+
+
+def can_enable_multi_queue_consumption(bench_path: str) -> bool:
+	try:
+		from semantic_version import Version
+
+		from bench.utils.app import get_current_version
+
+		supported_version = Version(major=14, minor=18, patch=0)
+
+		frappe_version = Version(get_current_version("frappe", bench_path=bench_path))
+
+		return frappe_version > supported_version
+	except Exception:
+		return False
 
 
 def check_supervisord_config(user=None):
