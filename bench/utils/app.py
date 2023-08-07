@@ -185,7 +185,9 @@ def get_required_deps(org, name, branch, deps="hooks.py"):
 	res = requests.get(url=git_api_url, params=params).json()
 
 	if "message" in res:
-		git_url = f"https://raw.githubusercontent.com/{org}/{name}/{params['ref']}/{name}/{deps}"
+		git_url = (
+			f"https://raw.githubusercontent.com/{org}/{name}/{params['ref']}/{name}/{deps}"
+		)
 		return requests.get(git_url).text
 
 	return base64.decodebytes(res["content"].encode()).decode()
@@ -282,7 +284,7 @@ def get_current_version(app, bench_path="."):
 			with open(init_path) as f:
 				current_version = get_version_from_string(f.read())
 
-	except AttributeError:
+	except (AttributeError, VersionNotFound):
 		# backward compatibility
 		with open(setup_path) as f:
 			current_version = get_version_from_string(f.read(), field="version")

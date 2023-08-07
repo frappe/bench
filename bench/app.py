@@ -198,7 +198,7 @@ class App(AppMeta):
 
 	@step(title="Archiving App {repo}", success="App {repo} Archived")
 	def remove(self, no_backup: bool = False):
-		active_app_path = os.path.join("apps", self.name)
+		active_app_path = os.path.join("apps", self.app_name)
 
 		if no_backup:
 			if not os.path.islink(active_app_path):
@@ -209,7 +209,7 @@ class App(AppMeta):
 		else:
 			archived_path = os.path.join("archived", "apps")
 			archived_name = get_available_folder_name(
-				f"{self.repo}-{date.today()}", archived_path
+				f"{self.app_name}-{date.today()}", archived_path
 			)
 			archived_app_path = os.path.join(archived_path, archived_name)
 
@@ -233,7 +233,7 @@ class App(AppMeta):
 
 		verbose = bench.cli.verbose or verbose
 		app_name = get_app_name(self.bench.name, self.app_name)
-		if not resolved and self.repo != "frappe" and not ignore_resolution:
+		if not resolved and self.app_name != "frappe" and not ignore_resolution:
 			click.secho(
 				f"Ignoring dependencies of {self.name}. To install dependencies use --resolve-deps",
 				fg="yellow",
@@ -262,7 +262,7 @@ class App(AppMeta):
 		from bench.utils.app import get_required_deps, required_apps_from_hooks
 
 		if self.on_disk:
-			required_deps = os.path.join(self.mount_path, self.repo, "hooks.py")
+			required_deps = os.path.join(self.mount_path, self.app_name, "hooks.py")
 			try:
 				return required_apps_from_hooks(required_deps, local=True)
 			except IndexError:
@@ -290,16 +290,16 @@ def make_resolution_plan(app: App, bench: "Bench"):
 	decide what apps and versions to install and in what order
 	"""
 	resolution = OrderedDict()
-	resolution[app.repo] = app
+	resolution[app.app_name] = app
 
 	for app_name in app._get_dependencies():
 		dep_app = App(app_name, bench=bench)
 		is_valid_frappe_branch(dep_app.url, dep_app.branch)
 		dep_app.required_by = app.name
-		if dep_app.repo in resolution:
-			click.secho(f"{dep_app.repo} is already resolved skipping", fg="yellow")
+		if dep_app.app_name in resolution:
+			click.secho(f"{dep_app.app_name} is already resolved skipping", fg="yellow")
 			continue
-		resolution[dep_app.repo] = dep_app
+		resolution[dep_app.app_name] = dep_app
 		resolution.update(make_resolution_plan(dep_app, bench))
 		app.local_resolution = [repo_name for repo_name, _ in reversed(resolution.items())]
 	return resolution
@@ -315,7 +315,7 @@ def get_excluded_apps(bench_path="."):
 
 def add_to_excluded_apps_txt(app, bench_path="."):
 	if app == "frappe":
-		raise ValueError("Frappe app cannot be excludeed from update")
+		raise ValueError("Frappe app cannot be excluded from update")
 	if app not in os.listdir("apps"):
 		raise ValueError(f"The app {app} does not exist")
 	apps = get_excluded_apps(bench_path=bench_path)
@@ -586,7 +586,9 @@ def install_app(
 		build_assets(bench_path=bench_path, app=app)
 
 	if restart_bench:
-		bench.reload()
+		# Avoiding exceptions here as production might not be set-up
+		# OR we might just be generating docker images.
+		bench.reload(_raise=False)
 
 
 def pull_apps(apps=None, bench_path=".", reset=False):

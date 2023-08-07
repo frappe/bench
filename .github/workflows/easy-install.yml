@@ -1,0 +1,37 @@
+name: "Easy Install Test"
+
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+
+concurrency:
+  group: easy-install-develop-${{ github.event_name }}-${{ github.event.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  easy-install-setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    name: Easy Install Test
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+
+      - name: Perform production easy install
+        run: |
+          python3 ${GITHUB_WORKSPACE}/easy-install.py -p -n actions_test --email test@frappe.io
+          docker compose -p actions_test exec backend bench version --format json
+          docker compose -p actions_test exec backend bench --site site1.localhost list-apps --format json
+          result=$(curl -H "Host: site1.localhost" -sk https://127.0.0.1/api/method/ping | jq -r ."message")
+          if [[ "$result" == "pong" ]]; then echo "New instance works fine"; else exit 1; fi
+          docker compose -p actions_test down
+          docker volume prune -f

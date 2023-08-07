@@ -155,7 +155,7 @@ def update_npm_packages(bench_path=".", apps=None):
 						else:
 							package_json[key] = value
 
-	if package_json is {}:
+	if package_json == {}:
 		with open(os.path.join(os.path.dirname(__file__), "package.json")) as f:
 			package_json = json.loads(f.read())
 
@@ -175,11 +175,16 @@ def migrate_env(python, backup=False):
 	nvenv = "env"
 	path = os.getcwd()
 	python = which(python)
-	virtualenv = which("virtualenv")
-	if not virtualenv:
-		raise FileNotFoundError("`virtualenv` not found. Install it and try again.")
-
 	pvenv = os.path.join(path, nvenv)
+
+	if python.startswith(pvenv):
+		# The supplied python version is in active virtualenv which we are about to nuke.
+		click.secho(
+			"Python version supplied is present in currently sourced virtual environment.\n"
+			"`deactiviate` the current virtual environment before migrating environments.",
+			fg="yellow",
+		)
+		sys.exit(1)
 
 	# Clear Cache before Bench Dies.
 	try:
@@ -212,18 +217,24 @@ def migrate_env(python, backup=False):
 		shutil.move(dest, target)
 
 	# Create virtualenv using specified python
-	venv_creation, packages_setup = 1, 1
+	def _install_app(app):
+		app_path = f"-e {os.path.join('apps', app)}"
+		exec_cmd(f"{pvenv}/bin/python -m pip install --upgrade {app_path}")
+
 	try:
 		logger.log(f"Setting up a New Virtual {python} Environment")
-		venv_creation = exec_cmd(f"{virtualenv} --python {python} {pvenv}")
+		exec_cmd(f"{python} -m venv {pvenv}")
 
-		apps = " ".join([f"-e {os.path.join('apps', app)}" for app in bench.apps])
-		packages_setup = exec_cmd(f"{pvenv} -m pip install --upgrade {apps}")
+		# Install frappe first
+		_install_app("frappe")
+		for app in bench.apps:
+			if str(app) != "frappe":
+				_install_app(app)
 
 		logger.log(f"Migration Successful to {python}")
 	except Exception:
-		if venv_creation or packages_setup:
-			logger.warning("Migration Error")
+		logger.warning("Python env migration Error", exc_info=True)
+		raise
 
 
 def validate_upgrade(from_ver, to_ver, bench_path="."):
@@ -265,7 +276,7 @@ def patch_sites(bench_path="."):
 			raise PatchError
 
 
-def restart_supervisor_processes(bench_path=".", web_workers=False):
+def restart_supervisor_processes(bench_path=".", web_workers=False, _raise=False):
 	from bench.bench import Bench
 
 	bench = Bench(bench_path)
@@ -274,7 +285,7 @@ def restart_supervisor_processes(bench_path=".", web_workers=False):
 	bench_name = get_bench_name(bench_path)
 
 	if cmd:
-		bench.run(cmd)
+		bench.run(cmd, _raise=_raise)
 
 	else:
 		sudo = ""
@@ -284,6 +295,12 @@ def restart_supervisor_processes(bench_path=".", web_workers=False):
 			if e.returncode == 127:
 				log("restart failed: Couldn't find supervisorctl in PATH", level=3)
 				return
+			sudo = "sudo "
+			supervisor_status = get_cmd_output("sudo supervisorctl status", cwd=bench_path)
+
+		if not sudo and (
+			"error: <class 'PermissionError'>, [Errno 13] Permission denied" in supervisor_status
+		):
 			sudo = "sudo "
 			supervisor_status = get_cmd_output("sudo supervisorctl status", cwd=bench_path)
 
@@ -301,18 +318,22 @@ def restart_supervisor_processes(bench_path=".", web_workers=False):
 		else:
 			group = "frappe:"
 
-		bench.run(f"{sudo}supervisorctl restart {group}")
+		failure = bench.run(f"{sudo}supervisorctl restart {group}", _raise=_raise)
+		if failure:
+			log("restarting supervisor failed. Use `bench restart` to retry.", level=3)
 
 
-def restart_systemd_processes(bench_path=".", web_workers=False):
+def restart_systemd_processes(bench_path=".", web_workers=False, _raise=True):
 	bench_name = get_bench_name(bench_path)
 	exec_cmd(
 		f"sudo systemctl stop -- $(systemctl show -p Requires {bench_name}.target | cut"
-		" -d= -f2)"
+		" -d= -f2)",
+		_raise=_raise,
 	)
 	exec_cmd(
 		f"sudo systemctl start -- $(systemctl show -p Requires {bench_name}.target |"
-		" cut -d= -f2)"
+		" cut -d= -f2)",
+		_raise=_raise,
 	)
 
 
@@ -434,13 +455,6 @@ def update(
 
 	if version_upgrade[0] or (not version_upgrade[0] and force):
 		post_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
-
-	if pull and compile:
-		from compileall import compile_dir
-
-		print("Compiling Python files...")
-		apps_dir = os.path.join(bench_path, "apps")
-		compile_dir(apps_dir, quiet=1, rx=re.compile(".*node_modules.*"))
 
 	bench.reload(web=False, supervisor=restart_supervisor, systemd=restart_systemd)
 

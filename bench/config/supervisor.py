@@ -8,7 +8,12 @@ import bench
 from bench.app import use_rq
 from bench.utils import get_bench_name, which
 from bench.bench import Bench
-from bench.config.common_site_config import update_config, get_gunicorn_workers
+from bench.config.common_site_config import (
+	update_config,
+	get_gunicorn_workers,
+	get_default_max_requests,
+	compute_max_requests_jitter,
+)
 
 # imports - third party imports
 import click
@@ -26,6 +31,13 @@ def generate_supervisor_config(bench_path, user=None, yes=False, skip_redis=Fals
 	template = bench.config.env().get_template("supervisor.conf")
 	bench_dir = os.path.abspath(bench_path)
 
+	web_worker_count = config.get(
+		"gunicorn_workers", get_gunicorn_workers()["gunicorn_workers"]
+	)
+	max_requests = config.get(
+		"gunicorn_max_requests", get_default_max_requests(web_worker_count)
+	)
+
 	config = template.render(
 		**{
 			"bench_dir": bench_dir,
@@ -38,9 +50,9 @@ def generate_supervisor_config(bench_path, user=None, yes=False, skip_redis=Fals
 			"redis_cache_config": os.path.join(bench_dir, "config", "redis_cache.conf"),
 			"redis_queue_config": os.path.join(bench_dir, "config", "redis_queue.conf"),
 			"webserver_port": config.get("webserver_port", 8000),
-			"gunicorn_workers": config.get(
-				"gunicorn_workers", get_gunicorn_workers()["gunicorn_workers"]
-			),
+			"gunicorn_workers": web_worker_count,
+			"gunicorn_max_requests": max_requests,
+			"gunicorn_max_requests_jitter": compute_max_requests_jitter(max_requests),
 			"bench_name": get_bench_name(bench_path),
 			"background_workers": config.get("background_workers") or 1,
 			"bench_cmd": which("bench"),
