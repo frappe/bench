@@ -82,7 +82,6 @@ def generate_systemd_config(
 		"redis_server": which("redis-server"),
 		"node": which("node") or which("nodejs"),
 		"redis_cache_config": os.path.join(bench_dir, "config", "redis_cache.conf"),
-		"redis_socketio_config": os.path.join(bench_dir, "config", "redis_socketio.conf"),
 		"redis_queue_config": os.path.join(bench_dir, "config", "redis_queue.conf"),
 		"webserver_port": config.get("webserver_port", 8000),
 		"gunicorn_workers": web_worker_count,
@@ -244,14 +243,10 @@ def setup_redis_config(bench_info, bench_path):
 	bench_redis_queue_template = bench.config.env().get_template(
 		"systemd/frappe-bench-redis-queue.service"
 	)
-	bench_redis_socketio_template = bench.config.env().get_template(
-		"systemd/frappe-bench-redis-socketio.service"
-	)
 
 	bench_redis_target_config = bench_redis_target_template.render(**bench_info)
 	bench_redis_cache_config = bench_redis_cache_template.render(**bench_info)
 	bench_redis_queue_config = bench_redis_queue_template.render(**bench_info)
-	bench_redis_socketio_config = bench_redis_socketio_template.render(**bench_info)
 
 	bench_redis_target_config_path = os.path.join(
 		bench_path, "config", "systemd", bench_info.get("bench_name") + "-redis.target"
@@ -262,12 +257,6 @@ def setup_redis_config(bench_info, bench_path):
 	bench_redis_queue_config_path = os.path.join(
 		bench_path, "config", "systemd", bench_info.get("bench_name") + "-redis-queue.service"
 	)
-	bench_redis_socketio_config_path = os.path.join(
-		bench_path,
-		"config",
-		"systemd",
-		bench_info.get("bench_name") + "-redis-socketio.service",
-	)
 
 	with open(bench_redis_target_config_path, "w") as f:
 		f.write(bench_redis_target_config)
@@ -277,9 +266,6 @@ def setup_redis_config(bench_info, bench_path):
 
 	with open(bench_redis_queue_config_path, "w") as f:
 		f.write(bench_redis_queue_config)
-
-	with open(bench_redis_socketio_config_path, "w") as f:
-		f.write(bench_redis_socketio_config)
 
 
 def _create_symlinks(bench_path):
@@ -319,6 +305,5 @@ def get_unit_files(bench_path):
 		[bench_name + "-node-socketio", ".service"],
 		[bench_name + "-redis-cache", ".service"],
 		[bench_name + "-redis-queue", ".service"],
-		[bench_name + "-redis-socketio", ".service"],
 	]
 	return unit_files

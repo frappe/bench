@@ -67,7 +67,6 @@ class TestBenchBase(unittest.TestCase):
 	def assert_config(self, bench_name):
 		for config, search_key in (
 			("redis_queue.conf", "redis_queue.rdb"),
-			("redis_socketio.conf", "redis_socketio.rdb"),
 			("redis_cache.conf", "redis_cache.rdb"),
 		):
 
