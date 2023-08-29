@@ -129,6 +129,10 @@ def make_ports(bench_path):
 
 		ports[key] = value
 
+	# Backward compatbility: always keep redis_cache and redis_socketio port same
+	# Note: not required from v15
+	ports["redis_socketio"] = ports["redis_cache"]
+
 	return ports
 
 
