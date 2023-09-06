@@ -12,6 +12,7 @@ from bench.app import use_rq
 from bench.bench import Bench
 from bench.config.common_site_config import (
 	compute_max_requests_jitter,
+	get_config,
 	get_default_max_requests,
 	get_gunicorn_workers,
 	update_config,
@@ -73,6 +74,7 @@ def generate_supervisor_config(bench_path, user=None, yes=False, skip_redis=Fals
 
 	update_config({"restart_supervisor_on_update": True}, bench_path=bench_path)
 	update_config({"restart_systemd_on_update": False}, bench_path=bench_path)
+	sync_socketio_port(bench_path)
 
 
 def get_supervisord_conf():
@@ -88,6 +90,16 @@ def get_supervisord_conf():
 	for possibility in possibilities:
 		if os.path.exists(possibility):
 			return possibility
+
+
+def sync_socketio_port(bench_path):
+	# Backward compatbility: always keep redis_cache and redis_socketio port same
+	common_config = get_config(bench_path=bench_path)
+
+	socketio_port = common_config.get("redis_socketio")
+	cache_port = common_config.get("redis_cache")
+	if socketio_port and socketio_port != cache_port:
+		update_config({"redis_socketio": cache_port})
 
 
 def can_enable_multi_queue_consumption(bench_path: str) -> bool:
