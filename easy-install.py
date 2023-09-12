@@ -114,7 +114,7 @@ def check_repo_exists() -> bool:
 	return os.path.exists(os.path.join(os.getcwd(), "frappe_docker"))
 
 
-def setup_prod(project: str, sites, email: str, version: str = None) -> None:
+def setup_prod(project: str, sites, email: str, version: str = None, image = None) -> None:
 	if check_repo_exists():
 		compose_file_name = os.path.join(os.path.expanduser("~"), f"{project}-compose.yml")
 		docker_repo_path = os.path.join(os.getcwd(), "frappe_docker")
@@ -125,6 +125,11 @@ def setup_prod(project: str, sites, email: str, version: str = None) -> None:
 		admin_pass = ""
 		db_pass = ""
 		with open(compose_file_name, "w") as f:
+			if image:
+				filedata = f.read()
+				filedata = filedata.replace("image: frappe/erpnext", f"image: {image}")
+				f.write(filedata)
+
 			# Writing to compose file
 			if not os.path.exists(os.path.join(docker_repo_path, ".env")):
 				admin_pass = generate_pass()
@@ -199,7 +204,7 @@ def setup_prod(project: str, sites, email: str, version: str = None) -> None:
 	else:
 		install_docker()
 		clone_frappe_docker_repo()
-		setup_prod(project, sites, email, version)  # Recursive
+		setup_prod(project, sites, email, version, image)  # Recursive
 
 
 def setup_dev_instance(project: str):
@@ -321,6 +326,7 @@ if __name__ == "__main__":
 		dest="sites",
 	)
 	parser.add_argument("-n", "--project", help="Project Name", default="frappe")
+	parser.add_argument("-i", "--image", help="Full Image Name")
 	parser.add_argument(
 		"--email", help="Add email for the SSL.", required="--prod" in sys.argv
 	)
@@ -338,6 +344,6 @@ if __name__ == "__main__":
 		if "example.com" in args.email:
 			cprint("Emails with example.com not acceptable", level=1)
 			sys.exit(1)
-		setup_prod(args.project, args.sites, args.email, args.version)
+		setup_prod(args.project, args.sites, args.email, args.version, args.image)
 	else:
 		parser.print_help()
