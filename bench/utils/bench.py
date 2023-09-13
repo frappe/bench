@@ -58,7 +58,7 @@ def update_node_packages(bench_path=".", apps=None, verbose=None):
 	# After rollup was merged, frappe_version = 10.1
 	# if develop_verion is 11 and up, only then install yarn
 	if v < LooseVersion("11.x.x-develop"):
-		update_npm_packages(bench_path, apps=apps)
+		update_npm_packages(bench_path, apps=apps, verbose=verbose)
 	else:
 		update_yarn_packages(bench_path, apps=apps, verbose=verbose)
 
@@ -133,7 +133,9 @@ def update_yarn_packages(bench_path=".", apps=None, verbose=None):
 			bench.run(yarn_install, cwd=app_path)
 
 
-def update_npm_packages(bench_path=".", apps=None):
+def update_npm_packages(bench_path=".", apps=None, verbose=None):
+	verbose = bench.cli.verbose or verbose
+	npm_install = "npm install --verbose" if verbose else "npm install"
 	apps_dir = os.path.join(bench_path, "apps")
 	package_json = {}
 
@@ -165,7 +167,7 @@ def update_npm_packages(bench_path=".", apps=None):
 	with open(os.path.join(bench_path, "package.json"), "w") as f:
 		f.write(json.dumps(package_json, indent=1, sort_keys=True))
 
-	exec_cmd("npm install", cwd=bench_path)
+	exec_cmd(npm_install, cwd=bench_path)
 
 
 def migrate_env(python, backup=False):
