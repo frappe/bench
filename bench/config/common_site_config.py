@@ -83,7 +83,7 @@ def update_config_for_frappe(config, bench_path):
 
 	for key in ("redis_cache", "redis_queue", "redis_socketio"):
 		if key not in config:
-			config[key] = f"redis://localhost:{ports[key]}"
+			config[key] = f"redis://127.0.0.1:{ports[key]}"
 
 	for key in ("webserver_port", "socketio_port", "file_watcher_port"):
 		if key not in config:
