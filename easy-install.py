@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import fileinput
 import logging
 import os
 import platform
@@ -115,6 +116,9 @@ def check_repo_exists() -> bool:
 
 
 def setup_prod(project: str, sites, email: str, version: str = None, image = None) -> None:
+	if len(sites) == 0:
+		sites = ["site.localhost"]
+
 	if check_repo_exists():
 		compose_file_name = os.path.join(os.path.expanduser("~"), f"{project}-compose.yml")
 		docker_repo_path = os.path.join(os.getcwd(), "frappe_docker")
@@ -125,11 +129,6 @@ def setup_prod(project: str, sites, email: str, version: str = None, image = Non
 		admin_pass = ""
 		db_pass = ""
 		with open(compose_file_name, "w") as f:
-			if image:
-				filedata = f.read()
-				filedata = filedata.replace("image: frappe/erpnext", f"image: {image}")
-				f.write(filedata)
-
 			# Writing to compose file
 			if not os.path.exists(os.path.join(docker_repo_path, ".env")):
 				admin_pass = generate_pass()
@@ -176,6 +175,14 @@ def setup_prod(project: str, sites, email: str, version: str = None, image = Non
 				logging.error("Docker Compose generation failed", exc_info=True)
 				cprint("\nGenerating Compose File failed\n")
 				sys.exit(1)
+
+		# Use custom image
+		if image:
+			for line in fileinput.input(compose_file_name, inplace=True):
+				if "image: frappe/erpnext" in line:
+					line = line.replace("image: frappe/erpnext", f"image: {image}")
+				sys.stdout.write(line)
+
 		try:
 			# Starting with generated compose file
 			subprocess.run(
@@ -321,7 +328,7 @@ if __name__ == "__main__":
 		"-s",
 		"--sitename",
 		help="Site Name(s) for your production bench",
-		default=["site1.localhost"],
+		default=[],
 		action="append",
 		dest="sites",
 	)
