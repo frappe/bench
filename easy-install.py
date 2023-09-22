@@ -117,7 +117,7 @@ def check_repo_exists() -> bool:
 
 def setup_prod(project: str, sites, email: str, version: str = None, image = None) -> None:
 	if len(sites) == 0:
-		sites = ["site.localhost"]
+		sites = ["site1.localhost"]
 
 	if check_repo_exists():
 		compose_file_name = os.path.join(os.path.expanduser("~"), f"{project}-compose.yml")
