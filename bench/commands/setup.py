@@ -358,7 +358,7 @@ def sync_domains(domain=None, site=None):
 @click.command("role", help="Install dependencies via ansible roles")
 @click.argument("role")
 @click.option("--admin_emails", default="")
-@click.option("--mysql_root_password")
+@click.option("--mysql_root_password", "--mariadb_root_password")
 @click.option("--container", is_flag=True, default=False)
 def setup_roles(role, **kwargs):
 	extra_vars = {"production": True}
