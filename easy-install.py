@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import fileinput
 import logging
 import os
 import platform
@@ -114,7 +115,10 @@ def check_repo_exists() -> bool:
 	return os.path.exists(os.path.join(os.getcwd(), "frappe_docker"))
 
 
-def setup_prod(project: str, sites, email: str, version: str = None) -> None:
+def setup_prod(project: str, sites, email: str, version: str = None, image = None) -> None:
+	if len(sites) == 0:
+		sites = ["site1.localhost"]
+
 	if check_repo_exists():
 		compose_file_name = os.path.join(os.path.expanduser("~"), f"{project}-compose.yml")
 		docker_repo_path = os.path.join(os.getcwd(), "frappe_docker")
@@ -171,6 +175,14 @@ def setup_prod(project: str, sites, email: str, version: str = None) -> None:
 				logging.error("Docker Compose generation failed", exc_info=True)
 				cprint("\nGenerating Compose File failed\n")
 				sys.exit(1)
+
+		# Use custom image
+		if image:
+			for line in fileinput.input(compose_file_name, inplace=True):
+				if "image: frappe/erpnext" in line:
+					line = line.replace("image: frappe/erpnext", f"image: {image}")
+				sys.stdout.write(line)
+
 		try:
 			# Starting with generated compose file
 			subprocess.run(
@@ -199,7 +211,7 @@ def setup_prod(project: str, sites, email: str, version: str = None) -> None:
 	else:
 		install_docker()
 		clone_frappe_docker_repo()
-		setup_prod(project, sites, email, version)  # Recursive
+		setup_prod(project, sites, email, version, image)  # Recursive
 
 
 def setup_dev_instance(project: str):
@@ -316,11 +328,12 @@ if __name__ == "__main__":
 		"-s",
 		"--sitename",
 		help="Site Name(s) for your production bench",
-		default=["site1.localhost"],
+		default=[],
 		action="append",
 		dest="sites",
 	)
 	parser.add_argument("-n", "--project", help="Project Name", default="frappe")
+	parser.add_argument("-i", "--image", help="Full Image Name")
 	parser.add_argument(
 		"--email", help="Add email for the SSL.", required="--prod" in sys.argv
 	)
@@ -338,6 +351,6 @@ if __name__ == "__main__":
 		if "example.com" in args.email:
 			cprint("Emails with example.com not acceptable", level=1)
 			sys.exit(1)
-		setup_prod(args.project, args.sites, args.email, args.version)
+		setup_prod(args.project, args.sites, args.email, args.version, args.image)
 	else:
 		parser.print_help()

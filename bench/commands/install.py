@@ -25,9 +25,10 @@ def install_prerequisites():
 @click.command(
 	"mariadb", help="Install and setup MariaDB of specified version and root password"
 )
-@click.option("--mysql_root_password", "--mysql-root-password", default="")
+@click.option("--mysql_root_password", "--mysql-root-password",
+			  "--mariadb_root_password", "--mariadb-root-password", default="")
 @click.option("--version", default="10.3")
-def install_maridb(mysql_root_password, version):
+def install_mariadb(mysql_root_password, version):
 	if mysql_root_password:
 		extra_vars.update(
 			{
@@ -111,7 +112,7 @@ def install_failtoban(**kwargs):
 
 
 install.add_command(install_prerequisites)
-install.add_command(install_maridb)
+install.add_command(install_mariadb)
 install.add_command(install_wkhtmltopdf)
 install.add_command(install_nodejs)
 install.add_command(install_psutil)
