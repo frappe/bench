@@ -54,9 +54,9 @@ class TestBenchInit(TestBenchBase):
 				"webserver_port": 8000,
 				"socketio_port": 9000,
 				"file_watcher_port": 6787,
-				"redis_queue": "redis://localhost:11000",
-				"redis_socketio": "redis://localhost:13000",
-				"redis_cache": "redis://localhost:13000",
+				"redis_queue": "redis://127.0.0.1:11000",
+				"redis_socketio": "redis://127.0.0.1:13000",
+				"redis_cache": "redis://127.0.0.1:13000",
 			},
 		)
 
@@ -66,9 +66,9 @@ class TestBenchInit(TestBenchBase):
 				"webserver_port": 8001,
 				"socketio_port": 9001,
 				"file_watcher_port": 6788,
-				"redis_queue": "redis://localhost:11001",
-				"redis_socketio": "redis://localhost:13001",
-				"redis_cache": "redis://localhost:13001",
+				"redis_queue": "redis://127.0.0.1:11001",
+				"redis_socketio": "redis://127.0.0.1:13001",
+				"redis_cache": "redis://127.0.0.1:13001",
 			},
 		)
 
