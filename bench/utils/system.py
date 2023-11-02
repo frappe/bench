@@ -35,6 +35,7 @@ def init(
 	skip_assets=False,
 	python="python3",
 	install_app=None,
+	dev=False,
 ):
 	"""Initialize a new bench directory
 
@@ -63,7 +64,14 @@ def init(
 	bench.setup.dirs()
 	bench.setup.logging()
 	bench.setup.env(python=python)
-	bench.setup.config(redis=not skip_redis_config_generation, procfile=not no_procfile)
+	config = {}
+	if dev:
+		config["developer_mode"] = 1
+	bench.setup.config(
+		redis=not skip_redis_config_generation,
+		procfile=not no_procfile,
+		additional_config=config,
+	)
 	bench.setup.patches()
 
 	# local apps
