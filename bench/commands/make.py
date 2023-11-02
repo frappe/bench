@@ -39,6 +39,12 @@ import click
 @click.option("--skip-assets", is_flag=True, default=False, help="Do not build assets")
 @click.option("--install-app", help="Install particular app after initialization")
 @click.option("--verbose", is_flag=True, help="Verbose output during install")
+@click.option(
+	"--dev",
+	is_flag=True,
+	default=False,
+	help="Enable developer mode and install development dependencies.",
+)
 def init(
 	path,
 	apps_path,
@@ -54,6 +60,7 @@ def init(
 	skip_assets=False,
 	python="python3",
 	install_app=None,
+	dev=False,
 ):
 	import os
 
@@ -79,6 +86,7 @@ def init(
 			skip_assets=skip_assets,
 			python=python,
 			verbose=verbose,
+			dev=dev,
 		)
 		log(f"Bench {path} initialized", level=1)
 	except SystemExit:
