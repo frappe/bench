@@ -18,12 +18,14 @@ default_config = {
 DEFAULT_MAX_REQUESTS = 5000
 
 
-def setup_config(bench_path):
+def setup_config(bench_path, additional_config=None):
 	make_pid_folder(bench_path)
 	bench_config = get_config(bench_path)
 	bench_config.update(default_config)
 	bench_config.update(get_gunicorn_workers())
 	update_config_for_frappe(bench_config, bench_path)
+	if additional_config:
+		bench_config.update(additional_config)
 
 	put_config(bench_config, bench_path)
 

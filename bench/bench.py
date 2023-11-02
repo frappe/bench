@@ -371,12 +371,12 @@ class BenchSetup(Base):
 			)
 
 	@step(title="Setting Up Bench Config", success="Bench Config Set Up")
-	def config(self, redis=True, procfile=True):
+	def config(self, redis=True, procfile=True, additional_config=None):
 		"""Setup config folder
 		- create pids folder
 		- generate sites/common_site_config.json
 		"""
-		setup_config(self.bench.name)
+		setup_config(self.bench.name, additional_config=additional_config)
 
 		if redis:
 			from bench.config.redis import generate_config
