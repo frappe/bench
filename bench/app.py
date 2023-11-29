@@ -578,7 +578,8 @@ def install_app(
 		install_python_dev_dependencies(apps=app, bench_path=bench_path, verbose=verbose)
 
 	if os.path.exists(os.path.join(app_path, "package.json")):
-		bench.run("yarn install", cwd=app_path)
+		yarn_install = "yarn install --verbose" if verbose else "yarn install"
+		bench.run(yarn_install, cwd=app_path)
 
 	bench.apps.sync(app_name=app, required=resolution, branch=tag, app_dir=app_path)
 
