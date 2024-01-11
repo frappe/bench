@@ -621,9 +621,9 @@ Cannot proceed with update: You have local changes in app "{app}" that are not c
 Here are your choices:
 
 1. Merge the {app} app manually with "git pull" / "git pull --rebase" and fix conflicts.
-1. Temporarily remove your changes with "git stash" or discard them completely
+2. Temporarily remove your changes with "git stash" or discard them completely
 	with "bench update --reset" or for individual repositries "git reset --hard"
-2. If your changes are helpful for others, send in a pull request via GitHub and
+3. If your changes are helpful for others, send in a pull request via GitHub and
 	wait for them to be merged in the core."""
 					)
 					sys.exit(1)
