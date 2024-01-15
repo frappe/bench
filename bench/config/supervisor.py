@@ -59,6 +59,7 @@ def generate_supervisor_config(bench_path, user=None, yes=False, skip_redis=Fals
 			"skip_redis": skip_redis,
 			"workers": config.get("workers", {}),
 			"multi_queue_consumption": can_enable_multi_queue_consumption(bench_path),
+			"supervisor_startretries": 10,
 		}
 	)
 
