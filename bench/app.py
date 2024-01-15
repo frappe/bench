@@ -25,7 +25,6 @@ from bench.utils import (UNSET_ARG, fetch_details_from_tag,
                          get_available_folder_name, get_bench_cache_path,
                          is_bench_directory, is_git_url,
                          is_valid_frappe_branch, log, run_frappe_cmd)
-from bench.utils.app import check_existing_dir
 from bench.utils.bench import build_assets, install_python_dev_dependencies
 from bench.utils.render import step
 
@@ -447,6 +446,7 @@ def get_app(
 	import bench as _bench
 	import bench.cli as bench_cli
 	from bench.bench import Bench
+	from bench.utils.app import check_existing_dir
 
 	bench = Bench(bench_path)
 	app = App(git_url, branch=branch, bench=bench, soft_link=soft_link, commit_hash=commit_hash)
@@ -547,6 +547,7 @@ def install_resolved_deps(
 	skip_assets=False,
 	verbose=False,
 ):
+	from bench.utils.app import check_existing_dir
 	if "frappe" in resolution:
 		# Terminal dependency
 		del resolution["frappe"]
