@@ -151,6 +151,9 @@ def drop(path):
 	default=False,
 	help="Resolve dependencies before installing app",
 )
+@click.option("--commit-hash",  default=None, help="Required for caching get-app artifacts.")
+@click.option("--cache-artifacts", is_flag=True, default=False, help="Whether to cache get-app artifacts. Needs commit-hash.")
+@click.option("--compress-artifacts",  is_flag=True, default=False, help="Whether to gzip get-app artifacts that are to be cached.")
 def get_app(
 	git_url,
 	branch,
@@ -160,6 +163,9 @@ def get_app(
 	soft_link=False,
 	init_bench=False,
 	resolve_deps=False,
+	commit_hash=None,
+	cache_artifacts=False,
+	compress_artifacts=False,
 ):
 	"clone an app from the internet and set it up in your bench"
 	from bench.app import get_app
@@ -172,6 +178,8 @@ def get_app(
 		soft_link=soft_link,
 		init_bench=init_bench,
 		resolve_deps=resolve_deps,
+		commit_hash=commit_hash if cache_artifacts else None,
+		compress_artifacts=compress_artifacts,
 	)
 
 

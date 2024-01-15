@@ -6,10 +6,12 @@ import re
 import shutil
 import subprocess
 import sys
+import tarfile
 import typing
 from collections import OrderedDict
 from datetime import date
 from functools import lru_cache
+from pathlib import Path
 from urllib.parse import urlparse
 
 # imports - third party imports
@@ -19,16 +21,11 @@ import git
 # imports - module imports
 import bench
 from bench.exceptions import NotInBenchDirectoryError
-from bench.utils import (
-	UNSET_ARG,
-	fetch_details_from_tag,
-	get_available_folder_name,
-	is_bench_directory,
-	is_git_url,
-	is_valid_frappe_branch,
-	log,
-	run_frappe_cmd,
-)
+from bench.utils import (UNSET_ARG, fetch_details_from_tag,
+                         get_available_folder_name, get_bench_cache_path,
+                         is_bench_directory, is_git_url,
+                         is_valid_frappe_branch, log, run_frappe_cmd)
+from bench.utils.app import check_existing_dir
 from bench.utils.bench import build_assets, install_python_dev_dependencies
 from bench.utils.render import step
 
@@ -166,6 +163,7 @@ class App(AppMeta):
 		branch: str = None,
 		bench: "Bench" = None,
 		soft_link: bool = False,
+		commit_hash = None,
 		*args,
 		**kwargs,
 	):
@@ -173,6 +171,7 @@ class App(AppMeta):
 		self.soft_link = soft_link
 		self.required_by = None
 		self.local_resolution = []
+		self.commit_hash =  commit_hash
 		super().__init__(name, branch, *args, **kwargs)
 
 	@step(title="Fetching App {repo}", success="App {repo} Fetched")
@@ -283,6 +282,95 @@ class App(AppMeta):
 			branch=self.tag,
 			required=self.local_resolution,
 		)
+		
+		
+	"""
+	Get App Cache
+
+	Since get-app affects only the `apps`, `env`, and `sites`
+	bench sub directories. If we assume deterministic builds
+	when get-app is called, the `apps/app_name` sub dir can be
+	cached.
+
+	In subsequent builds this would save time by not having to:
+	- clone repository
+	- install frontend dependencies
+	- building frontend assets
+	as all of this is contained in the `apps/app_name` sub dir.
+
+	Code that updates the `env` and `sites` subdirs still need
+	to be run.
+	"""
+		
+	def get_app_path(self) -> Path:
+		return Path(self.bench.name) / "apps" / self.app_name
+
+	def get_app_cache_path(self, is_compressed=False) -> Path:
+		assert self.commit_hash is not None
+
+		cache_path = get_bench_cache_path("apps")
+		ext = "tgz" if is_compressed else "tar"
+		tarfile_name = f"{self.app_name}-{self.commit_hash[:10]}.{ext}"
+		return cache_path / tarfile_name
+		
+	def get_cached(self) -> bool:
+		if not self.commit_hash:
+			return False
+		
+		cache_path = self.get_app_cache_path()
+		mode = "r"
+		
+		# Check if cache exists without gzip
+		if not cache_path.is_file():
+			cache_path = self.get_app_cache_path(True)
+			mode = "r:gz"
+
+		# Check if cache exists with gzip
+		if not cache_path.is_file():
+			return
+
+		app_path = self.get_app_path()
+		if app_path.is_dir():
+			shutil.rmtree(app_path)
+		
+		click.secho(f"{self.app_name} being installed from cache", fg="yellow")
+		with tarfile.open(cache_path, mode) as tar:
+			tar.extractall(app_path.parent)
+
+		return True
+	
+	def install_cached(self) -> None:
+		"""
+		TODO:
+		- check if cache is being set
+		- check if app is being set from cache
+		- complete install_cached
+		- check if app is being installed correctly from cache
+		"""
+		raise NotImplementedError("TODO: complete this function")
+	
+	def set_cache(self, compress_artifacts=False) -> bool:
+		if not self.commit_hash:
+			return False
+
+		app_path = self.get_app_path()
+		if not app_path.is_dir() or not is_valid_app_dir(app_path):
+			return False
+
+		cwd = os.getcwd()
+		cache_path = self.get_app_cache_path(compress_artifacts)
+		mode =  "w:gz" if compress_artifacts else "w"
+
+		os.chdir(app_path.parent)
+		with tarfile.open(cache_path, mode) as tar:
+			tar.add(app_path.name)
+		os.chdir(cwd)
+		return True
+	
+
+def is_valid_app_dir(app_path: Path) -> bool:
+	# TODO: Check from content if valid frappe app root
+	return True
 
 
 def make_resolution_plan(app: App, bench: "Bench"):
@@ -346,6 +434,8 @@ def get_app(
 	soft_link=False,
 	init_bench=False,
 	resolve_deps=False,
+	commit_hash=None,
+	compress_artifacts=False,
 ):
 	"""bench get-app clones a Frappe App from remote (GitHub or any other git server),
 	and installs it on the current bench. This also resolves dependencies based on the
@@ -357,10 +447,9 @@ def get_app(
 	import bench as _bench
 	import bench.cli as bench_cli
 	from bench.bench import Bench
-	from bench.utils.app import check_existing_dir
 
 	bench = Bench(bench_path)
-	app = App(git_url, branch=branch, bench=bench, soft_link=soft_link)
+	app = App(git_url, branch=branch, bench=bench, soft_link=soft_link, commit_hash=commit_hash)
 	git_url = app.url
 	repo_name = app.repo
 	branch = app.tag
@@ -417,6 +506,10 @@ def get_app(
 			verbose=verbose,
 		)
 		return
+	
+	if app.get_cached():
+		app.install_cached()
+		return
 
 	dir_already_exists, cloned_path = check_existing_dir(bench_path, repo_name)
 	to_clone = not dir_already_exists
@@ -442,6 +535,9 @@ def get_app(
 		or click.confirm("Do you want to reinstall the existing application?")
 	):
 		app.install(verbose=verbose, skip_assets=skip_assets, restart_bench=restart_bench)
+		
+	app.set_cache(compress_artifacts)
+
 
 
 def install_resolved_deps(
@@ -451,8 +547,6 @@ def install_resolved_deps(
 	skip_assets=False,
 	verbose=False,
 ):
-	from bench.utils.app import check_existing_dir
-
 	if "frappe" in resolution:
 		# Terminal dependency
 		del resolution["frappe"]

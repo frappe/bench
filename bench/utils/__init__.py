@@ -7,8 +7,9 @@ import subprocess
 import sys
 from functools import lru_cache
 from glob import glob
+from pathlib import Path
 from shlex import split
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 # imports - third party imports
 import click
@@ -50,6 +51,15 @@ def is_frappe_app(directory: str) -> bool:
 
 	return bool(is_frappe_app)
 
+def get_bench_cache_path(sub_dir: Optional[str]) -> Path:
+	relative_path = "~/.cache/bench"
+	if sub_dir and not sub_dir.startswith("/"):
+		relative_path += f"/{sub_dir}"
+
+	cache_path = os.path.expanduser(relative_path)
+	cache_path = Path(cache_path)
+	cache_path.mkdir(parents=True, exist_ok=True)
+	return cache_path
 
 @lru_cache(maxsize=None)
 def is_valid_frappe_branch(frappe_path: str, frappe_branch: str):
