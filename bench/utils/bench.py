@@ -349,10 +349,14 @@ def restart_process_manager(bench_path=".", web_workers=False):
 		exec_cmd(f"overmind restart {worker}", cwd=bench_path)
 
 
-def build_assets(bench_path=".", app=None):
+def build_assets(bench_path=".", app=None, using_cached=False):
 	command = "bench build"
 	if app:
 		command += f" --app {app}"
+		
+	if using_cached:
+		command += " --using-cached"
+	
 	exec_cmd(command, cwd=bench_path, env={"BENCH_DEVELOPER": "1"})
 
 

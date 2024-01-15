@@ -21,10 +21,17 @@ import git
 # imports - module imports
 import bench
 from bench.exceptions import NotInBenchDirectoryError
-from bench.utils import (UNSET_ARG, fetch_details_from_tag,
-                         get_available_folder_name, get_bench_cache_path,
-                         is_bench_directory, is_git_url,
-                         is_valid_frappe_branch, log, run_frappe_cmd)
+from bench.utils import (
+	UNSET_ARG,
+	fetch_details_from_tag,
+	get_available_folder_name,
+	get_bench_cache_path,
+	is_bench_directory,
+	is_git_url,
+	is_valid_frappe_branch,
+	log,
+	run_frappe_cmd,
+)
 from bench.utils.bench import build_assets, install_python_dev_dependencies
 from bench.utils.render import step
 
@@ -225,6 +232,7 @@ class App(AppMeta):
 		resolved=False,
 		restart_bench=True,
 		ignore_resolution=False,
+		using_cached=False
 	):
 		import bench.cli
 		from bench.utils.app import get_app_name
@@ -245,6 +253,7 @@ class App(AppMeta):
 			skip_assets=skip_assets,
 			restart_bench=restart_bench,
 			resolution=self.local_resolution,
+			using_cached=using_cached,
 		)
 
 	@step(title="Cloning and installing {repo}", success="App {repo} Installed")
@@ -332,21 +341,11 @@ class App(AppMeta):
 		if app_path.is_dir():
 			shutil.rmtree(app_path)
 		
-		click.secho(f"{self.app_name} being installed from cache", fg="yellow")
+		click.secho(f"Getting {self.app_name} from cache", fg="yellow")
 		with tarfile.open(cache_path, mode) as tar:
 			tar.extractall(app_path.parent)
 
 		return True
-	
-	def install_cached(self) -> None:
-		"""
-		TODO:
-		- check if cache is being set
-		- check if app is being set from cache
-		- complete install_cached
-		- check if app is being installed correctly from cache
-		"""
-		raise NotImplementedError("TODO: complete this function")
 	
 	def set_cache(self, compress_artifacts=False) -> bool:
 		if not self.commit_hash:
@@ -359,6 +358,11 @@ class App(AppMeta):
 		cwd = os.getcwd()
 		cache_path = self.get_app_cache_path(compress_artifacts)
 		mode =  "w:gz" if compress_artifacts else "w"
+		
+		message = "Caching get-app artifacts"
+		if compress_artifacts:
+			message += " (compressed)"
+		click.secho(message)
 
 		os.chdir(app_path.parent)
 		with tarfile.open(cache_path, mode) as tar:
@@ -456,7 +460,7 @@ def get_app(
 	bench_setup = False
 	restart_bench = not init_bench
 	frappe_path, frappe_branch = None, None
-
+	
 	if resolve_deps:
 		resolution = make_resolution_plan(app, bench)
 		click.secho("Following apps will be installed", fg="bright_blue")
@@ -508,7 +512,7 @@ def get_app(
 		return
 	
 	if app.get_cached():
-		app.install_cached()
+		app.install(verbose=verbose, skip_assets=skip_assets, restart_bench=restart_bench, using_cached=True)
 		return
 
 	dir_already_exists, cloned_path = check_existing_dir(bench_path, repo_name)
@@ -645,6 +649,7 @@ def install_app(
 	restart_bench=True,
 	skip_assets=False,
 	resolution=UNSET_ARG,
+	using_cached=False,
 ):
 	import bench.cli as bench_cli
 	from bench.bench import Bench
@@ -672,14 +677,14 @@ def install_app(
 	if conf.get("developer_mode"):
 		install_python_dev_dependencies(apps=app, bench_path=bench_path, verbose=verbose)
 
-	if os.path.exists(os.path.join(app_path, "package.json")):
+	if not using_cached and os.path.exists(os.path.join(app_path, "package.json")):
 		yarn_install = "yarn install --verbose" if verbose else "yarn install"
 		bench.run(yarn_install, cwd=app_path)
 
 	bench.apps.sync(app_name=app, required=resolution, branch=tag, app_dir=app_path)
 
 	if not skip_assets:
-		build_assets(bench_path=bench_path, app=app)
+		build_assets(bench_path=bench_path, app=app, using_cached=using_cached)
 
 	if restart_bench:
 		# Avoiding exceptions here as production might not be set-up
