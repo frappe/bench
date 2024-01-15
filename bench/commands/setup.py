@@ -73,7 +73,9 @@ def setup_supervisor(user=None, yes=False, skip_redis=False, skip_supervisord=Fa
 		generate_supervisor_config,
 	)
 
-	which("supervisorctl", raise_err=True)
+	if which("supervisorctl") is None:
+		click.secho("Please install `supervisor` to proceed", fg="red")
+		sys.exit(1)
 
 	if not skip_supervisord and "Permission denied" in get_cmd_output(
 		"supervisorctl status"
