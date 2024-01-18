@@ -354,17 +354,11 @@ def build_assets(bench_path=".", app=None, using_cached=False):
 	if app:
 		command += f" --app {app}"
 		
-	if using_cached and can_use_cached(bench_path):
-		command += " --using-cached"
+	env = {"BENCH_DEVELOPER": "1"}
+	if using_cached:
+		env["USING_CACHED"] = "1"
 	
-	exec_cmd(command, cwd=bench_path, env={"BENCH_DEVELOPER": "1"})
-
-def can_use_cached(bench_path=".") -> bool:
-	cmd = ["bench", "can-use-cached"]
-	return_code = subprocess.call(
-		cmd, cwd=bench_path, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-	)
-	return not return_code
+	exec_cmd(command, cwd=bench_path, env=env)
 
 def handle_version_upgrade(version_upgrade, bench_path, force, reset, conf):
 	from bench.utils import log, pause_exec
