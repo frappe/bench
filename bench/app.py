@@ -365,11 +365,19 @@ class App(AppMeta):
 		click.secho(message)
 
 		self.prune_app_directory()
+		
+		success = False
 		os.chdir(app_path.parent)
-		with tarfile.open(cache_path, mode) as tar:
-			tar.add(app_path.name)
-		os.chdir(cwd)
-		return True
+		try:
+			with tarfile.open(cache_path, mode) as tar:
+				tar.add(app_path.name)
+			success = True
+		except Exception:
+			log(f"Failed to cache {app_path}", level=3)
+			success = False
+		finally:
+			os.chdir(cwd)
+		return success
 	
 	def prune_app_directory(self):
 		app_path = self.get_app_path()
