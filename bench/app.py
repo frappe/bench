@@ -335,7 +335,7 @@ class App(AppMeta):
 
 		# Check if cache exists with gzip
 		if not cache_path.is_file():
-			return
+			return False
 
 		app_path = self.get_app_path()
 		if app_path.is_dir():
@@ -352,28 +352,64 @@ class App(AppMeta):
 			return False
 
 		app_path = self.get_app_path()
-		if not app_path.is_dir() or not is_valid_app_dir(app_path):
+		if not app_path.is_dir():
 			return False
 
 		cwd = os.getcwd()
 		cache_path = self.get_app_cache_path(compress_artifacts)
 		mode =  "w:gz" if compress_artifacts else "w"
 		
-		message = "Caching get-app artifacts"
+		message = f"Caching ${self.app_name} app directory"
 		if compress_artifacts:
 			message += " (compressed)"
 		click.secho(message)
 
+		self.prune_app_directory()
 		os.chdir(app_path.parent)
 		with tarfile.open(cache_path, mode) as tar:
 			tar.add(app_path.name)
 		os.chdir(cwd)
 		return True
 	
+	def prune_app_directory(self):
+		app_path = self.get_app_path()
+		remove_unused_node_modules(app_path)
+	
 
-def is_valid_app_dir(app_path: Path) -> bool:
-	# TODO: Check from content if valid frappe app root
-	return True
+def remove_unused_node_modules(app_path: Path) -> None:
+	"""
+	Erring a bit the side of caution; since there is no explicit way
+	to check if node_modules are utilized, this function checks if Vite
+	is being used to build the frontend code.
+	
+	Since most popular Frappe apps use Vite to build their frontends,
+	this method should suffice.
+	
+	Note: root package.json is ignored cause those usually belong to
+	apps that do not have a build step and so their node_modules are
+	utilized during runtime.
+	"""
+	
+	for p in app_path.iterdir():
+		if not p.is_dir():
+			continue
+		
+		package_json = p / "package.json"
+		if not package_json.is_file():
+			continue
+		
+		node_modules = p / "node_modules"
+		if not node_modules.is_dir():
+			continue
+		
+		can_delete = False
+		with package_json.open("r", encoding="utf-8") as f:
+			package_json = json.loads(f.read())
+			build_script = package_json.get("scripts", {}).get("build", "")
+			can_delete = "vite build" in build_script
+			
+		if can_delete:
+			shutil.rmtree(node_modules)
 
 
 def make_resolution_plan(app: App, bench: "Bench"):
