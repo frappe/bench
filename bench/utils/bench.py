@@ -748,11 +748,8 @@ def cache_clear() -> None:
 	tot_size = get_dir_size(cache_path)
 	shutil.rmtree(cache_path)
 
-	rem_items = tot_items - len(os.listdir(cache_path))
-	rem_size = tot_size - get_dir_size(cache_path)
-
-	if rem_items:
-		click.echo(f"Cleared {rem_size / 1_000_000:.3f} MB belonging to {rem_items} items")
+	if tot_items:
+		click.echo(f"Cleared {tot_size / 1_000_000:.3f} MB belonging to {tot_items} items")
 
 
 def get_dir_size(p: Path) -> int:
