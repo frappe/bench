@@ -644,12 +644,12 @@ To switch to your required branch, run the following commands: bench switch-to-b
 			sys.exit(1)
 
 
-def cache_helper(clear=False, remove_app="", remove_hash="") -> None:
-	can_remove = bool(remove_hash or remove_app)
+def cache_helper(clear=False, remove_app="", remove_key="") -> None:
+	can_remove = bool(remove_key or remove_app)
 	if not clear and not can_remove:
 		cache_list()
 	elif can_remove:
-		cache_remove(remove_app, remove_hash)
+		cache_remove(remove_app, remove_key)
 	elif clear:
 		cache_clear()
 	else:
@@ -696,17 +696,18 @@ def cache_list() -> None:
 			f"{created:%Y-%m-%d %H:%M:%S}  "
 			f"{accessed:%Y-%m-%d %H:%M:%S}  "
 		)
+
 	if tot_items:
 		click.echo(f"Total size {tot_size / 1_000_000:.3f} MB belonging to {tot_items} items")
 	else:
 		click.echo("No cached items")
 
 
-def cache_remove(app: str = "", hash: str = "") -> None:
+def cache_remove(app: str = "", key: str = "") -> None:
 	rem_items = 0
 	rem_size = 0
 	for item in get_bench_cache_path("apps").iterdir():
-		if not should_remove_item(item, app, hash):
+		if not should_remove_item(item, app, key):
 			continue
 
 		rem_items += 1
@@ -720,18 +721,18 @@ def cache_remove(app: str = "", hash: str = "") -> None:
 		click.echo("No items removed")
 
 
-def should_remove_item(item: Path, app: str, hash: str) -> bool:
+def should_remove_item(item: Path, app: str, key: str) -> bool:
 	if item.suffix not in [".tar", ".tgz"]:
 		return False
 
 	name = item.name
-	if app and hash and name.startswith(f"{app}-{hash[:10]}."):
+	if app and key and name.startswith(f"{app}-{key[:10]}."):
 		return True
 
 	if app and name.startswith(f"{app}-"):
 		return True
 
-	if hash and f"-{hash[:10]}." in name:
+	if key and f"-{key[:10]}." in name:
 		return True
 
 	return False

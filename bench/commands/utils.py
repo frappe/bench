@@ -186,11 +186,11 @@ def migrate_env(python, backup=True):
 	help="Removes all items that match provided app name",
 )
 @click.option(
-	"--remove-hash",
+	"--remove-key",
 	default="",
-	help="Removes all items that matches provided commit-hash",
+	help="Removes all items that matches provided cache key",
 )
-def app_cache_helper(clear=False, remove_app="", remove_hash=""):
+def app_cache_helper(clear=False, remove_app="", remove_key=""):
 	from bench.utils.bench import cache_helper
 
-	cache_helper(clear, remove_app, remove_hash)
+	cache_helper(clear, remove_app, remove_key)

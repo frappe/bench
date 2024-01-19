@@ -169,7 +169,7 @@ class App(AppMeta):
 		branch: str = None,
 		bench: "Bench" = None,
 		soft_link: bool = False,
-		commit_hash = None,
+		cache_key = None,
 		*args,
 		**kwargs,
 	):
@@ -177,7 +177,7 @@ class App(AppMeta):
 		self.soft_link = soft_link
 		self.required_by = None
 		self.local_resolution = []
-		self.commit_hash =  commit_hash
+		self.cache_key =  cache_key
 		super().__init__(name, branch, *args, **kwargs)
 
 	@step(title="Fetching App {repo}", success="App {repo} Fetched")
@@ -314,15 +314,15 @@ class App(AppMeta):
 		return Path(self.bench.name) / "apps" / self.app_name
 
 	def get_app_cache_path(self, is_compressed=False) -> Path:
-		assert self.commit_hash is not None
+		assert self.cache_key is not None
 
 		cache_path = get_bench_cache_path("apps")
 		ext = "tgz" if is_compressed else "tar"
-		tarfile_name = f"{self.app_name}-{self.commit_hash[:10]}.{ext}"
+		tarfile_name = f"{self.app_name}-{self.cache_key[:10]}.{ext}"
 		return cache_path / tarfile_name
 		
 	def get_cached(self) -> bool:
-		if not self.commit_hash:
+		if not self.cache_key:
 			return False
 		
 		cache_path = self.get_app_cache_path()
@@ -348,7 +348,7 @@ class App(AppMeta):
 		return True
 	
 	def set_cache(self, compress_artifacts=False) -> bool:
-		if not self.commit_hash:
+		if not self.cache_key:
 			return False
 
 		app_path = self.get_app_path()
@@ -359,7 +359,7 @@ class App(AppMeta):
 		cache_path = self.get_app_cache_path(compress_artifacts)
 		mode =  "w:gz" if compress_artifacts else "w"
 		
-		message = f"Caching ${self.app_name} app directory"
+		message = f"Caching {self.app_name} app directory"
 		if compress_artifacts:
 			message += " (compressed)"
 		click.secho(message)
@@ -481,7 +481,7 @@ def get_app(
 	soft_link=False,
 	init_bench=False,
 	resolve_deps=False,
-	commit_hash=None,
+	cache_key=None,
 	compress_artifacts=False,
 ):
 	"""bench get-app clones a Frappe App from remote (GitHub or any other git server),
@@ -497,7 +497,7 @@ def get_app(
 	from bench.utils.app import check_existing_dir
 
 	bench = Bench(bench_path)
-	app = App(git_url, branch=branch, bench=bench, soft_link=soft_link, commit_hash=commit_hash)
+	app = App(git_url, branch=branch, bench=bench, soft_link=soft_link, cache_key=cache_key)
 	git_url = app.url
 	repo_name = app.repo
 	branch = app.tag
