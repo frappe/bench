@@ -313,22 +313,23 @@ def restart_supervisor_processes(bench_path=".", web_workers=False, _raise=False
 			supervisor_status = get_cmd_output("sudo supervisorctl status", cwd=bench_path)
 
 		if web_workers and f"{bench_name}-web:" in supervisor_status:
-			group = f"{bench_name}-web:\t"
+			groups = [f"{bench_name}-web:\t"]
 
 		elif f"{bench_name}-workers:" in supervisor_status:
-			group = f"{bench_name}-workers: {bench_name}-web:"
+			groups = [f"{bench_name}-web:", f"{bench_name}-workers:"]
 
 		# backward compatibility
 		elif f"{bench_name}-processes:" in supervisor_status:
-			group = f"{bench_name}-processes:"
+			groups = [f"{bench_name}-processes:"]
 
 		# backward compatibility
 		else:
-			group = "frappe:"
+			groups = ["frappe:"]
 
-		failure = bench.run(f"{sudo}supervisorctl restart {group}", _raise=_raise)
-		if failure:
-			log("restarting supervisor failed. Use `bench restart` to retry.", level=3)
+		for group in groups:
+			failure = bench.run(f"{sudo}supervisorctl restart {group}", _raise=_raise)
+			if failure:
+				log(f"restarting supervisor group `{group}` failed. Use `bench restart` to retry.", level=3)
 
 
 def restart_systemd_processes(bench_path=".", web_workers=False, _raise=True):

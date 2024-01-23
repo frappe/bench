@@ -77,7 +77,7 @@ def install_nginx(user=None):
 		setup_sudoers(user)
 
 
-@click.command("virtualbox", help="Installs supervisor")
+@click.command("virtualbox", help="Installs virtualbox")
 def install_virtualbox():
 	run_playbook("vm_build.yml", tag="virtualbox")
 
