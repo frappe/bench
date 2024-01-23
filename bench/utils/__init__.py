@@ -10,7 +10,7 @@ from glob import glob
 from pathlib import Path
 from shlex import split
 from tarfile import data_filter, AbsoluteLinkError, TarInfo
-from typing import Callable, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 # imports - third party imports
 import click
@@ -575,7 +575,7 @@ def get_cmd_from_sysargv():
 def get_app_cache_extract_filter(
 	count_threshold: int = 10_000,
 	size_threshold: int = 1_000_000_000,
-) -> Callable[[TarInfo, str], TarInfo | None]:
+): # -> Callable[[TarInfo, str], TarInfo | None]
 	state = dict(count=0, size=0)
 
 	def filter_function(member: TarInfo, dest_path: str) -> Optional[TarInfo]:
