@@ -24,6 +24,7 @@ from bench.exceptions import NotInBenchDirectoryError
 from bench.utils import (
 	UNSET_ARG,
 	fetch_details_from_tag,
+	get_app_cache_extract_filter,
 	get_available_folder_name,
 	get_bench_cache_path,
 	is_bench_directory,
@@ -343,7 +344,11 @@ class App(AppMeta):
 		
 		click.secho(f"Getting {self.app_name} from cache", fg="yellow")
 		with tarfile.open(cache_path, mode) as tar:
-			tar.extractall(app_path.parent)
+			try:
+				tar.extractall(app_path.parent, filter=get_app_cache_extract_filter())
+			except:
+				shutil.rmtree(app_path)
+				return False
 
 		return True
 	

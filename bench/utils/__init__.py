@@ -9,7 +9,8 @@ from functools import lru_cache
 from glob import glob
 from pathlib import Path
 from shlex import split
-from typing import List, Optional, Tuple
+from tarfile import data_filter, AbsoluteLinkError, TarInfo
+from typing import Callable, List, Optional, Tuple
 
 # imports - third party imports
 import click
@@ -569,3 +570,28 @@ def get_cmd_from_sysargv():
 		break
 
 	return cmd_from_ctx
+
+
+def get_app_cache_extract_filter(
+	count_threshold: int = 10_000,
+	size_threshold: int = 1_000_000_000,
+) -> Callable[[TarInfo, str], TarInfo | None]:
+	state = dict(count=0, size=0)
+
+	def filter_function(member: TarInfo, dest_path: str) -> Optional[TarInfo]:
+		state["count"] += 1
+		state["size"] += member.size
+
+		if state["count"] > count_threshold:
+			raise Exception(f"Number of entries exceeds threshold ({state['count']})")
+
+		if state["size"] > size_threshold:
+			raise Exception(f"Extracted size exceeds threshold ({state['size']})")
+
+		try:
+			return data_filter(member, dest_path)
+		except AbsoluteLinkError:
+			# Links created by `frappe` after extraction
+			return None
+
+	return filter_function
