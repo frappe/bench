@@ -169,6 +169,7 @@ def cmd_requires_root():
 	if len(sys.argv) > 2 and sys.argv[1] in ("install"):
 		return True
 
+	return False
 
 def change_dir():
 	if os.path.exists("config.json") or "init" in sys.argv:
