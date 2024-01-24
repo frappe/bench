@@ -1,6 +1,9 @@
 # MAC OS
 .DS_Store
 
+# VS Code
+.vscode/
+
 # Vim Gitignore
 ## Swap
 [._]*.s[a-v][a-z]
