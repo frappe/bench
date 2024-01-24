@@ -176,3 +176,21 @@ def migrate_env(python, backup=True):
 	from bench.utils.bench import migrate_env
 
 	migrate_env(python=python, backup=backup)
+
+
+@click.command("app-cache", help="View or remove items belonging to bench get-app cache")
+@click.option("--clear", is_flag=True, default=False, help="Remove all items")
+@click.option(
+	"--remove-app",
+	default="",
+	help="Removes all items that match provided app name",
+)
+@click.option(
+	"--remove-key",
+	default="",
+	help="Removes all items that matches provided cache key",
+)
+def app_cache_helper(clear=False, remove_app="", remove_key=""):
+	from bench.utils.bench import cache_helper
+
+	cache_helper(clear, remove_app, remove_key)

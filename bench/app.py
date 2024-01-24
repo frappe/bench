@@ -6,10 +6,12 @@ import re
 import shutil
 import subprocess
 import sys
+import tarfile
 import typing
 from collections import OrderedDict
 from datetime import date
 from functools import lru_cache
+from pathlib import Path
 from urllib.parse import urlparse
 
 # imports - third party imports
@@ -22,7 +24,9 @@ from bench.exceptions import NotInBenchDirectoryError
 from bench.utils import (
 	UNSET_ARG,
 	fetch_details_from_tag,
+	get_app_cache_extract_filter,
 	get_available_folder_name,
+	get_bench_cache_path,
 	is_bench_directory,
 	is_git_url,
 	is_valid_frappe_branch,
@@ -166,6 +170,7 @@ class App(AppMeta):
 		branch: str = None,
 		bench: "Bench" = None,
 		soft_link: bool = False,
+		cache_key = None,
 		*args,
 		**kwargs,
 	):
@@ -173,6 +178,7 @@ class App(AppMeta):
 		self.soft_link = soft_link
 		self.required_by = None
 		self.local_resolution = []
+		self.cache_key =  cache_key
 		super().__init__(name, branch, *args, **kwargs)
 
 	@step(title="Fetching App {repo}", success="App {repo} Fetched")
@@ -227,6 +233,7 @@ class App(AppMeta):
 		resolved=False,
 		restart_bench=True,
 		ignore_resolution=False,
+		using_cached=False
 	):
 		import bench.cli
 		from bench.utils.app import get_app_name
@@ -247,6 +254,7 @@ class App(AppMeta):
 			skip_assets=skip_assets,
 			restart_bench=restart_bench,
 			resolution=self.local_resolution,
+			using_cached=using_cached,
 		)
 
 	@step(title="Cloning and installing {repo}", success="App {repo} Installed")
@@ -283,6 +291,139 @@ class App(AppMeta):
 			branch=self.tag,
 			required=self.local_resolution,
 		)
+		
+		
+	"""
+	Get App Cache
+
+	Since get-app affects only the `apps`, `env`, and `sites`
+	bench sub directories. If we assume deterministic builds
+	when get-app is called, the `apps/app_name` sub dir can be
+	cached.
+
+	In subsequent builds this would save time by not having to:
+	- clone repository
+	- install frontend dependencies
+	- building frontend assets
+	as all of this is contained in the `apps/app_name` sub dir.
+
+	Code that updates the `env` and `sites` subdirs still need
+	to be run.
+	"""
+		
+	def get_app_path(self) -> Path:
+		return Path(self.bench.name) / "apps" / self.app_name
+
+	def get_app_cache_path(self, is_compressed=False) -> Path:
+		assert self.cache_key is not None
+
+		cache_path = get_bench_cache_path("apps")
+		ext = "tgz" if is_compressed else "tar"
+		tarfile_name = f"{self.app_name}-{self.cache_key[:10]}.{ext}"
+		return cache_path / tarfile_name
+		
+	def get_cached(self) -> bool:
+		if not self.cache_key:
+			return False
+		
+		cache_path = self.get_app_cache_path()
+		mode = "r"
+		
+		# Check if cache exists without gzip
+		if not cache_path.is_file():
+			cache_path = self.get_app_cache_path(True)
+			mode = "r:gz"
+
+		# Check if cache exists with gzip
+		if not cache_path.is_file():
+			return False
+
+		app_path = self.get_app_path()
+		if app_path.is_dir():
+			shutil.rmtree(app_path)
+		
+		click.secho(f"Getting {self.app_name} from cache", fg="yellow")
+		with tarfile.open(cache_path, mode) as tar:
+			try:
+				tar.extractall(app_path.parent, filter=get_app_cache_extract_filter())
+			except Exception:
+				logger.exception(f"Cache extraction failed for {self.app_name}")
+				shutil.rmtree(app_path)
+				return False
+
+		return True
+	
+	def set_cache(self, compress_artifacts=False) -> bool:
+		if not self.cache_key:
+			return False
+
+		app_path = self.get_app_path()
+		if not app_path.is_dir():
+			return False
+
+		cwd = os.getcwd()
+		cache_path = self.get_app_cache_path(compress_artifacts)
+		mode =  "w:gz" if compress_artifacts else "w"
+		
+		message = f"Caching {self.app_name} app directory"
+		if compress_artifacts:
+			message += " (compressed)"
+		click.secho(message)
+
+		self.prune_app_directory()
+		
+		success = False
+		os.chdir(app_path.parent)
+		try:
+			with tarfile.open(cache_path, mode) as tar:
+				tar.add(app_path.name)
+			success = True
+		except Exception:
+			log(f"Failed to cache {app_path}", level=3)
+			success = False
+		finally:
+			os.chdir(cwd)
+		return success
+	
+	def prune_app_directory(self):
+		app_path = self.get_app_path()
+		remove_unused_node_modules(app_path)
+	
+
+def remove_unused_node_modules(app_path: Path) -> None:
+	"""
+	Erring a bit the side of caution; since there is no explicit way
+	to check if node_modules are utilized, this function checks if Vite
+	is being used to build the frontend code.
+	
+	Since most popular Frappe apps use Vite to build their frontends,
+	this method should suffice.
+	
+	Note: root package.json is ignored cause those usually belong to
+	apps that do not have a build step and so their node_modules are
+	utilized during runtime.
+	"""
+	
+	for p in app_path.iterdir():
+		if not p.is_dir():
+			continue
+		
+		package_json = p / "package.json"
+		if not package_json.is_file():
+			continue
+		
+		node_modules = p / "node_modules"
+		if not node_modules.is_dir():
+			continue
+		
+		can_delete = False
+		with package_json.open("r", encoding="utf-8") as f:
+			package_json = json.loads(f.read())
+			build_script = package_json.get("scripts", {}).get("build", "")
+			can_delete = "vite build" in build_script
+			
+		if can_delete:
+			shutil.rmtree(node_modules)
 
 
 def make_resolution_plan(app: App, bench: "Bench"):
@@ -346,6 +487,8 @@ def get_app(
 	soft_link=False,
 	init_bench=False,
 	resolve_deps=False,
+	cache_key=None,
+	compress_artifacts=False,
 ):
 	"""bench get-app clones a Frappe App from remote (GitHub or any other git server),
 	and installs it on the current bench. This also resolves dependencies based on the
@@ -360,14 +503,14 @@ def get_app(
 	from bench.utils.app import check_existing_dir
 
 	bench = Bench(bench_path)
-	app = App(git_url, branch=branch, bench=bench, soft_link=soft_link)
+	app = App(git_url, branch=branch, bench=bench, soft_link=soft_link, cache_key=cache_key)
 	git_url = app.url
 	repo_name = app.repo
 	branch = app.tag
 	bench_setup = False
 	restart_bench = not init_bench
 	frappe_path, frappe_branch = None, None
-
+	
 	if resolve_deps:
 		resolution = make_resolution_plan(app, bench)
 		click.secho("Following apps will be installed", fg="bright_blue")
@@ -417,6 +560,10 @@ def get_app(
 			verbose=verbose,
 		)
 		return
+	
+	if app.get_cached():
+		app.install(verbose=verbose, skip_assets=skip_assets, restart_bench=restart_bench, using_cached=True)
+		return
 
 	dir_already_exists, cloned_path = check_existing_dir(bench_path, repo_name)
 	to_clone = not dir_already_exists
@@ -442,6 +589,9 @@ def get_app(
 		or click.confirm("Do you want to reinstall the existing application?")
 	):
 		app.install(verbose=verbose, skip_assets=skip_assets, restart_bench=restart_bench)
+		
+	app.set_cache(compress_artifacts)
+
 
 
 def install_resolved_deps(
@@ -452,7 +602,6 @@ def install_resolved_deps(
 	verbose=False,
 ):
 	from bench.utils.app import check_existing_dir
-
 	if "frappe" in resolution:
 		# Terminal dependency
 		del resolution["frappe"]
@@ -550,6 +699,7 @@ def install_app(
 	restart_bench=True,
 	skip_assets=False,
 	resolution=UNSET_ARG,
+	using_cached=False,
 ):
 	import bench.cli as bench_cli
 	from bench.bench import Bench
@@ -577,14 +727,14 @@ def install_app(
 	if conf.get("developer_mode"):
 		install_python_dev_dependencies(apps=app, bench_path=bench_path, verbose=verbose)
 
-	if os.path.exists(os.path.join(app_path, "package.json")):
+	if not using_cached and os.path.exists(os.path.join(app_path, "package.json")):
 		yarn_install = "yarn install --verbose" if verbose else "yarn install"
 		bench.run(yarn_install, cwd=app_path)
 
 	bench.apps.sync(app_name=app, required=resolution, branch=tag, app_dir=app_path)
 
 	if not skip_assets:
-		build_assets(bench_path=bench_path, app=app)
+		build_assets(bench_path=bench_path, app=app, using_cached=using_cached)
 
 	if restart_bench:
 		# Avoiding exceptions here as production might not be set-up
@@ -621,9 +771,9 @@ Cannot proceed with update: You have local changes in app "{app}" that are not c
 Here are your choices:
 
 1. Merge the {app} app manually with "git pull" / "git pull --rebase" and fix conflicts.
-1. Temporarily remove your changes with "git stash" or discard them completely
+2. Temporarily remove your changes with "git stash" or discard them completely
 	with "bench update --reset" or for individual repositries "git reset --hard"
-2. If your changes are helpful for others, send in a pull request via GitHub and
+3. If your changes are helpful for others, send in a pull request via GitHub and
 	wait for them to be merged in the core."""
 					)
 					sys.exit(1)

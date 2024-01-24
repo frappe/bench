@@ -7,8 +7,10 @@ import subprocess
 import sys
 from functools import lru_cache
 from glob import glob
+from pathlib import Path
 from shlex import split
-from typing import List, Tuple
+from tarfile import TarInfo
+from typing import List, Optional, Tuple
 
 # imports - third party imports
 import click
@@ -50,6 +52,15 @@ def is_frappe_app(directory: str) -> bool:
 
 	return bool(is_frappe_app)
 
+def get_bench_cache_path(sub_dir: Optional[str]) -> Path:
+	relative_path = "~/.cache/bench"
+	if sub_dir and not sub_dir.startswith("/"):
+		relative_path += f"/{sub_dir}"
+
+	cache_path = os.path.expanduser(relative_path)
+	cache_path = Path(cache_path)
+	cache_path.mkdir(parents=True, exist_ok=True)
+	return cache_path
 
 @lru_cache(maxsize=None)
 def is_valid_frappe_branch(frappe_path: str, frappe_branch: str):
@@ -559,3 +570,35 @@ def get_cmd_from_sysargv():
 		break
 
 	return cmd_from_ctx
+
+
+def get_app_cache_extract_filter(
+	count_threshold: int = 10_000,
+	size_threshold: int = 1_000_000_000,
+): # -> Callable[[TarInfo, str], TarInfo | None]
+	state = dict(count=0, size=0)
+
+	AbsoluteLinkError = Exception
+	def data_filter(m: TarInfo, _:str) -> TarInfo:
+		return m
+
+	if (sys.version_info.major == 3 and sys.version_info.minor > 7) or sys.version_info.major > 3:
+		from tarfile import data_filter, AbsoluteLinkError
+
+	def filter_function(member: TarInfo, dest_path: str) -> Optional[TarInfo]:
+		state["count"] += 1
+		state["size"] += member.size
+
+		if state["count"] > count_threshold:
+			raise RuntimeError(f"Number of entries exceeds threshold ({state['count']})")
+
+		if state["size"] > size_threshold:
+			raise RuntimeError(f"Extracted size exceeds threshold ({state['size']})")
+
+		try:
+			return data_filter(member, dest_path)
+		except AbsoluteLinkError:
+			# Links created by `frappe` after extraction
+			return None
+
+	return filter_function
