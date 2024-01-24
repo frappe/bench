@@ -9,7 +9,7 @@ from functools import lru_cache
 from glob import glob
 from pathlib import Path
 from shlex import split
-from tarfile import AbsoluteLinkError, TarInfo
+from tarfile import TarInfo
 from typing import List, Optional, Tuple
 
 # imports - third party imports
@@ -578,11 +578,12 @@ def get_app_cache_extract_filter(
 ): # -> Callable[[TarInfo, str], TarInfo | None]
 	state = dict(count=0, size=0)
 
-	if sys.version_info.major <=2 or sys.version_info.minor <=8:
-		def data_filter(m, p):
-			return m
-	else:
-		from tarfile import data_filter
+	AbsoluteLinkError = Exception
+	def data_filter(m: TarInfo, _:str) -> TarInfo:
+		return m
+
+	if (sys.version_info.major == 3 and sys.version_info.minor > 7) or sys.version_info.major > 3:
+		from tarfile import data_filter, AbsoluteLinkError
 
 	def filter_function(member: TarInfo, dest_path: str) -> Optional[TarInfo]:
 		state["count"] += 1
