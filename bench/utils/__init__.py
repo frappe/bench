@@ -9,7 +9,7 @@ from functools import lru_cache
 from glob import glob
 from pathlib import Path
 from shlex import split
-from tarfile import data_filter, AbsoluteLinkError, TarInfo
+from tarfile import AbsoluteLinkError, TarInfo
 from typing import List, Optional, Tuple
 
 # imports - third party imports
@@ -578,15 +578,21 @@ def get_app_cache_extract_filter(
 ): # -> Callable[[TarInfo, str], TarInfo | None]
 	state = dict(count=0, size=0)
 
+	if sys.version_info.major <=2 or sys.version_info.minor <=8:
+		def data_filter(m, p):
+			return m
+	else:
+		from tarfile import data_filter
+
 	def filter_function(member: TarInfo, dest_path: str) -> Optional[TarInfo]:
 		state["count"] += 1
 		state["size"] += member.size
 
 		if state["count"] > count_threshold:
-			raise Exception(f"Number of entries exceeds threshold ({state['count']})")
+			raise RuntimeError(f"Number of entries exceeds threshold ({state['count']})")
 
 		if state["size"] > size_threshold:
-			raise Exception(f"Extracted size exceeds threshold ({state['size']})")
+			raise RuntimeError(f"Extracted size exceeds threshold ({state['size']})")
 
 		try:
 			return data_filter(member, dest_path)

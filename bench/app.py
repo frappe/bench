@@ -346,7 +346,8 @@ class App(AppMeta):
 		with tarfile.open(cache_path, mode) as tar:
 			try:
 				tar.extractall(app_path.parent, filter=get_app_cache_extract_filter())
-			except:
+			except Exception:
+				logger.exception(f"Cache extraction failed for {self.app_name}")
 				shutil.rmtree(app_path)
 				return False
 
