@@ -370,8 +370,9 @@ class App(AppMeta):
 
 		click.secho(f"Getting {self.app_name} from cache", fg="yellow")
 		with tarfile.open(cache_path, mode) as tar:
+			extraction_filter = get_app_cache_extract_filter(count_threshold=150_000)
 			try:
-				tar.extractall(app_path.parent, filter=get_app_cache_extract_filter())
+				tar.extractall(app_path.parent, filter=extraction_filter)
 			except Exception:
 				logger.exception(f"Cache extraction failed for {self.app_name}")
 				shutil.rmtree(app_path)
