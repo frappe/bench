@@ -12,11 +12,13 @@ from collections import OrderedDict
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
+from typing import Optional
 from urllib.parse import urlparse
 
 # imports - third party imports
 import click
 import git
+import semantic_version as sv
 
 # imports - module imports
 import bench
@@ -170,7 +172,7 @@ class App(AppMeta):
 		branch: str = None,
 		bench: "Bench" = None,
 		soft_link: bool = False,
-		cache_key = None,
+		cache_key=None,
 		*args,
 		**kwargs,
 	):
@@ -178,7 +180,8 @@ class App(AppMeta):
 		self.soft_link = soft_link
 		self.required_by = None
 		self.local_resolution = []
-		self.cache_key =  cache_key
+		self.cache_key = cache_key
+		self.pyproject = None
 		super().__init__(name, branch, *args, **kwargs)
 
 	@step(title="Fetching App {repo}", success="App {repo} Fetched")
@@ -233,10 +236,12 @@ class App(AppMeta):
 		resolved=False,
 		restart_bench=True,
 		ignore_resolution=False,
-		using_cached=False
+		using_cached=False,
 	):
 		import bench.cli
 		from bench.utils.app import get_app_name
+
+		self.validate_app_dependencies()
 
 		verbose = bench.cli.verbose or verbose
 		app_name = get_app_name(self.bench.name, self.app_name)
@@ -291,8 +296,29 @@ class App(AppMeta):
 			branch=self.tag,
 			required=self.local_resolution,
 		)
-		
-		
+
+	def get_pyproject(self) -> Optional[dict]:
+		from bench.utils.app import get_pyproject
+
+		if self.pyproject:
+			return self.pyproject
+
+		apps_path = os.path.join(os.path.abspath(self.bench.name), "apps")
+		pyproject_path = os.path.join(apps_path, self.app_name, "pyproject.toml")
+		self.pyproject = get_pyproject(pyproject_path)
+		return self.pyproject
+
+	def validate_app_dependencies(self) -> None:
+		pyproject = self.get_pyproject() or {}
+		deps: Optional[dict] = (
+			pyproject.get("tool", {}).get("bench", {}).get("frappe-dependencies")
+		)
+		if not deps:
+			return
+
+		for dep, version in deps.items():
+			validate_dependency(self, dep, version)
+
 	"""
 	Get App Cache
 
@@ -310,7 +336,7 @@ class App(AppMeta):
 	Code that updates the `env` and `sites` subdirs still need
 	to be run.
 	"""
-		
+
 	def get_app_path(self) -> Path:
 		return Path(self.bench.name) / "apps" / self.app_name
 
@@ -321,14 +347,14 @@ class App(AppMeta):
 		ext = "tgz" if is_compressed else "tar"
 		tarfile_name = f"{self.app_name}-{self.cache_key[:10]}.{ext}"
 		return cache_path / tarfile_name
-		
+
 	def get_cached(self) -> bool:
 		if not self.cache_key:
 			return False
-		
+
 		cache_path = self.get_app_cache_path()
 		mode = "r"
-		
+
 		# Check if cache exists without gzip
 		if not cache_path.is_file():
 			cache_path = self.get_app_cache_path(True)
@@ -341,7 +367,7 @@ class App(AppMeta):
 		app_path = self.get_app_path()
 		if app_path.is_dir():
 			shutil.rmtree(app_path)
-		
+
 		click.secho(f"Getting {self.app_name} from cache", fg="yellow")
 		with tarfile.open(cache_path, mode) as tar:
 			try:
@@ -352,7 +378,7 @@ class App(AppMeta):
 				return False
 
 		return True
-	
+
 	def set_cache(self, compress_artifacts=False) -> bool:
 		if not self.cache_key:
 			return False
@@ -363,15 +389,15 @@ class App(AppMeta):
 
 		cwd = os.getcwd()
 		cache_path = self.get_app_cache_path(compress_artifacts)
-		mode =  "w:gz" if compress_artifacts else "w"
-		
+		mode = "w:gz" if compress_artifacts else "w"
+
 		message = f"Caching {self.app_name} app directory"
 		if compress_artifacts:
 			message += " (compressed)"
 		click.secho(message)
 
 		self.prune_app_directory()
-		
+
 		success = False
 		os.chdir(app_path.parent)
 		try:
@@ -384,44 +410,142 @@ class App(AppMeta):
 		finally:
 			os.chdir(cwd)
 		return success
-	
+
 	def prune_app_directory(self):
 		app_path = self.get_app_path()
-		remove_unused_node_modules(app_path)
-	
+		if can_frappe_use_cached(self):
+			remove_unused_node_modules(app_path)
+
+
+def can_frappe_use_cached(app: App) -> bool:
+	min_frappe = get_required_frappe_version(app)
+	if not min_frappe:
+		return False
+
+	try:
+		return sv.Version(min_frappe) in sv.SimpleSpec(">=15.12.0")
+	except ValueError:
+		# Passed value is not a version string, it's an expression
+		pass
+
+	try:
+		"""
+		15.12.0 is the first version to support USING_CACHED,
+		but there is no way to check the last version without
+		support. So it's not possible to have a ">" filter.
+
+		Hence this excludes the first supported version.
+		"""
+		return sv.Version("15.12.0") not in sv.SimpleSpec(min_frappe)
+	except ValueError:
+		click.secho(f"Invalid value found for frappe version '{min_frappe}'", fg="yellow")
+		# Invalid expression
+		return False
+
+
+def validate_dependency(app: App, dep: str, req_version: str) -> None:
+	dep_path = Path(app.bench.name) / "apps" / dep
+	if not dep_path.is_dir():
+		click.secho(
+			f"Required frappe-dependency '{dep}' not found. "
+			f"Aborting '{app.name}' installation. "
+			f"Please install '{dep}' first and retry",
+			fg="red",
+		)
+		sys.exit(1)
+
+	dep_version = get_dep_version(dep, dep_path)
+	if not dep_version:
+		return
+
+	if sv.Version(dep_version) not in sv.SimpleSpec(req_version):
+		click.secho(
+			f"Installed frappe-dependency '{dep}' version '{dep_version}' "
+			f"does not satisfy required version '{req_version}'. "
+			f"App '{app.name}' might not work as expected",
+			fg="yellow",
+		)
+
+
+def get_dep_version(dep: str, dep_path: Path) -> Optional[str]:
+	from bench.utils.app import get_pyproject
+
+	dep_pp = get_pyproject(str(dep_path / "pyproject.toml"))
+	version = dep_pp.get("project", {}).get("version")
+	if version:
+		return version
+
+	dinit_path = dep_path / dep / "__init__.py"
+	if not dinit_path.is_file():
+		return None
+
+	with dinit_path.open("r", encoding="utf-8") as dinit:
+		for line in dinit:
+			if not line.startswith("__version__ =") and not line.startswith("VERSION ="):
+				continue
+
+			version = line.split("=")[1].strip().strip("\"'")
+			if version:
+				return version
+			else:
+				break
+
+	return None
+
+
+def get_required_frappe_version(app: App) -> Optional[str]:
+	pyproject = app.get_pyproject() or {}
+
+	# Reference: https://github.com/frappe/bench/issues/1524
+	req_frappe = (
+		pyproject.get("tool", {})
+		.get("bench", {})
+		.get("frappe-dependencies", {})
+		.get("frappe")
+	)
+
+	if not req_frappe:
+		click.secho(
+			"Required frappe version not set in pyproject.toml, "
+			"please refer: https://github.com/frappe/bench/issues/1524",
+			fg="yellow",
+		)
+
+	return req_frappe
+
 
 def remove_unused_node_modules(app_path: Path) -> None:
 	"""
 	Erring a bit the side of caution; since there is no explicit way
 	to check if node_modules are utilized, this function checks if Vite
 	is being used to build the frontend code.
-	
+
 	Since most popular Frappe apps use Vite to build their frontends,
 	this method should suffice.
-	
+
 	Note: root package.json is ignored cause those usually belong to
 	apps that do not have a build step and so their node_modules are
 	utilized during runtime.
 	"""
-	
+
 	for p in app_path.iterdir():
 		if not p.is_dir():
 			continue
-		
+
 		package_json = p / "package.json"
 		if not package_json.is_file():
 			continue
-		
+
 		node_modules = p / "node_modules"
 		if not node_modules.is_dir():
 			continue
-		
+
 		can_delete = False
 		with package_json.open("r", encoding="utf-8") as f:
 			package_json = json.loads(f.read())
 			build_script = package_json.get("scripts", {}).get("build", "")
 			can_delete = "vite build" in build_script
-			
+
 		if can_delete:
 			shutil.rmtree(node_modules)
 
@@ -503,14 +627,16 @@ def get_app(
 	from bench.utils.app import check_existing_dir
 
 	bench = Bench(bench_path)
-	app = App(git_url, branch=branch, bench=bench, soft_link=soft_link, cache_key=cache_key)
+	app = App(
+		git_url, branch=branch, bench=bench, soft_link=soft_link, cache_key=cache_key
+	)
 	git_url = app.url
 	repo_name = app.repo
 	branch = app.tag
 	bench_setup = False
 	restart_bench = not init_bench
 	frappe_path, frappe_branch = None, None
-	
+
 	if resolve_deps:
 		resolution = make_resolution_plan(app, bench)
 		click.secho("Following apps will be installed", fg="bright_blue")
@@ -560,9 +686,14 @@ def get_app(
 			verbose=verbose,
 		)
 		return
-	
+
 	if app.get_cached():
-		app.install(verbose=verbose, skip_assets=skip_assets, restart_bench=restart_bench, using_cached=True)
+		app.install(
+			verbose=verbose,
+			skip_assets=skip_assets,
+			restart_bench=restart_bench,
+			using_cached=True,
+		)
 		return
 
 	dir_already_exists, cloned_path = check_existing_dir(bench_path, repo_name)
@@ -589,9 +720,8 @@ def get_app(
 		or click.confirm("Do you want to reinstall the existing application?")
 	):
 		app.install(verbose=verbose, skip_assets=skip_assets, restart_bench=restart_bench)
-		
-	app.set_cache(compress_artifacts)
 
+	app.set_cache(compress_artifacts)
 
 
 def install_resolved_deps(
@@ -602,6 +732,7 @@ def install_resolved_deps(
 	verbose=False,
 ):
 	from bench.utils.app import check_existing_dir
+
 	if "frappe" in resolution:
 		# Terminal dependency
 		del resolution["frappe"]
