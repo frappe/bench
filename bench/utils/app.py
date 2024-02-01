@@ -233,7 +233,8 @@ def get_app_name(bench_path: str, folder_name: str) -> str:
 	config_py_path = os.path.join(apps_path, folder_name, "setup.cfg")
 	setup_py_path = os.path.join(apps_path, folder_name, "setup.py")
 	
-	pyproject = get_pyproject(apps_path, folder_name)
+	pyproject_path = os.path.join(apps_path, folder_name, "pyproject.toml")
+	pyproject = get_pyproject(pyproject_path)
 	if pyproject:
 		app_name = pyproject.get("project", {}).get("name")
 
@@ -255,8 +256,7 @@ def get_app_name(bench_path: str, folder_name: str) -> str:
 	return folder_name
 
 
-def get_pyproject(apps_path:str, folder_name:str) -> Optional[dict]:
-	pyproject_path = os.path.join(apps_path, folder_name, "pyproject.toml")
+def get_pyproject(pyproject_path: str) -> Optional[dict]:
 	if not os.path.exists(pyproject_path):
 		return None
 

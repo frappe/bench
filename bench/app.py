@@ -18,6 +18,7 @@ from urllib.parse import urlparse
 # imports - third party imports
 import click
 import git
+import semantic_version as sv
 
 # imports - module imports
 import bench
@@ -180,6 +181,7 @@ class App(AppMeta):
 		self.required_by = None
 		self.local_resolution = []
 		self.cache_key = cache_key
+		self.pyproject = None
 		super().__init__(name, branch, *args, **kwargs)
 
 	@step(title="Fetching App {repo}", success="App {repo} Fetched")
@@ -239,6 +241,8 @@ class App(AppMeta):
 		import bench.cli
 		from bench.utils.app import get_app_name
 
+		self.validate_app_dependencies()
+
 		verbose = bench.cli.verbose or verbose
 		app_name = get_app_name(self.bench.name, self.app_name)
 		if not resolved and self.app_name != "frappe" and not ignore_resolution:
@@ -292,6 +296,28 @@ class App(AppMeta):
 			branch=self.tag,
 			required=self.local_resolution,
 		)
+
+	def get_pyproject(self) -> Optional[dict]:
+		from bench.utils.app import get_pyproject
+
+		if self.pyproject:
+			return self.pyproject
+
+		apps_path = os.path.join(os.path.abspath(self.bench.name), "apps")
+		pyproject_path = os.path.join(apps_path, self.app_name, "pyproject.toml")
+		self.pyproject = get_pyproject(pyproject_path)
+		return self.pyproject
+
+	def validate_app_dependencies(self) -> None:
+		pyproject = self.get_pyproject() or {}
+		deps: Optional[dict] = (
+			pyproject.get("tool", {}).get("bench", {}).get("frappe-dependencies")
+		)
+		if not deps:
+			return
+
+		for dep, version in deps.items():
+			validate_dependency(self, dep, version)
 
 	"""
 	Get App Cache
@@ -396,8 +422,6 @@ def can_frappe_use_cached(app: App) -> bool:
 	if not min_frappe:
 		return False
 
-	import semantic_version as sv
-
 	try:
 		return sv.Version(min_frappe) in sv.SimpleSpec(">=15.12.0")
 	except ValueError:
@@ -414,19 +438,63 @@ def can_frappe_use_cached(app: App) -> bool:
 		"""
 		return sv.Version("15.12.0") not in sv.SimpleSpec(min_frappe)
 	except ValueError:
-		click.secho(
-			f"Invalid value found for frappe version '{min_frappe}'",
-			fg="yellow"
-		)
+		click.secho(f"Invalid value found for frappe version '{min_frappe}'", fg="yellow")
 		# Invalid expression
 		return False
 
 
-def get_required_frappe_version(app: App) -> Optional[str]:
+def validate_dependency(app: App, dep: str, req_version: str) -> None:
+	dep_path = Path(app.bench.name) / "apps" / dep
+	if not dep_path.is_dir():
+		click.secho(
+			f"Required frappe-dependency '{dep}' not found. "
+			f"Aborting '{app.name}' installation. "
+			f"Please install '{dep}' first and retry",
+			fg="red",
+		)
+		sys.exit(1)
+
+	dep_version = get_dep_version(dep, dep_path)
+	if not dep_version:
+		return
+
+	if sv.Version(dep_version) not in sv.SimpleSpec(req_version):
+		click.secho(
+			f"Installed frappe-dependency '{dep}' version '{dep_version}' "
+			f"does not satisfy required version '{req_version}'. "
+			f"App '{app.name}' might not work as expected",
+			fg="yellow",
+		)
+
+
+def get_dep_version(dep: str, dep_path: Path) -> Optional[str]:
 	from bench.utils.app import get_pyproject
 
-	apps_path = os.path.join(os.path.abspath(app.bench.name), "apps")
-	pyproject = get_pyproject(apps_path, app.app_name)
+	dep_pp = get_pyproject(str(dep_path / "pyproject.toml"))
+	version = dep_pp.get("project", {}).get("version")
+	if version:
+		return version
+
+	dinit_path = dep_path / dep / "__init__.py"
+	if not dinit_path.is_file():
+		return None
+
+	with dinit_path.open("r", encoding="utf-8") as dinit:
+		for line in dinit:
+			if not line.startswith("__version__ =") and not line.startswith("VERSION ="):
+				continue
+
+			version = line.split("=")[1].strip().strip("\"'")
+			if version:
+				return version
+			else:
+				break
+
+	return None
+
+
+def get_required_frappe_version(app: App) -> Optional[str]:
+	pyproject = app.get_pyproject() or {}
 
 	# Reference: https://github.com/frappe/bench/issues/1524
 	req_frappe = (
