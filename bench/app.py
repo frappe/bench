@@ -374,7 +374,9 @@ class App(AppMeta):
 			try:
 				tar.extractall(app_path.parent, filter=extraction_filter)
 			except Exception:
-				logger.exception(f"Cache extraction failed for {self.app_name}")
+				message = f"Cache extraction failed for {self.app_name}, skipping cache"
+				click.secho(message, fg="yellow")
+				logger.exception(message)
 				shutil.rmtree(app_path)
 				return False
 
