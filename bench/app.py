@@ -344,15 +344,18 @@ class App(AppMeta):
 		assert self.cache_key is not None
 
 		cache_path = get_bench_cache_path("apps")
-		ext = "tgz" if is_compressed else "tar"
-		tarfile_name = f"{self.app_name}-{self.cache_key[:10]}.{ext}"
+		tarfile_name = get_cache_filename(
+			self.app_name,
+			self.cache_key,
+			is_compressed,
+		)
 		return cache_path / tarfile_name
 
 	def get_cached(self) -> bool:
 		if not self.cache_key:
 			return False
 
-		cache_path = self.get_app_cache_path()
+		cache_path = self.get_app_cache_path(False)
 		mode = "r"
 
 		# Check if cache exists without gzip
@@ -418,6 +421,46 @@ class App(AppMeta):
 		app_path = self.get_app_path()
 		if can_frappe_use_cached(self):
 			remove_unused_node_modules(app_path)
+
+
+def coerce_url_to_name_if_possible(git_url: str, cache_key:str) -> str:
+	app_name = os.path.basename(git_url)
+	if can_get_cached(app_name, cache_key):
+		return app_name
+	return git_url
+
+
+def can_get_cached(app_name: str, cache_key: str) -> bool:
+	"""
+	Used before App is initialized if passed `git_url` is a
+	file URL as opposed to the app name.
+
+	If True then `git_url` can be coerced into the `app_name` and 
+	checking local remote and fetching can be skipped while keeping
+	get-app command params the same.
+	"""
+	cache_path = get_bench_cache_path("apps")
+	tarfile_path = cache_path / get_cache_filename(
+		app_name,
+		cache_key,
+		True,
+	)
+
+	if tarfile_path.is_file():
+		return True
+
+	tarfile_path = cache_path / get_cache_filename(
+		app_name,
+		cache_key,
+		False,
+	)
+
+	return tarfile_path.is_file()
+
+
+def get_cache_filename(app_name: str, cache_key: str, is_compressed=False):
+	ext = "tgz" if is_compressed else "tar"
+	return f"{app_name}-{cache_key[:10]}.{ext}"
 
 
 def can_frappe_use_cached(app: App) -> bool:
@@ -628,6 +671,9 @@ def get_app(
 	import bench.cli as bench_cli
 	from bench.bench import Bench
 	from bench.utils.app import check_existing_dir
+	
+	if urlparse(git_url).scheme == "file" and cache_key:
+		git_url = coerce_url_to_name_if_possible(git_url, cache_key)
 
 	bench = Bench(bench_path)
 	app = App(
