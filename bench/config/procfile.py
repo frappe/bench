@@ -1,19 +1,19 @@
-# imports - standard imports
 import os
+import platform
 
-# imports - third party imports
 import click
 
-# imports - module imports
 import bench
 from bench.app import use_rq
-from bench.utils import which
 from bench.bench import Bench
+from bench.utils import which
 
 
 def setup_procfile(bench_path, yes=False, skip_redis=False):
 	config = Bench(bench_path).conf
 	procfile_path = os.path.join(bench_path, "Procfile")
+
+	is_mac = platform.system() == "Darwin"
 	if not yes and os.path.exists(procfile_path):
 		click.confirm(
 			"A Procfile already exists and this will overwrite it. Do you want to continue?",
@@ -30,6 +30,7 @@ def setup_procfile(bench_path, yes=False, skip_redis=False):
 			CI=os.environ.get("CI"),
 			skip_redis=skip_redis,
 			workers=config.get("workers", {}),
+			is_mac=is_mac,
 		)
 	)
 
