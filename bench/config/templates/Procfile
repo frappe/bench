@@ -5,18 +5,14 @@ redis_queue: redis-server config/redis_queue.conf
 web: bench serve {% if webserver_port -%} --port {{ webserver_port }} {%- endif %}
 
 socketio: {{ node }} apps/frappe/socketio.js
+
 {% if not CI %}
 watch: bench watch
 {% endif %}
-{% if use_rq -%}
+
 schedule: bench schedule
-worker: bench worker 1>> logs/worker.log 2>> logs/worker.error.log
+worker: {{ 'OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES NO_PROXY=*' if is_mac else '' }} bench worker 1>> logs/worker.log 2>> logs/worker.error.log
 {% for worker_name, worker_details in workers.items() %}
-worker_{{ worker_name }}: bench worker --queue {{ worker_name }} 1>> logs/worker.log 2>> logs/worker.error.log
+worker_{{ worker_name }}: {{ 'OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES NO_PROXY=*' if is_mac else '' }} bench worker --queue {{ worker_name }} 1>> logs/worker.log 2>> logs/worker.error.log
 {% endfor %}
-{% else %}
-workerbeat: sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app beat -s scheduler.schedule'
-worker: sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app worker -n jobs@%h -Ofair --soft-time-limit 360 --time-limit 390'
-longjob_worker: sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app worker -n longjobs@%h -Ofair --soft-time-limit 1500 --time-limit 1530'
-async_worker: sh -c 'cd sites && exec ../env/bin/python -m frappe.celery_app worker -n async@%h -Ofair --soft-time-limit 1500 --time-limit 1530'
-{%- endif %}
+
