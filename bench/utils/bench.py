@@ -18,8 +18,14 @@ import click
 # imports - module imports
 import bench
 from bench.exceptions import PatchError, ValidationError
-from bench.utils import (exec_cmd, get_bench_cache_path, get_bench_name,
-                         get_cmd_output, log, which)
+from bench.utils import (
+	exec_cmd,
+	get_bench_cache_path,
+	get_bench_name,
+	get_cmd_output,
+	log,
+	which,
+)
 
 logger = logging.getLogger(bench.PROJECT_NAME)
 
@@ -132,7 +138,9 @@ def update_yarn_packages(bench_path=".", apps=None, verbose=None):
 		app_path = os.path.join(apps_dir, app)
 		if os.path.exists(os.path.join(app_path, "package.json")):
 			click.secho(f"\nInstalling node dependencies for {app}", fg="yellow")
-			yarn_install = "yarn install --verbose" if verbose else "yarn install"
+			yarn_install = "yarn install --check-files"
+			if verbose:
+				yarn_install += " --verbose"
 			bench.run(yarn_install, cwd=app_path)
 
 
@@ -329,7 +337,10 @@ def restart_supervisor_processes(bench_path=".", web_workers=False, _raise=False
 		for group in groups:
 			failure = bench.run(f"{sudo}supervisorctl restart {group}", _raise=_raise)
 			if failure:
-				log(f"restarting supervisor group `{group}` failed. Use `bench restart` to retry.", level=3)
+				log(
+					f"restarting supervisor group `{group}` failed. Use `bench restart` to retry.",
+					level=3,
+				)
 
 
 def restart_systemd_processes(bench_path=".", web_workers=False, _raise=True):
