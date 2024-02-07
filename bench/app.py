@@ -308,7 +308,7 @@ class App(AppMeta):
 		self.pyproject = get_pyproject(pyproject_path)
 		return self.pyproject
 
-	def validate_app_dependencies(self) -> None:
+	def validate_app_dependencies(self, throw=False) -> None:
 		pyproject = self.get_pyproject() or {}
 		deps: Optional[dict] = (
 			pyproject.get("tool", {}).get("bench", {}).get("frappe-dependencies")
@@ -317,7 +317,7 @@ class App(AppMeta):
 			return
 
 		for dep, version in deps.items():
-			validate_dependency(self, dep, version)
+			validate_dependency(self, dep, version, throw=throw)
 
 	"""
 	Get App Cache
@@ -489,16 +489,13 @@ def can_frappe_use_cached(app: App) -> bool:
 		return False
 
 
-def validate_dependency(app: App, dep: str, req_version: str) -> None:
+def validate_dependency(app: App, dep: str, req_version: str, throw=False) -> None:
 	dep_path = Path(app.bench.name) / "apps" / dep
 	if not dep_path.is_dir():
-		click.secho(
-			f"Required frappe-dependency '{dep}' not found. "
-			f"Aborting '{app.name}' installation. "
-			f"Please install '{dep}' first and retry",
-			fg="red",
-		)
-		sys.exit(1)
+		click.secho(f"Required frappe-dependency '{dep}' not found.", fg="yellow")
+		if throw:
+			sys.exit(1)
+		return
 
 	dep_version = get_dep_version(dep, dep_path)
 	if not dep_version:
@@ -508,9 +505,12 @@ def validate_dependency(app: App, dep: str, req_version: str) -> None:
 		click.secho(
 			f"Installed frappe-dependency '{dep}' version '{dep_version}' "
 			f"does not satisfy required version '{req_version}'. "
-			f"App '{app.name}' might not work as expected",
+			f"App '{app.name}' might not work as expected.",
 			fg="yellow",
 		)
+		if throw:
+			click.secho(f"Please install '{dep}{req_version}' first and retry", fg="red")
+			sys.exit(1)
 
 
 def get_dep_version(dep: str, dep_path: Path) -> Optional[str]:

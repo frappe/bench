@@ -46,6 +46,7 @@ from bench.commands.make import (
 	new_app,
 	pip,
 	remove_app,
+	validate_dependencies,
 )
 
 bench_command.add_command(init)
@@ -56,6 +57,7 @@ bench_command.add_command(remove_app)
 bench_command.add_command(exclude_app_for_update)
 bench_command.add_command(include_app_for_update)
 bench_command.add_command(pip)
+bench_command.add_command(validate_dependencies)
 
 
 from bench.commands.update import (
