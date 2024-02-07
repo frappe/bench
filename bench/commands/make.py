@@ -253,3 +253,20 @@ def pip(ctx, args):
 
 	env_py = get_env_cmd("python")
 	os.execv(env_py, (env_py, "-m", "pip") + args)
+
+
+@click.command(
+	"validate-dependencies",
+	help="Validates that all requirements specified in frappe-dependencies are met curently.",
+)
+@click.pass_context
+def validate_dependencies(ctx):
+	"Validate all specified frappe-dependencies."
+	from bench.bench import Bench
+	from bench.app import App
+
+	bench = Bench(".")
+
+	for app_name in bench.apps:
+		app = App(app_name, bench=bench)
+		app.validate_app_dependencies(throw=True)
