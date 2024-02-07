@@ -423,7 +423,7 @@ class App(AppMeta):
 			remove_unused_node_modules(app_path)
 
 
-def coerce_url_to_name_if_possible(git_url: str, cache_key:str) -> str:
+def coerce_url_to_name_if_possible(git_url: str, cache_key: str) -> str:
 	app_name = os.path.basename(git_url)
 	if can_get_cached(app_name, cache_key):
 		return app_name
@@ -435,7 +435,7 @@ def can_get_cached(app_name: str, cache_key: str) -> bool:
 	Used before App is initialized if passed `git_url` is a
 	file URL as opposed to the app name.
 
-	If True then `git_url` can be coerced into the `app_name` and 
+	If True then `git_url` can be coerced into the `app_name` and
 	checking local remote and fetching can be skipped while keeping
 	get-app command params the same.
 	"""
@@ -671,7 +671,7 @@ def get_app(
 	import bench.cli as bench_cli
 	from bench.bench import Bench
 	from bench.utils.app import check_existing_dir
-	
+
 	if urlparse(git_url).scheme == "file" and cache_key:
 		git_url = coerce_url_to_name_if_possible(git_url, cache_key)
 
@@ -908,7 +908,9 @@ def install_app(
 		install_python_dev_dependencies(apps=app, bench_path=bench_path, verbose=verbose)
 
 	if not using_cached and os.path.exists(os.path.join(app_path, "package.json")):
-		yarn_install = "yarn install --verbose" if verbose else "yarn install"
+		yarn_install = "yarn install --check-files"
+		if verbose:
+			yarn_install += " --verbose"
 		bench.run(yarn_install, cwd=app_path)
 
 	bench.apps.sync(app_name=app, required=resolution, branch=tag, app_dir=app_path)
