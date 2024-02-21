@@ -44,7 +44,7 @@ Source = "https://github.com/frappe/bench"
 
 [build-system]
 requires = [
-    "hatchling>=1.6.0",
+    "hatchling>=1.6.0,<1.9.4",
 ]
 build-backend = "hatchling.build"
 
