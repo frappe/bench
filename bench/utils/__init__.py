@@ -417,7 +417,7 @@ def get_env_frappe_commands(bench_path=".") -> List:
 	return []
 
 
-def find_org(org_repo):
+def find_org(org_repo, using_cached: bool=False):
 	import requests
 
 	org_repo = org_repo[0]
@@ -429,10 +429,13 @@ def find_org(org_repo):
 		if res.ok:
 			return org, org_repo
 
-	raise InvalidRemoteException(f"{org_repo} not found in frappe or erpnext")
+	if using_cached:
+		return "", org_repo
+
+	raise InvalidRemoteException(f"{org_repo} not found under frappe or erpnext GitHub accounts")
 
 
-def fetch_details_from_tag(_tag: str) -> Tuple[str, str, str]:
+def fetch_details_from_tag(_tag: str, using_cached: bool=False) -> Tuple[str, str, str]:
 	if not _tag:
 		raise Exception("Tag is not provided")
 
@@ -447,7 +450,7 @@ def fetch_details_from_tag(_tag: str) -> Tuple[str, str, str]:
 	try:
 		org, repo = org_repo
 	except Exception:
-		org, repo = find_org(org_repo)
+		org, repo = find_org(org_repo, using_cached)
 
 	return org, repo, tag
 

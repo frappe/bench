@@ -127,7 +127,8 @@ class AppMeta:
 			self.tag = self.branch = None
 
 	def _setup_details_from_name_tag(self):
-		self.org, self.repo, self.tag = fetch_details_from_tag(self.name)
+		using_cached = bool(self.cache_key)
+		self.org, self.repo, self.tag = fetch_details_from_tag(self.name, using_cached)
 		self.tag = self.tag or self.branch
 
 	def _setup_details_from_git_url(self, url=None):
