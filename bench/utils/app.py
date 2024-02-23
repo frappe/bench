@@ -232,7 +232,7 @@ def get_app_name(bench_path: str, folder_name: str) -> str:
 
 	config_py_path = os.path.join(apps_path, folder_name, "setup.cfg")
 	setup_py_path = os.path.join(apps_path, folder_name, "setup.py")
-	
+
 	pyproject_path = os.path.join(apps_path, folder_name, "pyproject.toml")
 	pyproject = get_pyproject(pyproject_path)
 	if pyproject:
@@ -278,12 +278,17 @@ def check_existing_dir(bench_path, repo_name):
 def get_current_version(app, bench_path="."):
 	current_version = None
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
+	pyproject_path = os.path.join(repo_dir, "pyproject.toml")
 	config_path = os.path.join(repo_dir, "setup.cfg")
 	init_path = os.path.join(repo_dir, os.path.basename(repo_dir), "__init__.py")
 	setup_path = os.path.join(repo_dir, "setup.py")
 
 	try:
-		if os.path.exists(config_path):
+		pyproject = get_pyproject(pyproject_path)
+		if pyproject:
+			current_version = pyproject.get("project", {}).get("version")
+
+		if not current_version and os.path.exists(config_path):
 			from setuptools.config import read_configuration
 
 			config = read_configuration(config_path)
