@@ -232,7 +232,7 @@ def get_app_name(bench_path: str, folder_name: str) -> str:
 
 	config_py_path = os.path.join(apps_path, folder_name, "setup.cfg")
 	setup_py_path = os.path.join(apps_path, folder_name, "setup.py")
-	
+
 	pyproject_path = os.path.join(apps_path, folder_name, "pyproject.toml")
 	pyproject = get_pyproject(pyproject_path)
 	if pyproject:
@@ -284,14 +284,9 @@ def get_current_version(app, bench_path="."):
 	setup_path = os.path.join(repo_dir, "setup.py")
 
 	try:
-		if os.path.exists(pyproject_path):
-			try:
-				from tomli import load
-			except ImportError:
-				from tomllib import load
-
-			with open(pyproject_path, "rb") as f:
-				current_version = load(f).get("project", {}).get("version")
+		pyproject = get_pyproject(pyproject_path)
+		if pyproject:
+			current_version = pyproject.get("project", {}).get("version")
 
 		if not current_version and os.path.exists(config_path):
 			from setuptools.config import read_configuration
