@@ -132,10 +132,7 @@ def cli():
 			bench_command()
 
 	if in_bench:
-		if cmd_from_sys in get_frappe_commands():
-			frappe_cmd()
-		else:
-			app_cmd()
+		frappe_cmd()
 
 	bench_command()
 
