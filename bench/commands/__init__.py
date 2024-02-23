@@ -46,6 +46,7 @@ from bench.commands.make import (
 	new_app,
 	pip,
 	remove_app,
+	validate_dependencies,
 )
 
 bench_command.add_command(init)
@@ -56,6 +57,7 @@ bench_command.add_command(remove_app)
 bench_command.add_command(exclude_app_for_update)
 bench_command.add_command(include_app_for_update)
 bench_command.add_command(pip)
+bench_command.add_command(validate_dependencies)
 
 
 from bench.commands.update import (
@@ -72,6 +74,7 @@ bench_command.add_command(switch_to_develop)
 
 
 from bench.commands.utils import (
+	app_cache_helper,
 	backup_all_sites,
 	bench_src,
 	disable_production,
@@ -108,6 +111,7 @@ bench_command.add_command(disable_production)
 bench_command.add_command(bench_src)
 bench_command.add_command(find_benches)
 bench_command.add_command(migrate_env)
+bench_command.add_command(app_cache_helper)
 
 from bench.commands.setup import setup
 

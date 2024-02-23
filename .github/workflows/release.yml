@@ -13,7 +13,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v2
         with:
-          node-version: 18
+          node-version: 20
       - uses: actions/setup-python@v4
         with:
           python-version: '3.x'
@@ -22,7 +22,7 @@ jobs:
         run: |
           npm install @semantic-release/git @semantic-release/exec --no-save
           python3 -m pip install wheel twine
-          python3 -m pip install git+https://github.com/pypa/hatch
+          python3 -m pip install git+https://github.com/pypa/hatch@hatch-v1.9.2
 
       - name: Create Release
         env:

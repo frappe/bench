@@ -4,11 +4,13 @@ import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 import sys
 from functools import lru_cache
 from glob import glob
 from json.decoder import JSONDecodeError
+from pathlib import Path
 
 # imports - third party imports
 import click
@@ -16,7 +18,14 @@ import click
 # imports - module imports
 import bench
 from bench.exceptions import PatchError, ValidationError
-from bench.utils import exec_cmd, get_bench_name, get_cmd_output, log, which
+from bench.utils import (
+	exec_cmd,
+	get_bench_cache_path,
+	get_bench_name,
+	get_cmd_output,
+	log,
+	which,
+)
 
 logger = logging.getLogger(bench.PROJECT_NAME)
 
@@ -129,7 +138,9 @@ def update_yarn_packages(bench_path=".", apps=None, verbose=None):
 		app_path = os.path.join(apps_dir, app)
 		if os.path.exists(os.path.join(app_path, "package.json")):
 			click.secho(f"\nInstalling node dependencies for {app}", fg="yellow")
-			yarn_install = "yarn install --verbose" if verbose else "yarn install"
+			yarn_install = "yarn install --check-files"
+			if verbose:
+				yarn_install += " --verbose"
 			bench.run(yarn_install, cwd=app_path)
 
 
@@ -310,22 +321,26 @@ def restart_supervisor_processes(bench_path=".", web_workers=False, _raise=False
 			supervisor_status = get_cmd_output("sudo supervisorctl status", cwd=bench_path)
 
 		if web_workers and f"{bench_name}-web:" in supervisor_status:
-			group = f"{bench_name}-web:\t"
+			groups = [f"{bench_name}-web:\t"]
 
 		elif f"{bench_name}-workers:" in supervisor_status:
-			group = f"{bench_name}-workers: {bench_name}-web:"
+			groups = [f"{bench_name}-web:", f"{bench_name}-workers:"]
 
 		# backward compatibility
 		elif f"{bench_name}-processes:" in supervisor_status:
-			group = f"{bench_name}-processes:"
+			groups = [f"{bench_name}-processes:"]
 
 		# backward compatibility
 		else:
-			group = "frappe:"
+			groups = ["frappe:"]
 
-		failure = bench.run(f"{sudo}supervisorctl restart {group}", _raise=_raise)
-		if failure:
-			log("restarting supervisor failed. Use `bench restart` to retry.", level=3)
+		for group in groups:
+			failure = bench.run(f"{sudo}supervisorctl restart {group}", _raise=_raise)
+			if failure:
+				log(
+					f"restarting supervisor group `{group}` failed. Use `bench restart` to retry.",
+					level=3,
+				)
 
 
 def restart_systemd_processes(bench_path=".", web_workers=False, _raise=True):
@@ -349,11 +364,16 @@ def restart_process_manager(bench_path=".", web_workers=False):
 		exec_cmd(f"overmind restart {worker}", cwd=bench_path)
 
 
-def build_assets(bench_path=".", app=None):
+def build_assets(bench_path=".", app=None, using_cached=False):
 	command = "bench build"
 	if app:
 		command += f" --app {app}"
-	exec_cmd(command, cwd=bench_path, env={"BENCH_DEVELOPER": "1"})
+
+	env = {"BENCH_DEVELOPER": "1"}
+	if using_cached:
+		env["USING_CACHED"] = "1"
+
+	exec_cmd(command, cwd=bench_path, env=env)
 
 
 def handle_version_upgrade(version_upgrade, bench_path, force, reset, conf):
@@ -634,3 +654,115 @@ To switch to your required branch, run the following commands: bench switch-to-b
 			)
 
 			sys.exit(1)
+
+
+def cache_helper(clear=False, remove_app="", remove_key="") -> None:
+	can_remove = bool(remove_key or remove_app)
+	if not clear and not can_remove:
+		cache_list()
+	elif can_remove:
+		cache_remove(remove_app, remove_key)
+	elif clear:
+		cache_clear()
+	else:
+		pass  # unreachable
+
+
+def cache_list() -> None:
+	from datetime import datetime
+
+	tot_size = 0
+	tot_items = 0
+
+	printed_header = False
+	for item in get_bench_cache_path("apps").iterdir():
+		if item.suffix not in [".tar", ".tgz"]:
+			continue
+
+		stat = item.stat()
+		size_mb = stat.st_size / 1_000_000
+		created = datetime.fromtimestamp(stat.st_ctime)
+		accessed = datetime.fromtimestamp(stat.st_atime)
+
+		app = item.name.split("-")[0]
+		tot_items += 1
+		tot_size += stat.st_size
+		compressed = item.suffix == ".tgz"
+
+		if not printed_header:
+			click.echo(
+				f"{'APP':15}  "
+				f"{'FILE':25}  "
+				f"{'SIZE':>13}  "
+				f"{'COMPRESSED'}  "
+				f"{'CREATED':19}  "
+				f"{'ACCESSED':19}  "
+			)
+			printed_header = True
+
+		click.echo(
+			f"{app:15}  "
+			f"{item.name:25}  "
+			f"{size_mb:10.3f} MB  "
+			f"{str(compressed):10}  "
+			f"{created:%Y-%m-%d %H:%M:%S}  "
+			f"{accessed:%Y-%m-%d %H:%M:%S}  "
+		)
+
+	if tot_items:
+		click.echo(f"Total size {tot_size / 1_000_000:.3f} MB belonging to {tot_items} items")
+	else:
+		click.echo("No cached items")
+
+
+def cache_remove(app: str = "", key: str = "") -> None:
+	rem_items = 0
+	rem_size = 0
+	for item in get_bench_cache_path("apps").iterdir():
+		if not should_remove_item(item, app, key):
+			continue
+
+		rem_items += 1
+		rem_size += item.stat().st_size
+		item.unlink(True)
+		click.echo(f"Removed {item.name}")
+
+	if rem_items:
+		click.echo(f"Cleared {rem_size / 1_000_000:.3f} MB belonging to {rem_items} items")
+	else:
+		click.echo("No items removed")
+
+
+def should_remove_item(item: Path, app: str, key: str) -> bool:
+	if item.suffix not in [".tar", ".tgz"]:
+		return False
+
+	name = item.name
+	if app and key and name.startswith(f"{app}-{key[:10]}."):
+		return True
+
+	if app and name.startswith(f"{app}-"):
+		return True
+
+	if key and f"-{key[:10]}." in name:
+		return True
+
+	return False
+
+
+def cache_clear() -> None:
+	cache_path = get_bench_cache_path("apps")
+	tot_items = len(os.listdir(cache_path))
+	if not tot_items:
+		click.echo("No cached items")
+		return
+
+	tot_size = get_dir_size(cache_path)
+	shutil.rmtree(cache_path)
+
+	if tot_items:
+		click.echo(f"Cleared {tot_size / 1_000_000:.3f} MB belonging to {tot_items} items")
+
+
+def get_dir_size(p: Path) -> int:
+	return sum(i.stat(follow_symlinks=False).st_size for i in p.iterdir())
