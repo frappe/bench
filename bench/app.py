@@ -101,7 +101,7 @@ class AppMeta:
 		# fetch meta for repo from remote git server - traditional get-app url
 		elif is_git_url(self.name):
 			self.is_url = True
-			self._setup_details_from_git_url()
+			self.__setup_details_from_git()
 
 		# fetch meta from new styled name tags & first party apps on github
 		else:
@@ -116,7 +116,7 @@ class AppMeta:
 		# If app is a git repo
 		self.git_repo = git.Repo(self.mount_path)
 		try:
-			self._setup_details_from_git_url(self.git_repo.remotes[0].url)
+			self.__setup_details_from_git(self.git_repo.remotes[0].url)
 			if not (self.branch or self.tag):
 				self.tag = self.branch = self.git_repo.active_branch.name
 		except IndexError:
@@ -130,9 +130,6 @@ class AppMeta:
 		using_cached = bool(self.cache_key)
 		self.org, self.repo, self.tag = fetch_details_from_tag(self.name, using_cached)
 		self.tag = self.tag or self.branch
-
-	def _setup_details_from_git_url(self, url=None):
-		return self.__setup_details_from_git(url)
 
 	def __setup_details_from_git(self, url=None):
 		name = url if url else self.name
