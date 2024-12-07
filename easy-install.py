@@ -416,7 +416,7 @@ def create_site(
         "backend",
         "bench",
         "new-site",
-        "--no-mariadb-socket",
+        "--mariadb-user-host-login-scope=%",
         f"--db-root-password={db_pass}",
         f"--admin-password={admin_pass}",
     ]
