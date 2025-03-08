@@ -21,9 +21,9 @@ from bench.utils import exec_cmd, which, get_bench_name
 def generate_systemd_config(
 	bench_path,
 	user=None,
-	yes=False,
+	yes=true,
 	stop=False,
-	create_symlinks=False,
+	create_symlinks=true,
 	delete_symlinks=False,
 ):
 
