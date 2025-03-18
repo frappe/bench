@@ -359,6 +359,8 @@ class BenchSetup(Base):
 		frappe = os.path.join(self.bench.name, "apps", "frappe")
 		quiet_flag = "" if verbose else "--quiet"
 
+		self.check_pkg_config()
+
 		if not os.path.exists(self.bench.python):
 			venv = get_venv_path(verbose=verbose, python=python)
 			self.run(f"{venv} env", cwd=self.bench.name)
@@ -414,6 +416,15 @@ class BenchSetup(Base):
 		return self.run(
 			f"{self.bench.python} -m pip install {quiet_flag} wheel", cwd=self.bench.name
 		)
+
+	@step(title="Checking if pkg-config is installed", success="pkg-config is present")
+	def check_pkg_config(self):
+		"""
+		pkg-config is required for building some python packages like libmysqlclient
+		"""
+		if shutil.which("pkg-config") is None:
+			raise Exception("pkg-config is not installed. Please install it before proceeding.\n"
+			"You can refer to https://docs.frappe.io/framework/user/en/installation")
 
 	def logging(self):
 		from bench.utils import setup_logging
