@@ -369,8 +369,13 @@ class BenchSetup(Base):
 		self.wheel()
 
 		if os.path.exists(frappe):
+			# macOS needs a custom PKG_CONFIG_DIR
+			command_prefix = ""
+			if sys.platform == "darwin":
+				command_prefix = "PKG_CONFIG_PATH=$(brew --prefix mariadb-connector-c)/lib/pkgconfig"
+
 			self.run(
-				f"{self.bench.python} -m pip install {quiet_flag} --upgrade -e {frappe}",
+				f"{command_prefix} {self.bench.python} -m pip install {quiet_flag} --upgrade -e {frappe}",
 				cwd=self.bench.name,
 			)
 
@@ -491,7 +496,11 @@ class BenchSetup(Base):
 		for app in apps:
 			app_path = os.path.join(self.bench.name, "apps", app)
 			log(f"\nInstalling python dependencies for {app}", level=3, no_log=True)
-			self.run(f"{self.bench.python} -m pip install {quiet_flag} --upgrade -e {app_path}")
+			command_prefix = ""
+			# macOS needs a custom PKG_CONFIG_DIR for frappe
+			if app == "frappe" and sys.platform == "darwin":
+				command_prefix = "PKG_CONFIG_PATH=$(brew --prefix mariadb-connector-c)/lib/pkgconfig"
+			self.run(f"{command_prefix} {self.bench.python} -m pip install {quiet_flag} --upgrade -e {app_path}")
 
 	def node(self, apps=None):
 		"""Install and upgrade Node dependencies for specified / all apps on given Bench"""

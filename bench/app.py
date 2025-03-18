@@ -909,8 +909,13 @@ def install_app(
 
 	app_path = os.path.realpath(os.path.join(bench_path, "apps", app))
 
+	command_prefix = ""
+	# macOS needs a custom PKG_CONFIG_DIR for frappe
+	if app == "frappe" and sys.platform == "darwin":
+		command_prefix = "PKG_CONFIG_PATH=$(brew --prefix mariadb-connector-c)/lib/pkgconfig"
+
 	bench.run(
-		f"{bench.python} -m pip install {quiet_flag} --upgrade -e {app_path} {cache_flag}"
+		f"{command_prefix} {bench.python} -m pip install {quiet_flag} --upgrade -e {app_path} {cache_flag}"
 	)
 
 	if conf.get("developer_mode"):
