@@ -491,6 +491,7 @@ class BenchSetup(Base):
 
 		quiet_flag = "" if bench.cli.verbose else "--quiet"
 
+		self.check_pkg_config()
 		self.pip()
 
 		for app in apps:
