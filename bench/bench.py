@@ -44,8 +44,8 @@ logger = logging.getLogger(bench.PROJECT_NAME)
 
 
 class Base:
-	def run(self, cmd, cwd=None, _raise=True):
-		return exec_cmd(cmd, cwd=cwd or self.cwd, _raise=_raise)
+	def run(self, cmd, cwd=None, _raise=True, env=None):
+		return exec_cmd(cmd, cwd=cwd or self.cwd, _raise=_raise, env=env)
 
 
 class Validator:
@@ -370,13 +370,14 @@ class BenchSetup(Base):
 
 		if os.path.exists(frappe):
 			# macOS needs a custom PKG_CONFIG_DIR
-			command_prefix = ""
+			env = {}
 			if sys.platform == "darwin":
-				command_prefix = "PKG_CONFIG_PATH=$(brew --prefix mariadb-connector-c)/lib/pkgconfig"
-
+				env = {
+					"PKG_CONFIG_PATH": "/opt/homebrew/opt/mariadb-connector-c/lib/pkgconfig",
+				}
 			self.run(
-				f"{command_prefix} {self.bench.python} -m pip install {quiet_flag} --upgrade -e {frappe}",
-				cwd=self.bench.name,
+				f"{self.bench.python} -m pip install {quiet_flag} --upgrade -e {frappe}",
+				cwd=self.bench.name, env=env,
 			)
 
 	@step(title="Setting Up Bench Config", success="Bench Config Set Up")
@@ -497,11 +498,13 @@ class BenchSetup(Base):
 		for app in apps:
 			app_path = os.path.join(self.bench.name, "apps", app)
 			log(f"\nInstalling python dependencies for {app}", level=3, no_log=True)
-			command_prefix = ""
+			env = {}
 			# macOS needs a custom PKG_CONFIG_DIR for frappe
 			if app == "frappe" and sys.platform == "darwin":
-				command_prefix = "PKG_CONFIG_PATH=$(brew --prefix mariadb-connector-c)/lib/pkgconfig"
-			self.run(f"{command_prefix} {self.bench.python} -m pip install {quiet_flag} --upgrade -e {app_path}")
+				env = {
+					"PKG_CONFIG_PATH": "/opt/homebrew/opt/mariadb-connector-c/lib/pkgconfig",
+				}
+			self.run(f"{self.bench.python} -m pip install {quiet_flag} --upgrade -e {app_path}", env=env)
 
 	def node(self, apps=None):
 		"""Install and upgrade Node dependencies for specified / all apps on given Bench"""
