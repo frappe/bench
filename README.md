@@ -350,7 +350,6 @@ This should display $HOME/bench-repo
 
 ```sh
 # Delete bench installed in editable install
-rm -r $(find ~ -name '*.egg-info')
 pip uninstall frappe-bench
 ```
 
