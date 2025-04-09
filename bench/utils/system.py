@@ -214,3 +214,7 @@ def setup_fonts():
 	os.rename(os.path.join(fonts_path, "usr_share_fonts"), "/usr/share/fonts")
 	shutil.rmtree(fonts_path)
 	exec_cmd("fc-cache -fv")
+
+def get_mariadb_pkgconfig_path() -> str:
+	import subprocess
+	return subprocess.check_output(["brew", "--prefix", "mariadb-connector-c"]).decode("utf-8").strip() + "/lib/pkgconfig"

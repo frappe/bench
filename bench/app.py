@@ -892,6 +892,7 @@ def install_app(
 ):
 	import bench.cli as bench_cli
 	from bench.bench import Bench
+	from bench.utils.system import get_mariadb_pkgconfig_path
 
 	install_text = f"Installing {app}"
 	click.secho(install_text, fg="yellow")
@@ -913,7 +914,7 @@ def install_app(
 	# macOS needs a custom PKG_CONFIG_DIR for frappe
 	if app == "frappe" and sys.platform == "darwin":
 		env = {
-			"PKG_CONFIG_PATH": "/opt/homebrew/opt/mariadb-connector-c/lib/pkgconfig",
+			"PKG_CONFIG_PATH": get_mariadb_pkgconfig_path(),
 		}
 
 	bench.run(

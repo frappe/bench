@@ -34,6 +34,7 @@ from bench.utils.bench import (
 )
 from bench.utils.render import job, step
 from bench.utils.app import get_current_version
+from bench.utils.system import get_mariadb_pkgconfig_path
 from bench.app import is_git_repo
 
 
@@ -373,7 +374,7 @@ class BenchSetup(Base):
 			env = {}
 			if sys.platform == "darwin":
 				env = {
-					"PKG_CONFIG_PATH": "/opt/homebrew/opt/mariadb-connector-c/lib/pkgconfig",
+					"PKG_CONFIG_PATH": get_mariadb_pkgconfig_path(),
 				}
 			self.run(
 				f"{self.bench.python} -m pip install {quiet_flag} --upgrade -e {frappe}",
@@ -502,7 +503,7 @@ class BenchSetup(Base):
 			# macOS needs a custom PKG_CONFIG_DIR for frappe
 			if app == "frappe" and sys.platform == "darwin":
 				env = {
-					"PKG_CONFIG_PATH": "/opt/homebrew/opt/mariadb-connector-c/lib/pkgconfig",
+					"PKG_CONFIG_PATH": get_mariadb_pkgconfig_path(),
 				}
 			self.run(f"{self.bench.python} -m pip install {quiet_flag} --upgrade -e {app_path}", env=env)
 
