@@ -892,8 +892,7 @@ def install_app(
 ):
 	import bench.cli as bench_cli
 	from bench.bench import Bench
-	from bench.utils.system import get_mariadb_pkgconfig_path
-
+	from bench.utils.system import get_mariadb_pkgconfig_path, check_pkg_config
 	install_text = f"Installing {app}"
 	click.secho(install_text, fg="yellow")
 	logger.log(install_text)
@@ -910,12 +909,17 @@ def install_app(
 
 	app_path = os.path.realpath(os.path.join(bench_path, "apps", app))
 
-	env = {}
-	# macOS needs a custom PKG_CONFIG_DIR for frappe
-	if app == "frappe" and sys.platform == "darwin":
-		env = {
-			"PKG_CONFIG_PATH": get_mariadb_pkgconfig_path(),
-		}
+	env = None
+
+	# macOS needs a custom PKG_CONFIG_DIR for frappe v16+
+	from bench.utils.app import get_current_frappe_version
+	if app == "frappe" and get_current_frappe_version(bench_path) >= 16:
+		check_pkg_config()
+
+		if sys.platform == "darwin":
+			env = {
+				"PKG_CONFIG_PATH": get_mariadb_pkgconfig_path(),
+			}
 
 	bench.run(
 		f"{bench.python} -m pip install {quiet_flag} --upgrade -e {app_path} {cache_flag}", env=env

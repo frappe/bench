@@ -34,7 +34,7 @@ from bench.utils.bench import (
 )
 from bench.utils.render import job, step
 from bench.utils.app import get_current_version
-from bench.utils.system import get_mariadb_pkgconfig_path
+from bench.utils.system import get_mariadb_pkgconfig_path, check_pkg_config
 from bench.app import is_git_repo
 
 
@@ -360,8 +360,6 @@ class BenchSetup(Base):
 		frappe = os.path.join(self.bench.name, "apps", "frappe")
 		quiet_flag = "" if verbose else "--quiet"
 
-		self.check_pkg_config()
-
 		if not os.path.exists(self.bench.python):
 			venv = get_venv_path(verbose=verbose, python=python)
 			self.run(f"{venv} env", cwd=self.bench.name)
@@ -370,16 +368,21 @@ class BenchSetup(Base):
 		self.wheel()
 
 		if os.path.exists(frappe):
-			# macOS needs a custom PKG_CONFIG_DIR
-			env = {}
-			if sys.platform == "darwin":
-				env = {
-					"PKG_CONFIG_PATH": get_mariadb_pkgconfig_path(),
-				}
-			self.run(
-				f"{self.bench.python} -m pip install {quiet_flag} --upgrade -e {frappe}",
-				cwd=self.bench.name, env=env,
-			)
+				env = None
+
+				from bench.utils.app import get_current_frappe_version
+				if get_current_frappe_version(self.bench.name) >= 16:
+					check_pkg_config()
+					# macOS needs a custom PKG_CONFIG_DIR for frappe v16+
+					if sys.platform == "darwin":
+						env = {
+							"PKG_CONFIG_PATH": get_mariadb_pkgconfig_path(),
+						}
+
+				self.run(
+					f"{self.bench.python} -m pip install {quiet_flag} --upgrade -e {frappe}",
+					cwd=self.bench.name, env=env,
+				)
 
 	@step(title="Setting Up Bench Config", success="Bench Config Set Up")
 	def config(self, redis=True, procfile=True, additional_config=None):
@@ -423,15 +426,6 @@ class BenchSetup(Base):
 		return self.run(
 			f"{self.bench.python} -m pip install {quiet_flag} wheel", cwd=self.bench.name
 		)
-
-	@step(title="Checking if pkg-config is installed", success="pkg-config is present")
-	def check_pkg_config(self):
-		"""
-		pkg-config is required for building some python packages like libmysqlclient
-		"""
-		if shutil.which("pkg-config") is None:
-			raise Exception("pkg-config is not installed. Please install it before proceeding.\n"
-			"You can refer to https://docs.frappe.io/framework/user/en/installation")
 
 	def logging(self):
 		from bench.utils import setup_logging
@@ -493,18 +487,22 @@ class BenchSetup(Base):
 
 		quiet_flag = "" if bench.cli.verbose else "--quiet"
 
-		self.check_pkg_config()
 		self.pip()
 
 		for app in apps:
 			app_path = os.path.join(self.bench.name, "apps", app)
 			log(f"\nInstalling python dependencies for {app}", level=3, no_log=True)
-			env = {}
-			# macOS needs a custom PKG_CONFIG_DIR for frappe
-			if app == "frappe" and sys.platform == "darwin":
-				env = {
-					"PKG_CONFIG_PATH": get_mariadb_pkgconfig_path(),
-				}
+			env = None
+			# macOS needs a custom PKG_CONFIG_DIR for frappe v16+
+			from bench.utils.app import get_current_frappe_version
+			if app == "frappe":
+				if get_current_frappe_version(self.bench.name) >= 16:
+					check_pkg_config()
+				if sys.platform == "darwin":
+					env = {
+						"PKG_CONFIG_PATH": get_mariadb_pkgconfig_path(),
+					}
+
 			self.run(f"{self.bench.python} -m pip install {quiet_flag} --upgrade -e {app_path}", env=env)
 
 	def node(self, apps=None):

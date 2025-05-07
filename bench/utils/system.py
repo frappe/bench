@@ -218,3 +218,11 @@ def setup_fonts():
 def get_mariadb_pkgconfig_path() -> str:
 	import subprocess
 	return subprocess.check_output(["brew", "--prefix", "mariadb-connector-c"]).decode("utf-8").strip() + "/lib/pkgconfig"
+
+def check_pkg_config():
+	"""
+	pkg-config is required for building some python packages like libmysqlclient
+	"""
+	if shutil.which("pkg-config") is None:
+		raise Exception("pkg-config is not installed. Please install it before proceeding.\n"
+		"You can refer to https://docs.frappe.io/framework/user/en/installation")
