@@ -129,3 +129,6 @@ jobs:
           python -m pip install -U -e ${GITHUB_WORKSPACE};
 
       - run: python -m unittest -v bench.tests.test_utils && python -m unittest -v bench.tests.test_init
+
+      - uses: mxschmitt/action-tmate@v3
+        if: ${{ failure() && contains( github.event.pull_request.labels.*.name, 'debug-gha') }}
