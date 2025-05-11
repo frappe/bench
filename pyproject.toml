@@ -19,7 +19,7 @@ classifiers = [
     "Topic :: System :: Installation/Setup",
 ]
 dependencies = [
-    "Click~=7.0",
+    "Click~=8.1.0",
     "GitPython~=3.1.30",
     "honcho",
     "Jinja2~=3.1.3",
