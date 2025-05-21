@@ -1,6 +1,9 @@
 from typing import List
 import click
-from click.core import _check_nested_chain
+try:
+	from click.core import _check_nested_chain
+except ImportError:
+	from click.core import _check_multicommand as _check_nested_chain
 
 
 def print_bench_version(ctx, param, value):
