@@ -1,6 +1,6 @@
 <div align="center">
 
-![Logo](resources/logo.png)
+![Logo](https://raw.githubusercontent.com/frappe/bench/9f76d3a39891464a8eafdbb3084828eeb5314fde/resources/logo.png)
 
 ## Bench
 **CLI to manage Frappe applications**
@@ -299,7 +299,7 @@ In case the setup fails, the log file is saved under `$HOME/easy-install.log`. Y
 
 For more in-depth information on commands and their usage, follow [Commands and Usage](https://github.com/frappe/bench/blob/develop/docs/commands_and_usage.md). As for a consolidated list of bench commands, check out [Bench Usage](https://github.com/frappe/bench/blob/develop/docs/bench_usage.md).
 
-![Help](resources/help.png)
+![Help](https://raw.githubusercontent.com/frappe/bench/9f76d3a39891464a8eafdbb3084828eeb5314fde/resources/help.png)
 
 
 ## Custom Bench Commands
