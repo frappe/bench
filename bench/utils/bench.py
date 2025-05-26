@@ -97,8 +97,15 @@ def install_python_dev_dependencies(bench_path=".", apps=None, verbose=False):
 		dev_requirements_path = os.path.join(app_path, "dev-requirements.txt")
 
 		if os.path.exists(pyproject_path):
-			pyproject_deps = _generate_dev_deps_pattern(pyproject_path)
-			if pyproject_deps:
+			try:
+				from tomli import loads
+			except ImportError:
+				from tomllib import loads
+		
+			pyroject_config = loads(open(pyproject_path).read())
+			for key, deps in pyroject_config["project"]["optional-dependencies"].items():
+				bench.run(f"{bench.python} -m pip install {quiet_flag} --upgrade {' '.join(deps)}")
+			if pyproject_deps := _generate_dev_deps_pattern(pyproject_path):
 				bench.run(f"{bench.python} -m pip install {quiet_flag} --upgrade {pyproject_deps}")
 
 		if not pyproject_deps and os.path.exists(dev_requirements_path):
