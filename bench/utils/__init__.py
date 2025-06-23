@@ -132,6 +132,9 @@ def check_latest_version():
 	if VERSION.endswith("dev"):
 		return
 
+	if os.environ.get("FRAPPE_DOCKER_BUILD"):
+		return
+
 	import requests
 	from semantic_version import Version
 

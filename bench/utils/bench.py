@@ -315,6 +315,9 @@ def restart_supervisor_processes(bench_path=".", web_workers=False, _raise=False
 	if which("supervisorctl") is None:
 		return
 
+	if os.environ.get("FRAPPE_DOCKER_BUILD"):
+		return
+
 	from bench.bench import Bench
 
 	bench = Bench(bench_path)
