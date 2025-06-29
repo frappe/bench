@@ -24,7 +24,7 @@
         state: present
 
     - name: configure mariadb
-      include: roles/mariadb/tasks/main.yml
+      include_tasks: roles/mariadb/tasks/main.yml
       vars:
         mysql_conf_tpl: roles/mariadb/files/mariadb_config.cnf
 
@@ -32,10 +32,10 @@
       pip: name=mysql-python version=1.2.5
 
     # setup frappe-bench
-    - include: includes/setup_bench.yml
+    - include_tasks: includes/setup_bench.yml
 
     # setup development environment
-    - include: includes/setup_dev_env.yml
+    - include_tasks: includes/setup_dev_env.yml
       when: not production
 
 ...

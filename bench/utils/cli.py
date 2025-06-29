@@ -1,5 +1,6 @@
+from typing import List
 import click
-from click.core import _check_multicommand
+from click.core import _check_nested_chain
 
 
 def print_bench_version(ctx, param, value):
@@ -24,7 +25,7 @@ class MultiCommandGroup(click.Group):
 		name = name or cmd.name
 		if name is None:
 			raise TypeError("Command has no name.")
-		_check_multicommand(self, name, cmd, register=True)
+		_check_nested_chain(self, name, cmd, register=True)
 
 		try:
 			self.commands[name] = cmd
@@ -32,6 +33,27 @@ class MultiCommandGroup(click.Group):
 			if isinstance(name, list):
 				for _name in name:
 					self.commands[_name] = cmd
+
+
+class SugaredOption(click.Option):
+	def __init__(self, *args, **kwargs):
+		self.only_if_set: List = kwargs.pop("only_if_set")
+		kwargs["help"] = (
+			kwargs.get("help", "")
+			+ f". Option is acceptable only if {', '.join(self.only_if_set)} is used."
+		)
+		super().__init__(*args, **kwargs)
+
+	def handle_parse_result(self, ctx, opts, args):
+		current_opt = self.name in opts
+		if current_opt and self.only_if_set:
+			for opt in self.only_if_set:
+				if opt not in opts:
+					deafaults_set = [x.default for x in ctx.command.params if x.name == opt]
+					if not deafaults_set:
+						raise click.UsageError(f"Illegal Usage: Set '{opt}' before '{self.name}'.")
+
+		return super().handle_parse_result(ctx, opts, args)
 
 
 def use_experimental_feature(ctx, param, value):

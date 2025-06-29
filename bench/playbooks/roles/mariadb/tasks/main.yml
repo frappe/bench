@@ -1,11 +1,11 @@
 ---
-- include: centos.yml
+- include_tasks: centos.yml
   when: ansible_distribution == 'CentOS' and ansible_distribution_major_version|int >= 6
 
-- include: ubuntu-trusty.yml
+- include_tasks: ubuntu-trusty.yml
   when: ansible_distribution == 'Ubuntu' and ansible_distribution_version == '14.04'
 
-- include: ubuntu-xenial_bionic.yml
+- include_tasks: ubuntu-xenial_bionic.yml
   when: ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int >= 16
 
 - name: Add configuration
@@ -16,7 +16,7 @@
     group: root
     mode: 0644
   when: mysql_conf_tpl != 'change_me' and ansible_distribution != 'Debian'
-  notify: restart mysql
+  notify: restart mariadb
 
 - include_tasks: debian.yml
   when: ansible_distribution == 'Debian'
@@ -29,7 +29,7 @@
     group: root
     mode: 0644
   when: mysql_conf_tpl != 'change_me' and ansible_distribution == 'Debian'
-  notify: restart mysql
+  notify: restart mariadb
 
 - name: Add additional conf for MariaDB 10.2 in mariadb.conf.d
   blockinfile:
@@ -59,7 +59,7 @@
 
 - name: Start and enable service
   service:
-    name: mysql
+    name: mariadb
     state: started
     enabled: yes
 

@@ -1,5 +1,4 @@
 # imports - standard imports
-import functools
 import json
 import logging
 import os
@@ -7,28 +6,37 @@ import re
 import shutil
 import subprocess
 import sys
+import uuid
+import tarfile
 import typing
+from collections import OrderedDict
 from datetime import date
+from functools import lru_cache
+from pathlib import Path
+from typing import Optional
 from urllib.parse import urlparse
 
 # imports - third party imports
 import click
+import git
+import semantic_version as sv
 
 # imports - module imports
 import bench
-from bench.exceptions import NotInBenchDirectoryError
 from bench.utils import (
+	UNSET_ARG,
 	fetch_details_from_tag,
+	get_app_cache_extract_filter,
 	get_available_folder_name,
+	get_bench_cache_path,
 	is_bench_directory,
 	is_git_url,
+	is_valid_frappe_branch,
 	log,
 	run_frappe_cmd,
+	get_file_md5,
 )
-from bench.utils.bench import (
-	build_assets,
-	install_python_dev_dependencies,
-)
+from bench.utils.bench import build_assets, install_python_dev_dependencies
 from bench.utils.render import step
 
 if typing.TYPE_CHECKING:
@@ -42,20 +50,20 @@ class AppMeta:
 	def __init__(self, name: str, branch: str = None, to_clone: bool = True):
 		"""
 		name (str): This could look something like
-			1. https://github.com/frappe/healthcare.git
-			2. git@github.com:frappe/healthcare.git
-			3. frappe/healthcare@develop
-			4. healthcare
-			5. healthcare@develop, healthcare@v13.12.1
+		        1. https://github.com/frappe/healthcare.git
+		        2. git@github.com:frappe/healthcare.git
+		        3. frappe/healthcare@develop
+		        4. healthcare
+		        5. healthcare@develop, healthcare@v13.12.1
 
 		References for Version Identifiers:
 		 * https://www.python.org/dev/peps/pep-0440/#version-specifiers
 		 * https://docs.npmjs.com/about-semantic-versioning
 
 		class Healthcare(AppConfig):
-			dependencies = [{"frappe/erpnext": "~13.17.0"}]
+		        dependencies = [{"frappe/erpnext": "~13.17.0"}]
 		"""
-		self.name = name.rstrip('/')
+		self.name = name.rstrip("/")
 		self.remote_server = "github.com"
 		self.to_clone = to_clone
 		self.on_disk = False
@@ -63,20 +71,28 @@ class AppMeta:
 		self.from_apps = False
 		self.is_url = False
 		self.branch = branch
+		self.app_name = None
+		self.git_repo = None
+		self.is_repo = (
+			is_git_repo(app_path=get_repo_dir(self.name))
+			if os.path.exists(get_repo_dir(self.name))
+			else True
+		)
 		self.mount_path = os.path.abspath(
 			os.path.join(urlparse(self.name).netloc, urlparse(self.name).path)
 		)
 		self.setup_details()
 
 	def setup_details(self):
+		# support for --no-git
+		if not self.is_repo:
+			self.repo = self.app_name = self.name
+			return
 		# fetch meta from installed apps
-		if (
-			not self.to_clone
-			and hasattr(self, "bench")
-			and os.path.exists(os.path.join(self.bench.name, "apps", self.name))
-		):
+		if self.bench and os.path.exists(os.path.join(self.bench.name, "apps", self.name)):
+			self.mount_path = os.path.join(self.bench.name, "apps", self.name)
 			self.from_apps = True
-			self._setup_details_from_installed_apps()
+			self._setup_details_from_mounted_disk()
 
 		# fetch meta for repo on mounted disk
 		elif os.path.exists(self.mount_path):
@@ -86,51 +102,53 @@ class AppMeta:
 		# fetch meta for repo from remote git server - traditional get-app url
 		elif is_git_url(self.name):
 			self.is_url = True
-			if self.name.startswith("git@") or self.name.startswith("ssh://"):
-				self.use_ssh = True
-			self._setup_details_from_git_url()
+			self.__setup_details_from_git()
 
 		# fetch meta from new styled name tags & first party apps on github
 		else:
 			self._setup_details_from_name_tag()
 
+		if self.git_repo:
+			self.app_name = os.path.basename(os.path.normpath(self.git_repo.working_tree_dir))
+		else:
+			self.app_name = self.repo
+
 	def _setup_details_from_mounted_disk(self):
-		self.org, self.repo, self.tag = os.path.split(self.mount_path)[-2:] + (
-			self.branch,
-		)
+		# If app is a git repo
+		self.git_repo = git.Repo(self.mount_path)
+		try:
+			self.__setup_details_from_git(self.git_repo.remotes[0].url)
+			if not (self.branch or self.tag):
+				self.tag = self.branch = self.git_repo.active_branch.name
+		except IndexError:
+			self.org, self.repo, self.tag = os.path.split(self.mount_path)[-2:] + (self.branch,)
+		except TypeError:
+			# faced a "a detached symbolic reference as it points" in case you're in the middle of
+			# some git shenanigans
+			self.tag = self.branch = None
 
 	def _setup_details_from_name_tag(self):
-		self.org, self.repo, self.tag = fetch_details_from_tag(self.name)
+		using_cached = bool(self.cache_key)
+		self.org, self.repo, self.tag = fetch_details_from_tag(self.name, using_cached)
 		self.tag = self.tag or self.branch
 
-	def _setup_details_from_installed_apps(self):
-		self.org, self.repo, self.tag = os.path.split(
-			os.path.join(self.bench.name, "apps", self.name)
-		)[-2:] + (self.branch,)
-
-	def _setup_details_from_git_url(self):
-		return self.__setup_details_from_git()
-
-	def __setup_details_from_git(self):
-		if self.use_ssh:
-			_first_part, _second_part = self.name.split(":")
+	def __setup_details_from_git(self, url=None):
+		name = url if url else self.name
+		if name.startswith("git@") or name.startswith("ssh://"):
+			self.use_ssh = True
+			_first_part, _second_part = name.rsplit(":", 1)
 			self.remote_server = _first_part.split("@")[-1]
 			self.org, _repo = _second_part.rsplit("/", 1)
 		else:
-			self.remote_server, self.org, _repo = self.name.rsplit("/", 2)
+			protocal = "https://" if "https://" in name else "http://"
+			self.remote_server, self.org, _repo = name.replace(protocal, "").rsplit("/", 2)
 
 		self.tag = self.branch
 		self.repo = _repo.split(".")[0]
 
 	@property
 	def url(self):
-		if self.from_apps:
-			return os.path.abspath(os.path.join("apps", self.name))
-
-		if self.on_disk:
-			return self.mount_path
-
-		if self.is_url:
+		if self.is_url or self.from_apps or self.on_disk:
 			return self.name
 
 		if self.use_ssh:
@@ -145,12 +163,24 @@ class AppMeta:
 		return f"git@{self.remote_server}:{self.org}/{self.repo}.git"
 
 
-@functools.lru_cache(maxsize=None)
+@lru_cache(maxsize=None)
 class App(AppMeta):
 	def __init__(
-		self, name: str, branch: str = None, bench: "Bench" = None, *args, **kwargs
+		self,
+		name: str,
+		branch: str = None,
+		bench: "Bench" = None,
+		soft_link: bool = False,
+		cache_key=None,
+		*args,
+		**kwargs,
 	):
 		self.bench = bench
+		self.soft_link = soft_link
+		self.required_by = None
+		self.local_resolution = []
+		self.cache_key = cache_key
+		self.pyproject = None
 		super().__init__(name, branch, *args, **kwargs)
 
 	@step(title="Fetching App {repo}", success="App {repo} Fetched")
@@ -158,92 +188,453 @@ class App(AppMeta):
 		branch = f"--branch {self.tag}" if self.tag else ""
 		shallow = "--depth 1" if self.bench.shallow_clone else ""
 
+		if not self.soft_link:
+			cmd = "git clone"
+			args = f"{self.url} {branch} {shallow} --origin upstream"
+		else:
+			cmd = "ln -s"
+			args = f"{self.name}"
+
 		fetch_txt = f"Getting {self.repo}"
 		click.secho(fetch_txt, fg="yellow")
 		logger.log(fetch_txt)
 
 		self.bench.run(
-			f"git clone {self.url} {branch} {shallow} --origin upstream",
+			f"{cmd} {args}",
 			cwd=os.path.join(self.bench.name, "apps"),
 		)
 
 	@step(title="Archiving App {repo}", success="App {repo} Archived")
-	def remove(self):
-		active_app_path = os.path.join("apps", self.repo)
-		archived_path = os.path.join("archived", "apps")
-		archived_name = get_available_folder_name(
-			f"{self.repo}-{date.today()}", archived_path
-		)
-		archived_app_path = os.path.join(archived_path, archived_name)
-		log(f"App moved from {active_app_path} to {archived_app_path}")
-		shutil.move(active_app_path, archived_app_path)
+	def remove(self, no_backup: bool = False):
+		active_app_path = os.path.join("apps", self.app_name)
+
+		if no_backup:
+			if not os.path.islink(active_app_path):
+				shutil.rmtree(active_app_path)
+			else:
+				os.remove(active_app_path)
+			log(f"App deleted from {active_app_path}")
+		else:
+			archived_path = os.path.join("archived", "apps")
+			archived_name = get_available_folder_name(
+				f"{self.app_name}-{date.today()}", archived_path
+			)
+			archived_app_path = os.path.join(archived_path, archived_name)
+
+			shutil.move(active_app_path, archived_app_path)
+			log(f"App moved from {active_app_path} to {archived_app_path}")
+
+		self.from_apps = False
+		self.on_disk = False
 
 	@step(title="Installing App {repo}", success="App {repo} Installed")
-	def install(self, skip_assets=False, verbose=False, restart_bench=True):
+	def install(
+		self,
+		skip_assets=False,
+		verbose=False,
+		resolved=False,
+		restart_bench=True,
+		ignore_resolution=False,
+		using_cached=False,
+	):
 		import bench.cli
 		from bench.utils.app import get_app_name
 
-		verbose = bench.cli.verbose or verbose
-		app_name = get_app_name(self.bench.name, self.repo)
+		self.validate_app_dependencies()
 
-		# TODO: this should go inside install_app only tho - issue: default/resolved branch
-		setup_app_dependencies(
-			repo_name=self.repo,
-			bench_path=self.bench.name,
-			branch=self.tag,
-			verbose=verbose,
-			skip_assets=skip_assets,
-		)
+		verbose = bench.cli.verbose or verbose
+		app_name = get_app_name(self.bench.name, self.app_name)
+		if not resolved and self.app_name != "frappe" and not ignore_resolution:
+			click.secho(
+				f"Ignoring dependencies of {self.name}. To install dependencies use --resolve-deps",
+				fg="yellow",
+			)
 
 		install_app(
 			app=app_name,
+			tag=self.tag,
 			bench_path=self.bench.name,
 			verbose=verbose,
 			skip_assets=skip_assets,
-			restart_bench=restart_bench
+			restart_bench=restart_bench,
+			resolution=self.local_resolution,
+			using_cached=using_cached,
 		)
+
+	@step(title="Cloning and installing {repo}", success="App {repo} Installed")
+	def install_resolved_apps(self, *args, **kwargs):
+		self.get()
+		self.install(*args, **kwargs, resolved=True)
 
 	@step(title="Uninstalling App {repo}", success="App {repo} Uninstalled")
 	def uninstall(self):
-		self.bench.run(f"{self.bench.python} -m pip uninstall -y {self.repo}")
+		if os.environ.get("BENCH_USE_UV"):
+			self.bench.run(f"uv pip uninstall {self.name} --python {self.bench.python}")
+		else:
+			self.bench.run(f"{self.bench.python} -m pip uninstall -y {self.name}")
+
+	def _get_dependencies(self):
+		from bench.utils.app import get_required_deps, required_apps_from_hooks
+
+		if self.on_disk:
+			required_deps = os.path.join(self.mount_path, self.app_name, "hooks.py")
+			try:
+				return required_apps_from_hooks(required_deps, local=True)
+			except IndexError:
+				return []
+		try:
+			required_deps = get_required_deps(self.org, self.repo, self.tag or self.branch)
+			return required_apps_from_hooks(required_deps)
+		except Exception:
+			return []
+
+	def update_app_state(self):
+		from bench.bench import Bench
+
+		bench = Bench(self.bench.name)
+		bench.apps.sync(
+			app_dir=self.app_name,
+			app_name=self.name,
+			branch=self.tag,
+			required=self.local_resolution,
+		)
+
+	def get_pyproject(self) -> Optional[dict]:
+		from bench.utils.app import get_pyproject
+
+		if self.pyproject:
+			return self.pyproject
+
+		apps_path = os.path.join(os.path.abspath(self.bench.name), "apps")
+		pyproject_path = os.path.join(apps_path, self.app_name, "pyproject.toml")
+		self.pyproject = get_pyproject(pyproject_path)
+		return self.pyproject
+
+	def validate_app_dependencies(self, throw=False) -> None:
+		pyproject = self.get_pyproject() or {}
+		deps: Optional[dict] = (
+			pyproject.get("tool", {}).get("bench", {}).get("frappe-dependencies")
+		)
+		if not deps:
+			return
+
+		for dep, version in deps.items():
+			validate_dependency(self, dep, version, throw=throw)
+
+	"""
+	Get App Cache
+
+	Since get-app affects only the `apps`, `env`, and `sites`
+	bench sub directories. If we assume deterministic builds
+	when get-app is called, the `apps/app_name` sub dir can be
+	cached.
+
+	In subsequent builds this would save time by not having to:
+	- clone repository
+	- install frontend dependencies
+	- building frontend assets
+	as all of this is contained in the `apps/app_name` sub dir.
+
+	Code that updates the `env` and `sites` subdirs still need
+	to be run.
+	"""
+
+	def get_app_path(self) -> Path:
+		return Path(self.bench.name) / "apps" / self.app_name
+
+	def get_app_cache_temp_path(self, is_compressed=False) -> Path:
+		cache_path = get_bench_cache_path("apps")
+		ext = "tgz" if is_compressed else "tar"
+		tarfile_name = f"{self.app_name}.{uuid.uuid4().hex}.{ext}"
+		return cache_path / tarfile_name
+
+	def get_app_cache_hashed_path(self, temp_path: Path) -> Path:
+		assert self.cache_key is not None
+
+		ext = temp_path.suffix[1:]
+		md5 = get_file_md5(temp_path)
+		tarfile_name = f"{self.app_name}.{self.cache_key}.md5-{md5}.{ext}"
+
+		return temp_path.with_name(tarfile_name)
+
+	def get_cached(self) -> bool:
+		if not self.cache_key:
+			return False
+
+		if not (cache_path := validate_cache_and_get_path(self.app_name, self.cache_key)):
+			return False
+
+		app_path = self.get_app_path()
+		if app_path.is_dir():
+			shutil.rmtree(app_path)
+
+		click.secho(
+			f"Bench app-cache: extracting {self.app_name} from {cache_path.as_posix()}",
+		)
+
+		mode = "r:gz" if cache_path.suffix.endswith(".tgz") else "r"
+		with tarfile.open(cache_path, mode) as tar:
+			extraction_filter = get_app_cache_extract_filter(count_threshold=150_000)
+			try:
+				tar.extractall(app_path.parent, filter=extraction_filter)
+				click.secho(
+					f"Bench app-cache: extraction succeeded for {self.app_name}",
+					fg="green",
+				)
+			except Exception:
+				message = f"Bench app-cache: extraction failed for {self.app_name}"
+				click.secho(
+					message,
+					fg="yellow",
+				)
+				logger.exception(message)
+				shutil.rmtree(app_path)
+				return False
+
+		return True
+
+	def set_cache(self, compress_artifacts=False) -> bool:
+		if not self.cache_key:
+			return False
+
+		app_path = self.get_app_path()
+		if not app_path.is_dir():
+			return False
+
+		cwd = os.getcwd()
+		cache_path = self.get_app_cache_temp_path(compress_artifacts)
+		mode = "w:gz" if compress_artifacts else "w"
+
+		message = f"Bench app-cache: caching {self.app_name}"
+		if compress_artifacts:
+			message += " (compressed)"
+		click.secho(message)
+
+		self.prune_app_directory()
+
+		success = False
+		os.chdir(app_path.parent)
+		try:
+			with tarfile.open(cache_path, mode) as tar:
+				tar.add(app_path.name)
+
+			hashed_path = self.get_app_cache_hashed_path(cache_path)
+			unlink_no_throw(hashed_path)
+
+			cache_path.rename(hashed_path)
+			click.secho(
+				f"Bench app-cache: caching succeeded for {self.app_name} as {hashed_path.as_posix()}",
+				fg="green",
+			)
+
+			success = True
+		except Exception as exc:
+			log(f"Bench app-cache: caching failed for {self.app_name} {exc}", level=3)
+			success = False
+		finally:
+			os.chdir(cwd)
+		return success
+
+	def prune_app_directory(self):
+		app_path = self.get_app_path()
+		if can_frappe_use_cached(self):
+			remove_unused_node_modules(app_path)
 
 
-def add_to_appstxt(app, bench_path="."):
-	from bench.bench import Bench
-
-	apps = Bench(bench_path).apps
-
-	if app not in apps:
-		apps.append(app)
-		return write_appstxt(apps, bench_path=bench_path)
+def coerce_url_to_name_if_possible(git_url: str, cache_key: str) -> str:
+	app_name = os.path.basename(git_url)
+	if can_get_cached(app_name, cache_key):
+		return app_name
+	return git_url
 
 
-def remove_from_appstxt(app, bench_path="."):
-	from bench.bench import Bench
+def can_get_cached(app_name: str, cache_key: str) -> bool:
+	"""
+	Used before App is initialized if passed `git_url` is a
+	file URL as opposed to the app name.
 
-	apps = Bench(bench_path).apps
+	If True then `git_url` can be coerced into the `app_name` and
+	checking local remote and fetching can be skipped while keeping
+	get-app command params the same.
+	"""
 
-	if app in apps:
-		apps.remove(app)
-		return write_appstxt(apps, bench_path=bench_path)
+	if cache_path := get_app_cache_path(app_name, cache_key):
+		return cache_path.exists()
+
+	return False
 
 
-def write_appstxt(apps, bench_path="."):
-	with open(os.path.join(bench_path, "sites", "apps.txt"), "w") as f:
-		return f.write("\n".join(apps))
+def can_frappe_use_cached(app: App) -> bool:
+	min_frappe = get_required_frappe_version(app)
+	if not min_frappe:
+		return False
+
+	try:
+		return sv.Version(min_frappe) in sv.SimpleSpec(">=15.12.0")
+	except ValueError:
+		# Passed value is not a version string, it's an expression
+		pass
+
+	try:
+		"""
+		15.12.0 is the first version to support USING_CACHED,
+		but there is no way to check the last version without
+		support. So it's not possible to have a ">" filter.
+
+		Hence this excludes the first supported version.
+		"""
+		return sv.Version("15.12.0") not in sv.SimpleSpec(min_frappe)
+	except ValueError:
+		click.secho(
+			f"Bench app-cache: invalid value found for frappe version '{min_frappe}'",
+			fg="yellow",
+		)
+		# Invalid expression
+		return False
+
+
+def validate_dependency(app: App, dep: str, req_version: str, throw=False) -> None:
+	dep_path = Path(app.bench.name) / "apps" / dep
+	if not dep_path.is_dir():
+		click.secho(f"Required frappe-dependency '{dep}' not found.", fg="yellow")
+		if throw:
+			sys.exit(1)
+		return
+
+	dep_version = get_dep_version(dep, dep_path)
+	if not dep_version:
+		return
+
+	if sv.Version(dep_version) not in sv.SimpleSpec(req_version):
+		click.secho(
+			f"Installed frappe-dependency '{dep}' version '{dep_version}' "
+			f"does not satisfy required version '{req_version}'. "
+			f"App '{app.name}' might not work as expected.",
+			fg="yellow",
+		)
+		if throw:
+			click.secho(f"Please install '{dep}{req_version}' first and retry", fg="red")
+			sys.exit(1)
+
+
+def get_dep_version(dep: str, dep_path: Path) -> Optional[str]:
+	from bench.utils.app import get_pyproject
+
+	dep_pp = get_pyproject(str(dep_path / "pyproject.toml"))
+	version = dep_pp.get("project", {}).get("version")
+	if version:
+		return version
+
+	dinit_path = dep_path / dep / "__init__.py"
+	if not dinit_path.is_file():
+		return None
+
+	with dinit_path.open("r", encoding="utf-8") as dinit:
+		for line in dinit:
+			if not line.startswith("__version__ =") and not line.startswith("VERSION ="):
+				continue
+
+			version = line.split("=")[1].strip().strip("\"'")
+			if version:
+				return version
+			else:
+				break
+
+	return None
+
+
+def get_required_frappe_version(app: App) -> Optional[str]:
+	pyproject = app.get_pyproject() or {}
+
+	# Reference: https://github.com/frappe/bench/issues/1524
+	req_frappe = (
+		pyproject.get("tool", {})
+		.get("bench", {})
+		.get("frappe-dependencies", {})
+		.get("frappe")
+	)
+
+	if not req_frappe:
+		click.secho(
+			"Required frappe version not set in pyproject.toml, "
+			"please refer: https://github.com/frappe/bench/issues/1524",
+			fg="yellow",
+		)
+
+	return req_frappe
+
+
+def remove_unused_node_modules(app_path: Path) -> None:
+	"""
+	Erring a bit the side of caution; since there is no explicit way
+	to check if node_modules are utilized, this function checks if Vite
+	is being used to build the frontend code.
+
+	Since most popular Frappe apps use Vite to build their frontends,
+	this method should suffice.
+
+	Note: root package.json is ignored cause those usually belong to
+	apps that do not have a build step and so their node_modules are
+	utilized during runtime.
+	"""
+
+	for p in app_path.iterdir():
+		if not p.is_dir():
+			continue
+
+		package_json = p / "package.json"
+		if not package_json.is_file():
+			continue
+
+		node_modules = p / "node_modules"
+		if not node_modules.is_dir():
+			continue
+
+		can_delete = False
+		with package_json.open("r", encoding="utf-8") as f:
+			package_json = json.loads(f.read())
+			build_script = package_json.get("scripts", {}).get("build", "")
+			can_delete = "vite build" in build_script
+
+		if can_delete:
+			click.secho(
+				f"Bench app-cache: removing {node_modules.as_posix()}",
+				fg="yellow",
+			)
+			shutil.rmtree(node_modules)
+
+
+def make_resolution_plan(app: App, bench: "Bench"):
+	"""
+	decide what apps and versions to install and in what order
+	"""
+	resolution = OrderedDict()
+	resolution[app.app_name] = app
+
+	for app_name in app._get_dependencies():
+		dep_app = App(app_name, bench=bench)
+		is_valid_frappe_branch(dep_app.url, dep_app.branch)
+		dep_app.required_by = app.name
+		if dep_app.app_name in resolution:
+			click.secho(f"{dep_app.app_name} is already resolved skipping", fg="yellow")
+			continue
+		resolution[dep_app.app_name] = dep_app
+		resolution.update(make_resolution_plan(dep_app, bench))
+		app.local_resolution = [repo_name for repo_name, _ in reversed(resolution.items())]
+	return resolution
 
 
 def get_excluded_apps(bench_path="."):
 	try:
 		with open(os.path.join(bench_path, "sites", "excluded_apps.txt")) as f:
 			return f.read().strip().split("\n")
-	except IOError:
+	except OSError:
 		return []
 
 
 def add_to_excluded_apps_txt(app, bench_path="."):
 	if app == "frappe":
-		raise ValueError("Frappe app cannot be excludeed from update")
+		raise ValueError("Frappe app cannot be excluded from update")
 	if app not in os.listdir("apps"):
 		raise ValueError(f"The app {app} does not exist")
 	apps = get_excluded_apps(bench_path=bench_path)
@@ -264,40 +655,6 @@ def remove_from_excluded_apps_txt(app, bench_path="."):
 		return write_excluded_apps_txt(apps, bench_path=bench_path)
 
 
-def setup_app_dependencies(
-	repo_name, bench_path=".", branch=None, skip_assets=False, verbose=False
-):
-	# branch kwarg is somewhat of a hack here; since we're assuming the same branches for all apps
-	# for eg: if you're installing erpnext@develop, you'll want frappe@develop and healthcare@develop too
-	import glob
-	import bench.cli
-	from bench.bench import Bench
-
-	verbose = bench.cli.verbose or verbose
-	apps_path = os.path.join(os.path.abspath(bench_path), "apps")
-	files = glob.glob(os.path.join(apps_path, repo_name, "**", "hooks.py"))
-
-	if files:
-		with open(files[0]) as f:
-			lines = [x for x in f.read().split("\n") if x.strip().startswith("required_apps")]
-		if lines:
-			required_apps = eval(lines[0].strip("required_apps").strip().lstrip("=").strip())
-
-			if isinstance(required_apps, str):
-				required_apps = [required_apps]
-
-			# TODO: when the time comes, add version check here
-			for app in required_apps:
-				if app not in Bench(bench_path).apps:
-					get_app(
-						app,
-						bench_path=bench_path,
-						branch=branch,
-						skip_assets=skip_assets,
-						verbose=verbose,
-					)
-
-
 def get_app(
 	git_url,
 	branch=None,
@@ -305,7 +662,11 @@ def get_app(
 	skip_assets=False,
 	verbose=False,
 	overwrite=False,
+	soft_link=False,
 	init_bench=False,
+	resolve_deps=False,
+	cache_key=None,
+	compress_artifacts=False,
 ):
 	"""bench get-app clones a Frappe App from remote (GitHub or any other git server),
 	and installs it on the current bench. This also resolves dependencies based on the
@@ -314,42 +675,87 @@ def get_app(
 	If the bench_path is not a bench directory, a new bench is created named using the
 	git_url parameter.
 	"""
-	from bench.bench import Bench
 	import bench as _bench
 	import bench.cli as bench_cli
+	from bench.bench import Bench
+	from bench.utils.app import check_existing_dir
+
+	if urlparse(git_url).scheme == "file" and cache_key:
+		git_url = coerce_url_to_name_if_possible(git_url, cache_key)
 
 	bench = Bench(bench_path)
-	app = App(git_url, branch=branch, bench=bench)
+	app = App(
+		git_url, branch=branch, bench=bench, soft_link=soft_link, cache_key=cache_key
+	)
 	git_url = app.url
 	repo_name = app.repo
 	branch = app.tag
 	bench_setup = False
 	restart_bench = not init_bench
+	frappe_path, frappe_branch = None, None
+
+	if resolve_deps:
+		resolution = make_resolution_plan(app, bench)
+		click.secho("Following apps will be installed", fg="bright_blue")
+		for idx, app in enumerate(reversed(resolution.values()), start=1):
+			print(
+				f"{idx}. {app.name} {f'(required by {app.required_by})' if app.required_by else ''}"
+			)
+
+		if "frappe" in resolution:
+			# Todo: Make frappe a terminal dependency for all frappe apps.
+			frappe_path, frappe_branch = resolution["frappe"].url, resolution["frappe"].tag
 
 	if not is_bench_directory(bench_path):
 		if not init_bench:
-			raise NotInBenchDirectoryError(
+			click.secho(
 				f"{os.path.realpath(bench_path)} is not a valid bench directory. "
-				"Run with --init-bench if you'd like to create a Bench too."
+				"Run with --init-bench if you'd like to create a Bench too.",
+				fg="red",
 			)
+			sys.exit(1)
 
 		from bench.utils.system import init
 
 		bench_path = get_available_folder_name(f"{app.repo}-bench", bench_path)
-		init(path=bench_path, frappe_branch=branch)
+		init(
+			path=bench_path,
+			frappe_path=frappe_path,
+			frappe_branch=frappe_branch or branch,
+		)
 		os.chdir(bench_path)
 		bench_setup = True
 
 	if bench_setup and bench_cli.from_command_line and bench_cli.dynamic_feed:
-		_bench.LOG_BUFFER.append({
-			"message": f"Fetching App {repo_name}",
-			"prefix": click.style('⏼', fg='bright_yellow'),
-			"is_parent": True,
-			"color": None,
-		})
+		_bench.LOG_BUFFER.append(
+			{
+				"message": f"Fetching App {repo_name}",
+				"prefix": click.style("⏼", fg="bright_yellow"),
+				"is_parent": True,
+				"color": None,
+			}
+		)
 
-	cloned_path = os.path.join(bench_path, "apps", repo_name)
-	dir_already_exists = os.path.isdir(cloned_path)
+	if resolve_deps:
+		install_resolved_deps(
+			bench,
+			resolution,
+			bench_path=bench_path,
+			skip_assets=skip_assets,
+			verbose=verbose,
+		)
+		return
+
+	if app.get_cached():
+		app.install(
+			verbose=verbose,
+			skip_assets=skip_assets,
+			restart_bench=restart_bench,
+			using_cached=True,
+		)
+		return
+
+	dir_already_exists, cloned_path = check_existing_dir(bench_path, repo_name)
 	to_clone = not dir_already_exists
 
 	# application directory already exists
@@ -361,7 +767,7 @@ def get_app(
 			"Do you want to continue and overwrite it?"
 		)
 	):
-		shutil.rmtree(cloned_path)
+		app.remove()
 		to_clone = True
 
 	if to_clone:
@@ -374,23 +780,100 @@ def get_app(
 	):
 		app.install(verbose=verbose, skip_assets=skip_assets, restart_bench=restart_bench)
 
+	app.set_cache(compress_artifacts)
+
+
+def install_resolved_deps(
+	bench,
+	resolution,
+	bench_path=".",
+	skip_assets=False,
+	verbose=False,
+):
+	from bench.utils.app import check_existing_dir
+
+	if "frappe" in resolution:
+		# Terminal dependency
+		del resolution["frappe"]
+
+	for repo_name, app in reversed(resolution.items()):
+		existing_dir, path_to_app = check_existing_dir(bench_path, repo_name)
+		if existing_dir:
+			is_compatible = False
+
+			try:
+				installed_branch = bench.apps.states[repo_name]["resolution"]["branch"].strip()
+			except Exception:
+				installed_branch = (
+					subprocess.check_output(
+						"git rev-parse --abbrev-ref HEAD", shell=True, cwd=path_to_app
+					)
+					.decode("utf-8")
+					.rstrip()
+				)
+			try:
+				if app.tag is None:
+					current_remote = (
+						subprocess.check_output(
+							f"git config branch.{installed_branch}.remote", shell=True, cwd=path_to_app
+						)
+						.decode("utf-8")
+						.rstrip()
+					)
+
+					default_branch = (
+						subprocess.check_output(
+							f"git symbolic-ref refs/remotes/{current_remote}/HEAD",
+							shell=True,
+							cwd=path_to_app,
+						)
+						.decode("utf-8")
+						.rsplit("/")[-1]
+						.strip()
+					)
+					is_compatible = default_branch == installed_branch
+				else:
+					is_compatible = installed_branch == app.tag
+			except Exception:
+				is_compatible = False
+
+			prefix = "C" if is_compatible else "Inc"
+			click.secho(
+				f"{prefix}ompatible version of {repo_name} is already installed",
+				fg="green" if is_compatible else "red",
+			)
+			app.update_app_state()
+			if click.confirm(
+				f"Do you wish to clone and install the already installed {prefix}ompatible app"
+			):
+				click.secho(f"Removing installed app {app.name}", fg="yellow")
+				shutil.rmtree(path_to_app)
+			else:
+				continue
+		app.install_resolved_apps(skip_assets=skip_assets, verbose=verbose)
+
 
 def new_app(app, no_git=None, bench_path="."):
 	if bench.FRAPPE_VERSION in (0, None):
-		raise NotInBenchDirectoryError(
-			f"{os.path.realpath(bench_path)} is not a valid bench directory."
+		click.secho(
+			f"{os.path.realpath(bench_path)} is not a valid bench directory.",
+			fg="red",
 		)
+		sys.exit(1)
 
 	# For backwards compatibility
 	app = app.lower().replace(" ", "_").replace("-", "_")
+	if app[0].isdigit() or "." in app:
+		click.secho(
+			"App names cannot start with numbers(digits) or have dot(.) in them", fg="red"
+		)
+		return
+
 	apps = os.path.abspath(os.path.join(bench_path, "apps"))
 	args = ["make-app", apps, app]
 	if no_git:
 		if bench.FRAPPE_VERSION < 14:
-			click.secho(
-				"Frappe v14 or greater is needed for '--no-git' flag",
-				fg="red"
-			)
+			click.secho("Frappe v14 or greater is needed for '--no-git' flag", fg="red")
 			return
 		args.append(no_git)
 
@@ -401,18 +884,24 @@ def new_app(app, no_git=None, bench_path="."):
 
 def install_app(
 	app,
+	tag=None,
 	bench_path=".",
 	verbose=False,
 	no_cache=False,
 	restart_bench=True,
 	skip_assets=False,
+	resolution=UNSET_ARG,
+	using_cached=False,
 ):
 	import bench.cli as bench_cli
 	from bench.bench import Bench
-
+	from bench.utils.system import get_mariadb_pkgconfig_path, check_pkg_config
 	install_text = f"Installing {app}"
 	click.secho(install_text, fg="yellow")
 	logger.log(install_text)
+
+	if resolution == UNSET_ARG:
+		resolution = []
 
 	bench = Bench(bench_path)
 	conf = bench.conf
@@ -423,21 +912,45 @@ def install_app(
 
 	app_path = os.path.realpath(os.path.join(bench_path, "apps", app))
 
-	bench.run(f"{bench.python} -m pip install {quiet_flag} --upgrade -e {app_path} {cache_flag}")
+	env = None
+
+	# macOS needs a custom PKG_CONFIG_DIR for frappe v16+
+	from bench.utils.app import get_current_frappe_version
+	if app == "frappe" and get_current_frappe_version(bench_path) >= 16:
+		check_pkg_config()
+
+		if sys.platform == "darwin":
+			env = {
+				"PKG_CONFIG_PATH": get_mariadb_pkgconfig_path(),
+			}
+
+	if os.environ.get("BENCH_USE_UV"):
+		bench.run(
+			f"uv pip install {quiet_flag} --upgrade -e {app_path} {cache_flag} --python {bench.python}", env=env
+		)
+	else:
+		bench.run(
+			f"{bench.python} -m pip install {quiet_flag} --upgrade -e {app_path} {cache_flag}", env=env
+		)
 
 	if conf.get("developer_mode"):
 		install_python_dev_dependencies(apps=app, bench_path=bench_path, verbose=verbose)
 
-	if os.path.exists(os.path.join(app_path, "package.json")):
-		bench.run("yarn install", cwd=app_path)
+	if not using_cached and os.path.exists(os.path.join(app_path, "package.json")):
+		yarn_install = "yarn install --check-files"
+		if verbose:
+			yarn_install += " --verbose"
+		bench.run(yarn_install, cwd=app_path)
 
-	bench.apps.sync()
+	bench.apps.sync(app_name=app, required=resolution, branch=tag, app_dir=app_path)
 
 	if not skip_assets:
-		build_assets(bench_path=bench_path, app=app)
+		build_assets(bench_path=bench_path, app=app, using_cached=using_cached)
 
 	if restart_bench:
-		bench.reload()
+		# Avoiding exceptions here as production might not be set-up
+		# OR we might just be generating docker images.
+		bench.reload(_raise=False)
 
 
 def pull_apps(apps=None, bench_path=".", reset=False):
@@ -469,9 +982,9 @@ Cannot proceed with update: You have local changes in app "{app}" that are not c
 Here are your choices:
 
 1. Merge the {app} app manually with "git pull" / "git pull --rebase" and fix conflicts.
-1. Temporarily remove your changes with "git stash" or discard them completely
+2. Temporarily remove your changes with "git stash" or discard them completely
 	with "bench update --reset" or for individual repositries "git reset --hard"
-2. If your changes are helpful for others, send in a pull request via GitHub and
+3. If your changes are helpful for others, send in a pull request via GitHub and
 	wait for them to be merged in the core."""
 					)
 					sys.exit(1)
@@ -526,11 +1039,22 @@ def get_repo_dir(app, bench_path="."):
 	return os.path.join(bench_path, "apps", app)
 
 
+def is_git_repo(app_path):
+	try:
+		git.Repo(app_path, search_parent_directories=False)
+		return True
+	except git.exc.InvalidGitRepositoryError:
+		return False
+
+
 def install_apps_from_path(path, bench_path="."):
 	apps = get_apps_json(path)
 	for app in apps:
 		get_app(
-			app["url"], branch=app.get("branch"), bench_path=bench_path, skip_assets=True,
+			app["url"],
+			branch=app.get("branch"),
+			bench_path=bench_path,
+			skip_assets=True,
 		)
 
 
@@ -543,3 +1067,58 @@ def get_apps_json(path):
 
 	with open(path) as f:
 		return json.load(f)
+
+
+def is_cache_hash_valid(cache_path: Path) -> bool:
+	parts = cache_path.name.split(".")
+	if len(parts) < 2 or not parts[-2].startswith("md5-"):
+		return False
+
+	md5 = parts[-2].split("-")[1]
+	return get_file_md5(cache_path) == md5
+
+
+def unlink_no_throw(path: Path):
+	if not path.exists():
+		return
+
+	try:
+		path.unlink(True)
+	except Exception:
+		pass
+
+
+def get_app_cache_path(app_name: str, cache_key: str) -> "Optional[Path]":
+	cache_path = get_bench_cache_path("apps")
+	glob_pattern = f"{app_name}.{cache_key}.md5-*"
+
+	for app_cache_path in cache_path.glob(glob_pattern):
+		return app_cache_path
+
+	return None
+
+
+def validate_cache_and_get_path(app_name: str, cache_key: str) -> "Optional[Path]":
+	if not cache_key:
+		return
+
+	if not (cache_path := get_app_cache_path(app_name, cache_key)):
+		return
+
+	if not cache_path.is_file():
+		click.secho(
+			f"Bench app-cache: file check failed for {cache_path.as_posix()}, skipping cache",
+			fg="yellow",
+		)
+		unlink_no_throw(cache_path)
+		return
+
+	if not is_cache_hash_valid(cache_path):
+		click.secho(
+			f"Bench app-cache: hash validation failed for {cache_path.as_posix()}, skipping cache",
+			fg="yellow",
+		)
+		unlink_no_throw(cache_path)
+		return
+
+	return cache_path

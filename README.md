@@ -1,46 +1,29 @@
 <div align="center">
-	<img src="https://github.com/frappe/design/raw/master/logos/png/bench-logo.png" height="128">
-	<h2>Bench</h2>
+
+![Logo](resources/logo.png)
+
+## Bench
+**CLI to manage Frappe applications**
+
+
+[![Python version](https://img.shields.io/badge/python-%3E=_3.10-green.svg)](https://www.python.org/downloads/)
+[![PyPI Version](https://badge.fury.io/py/frappe-bench.svg)](https://pypi.org/project/frappe-bench)
+![Platform Compatibility](https://img.shields.io/badge/platform-linux%20%7C%20macos-blue)
+
 </div>
 
-Bench is a command-line utility that helps you to install, update, and manage multiple sites for Frappe/ERPNext applications on [*nix systems](https://en.wikipedia.org/wiki/Unix-like) for development and production.
+## Bench
 
-<div align="center">
-	<a target="_blank" href="https://www.python.org/downloads/" title="Python version">
-		<img src="https://img.shields.io/badge/python-%3E=_3.6-green.svg">
-	</a>
-	<a target="_blank" href="https://app.travis-ci.com/github/frappe/bench" title="CI Status">
-		<img src="https://app.travis-ci.com/frappe/bench.svg?branch=develop">
-	</a>
-	<a target="_blank" href="https://pypi.org/project/frappe-bench" title="PyPI Version">
-		<img src="https://badge.fury.io/py/frappe-bench.svg" alt="PyPI version">
-	</a>
-	<a target="_blank" title="Platform Compatibility">
-		<img src="https://img.shields.io/badge/platform-linux%20%7C%20osx-blue">
-	</a>
-	<a target="_blank" href="https://app.fossa.com/projects/git%2Bgithub.com%2Ffrappe%2Fbench?ref=badge_shield" title="FOSSA Status">
-		<img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Ffrappe%2Fbench.svg?type=shield">
-	</a>
-	<a target="_blank" href="#LICENSE" title="License: GPLv3">
-		<img src="https://img.shields.io/badge/License-GPLv3-blue.svg">
-	</a>
-</div>
+Bench is a command-line utility that helps you to install, update, and manage multiple sites for Frappe applications on [*nix systems](https://en.wikipedia.org/wiki/Unix-like) for development and production.
 
-## Table of Contents
+## Key features
 
- - [Installation](#installation)
-	- [Containerized Installation](#containerized-installation)
-	- [Easy Install Script](#easy-install-script)
-	- [Manual Installation](#manual-installation)
- - [Usage](#basic-usage)
- - [Custom Bench commands](#custom-bench-commands)
- - [Bench Manager](#bench-manager)
- - [Guides](#guides)
- - [Resources](#resources)
- - [Development](#development)
- - [Releases](#releases)
- - [License](#license)
-
+Bench helps you set up and manage your frappe sites with ease. Here are some of the key features:
+- Initializing a new bench to work on sites and apps
+- Creating a new frappe site
+- Creating and installing apps that can be used on the sites
+- Managing frappe sites
+- Managing site backups
 
 ## Installation
 
@@ -49,91 +32,224 @@ A typical bench setup provides two types of environments &mdash; Development and
 The setup for each of these installations can be achieved in multiple ways:
 
  - [Containerized Installation](#containerized-installation)
- - [Easy Install Script](#easy-install-script)
- - [Manual Installation](#manual-installation)
+ - [Manual Installation](https://docs.frappe.io/framework/user/en/tutorial/install-and-setup-bench)
 
-We recommend using either the Docker Installation or the Easy Install Script to setup a Production Environment. For Development, you may choose either of the three methods to setup an instance.
+We recommend using Docker Installation to setup a Production Environment. For Development, you may choose either of the two methods to setup an instance.
 
-Otherwise, if you are looking to evaluate ERPNext, you can also download the [Virtual Machine Image](https://erpnext.com/download) or register for [a free trial on erpnext.com](https://erpnext.com/pricing).
+Otherwise, if you are looking to evaluate Frappe apps without the hassle of managing hosting yourself, you can try them on [Frappe Cloud](https://frappecloud.com/).
 
+<div>
+	<a href="https://frappecloud.com/dashboard/signup" target="_blank">
+		<picture>
+			<source media="(prefers-color-scheme: dark)" srcset="https://frappe.io/files/try-on-fc-white.png">
+			<img src="https://frappe.io/files/try-on-fc-black.png" alt="Try on Frappe Cloud" height="28" />
+		</picture>
+	</a>
+</div>
 
 ### Containerized Installation
 
-A Frappe/ERPNext instance can be setup and replicated easily using [Docker](https://docker.com). The officially supported Docker installation can be used to setup either of both Development and Production environments.
+A Frappe instance can be setup and replicated easily using [Docker](https://docker.com). The officially supported Docker installation can be used to setup either of both Development and Production environments.
 
 To setup either of the environments, you will need to clone the official docker repository:
 
 ```sh
-$ git clone https://github.com/frappe/frappe_docker.git
-$ cd frappe_docker
+git clone https://github.com/frappe/frappe_docker.git
 ```
 
-A quick setup guide for both the environments can be found below. For more details, check out the [Frappe/ERPNext Docker Repository](https://github.com/frappe/frappe_docker).
+A quick setup guide for both the environments can be found below. For more details, check out the [Frappe Docker Repository](https://github.com/frappe/frappe_docker).
 
 ### Easy Install Script
 
-The Easy Install script should get you going with a Frappe/ERPNext setup with minimal manual intervention and effort. Since there are a lot of configurations being automatically setup, we recommend executing this script on a fresh server.
+The Easy Install script should get you going with a Frappe setup with minimal manual intervention and effort.
 
-**Note:** This script works only on GNU/Linux based server distributions, and has been designed and tested to work on Ubuntu 16.04+, CentOS 7+, and Debian-based systems.
-
-> This script installs Version 12 by default. It is untested with Version 13 and above. Containerized or manual installs are recommended for newer setups.
-
-#### Prerequisites
-
-You need to install the following packages for the script to run:
-
- - ##### Ubuntu and Debian-based Distributions:
-
-	```sh
-	$ apt install python3-minimal build-essential python3-setuptools
-	```
-
- - ##### CentOS and other RPM Distributions:
-
-	```sh
-	$ dnf groupinstall "Development Tools"
-	$ dnf install python3
-	```
+This script uses Docker with the [Frappe Docker Repository](https://github.com/frappe/frappe_docker) and can be used for both Development setup and Production setup.
 
 #### Setup
 
 Download the Easy Install script and execute it:
 
 ```sh
-$ wget https://raw.githubusercontent.com/frappe/bench/develop/install.py
-$ python3 install.py --production
+wget https://raw.githubusercontent.com/frappe/bench/develop/easy-install.py
+python3 easy-install.py deploy --email=user@domain.tld --sitename=subdomain.domain.tld --app=erpnext
 ```
 
-The script should then prompt you for the MySQL root password and an Administrator password for the Frappe/ERPNext instance, which will then be saved under `$HOME/passwords.txt` of the user used to setup the instance. This script will then install the required stack, setup bench and a default ERPNext instance.
+This script will install docker on your system and will fetch the required containers, setup bench and a default ERPNext instance.
 
-When the setup is complete, you will be able to access the system at `http://<your-server-ip>`, wherein you can use the administrator password to login.
+The script will generate MySQL root password and an Administrator password for the Frappe/ERPNext instance, which will then be saved under `$HOME/passwords.txt` of the user used to setup the instance.
+It will also generate a new compose file under `$HOME/<project-name>-compose.yml`.
+
+When the setup is complete, you will be able to access the system at `http://<your-server-ip>`, wherein you can use the Administrator password to login.
+
+#### Arguments
+
+Here are the arguments for the easy-install script
+
+<details>
+<summary><b>Build custom images</b></summary>
+
+```txt
+usage: easy-install.py build [-h] [-n PROJECT] [-i IMAGE] [-q] [-m HTTP_PORT] [-v VERSION] [-a APPS] [-s SITES] [-e EMAIL]
+                             [-p] [-r FRAPPE_PATH] [-b FRAPPE_BRANCH] [-j APPS_JSON] [-t TAGS] [-c CONTAINERFILE]
+                             [-y PYTHON_VERSION] [-d NODE_VERSION] [-x] [-u]
+
+options:
+  -h, --help            show this help message and exit
+  -n PROJECT, --project PROJECT
+                        Project Name
+  -g, --backup-schedule BACKUP_SCHEDULE
+                        Backup schedule cronstring, default: "@every 6h"
+  -i IMAGE, --image IMAGE
+                        Full Image Name
+  -q, --no-ssl          No https
+  -m HTTP_PORT, --http-port HTTP_PORT
+                        Http port in case of no-ssl
+  -v VERSION, --version VERSION
+                        ERPNext version to install, defaults to latest stable
+  -a APPS, --app APPS   list of app(s) to be installed
+  -s SITES, --sitename SITES
+                        Site Name(s) for your production bench
+  -e EMAIL, --email EMAIL
+                        Add email for the SSL.
+  -p, --push            Push the built image to registry
+  -r FRAPPE_PATH, --frappe-path FRAPPE_PATH
+                        Frappe Repository to use, default: https://github.com/frappe/frappe
+  -b FRAPPE_BRANCH, --frappe-branch FRAPPE_BRANCH
+                        Frappe branch to use, default: version-15
+  -j APPS_JSON, --apps-json APPS_JSON
+                        Path to apps json, default: frappe_docker/development/apps-example.json
+  -t TAGS, --tag TAGS   Full Image Name(s), default: custom-apps:latest
+  -c CONTAINERFILE, --containerfile CONTAINERFILE
+                        Path to Containerfile: images/layered/Containerfile
+  -y PYTHON_VERSION, --python-version PYTHON_VERSION
+                        Python Version, default: 3.11.6
+  -d NODE_VERSION, --node-version NODE_VERSION
+                        NodeJS Version, default: 18.18.2
+  -x, --deploy          Deploy after build
+  -u, --upgrade         Upgrade after build
+```
+</details>
+
+<details>
+<summary><b>Deploy using compose</b></summary>
+
+```txt
+usage: easy-install.py deploy [-h] [-n PROJECT] [-i IMAGE] [-q] [-m HTTP_PORT] [-v VERSION] [-a APPS] [-s SITES] [-e EMAIL]
+
+options:
+  -h, --help            show this help message and exit
+  -n PROJECT, --project PROJECT
+                        Project Name
+  -g, --backup-schedule BACKUP_SCHEDULE
+                        Backup schedule cronstring, default: "@every 6h"
+  -i IMAGE, --image IMAGE
+                        Full Image Name
+  -q, --no-ssl          No https
+  -m HTTP_PORT, --http-port HTTP_PORT
+                        Http port in case of no-ssl
+  -v VERSION, --version VERSION
+                        ERPNext version to install, defaults to latest stable
+  -a APPS, --app APPS   list of app(s) to be installed
+  -s SITES, --sitename SITES
+                        Site Name(s) for your production bench
+  -e EMAIL, --email EMAIL
+                        Add email for the SSL.
+```
+</details>
+
+<details>
+<summary><b>Upgrade existing project</b></summary>
+
+```txt
+usage: easy-install.py upgrade [-h] [-n PROJECT] [-i IMAGE] [-q] [-m HTTP_PORT] [-v VERSION]
+
+options:
+  -h, --help            show this help message and exit
+  -n PROJECT, --project PROJECT
+                        Project Name
+  -g, --backup-schedule BACKUP_SCHEDULE
+                        Backup schedule cronstring, default: "@every 6h"
+  -i IMAGE, --image IMAGE
+                        Full Image Name
+  -q, --no-ssl          No https
+  -m HTTP_PORT, --http-port HTTP_PORT
+                        Http port in case of no-ssl
+  -v VERSION, --version VERSION
+                        ERPNext or image version to install, defaults to latest stable
+```
+</details>
+
+<details>
+<summary><b>Development setup using compose</b></summary>
+
+```txt
+usage: easy-install.py develop [-h] [-n PROJECT]
+
+options:
+  -h, --help            show this help message and exit
+  -n PROJECT, --project PROJECT
+                        Compose project name
+```
+</details>
+
+<details>
+<summary><b>Exec into existing project</b></summary>
+
+```txt
+usage: easy-install.py exec [-h] [-n PROJECT]
+
+options:
+  -h, --help            show this help message and exit
+  -n PROJECT, --project PROJECT
+                        Project Name
+```
+</details>
+
+To use custom apps, you need to create a json file with list of apps and pass it to build command.
+
+Example apps.json
+
+```json
+[
+  {
+    "url": "https://github.com/frappe/wiki.git",
+    "branch": "master"
+  }
+]
+```
+
+Execute following command to build and deploy above apps:
+
+```sh
+$ python3 easy-install.py build \
+	--tag=ghcr.io/org/repo/custom-apps:latest \
+	--push \
+	--image=ghcr.io/org/repo/custom-apps \
+	--version=latest \
+	--deploy \
+	--project=actions_test \
+	--email=test@frappe.io \
+	--apps-json=apps.json \
+	--app=wiki
+```
+
+Note:
+
+- `--tag`, tag to set for built image, can be multiple.
+- `--push`, push the built image.
+- `--image`, the image to use when starting docker compose project.
+- `--version`, the version to use when starting docker compose project.
+- `--app`, app to install on site creation, can be multiple.
+- `--deploy`, flag to deploy after build/push is complete
+- `--project=actions_test`, name of the project, compose file with project name will be stored in user home directory.
+- `--email=test@frappe.io`, valid email for letsencrypt certificate expiry notification.
+- `--apps-json`, path to json file with list of apps to be added to bench.
 
 #### Troubleshooting
 
-In case the setup fails, the log file is saved under `/tmp/logs/install_bench.log`. You may then:
+In case the setup fails, the log file is saved under `$HOME/easy-install.log`. You may then
 
- - Create an Issue in this repository with the log file attached.
- - Search for an existing issue or post the log file on the [Frappe/ERPNext Discuss Forum](https://discuss.erpnext.com/c/bench) with the tag `installation_problem` under "Install/Update" category.
-
-For more information and advanced setup instructions, check out the [Easy Install Documentation](https://github.com/frappe/bench/blob/develop/docs/easy_install.md).
-
-
-### Manual Installation
-
-Some might want to manually setup a bench instance locally for development. To quickly get started on installing bench the hard way, you can follow the guide on [Installing Bench and the Frappe Framework](https://frappe.io/docs/user/en/installation).
-
-You'll have to set up the system dependencies required for setting up a Frappe Environment. Checkout [docs/installation](https://github.com/frappe/bench/blob/develop/docs/installation.md) for more information on this. If you've already set up, install bench via pip:
-
-
-```sh
-$ pip install frappe-bench
-```
-
-For more extensive distribution-dependent documentation, check out the following guides:
-
- - [Hitchhiker's Guide to Installing Frappe on Linux](https://github.com/frappe/frappe/wiki/The-Hitchhiker%27s-Guide-to-Installing-Frappe-on-Linux)
- - [Hitchhiker's Guide to Installing Frappe on MacOS](https://github.com/frappe/bench/wiki/Setting-up-a-Mac-for-Frappe-ERPNext-Development)
-
+- Create an Issue in this repository with the log file attached.
 
 ## Basic Usage
 
@@ -183,49 +299,31 @@ For more extensive distribution-dependent documentation, check out the following
 
 For more in-depth information on commands and their usage, follow [Commands and Usage](https://github.com/frappe/bench/blob/develop/docs/commands_and_usage.md). As for a consolidated list of bench commands, check out [Bench Usage](https://github.com/frappe/bench/blob/develop/docs/bench_usage.md).
 
+![Help](resources/help.png)
+
 
 ## Custom Bench Commands
 
 If you wish to extend the capabilities of bench with your own custom Frappe Application, you may follow [Adding Custom Bench Commands](https://github.com/frappe/bench/blob/develop/docs/bench_custom_cmd.md).
 
 
-## Bench Manager
-
-[Bench Manager](https://github.com/frappe/bench_manager) is a GUI frontend for Bench with the same functionalties. You can install it by executing the following command:
-
-```sh
-$ bench setup manager
-```
-
- - **Note:** This will create a new site to setup Bench Manager, if you want to set it up on an existing site, run the following commands:
-
-	```sh
-	$ bench get-app https://github.com/frappe/bench_manager.git
-	$ bench --site <sitename> install-app bench_manager
-	```
-
-
 ## Guides
 
-- [Configuring HTTPS](https://frappe.io/docs/user/en/bench/guides/configuring-https.html)
-- [Using Let's Encrypt to setup HTTPS](https://frappe.io/docs/user/en/bench/guides/lets-encrypt-ssl-setup.html)
-- [Diagnosing the Scheduler](https://frappe.io/docs/user/en/bench/guides/diagnosing-the-scheduler.html)
-- [Change Hostname](https://frappe.io/docs/user/en/bench/guides/adding-custom-domains)
-- [Manual Setup](https://frappe.io/docs/user/en/bench/guides/manual-setup.html)
-- [Setup Production](https://frappe.io/docs/user/en/bench/guides/setup-production.html)
-- [Setup Multitenancy](https://frappe.io/docs/user/en/bench/guides/setup-multitenancy.html)
+- [Configuring HTTPS](https://docs.frappe.io/framework/user/en/bench/guides/configuring-https)
+- [Using Let's Encrypt to setup HTTPS](https://docs.frappe.io/framework/user/en/bench/guides/lets-encrypt-ssl-setup)
+- [Diagnosing the Scheduler](https://docs.frappe.io/framework/user/en/bench/guides/diagnosing-the-scheduler)
+- [Change Hostname](https://docs.frappe.io/framework/user/en/bench/guides/adding-custom-domains)
+- [Manual Setup](https://docs.frappe.io/framework/user/en/tutorial/install-and-setup-bench)
+- [Setup Production](https://docs.frappe.io/framework/user/en/bench/guides/setup-production)
+- [Setup Multitenancy](https://docs.frappe.io/framework/user/en/bench/guides/setup-multitenancy)
 - [Stopping Production](https://github.com/frappe/bench/wiki/Stopping-Production-and-starting-Development)
-
-For an exhaustive list of guides, check out [Bench Guides](https://frappe.io/docs/user/en/bench/guides).
 
 
 ## Resources
 
-- [Bench Commands Cheat Sheet](https://frappe.io/docs/user/en/bench/resources/bench-commands-cheatsheet.html)
-- [Background Services](https://frappe.io/docs/user/en/bench/resources/background-services.html)
-- [Bench Procfile](https://frappe.io/docs/user/en/bench/resources/bench-procfile.html)
-
-For an exhaustive list of resources, check out [Bench Resources](https://frappe.io/docs/user/en/bench/resources).
+- [Bench Commands Cheat Sheet](https://docs.frappe.io/framework/user/en/bench/resources/bench-commands-cheatsheet)
+- [Background Services](https://docs.frappe.io/framework/user/en/bench/resources/background-services)
+- [Bench Procfile](https://docs.frappe.io/framework/user/en/bench/resources/bench-procfile)
 
 
 ## Development
@@ -236,49 +334,60 @@ To contribute and develop on the bench CLI tool, clone this repo and create an e
 
 	This is not the recommended mode of installation for production. Instead, install the package from PyPI with: `pip install frappe-bench`
 
+### Clone and install
 
 ```sh
-$ git clone https://github.com/frappe/bench ~/bench-repo
-$ pip3 install -e ~/bench-repo
-$ bench src
-/Users/frappe/bench-repo
+git clone https://github.com/frappe/bench ~/bench-repo
+pip install -e ~/bench-repo
 ```
 
-To clear up the editable install and switch to a stable version of bench, uninstall via pip and delete the corresponding egg file from the python path.
+```shell
+bench src
+```
+This should display $HOME/bench-repo
 
+### To clear up the editable install and delete the corresponding egg file from the python path:
 
 ```sh
 # Delete bench installed in editable install
-$ rm -r $(find ~ -name '*.egg-info')
-$ pip3 uninstall frappe-bench
-
-# Install latest released version of bench
-$ pip3 install -U frappe-bench
+pip uninstall frappe-bench
 ```
 
-To confirm the switch, check the output of `bench src`. It should change from something like `$HOME/bench-repo` to `/usr/local/lib/python3.6/dist-packages` and stop the editable install warnings from getting triggered at every command.
+### Then you can install the latest from PyPI
+```sh
+pip install -U frappe-bench
+```
+
+To confirm the switch, check the output of `bench src`. It should change from something like `$HOME/bench-repo` to `/usr/local/lib/python3.12/dist-packages` and stop the editable install warnings from getting triggered at every command.
 
 
 ## Releases
 
-Bench's version information can be accessed via `bench.VERSION` in the package's __init__.py file. Eversince the v5.0 release, we've started publishing releases on GitHub, and PyPI.
+Bench's version information can be accessed via `bench.VERSION` in the package's __init__.py file. Ever since the v5.0 release, we've started publishing releases on GitHub, and PyPI.
 
-GitHub: https://github.com/frappe/bench/releases
+[GitHub](https://github.com/frappe/bench/releases)
+[Pypi](https://pypi.org/project/frappe-bench)
 
-PyPI: https://pypi.org/project/frappe-bench
 
+## Learn and connect
 
-From v5.3.0, we partially automated the release process using [@semantic-release](.github/workflows/release.yml). Under this new pipeline, we do the following steps to make a release:
+- [Discuss](https://discuss.frappe.io/)
+- [YouTube](https://www.youtube.com/@frappetech)
 
-1. Merge `develop` into the `staging` branch
-1. Merge `staging` into the latest stable branch, which is `v5.x` at this point.
+## Contribute
+To contribute to this project, please review the [Contribution Guidelines](https://github.com/frappe/erpnext/wiki/Contribution-Guidelines) for detailed instructions. Make sure to follow our [Code of Conduct](https://github.com/frappe/frappe/blob/develop/CODE_OF_CONDUCT.md) to keep the community welcoming and respectful.
 
-This triggers a GitHub Action job that generates a bump commit, drafts and generates a GitHub release, builds a Python package and publishes it to PyPI.
+## Security
+The Frappe team and community prioritize security. If you discover a security issue, please report it via our [Security Report Form](https://frappe.io/security).
+Your responsible disclosure helps keep Frappe and its users safe. We'll do our best to respond quickly and keep you informed throughout the process.
+For guidelines on reporting, check out our [Reporting Guidelines](https://frappe.io/security), and review our [Logo and Trademark Policy](https://github.com/frappe/erpnext/blob/develop/TRADEMARK_POLICY.md) for branding information.
 
-The intermediate `staging` branch exists to mediate the `bench.VERSION` conflict that would arise while merging `develop` and stable. On develop, the version has to be manually updated (for major release changes). The version tag plays a role in deciding when checks have to be made for new Bench releases.
-
-> Note: We may want to kill the convention of separate branches for different version releases of Bench. We don't need to maintain this the way we do for Frappe & ERPNext. A single branch named `stable` would sustain.
-
-## License
-
-This repository has been released under the [GNU GPLv3 License](LICENSE).
+<br/><br/>
+<div align="center">
+	<a href="https://frappe.io" target="_blank">
+		<picture>
+			<source media="(prefers-color-scheme: dark)" srcset="https://frappe.io/files/Frappe-white.png">
+			<img src="https://frappe.io/files/Frappe-black.png" alt="Frappe Technologies" height="28"/>
+		</picture>
+	</a>
+</div>

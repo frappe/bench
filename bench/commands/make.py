@@ -37,10 +37,14 @@ import click
 	help="Skip redis config generation if already specifying the common-site-config file",
 )
 @click.option("--skip-assets", is_flag=True, default=False, help="Do not build assets")
-@click.option(
-	"--install-app", help="Install particular app after initialization"
-)
+@click.option("--install-app", help="Install particular app after initialization")
 @click.option("--verbose", is_flag=True, help="Verbose output during install")
+@click.option(
+	"--dev",
+	is_flag=True,
+	default=False,
+	help="Enable developer mode and install development dependencies.",
+)
 def init(
 	path,
 	apps_path,
@@ -56,6 +60,7 @@ def init(
 	skip_assets=False,
 	python="python3",
 	install_app=None,
+	dev=False,
 ):
 	import os
 
@@ -69,7 +74,7 @@ def init(
 	try:
 		init(
 			path,
-			apps_path=apps_path, # can be used from --config flag? Maybe config file could have more info?
+			apps_path=apps_path,  # can be used from --config flag? Maybe config file could have more info?
 			no_procfile=no_procfile,
 			no_backups=no_backups,
 			frappe_path=frappe_path,
@@ -81,6 +86,7 @@ def init(
 			skip_assets=skip_assets,
 			python=python,
 			verbose=verbose,
+			dev=dev,
 		)
 		log(f"Bench {path} initialized", level=1)
 	except SystemExit:
@@ -131,10 +137,43 @@ def drop(path):
 @click.option("--overwrite", is_flag=True, default=False)
 @click.option("--skip-assets", is_flag=True, default=False, help="Do not build assets")
 @click.option(
+	"--soft-link",
+	is_flag=True,
+	default=False,
+	help="Create a soft link to git repo instead of clone.",
+)
+@click.option(
 	"--init-bench", is_flag=True, default=False, help="Initialize Bench if not in one"
 )
+@click.option(
+	"--resolve-deps",
+	is_flag=True,
+	default=False,
+	help="Resolve dependencies before installing app",
+)
+@click.option(
+	"--cache-key",
+	type=str,
+	default=None,
+	help="Caches get-app artifacts if provided (only first 10 chars is used)",
+)
+@click.option(
+	"--compress-artifacts",
+	is_flag=True,
+	default=False,
+	help="Whether to gzip get-app artifacts that are to be cached",
+)
 def get_app(
-	git_url, branch, name=None, overwrite=False, skip_assets=False, init_bench=False
+	git_url,
+	branch,
+	name=None,
+	overwrite=False,
+	skip_assets=False,
+	soft_link=False,
+	init_bench=False,
+	resolve_deps=False,
+	cache_key=None,
+	compress_artifacts=False,
 ):
 	"clone an app from the internet and set it up in your bench"
 	from bench.app import get_app
@@ -144,7 +183,11 @@ def get_app(
 		branch=branch,
 		skip_assets=skip_assets,
 		overwrite=overwrite,
+		soft_link=soft_link,
 		init_bench=init_bench,
+		resolve_deps=resolve_deps,
+		cache_key=cache_key,
+		compress_artifacts=compress_artifacts,
 	)
 
 
@@ -153,7 +196,7 @@ def get_app(
 	"--no-git",
 	is_flag=True,
 	flag_value="--no-git",
-	help="Do not initialize git repository for the app (available in Frappe v14+)"
+	help="Do not initialize git repository for the app (available in Frappe v14+)",
 )
 @click.argument("app-name")
 def new_app(app_name, no_git=None):
@@ -168,12 +211,14 @@ def new_app(app_name, no_git=None):
 		"Completely remove app from bench and re-build assets if not installed on any site"
 	),
 )
+@click.option("--no-backup", is_flag=True, help="Do not backup app before removing")
+@click.option("--force", is_flag=True, help="Force remove app")
 @click.argument("app-name")
-def remove_app(app_name):
+def remove_app(app_name, no_backup=False, force=False):
 	from bench.bench import Bench
 
 	bench = Bench(".")
-	bench.uninstall(app_name)
+	bench.uninstall(app_name, no_backup=no_backup, force=force)
 
 
 @click.command("exclude-app", help="Exclude app from updating")
@@ -203,8 +248,29 @@ def include_app_for_update(app_name):
 def pip(ctx, args):
 	"Run pip commands in bench env"
 	import os
+	import shutil
 
 	from bench.utils.bench import get_env_cmd
 
-	env_py = get_env_cmd("python")
-	os.execv(env_py, (env_py, "-m", "pip") + args)
+	if os.environ.get("BENCH_USE_UV") and (env_uv := shutil.which("uv")):
+		os.execv(env_uv, (env_uv, "pip") + args)
+	else:
+		env_py = get_env_cmd("python")
+		os.execv(env_py, (env_py, "-m", "pip") + args)
+
+
+@click.command(
+	"validate-dependencies",
+	help="Validates that all requirements specified in frappe-dependencies are met curently.",
+)
+@click.pass_context
+def validate_dependencies(ctx):
+	"Validate all specified frappe-dependencies."
+	from bench.bench import Bench
+	from bench.app import App
+
+	bench = Bench(".")
+
+	for app_name in bench.apps:
+		app = App(app_name, bench=bench)
+		app.validate_app_dependencies(throw=True)

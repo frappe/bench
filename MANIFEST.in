@@ -1,9 +1,0 @@
-include *.md
-include *.py
-recursive-include bench *.conf
-recursive-include bench *.sh
-recursive-include bench *.py
-recursive-include bench *.txt
-recursive-include bench *.json
-recursive-include bench/config/templates *
-recursive-include bench/playbooks *

@@ -2,27 +2,39 @@
 import json
 import logging
 import os
-import subprocess
 import re
+import subprocess
 import sys
+import hashlib
+from functools import lru_cache
 from glob import glob
+from pathlib import Path
 from shlex import split
-from typing import List, Tuple
+from tarfile import TarInfo
+from typing import List, Optional, Tuple
 
 # imports - third party imports
 import click
 
 # imports - module imports
 from bench import PROJECT_NAME, VERSION
+from bench.exceptions import (
+	AppNotInstalledError,
+	CommandFailedError,
+	InvalidRemoteException,
+)
 
-from bench.exceptions import CommandFailedError, InvalidRemoteException, ValidationError
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+	from typing import Optional
 
 
 logger = logging.getLogger(PROJECT_NAME)
-bench_cache_file = ".bench.cmd"
 paths_in_app = ("hooks.py", "modules.txt", "patches.txt")
 paths_in_bench = ("apps", "sites", "config", "logs", "config/pids")
 sudoers_file = "/etc/sudoers.d/frappe"
+UNSET_ARG = object()
 
 
 def is_bench_directory(directory=os.path.curdir):
@@ -31,6 +43,9 @@ def is_bench_directory(directory=os.path.curdir):
 	for folder in paths_in_bench:
 		path = os.path.abspath(os.path.join(directory, folder))
 		is_bench = is_bench and os.path.exists(path)
+		# Once is_bench becomes false, it will always be false, even if other path exists.
+		if not is_bench:
+			break
 
 	return is_bench
 
@@ -48,7 +63,46 @@ def is_frappe_app(directory: str) -> bool:
 	return bool(is_frappe_app)
 
 
-def log(message, level=0, no_log=False):
+def get_bench_cache_path(sub_dir: Optional[str]) -> Path:
+	relative_path = "~/.cache/bench"
+	if sub_dir and not sub_dir.startswith("/"):
+		relative_path += f"/{sub_dir}"
+
+	cache_path = os.path.expanduser(relative_path)
+	cache_path = Path(cache_path)
+	cache_path.mkdir(parents=True, exist_ok=True)
+	return cache_path
+
+
+@lru_cache(maxsize=None)
+def is_valid_frappe_branch(frappe_path: str, frappe_branch: str):
+	"""Check if a branch exists in a repo. Throws InvalidRemoteException if branch is not found
+
+	Uses native git command to check for branches on a remote.
+
+	:param frappe_path: git url
+	:type frappe_path: str
+	:param frappe_branch: branch to check
+	:type frappe_branch: str
+	:raises InvalidRemoteException: branch for this repo doesn't exist
+	"""
+	from git.cmd import Git
+	from git.exc import GitCommandError
+
+	g = Git()
+
+	if frappe_branch:
+		try:
+			res = g.ls_remote("--heads", "--tags", frappe_path, frappe_branch)
+			if not res:
+				raise InvalidRemoteException(
+					f"Invalid branch or tag: {frappe_branch} for the remote {frappe_path}"
+				)
+		except GitCommandError as e:
+			raise InvalidRemoteException(f"Invalid frappe path: {frappe_path}") from e
+
+
+def log(message, level=0, no_log=False, stderr=False):
 	import bench
 	import bench.cli
 
@@ -62,22 +116,23 @@ def log(message, level=0, no_log=False):
 	color, prefix = levels.get(level, levels[0])
 
 	if bench.cli.from_command_line and bench.cli.dynamic_feed:
-		bench.LOG_BUFFER.append(
-			{"prefix": prefix, "message": message, "color": color}
-		)
+		bench.LOG_BUFFER.append({"prefix": prefix, "message": message, "color": color})
 
 	if no_log:
-		click.secho(message, fg=color)
+		click.secho(message, fg=color, err=stderr)
 	else:
 		loggers = {2: logger.error, 3: logger.warning}
 		level_logger = loggers.get(level, logger.info)
 
 		level_logger(message)
-		click.secho(f"{prefix}: {message}", fg=color)
+		click.secho(f"{prefix}: {message}", fg=color, err=stderr)
 
 
 def check_latest_version():
 	if VERSION.endswith("dev"):
+		return
+
+	if os.environ.get("FRAPPE_DOCKER_BUILD"):
 		return
 
 	import requests
@@ -96,7 +151,10 @@ def check_latest_version():
 		local_version = Version(VERSION)
 
 		if pypi_version > local_version:
-			log(f"A newer version of bench is available: {local_version} → {pypi_version}")
+			log(
+				f"A newer version of bench is available: {local_version} → {pypi_version}",
+				stderr=True,
+			)
 
 
 def pause_exec(seconds=10):
@@ -118,12 +176,12 @@ def exec_cmd(cmd, cwd=".", env=None, _raise=True):
 	cwd_info = f"cd {cwd} && " if cwd != "." else ""
 	cmd_log = f"{cwd_info}{cmd}"
 	logger.debug(cmd_log)
-	cmd = split(cmd)
-	return_code = subprocess.call(cmd, cwd=cwd, universal_newlines=True, env=env)
+	spl_cmd = split(cmd)
+	return_code = subprocess.call(spl_cmd, cwd=cwd, universal_newlines=True, env=env)
 	if return_code:
 		logger.warning(f"{cmd_log} executed with exit code {return_code}")
 		if _raise:
-			raise CommandFailedError
+			raise CommandFailedError(cmd) from subprocess.CalledProcessError(return_code, cmd)
 	return return_code
 
 
@@ -138,7 +196,7 @@ def which(executable: str, raise_err: bool = False) -> str:
 	return exec_
 
 
-def setup_logging(bench_path=".") -> "logger":
+def setup_logging(bench_path=".") -> logging.Logger:
 	LOG_LEVEL = 15
 	logging.addLevelName(LOG_LEVEL, "LOG")
 
@@ -205,7 +263,7 @@ def run_frappe_cmd(*args, **kwargs):
 	f = get_env_cmd("python", bench_path=bench_path)
 	sites_dir = os.path.join(bench_path, "sites")
 
-	is_async = False if from_command_line else True
+	is_async = not from_command_line
 	if is_async:
 		stderr = stdout = subprocess.PIPE
 	else:
@@ -218,11 +276,7 @@ def run_frappe_cmd(*args, **kwargs):
 		stderr=stderr,
 	)
 
-	if is_async:
-		return_code = print_output(p)
-	else:
-		return_code = p.wait()
-
+	return_code = print_output(p) if is_async else p.wait()
 	if return_code > 0:
 		sys.exit(return_code)
 
@@ -269,7 +323,7 @@ def set_git_remote_url(git_url, bench_path="."):
 	app = git_url.rsplit("/", 1)[1].rsplit(".", 1)[0]
 
 	if app not in Bench(bench_path).apps:
-		raise ValidationError(f"No app named {app}")
+		raise AppNotInstalledError(f"No app named {app}")
 
 	app_dir = get_repo_dir(app, bench_path=bench_path)
 
@@ -355,7 +409,7 @@ def find_parent_bench(path: str) -> str:
 		return find_parent_bench(parent_dir)
 
 
-def generate_command_cache(bench_path=".") -> List:
+def get_env_frappe_commands(bench_path=".") -> List:
 	"""Caches all available commands (even custom apps) via Frappe
 	Default caching behaviour: generated the first time any command (for a specific bench directory)
 	"""
@@ -364,16 +418,12 @@ def generate_command_cache(bench_path=".") -> List:
 	python = get_env_cmd("python", bench_path=bench_path)
 	sites_path = os.path.join(bench_path, "sites")
 
-	if os.path.exists(bench_cache_file):
-		os.remove(bench_cache_file)
-
 	try:
-		output = get_cmd_output(
-			f"{python} -m frappe.utils.bench_helper get-frappe-commands", cwd=sites_path
+		return json.loads(
+			get_cmd_output(
+				f"{python} -m frappe.utils.bench_helper get-frappe-commands", cwd=sites_path
+			)
 		)
-		with open(bench_cache_file, "w") as f:
-			json.dump(eval(output), f)
-		return json.loads(output)
 
 	except subprocess.CalledProcessError as e:
 		if hasattr(e, "stderr"):
@@ -382,31 +432,29 @@ def generate_command_cache(bench_path=".") -> List:
 	return []
 
 
-def clear_command_cache(bench_path="."):
-	"""Clears commands cached
-	Default invalidation behaviour: destroyed on each run of `bench update`
-	"""
-
-	if os.path.exists(bench_cache_file):
-		os.remove(bench_cache_file)
-	else:
-		print("Bench command cache doesn't exist in this folder!")
-
-
-def find_org(org_repo):
+def find_org(org_repo, using_cached: bool = False):
 	import requests
 
 	org_repo = org_repo[0]
 
 	for org in ["frappe", "erpnext"]:
 		res = requests.head(f"https://api.github.com/repos/{org}/{org_repo}")
+		if res.status_code in (400, 403):
+			res = requests.head(f"https://github.com/{org}/{org_repo}")
 		if res.ok:
 			return org, org_repo
 
-	raise InvalidRemoteException
+	if using_cached:
+		return "", org_repo
+
+	raise InvalidRemoteException(
+		f"{org_repo} not found under frappe or erpnext GitHub accounts"
+	)
 
 
-def fetch_details_from_tag(_tag: str) -> Tuple[str, str, str]:
+def fetch_details_from_tag(
+	_tag: str, using_cached: bool = False
+) -> Tuple[str, str, str]:
 	if not _tag:
 		raise Exception("Tag is not provided")
 
@@ -421,7 +469,7 @@ def fetch_details_from_tag(_tag: str) -> Tuple[str, str, str]:
 	try:
 		org, repo = org_repo
 	except Exception:
-		org, repo = find_org(org_repo)
+		org, repo = find_org(org_repo, using_cached)
 
 	return org, repo, tag
 
@@ -481,6 +529,7 @@ def get_traceback() -> str:
 
 class _dict(dict):
 	"""dict like object that exposes keys as attributes"""
+
 	# bench port of frappe._dict
 	def __getattr__(self, key):
 		ret = self.get(key)
@@ -488,27 +537,108 @@ class _dict(dict):
 		if not ret and key.startswith("__") and key != "__deepcopy__":
 			raise AttributeError()
 		return ret
+
 	def __setattr__(self, key, value):
 		self[key] = value
+
 	def __getstate__(self):
 		return self
+
 	def __setstate__(self, d):
 		self.update(d)
+
 	def update(self, d):
 		"""update and return self -- the missing dict feature in python"""
-		super(_dict, self).update(d)
+		super().update(d)
 		return self
+
 	def copy(self):
 		return _dict(dict(self).copy())
 
 
-def parse_sys_argv():
-	sys_argv = _dict(options=set(), commands=set())
+def get_cmd_from_sysargv():
+	"""Identify and segregate tokens to options and command
 
-	for c in sys.argv[1:]:
-		if c.startswith("-"):
-			sys_argv.options.add(c)
-		else:
-			sys_argv.commands.add(c)
+	For Command: `bench --profile --site frappeframework.com migrate --no-backup`
+	sys.argv: ["/home/frappe/.local/bin/bench", "--profile", "--site", "frappeframework.com", "migrate", "--no-backup"]
+	Actual command run: migrate
 
-	return sys_argv
+	"""
+	# context is passed as options to frappe's bench_helper
+	from bench.bench import Bench
+
+	frappe_context = _dict(params={"--site"}, flags={"--verbose", "--profile", "--force"})
+	cmd_from_ctx = None
+	sys_argv = sys.argv[1:]
+	skip_next = False
+
+	for arg in sys_argv:
+		if skip_next:
+			skip_next = False
+			continue
+
+		if arg in frappe_context.flags:
+			continue
+
+		elif arg in frappe_context.params:
+			skip_next = True
+			continue
+
+		if sys_argv.index(arg) == 0 and arg in Bench(".").apps:
+			continue
+
+		cmd_from_ctx = arg
+
+		break
+
+	return cmd_from_ctx
+
+
+def get_app_cache_extract_filter(
+	count_threshold: int = 10_000,
+	size_threshold: int = 1_000_000_000,
+):  # -> Callable[[TarInfo, str], TarInfo | None]
+	state = dict(count=0, size=0)
+
+	AbsoluteLinkError = Exception
+
+	def data_filter(m: TarInfo, _: str) -> TarInfo:
+		return m
+
+	if (
+		sys.version_info.major == 3 and sys.version_info.minor > 7
+	) or sys.version_info.major > 3:
+		from tarfile import data_filter, AbsoluteLinkError
+
+	def filter_function(member: TarInfo, dest_path: str) -> Optional[TarInfo]:
+		state["count"] += 1
+		state["size"] += member.size
+
+		if state["count"] > count_threshold:
+			raise RuntimeError(f"Number of entries exceeds threshold ({state['count']})")
+
+		if state["size"] > size_threshold:
+			raise RuntimeError(f"Extracted size exceeds threshold ({state['size']})")
+
+		try:
+			return data_filter(member, dest_path)
+		except AbsoluteLinkError:
+			# Links created by `frappe` after extraction
+			return None
+
+	return filter_function
+
+
+def get_file_md5(p: Path) -> "str":
+	with open(p.as_posix(), "rb") as f:
+		try:
+			file_md5 = hashlib.md5(usedforsecurity=False)
+
+		# Will throw if < 3.9, can be removed once support
+		# is dropped
+		except TypeError:
+			file_md5 = hashlib.md5()
+
+		while chunk := f.read(2**16):
+			file_md5.update(chunk)
+	return file_md5.hexdigest()
