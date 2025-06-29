@@ -1,0 +1,42 @@
+# Virtual Environment
+venv/
+*.pyc
+__pycache__/
+.env
+instance/
+
+# IDE / Editor specific
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# DB files (if any local, like sqlite)
+*.db
+*.sqlite3
+
+# Test outputs
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# MyPy cache
+.mypy_cache/
+
+# Python crash logs
+*.log
+
+# Aerich migrations (usually committed, but sometimes ignored in specific strategies)
+# migrations/ if not version controlled, but we WILL version control them.
+# So, not adding migrations/ here.
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# macOS specific
+.DS_Store
