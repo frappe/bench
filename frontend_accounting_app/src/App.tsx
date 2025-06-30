@@ -6,7 +6,8 @@ import './App.css' // We can keep this for now, or remove if Tailwind handles al
 import InvoicesPage from './components/invoices/InvoicesPage';
 import ProfitAndLossReport from './components/reports/ProfitAndLossReport';
 import BankStatementUpload from './components/banking/BankStatementUpload';
-import PayrollPage from './components/payroll/PayrollPage'; // Import PayrollPage
+import PayrollPage from './components/payroll/PayrollPage';
+import ExpensesPage from './components/expenses/ExpensesPage'; // Import ExpensesPage
 
 function App() {
   const [session, setSession] = useState<Session | null>(null)
@@ -60,6 +61,8 @@ function App() {
         <div>
           <p style={{ marginBottom: '20px' }}>Signed in as: <strong>{session.user.email}</strong></p>
           <InvoicesPage userId={session.user.id} />
+          <hr style={{margin: '30px 0'}} />
+          <ExpensesPage userId={session.user.id} /> {/* Added ExpensesPage */}
           <hr style={{margin: '30px 0'}} />
           <ProfitAndLossReport userId={session.user.id} />
           <hr style={{margin: '30px 0'}} />
