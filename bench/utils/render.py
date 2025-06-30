@@ -14,7 +14,7 @@ class Capturing(list):
 	Util to consume the stdout encompassed in it and push it to a list
 
 	with Capturing() as output:
-		subprocess.check_output("ls", shell=True)
+	        subprocess.check_output("ls", shell=True)
 
 	print(output)
 	# ["b'Applications\\nDesktop\\nDocuments\\nDownloads\\n'"]
@@ -53,20 +53,25 @@ class Rendering:
 		if not self.dynamic_feed:
 			return
 
-		_prefix = click.style('⏼', fg='bright_yellow')
-		_hierarchy = "  " if not self.is_parent else ""
+		_prefix = click.style("⏼", fg="bright_yellow")
+		_hierarchy = "" if self.is_parent else "  "
 		self._title = self.title.format(**self.kw)
 		click.secho(f"{_hierarchy}{_prefix} {self._title}")
 
 		bench.LOG_BUFFER.append(
-			{"message": self._title, "prefix": _prefix, "color": None, "is_parent": self.is_parent}
+			{
+				"message": self._title,
+				"prefix": _prefix,
+				"color": None,
+				"is_parent": self.is_parent,
+			}
 		)
 
 	def __exit__(self, *args, **kwargs):
 		if not self.dynamic_feed:
 			return
 
-		self._prefix = click.style('✔', fg='green')
+		self._prefix = click.style("✔", fg="green")
 		self._success = self.success.format(**self.kw)
 
 		self.render_screen()
@@ -78,7 +83,7 @@ class Rendering:
 			if l["message"] == self._title:
 				l["prefix"] = self._prefix
 				l["message"] = self._success
-			_hierarchy = "  " if not l["is_parent"] else ""
+			_hierarchy = "" if l.get("is_parent") else "  "
 			click.secho(f'{_hierarchy}{l["prefix"]} {l["message"]}', fg=l["color"])
 
 
@@ -87,14 +92,20 @@ def job(title: str = None, success: str = None):
 	For instance, the `get-app` command consists of two jobs: `initializing bench`
 	and `fetching and installing app`.
 	"""
+
 	def innfn(fn):
 		def wrapper_fn(*args, **kwargs):
 			with Rendering(
-				success=success, title=title, is_parent=True, args=args, kwargs=kwargs,
+				success=success,
+				title=title,
+				is_parent=True,
+				args=args,
+				kwargs=kwargs,
 			):
 				return fn(*args, **kwargs)
 
 		return wrapper_fn
+
 	return innfn
 
 
@@ -102,12 +113,18 @@ def step(title: str = None, success: str = None):
 	"""Supposed to be wrapped around the smallest possible atomic step in a given operation.
 	For instance, `building assets` is a step in the update operation.
 	"""
+
 	def innfn(fn):
 		def wrapper_fn(*args, **kwargs):
 			with Rendering(
-				success=success, title=title, is_parent=False, args=args, kwargs=kwargs,
+				success=success,
+				title=title,
+				is_parent=False,
+				args=args,
+				kwargs=kwargs,
 			):
 				return fn(*args, **kwargs)
 
 		return wrapper_fn
+
 	return innfn
