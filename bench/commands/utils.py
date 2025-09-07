@@ -194,3 +194,93 @@ def app_cache_helper(clear=False, remove_app="", remove_key=""):
 	from bench.utils.bench import cache_helper
 
 	cache_helper(clear, remove_app, remove_key)
+
+
+from pathlib import Path
+from typing import List, Tuple
+import click
+import re
+from bench.utils import get_bench_name
+
+LISTEN_PORT_RE = re.compile(
+    r'\blisten\b\s+(?:\[[^\]]+\]:|[0-9a-zA-Z\.\-]+:)?(?P<port>\d+)', re.IGNORECASE
+)
+
+
+@click.command("show-ports", help="Show which sites are configured on which ports")
+@click.option("--site", "-s", required=False, help="Filter by site name")
+def show_ports(site: str = None):
+    """Show which sites are configured on which ports (safe, linear scan)."""
+    bench_path = Path(os.getcwd())
+    conf_path = bench_path / "config" / "nginx.conf"
+
+    if not conf_path.exists():
+        click.echo("No nginx.conf found. Try running `bench setup nginx` first.")
+        return
+
+    try:
+        bench_name = get_bench_name(str(bench_path))
+    except Exception:
+        bench_name = "<unknown>"
+
+    sites_ports: List[Tuple[str, int]] = []
+    in_server_block = False
+    current_names: List[str] = []
+    current_listens: List[int] = []
+
+    with conf_path.open("r", encoding="utf-8", errors="ignore") as fh:
+        lines_iter = iter(fh)
+        for raw in lines_iter:
+            line = raw.strip()
+            if not line or line.startswith("#"):
+                continue
+
+            if line.startswith("server") and "{" in line:
+                in_server_block = True
+                current_names.clear()
+                current_listens.clear()
+                continue
+
+            if not in_server_block:
+                continue
+
+            if "listen" in line:
+                m = LISTEN_PORT_RE.search(line)
+                if m:
+                    try:
+                        current_listens.append(int(m.group("port")))
+                    except (ValueError, TypeError):
+                        pass
+
+            if "server_name" in line:
+                after = line.split("server_name", 1)[1]
+                buf = after
+                while ";" not in buf:
+                    try:
+                        buf += " " + next(lines_iter).strip()
+                    except StopIteration:
+                        break
+                name_segment = buf.split(";", 1)[0].strip()
+                if name_segment:
+                    tokens = name_segment.split()
+                    current_names.extend(t.strip() for t in tokens if t.strip())
+
+            if "}" in line:
+                names_to_use = current_names or ["<no server_name>"]
+                for n in names_to_use:
+                    for p in current_listens:
+                        if (n, p) not in sites_ports:
+                            sites_ports.append((n, p))
+                in_server_block = False
+                current_names.clear()
+                current_listens.clear()
+
+    if site:
+        sites_ports = [(n, p) for (n, p) in sites_ports if n == site]
+
+    if not sites_ports:
+        click.echo("No matching sites/ports found in nginx.conf")
+        return
+
+    out_lines = [f"Site {n} → Port {p}" for (n, p) in sites_ports]
+    click.echo(f"Bench {bench_name} sites and ports:\n" + "\n".join(out_lines))

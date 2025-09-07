@@ -92,6 +92,7 @@ from bench.commands.utils import (
 	set_ssl_certificate_key,
 	set_url_root,
 	start,
+    show_ports
 )
 
 bench_command.add_command(start)
@@ -112,6 +113,7 @@ bench_command.add_command(bench_src)
 bench_command.add_command(find_benches)
 bench_command.add_command(migrate_env)
 bench_command.add_command(app_cache_helper)
+bench_command.add_command(show_ports)
 
 from bench.commands.setup import setup
 
