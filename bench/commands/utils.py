@@ -5,6 +5,7 @@ import os
 import click
 
 
+
 @click.command("start", help="Start Frappe development processes")
 @click.option("--no-dev", is_flag=True, default=False)
 @click.option(
@@ -17,6 +18,15 @@ import click
 @click.option("--procfile", "-p", type=str)
 @click.option("--man", "-m", help="Process Manager of your choice ;)")
 def start(no_dev, concurrency, procfile, no_prefix, man):
+
+	# for editable mode check
+	try:
+		import frappe
+		from frappe.utils.bench_helper import check_non_editable_apps
+		check_non_editable_apps()
+	except Exception:
+		pass
+
 	from bench.utils.system import start
 
 	start(
