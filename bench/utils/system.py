@@ -69,6 +69,12 @@ def init(
 	config = {}
 	if dev:
 		config["developer_mode"] = 1
+
+	if default_app:
+		# Assume mprocs if default_app is set
+		use_mprocs = True
+		install_app = default_app
+
 	bench.setup.config(
 		redis=not skip_redis_config_generation,
 		procfile=not no_procfile,
