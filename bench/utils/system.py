@@ -25,6 +25,7 @@ def init(
 	path,
 	apps_path=None,
 	no_procfile=False,
+	use_mprocs=False,
 	no_backups=False,
 	frappe_path=None,
 	frappe_branch=None,
@@ -36,6 +37,7 @@ def init(
 	python="python3",
 	install_app=None,
 	dev=False,
+	default_app=None,
 ):
 	"""Initialize a new bench directory
 
@@ -70,7 +72,9 @@ def init(
 	bench.setup.config(
 		redis=not skip_redis_config_generation,
 		procfile=not no_procfile,
+		use_mprocs=use_mprocs,
 		additional_config=config,
+		default_app=default_app
 	)
 	bench.setup.patches()
 
@@ -147,13 +151,20 @@ def setup_sudoers(user):
 
 
 def start(no_dev=False, concurrency=None, procfile=None, no_prefix=False, procman=None):
+	os.environ["PYTHONUNBUFFERED"] = "true"
+	if not no_dev:
+		os.environ["DEV_SERVER"] = "true"
+
+	# Check if mprocs file exists
+	if os.path.exists('mprocs.yaml'):
+		program = which('mprocs')
+		if program:
+			os.execv(program, ['mprocs', *sys.argv[2:]])
+	
 	program = which(procman) if procman else get_process_manager()
 	if not program:
 		raise Exception("No process manager found")
 
-	os.environ["PYTHONUNBUFFERED"] = "true"
-	if not no_dev:
-		os.environ["DEV_SERVER"] = "true"
 
 	command = [program, "start"]
 	if concurrency:

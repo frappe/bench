@@ -399,7 +399,7 @@ class BenchSetup(Base):
 					)
 
 	@step(title="Setting Up Bench Config", success="Bench Config Set Up")
-	def config(self, redis=True, procfile=True, additional_config=None):
+	def config(self, redis=True, procfile=True, use_mprocs=False, additional_config=None, default_app=None):
 		"""Setup config folder
 		- create pids folder
 		- generate sites/common_site_config.json
@@ -414,7 +414,7 @@ class BenchSetup(Base):
 		if procfile:
 			from bench.config.procfile import setup_procfile
 
-			setup_procfile(self.bench.name, skip_redis=not redis)
+			setup_procfile(self.bench.name, skip_redis=not redis, use_mprocs=use_mprocs, default_app=default_app)
 
 	@step(title="Updating pip", success="Updated pip")
 	def pip(self, verbose=False):
