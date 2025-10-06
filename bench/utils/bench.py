@@ -203,7 +203,19 @@ def migrate_env(python, backup=False):
 	bench = Bench(".")
 	nvenv = "env"
 	path = os.getcwd()
+	original_python = python
 	python = which(python)
+	
+	if not python:
+		# Try finding python in pyenv if it's a version number
+		if original_python and re.match(r"^\d+\.\d+\.\d+$", original_python):
+			pyenv_path = os.path.expanduser("~/.pyenv/versions")
+			possible_path = os.path.join(pyenv_path, original_python, "bin", "python")
+			if os.path.exists(possible_path):
+				python = possible_path
+				
+	if not python:
+		raise ValueError(f"Could not find Python executable '{python}'. Make sure it's in your PATH or use the full path to the executable.")
 	pvenv = os.path.join(path, nvenv)
 
 	if python.startswith(pvenv):
