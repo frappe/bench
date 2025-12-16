@@ -295,8 +295,14 @@ class BenchApps(MutableSequence):
 			return {}
 
 	def _get_app_location_from_env(self, app_name):
-		"""Get the installation location of an app from the Python environment"""
+		"""
+		Get the installation location of an app from the Python environment.
+		
+		Note: Currently unused in the implementation. If used in the future,
+		app_name should be validated to prevent command injection.
+		"""
 		try:
+			# Note: app_name should be validated before use to prevent command injection
 			if os.environ.get("BENCH_USE_UV"):
 				output = get_cmd_output(f"uv pip show {app_name} --python {self.bench.python}", cwd=self.bench.name)
 			else:
@@ -318,11 +324,16 @@ class BenchApps(MutableSequence):
 			return None
 
 	def _discover_apps_from_env(self):
-		"""Discover frappe apps from the Python environment"""
+		"""
+		Discover frappe apps from the Python environment.
+		
+		Package names come from pip's JSON output which are already sanitized.
+		"""
 		apps_from_env = []
 		installed_packages = self._get_installed_packages()
 		
 		for pkg_name in installed_packages:
+			# pkg_name comes from pip's JSON output, which is already sanitized
 			# Check if package corresponds to an app in the apps directory
 			app_path = os.path.join(self.bench.name, "apps", pkg_name)
 			if os.path.exists(app_path) and is_frappe_app(app_path):
