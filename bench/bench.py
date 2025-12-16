@@ -178,6 +178,7 @@ class BenchApps(MutableSequence):
 		self.bench = bench
 		self.states_path = os.path.join(self.bench.name, "sites", "apps.json")
 		self.apps_path = os.path.join(self.bench.name, "apps")
+		self._cached_apps = None
 		self.initialize_apps()
 		self.set_states()
 
@@ -269,6 +270,8 @@ class BenchApps(MutableSequence):
 	):
 		if required == UNSET_ARG:
 			required = []
+		# Invalidate cache before re-initializing
+		self._cached_apps = None
 		self.initialize_apps()
 
 		with open(self.bench.apps_txt, "w") as f:
@@ -278,17 +281,95 @@ class BenchApps(MutableSequence):
 			app_name=app_name, app_dir=app_dir, branch=branch, required=required
 		)
 
-	def initialize_apps(self):
+	def _get_installed_packages(self):
+		"""Get list of installed packages from the Python environment"""
 		try:
-			self.apps = [
+			if os.environ.get("BENCH_USE_UV"):
+				output = get_cmd_output(f"uv pip list --format=json --python {self.bench.python}", cwd=self.bench.name)
+			else:
+				output = get_cmd_output(f"{self.bench.python} -m pip list --format=json", cwd=self.bench.name)
+			
+			packages = json.loads(output)
+			return {pkg['name'].lower().replace('-', '_'): pkg for pkg in packages}
+		except Exception:
+			return {}
+
+	def _get_app_location_from_env(self, app_name):
+		"""Get the installation location of an app from the Python environment"""
+		try:
+			if os.environ.get("BENCH_USE_UV"):
+				output = get_cmd_output(f"uv pip show {app_name} --python {self.bench.python}", cwd=self.bench.name)
+			else:
+				output = get_cmd_output(f"{self.bench.python} -m pip show {app_name}", cwd=self.bench.name)
+			
+			for line in output.split('\n'):
+				if line.startswith('Location:'):
+					location = line.split(':', 1)[1].strip()
+					# Check if this is an editable install pointing to apps directory
+					app_path = os.path.join(location, app_name)
+					if os.path.exists(app_path) and is_frappe_app(app_path):
+						return app_path
+					# Check if it's in the bench apps directory
+					bench_app_path = os.path.join(self.bench.name, "apps", app_name)
+					if os.path.exists(bench_app_path) and is_frappe_app(bench_app_path):
+						return bench_app_path
+			return None
+		except Exception:
+			return None
+
+	def _discover_apps_from_env(self):
+		"""Discover frappe apps from the Python environment"""
+		apps_from_env = []
+		installed_packages = self._get_installed_packages()
+		
+		for pkg_name in installed_packages:
+			# Check if package corresponds to an app in the apps directory
+			app_path = os.path.join(self.bench.name, "apps", pkg_name)
+			if os.path.exists(app_path) and is_frappe_app(app_path):
+				apps_from_env.append(pkg_name)
+		
+		return apps_from_env
+
+	def initialize_apps(self):
+		"""
+		Initialize apps list by discovering frappe apps from:
+		1. The apps directory (existing behavior)
+		2. Python environment (new behavior)
+		Results are cached for performance.
+		"""
+		# Return cached result if available
+		if self._cached_apps is not None:
+			self.apps = self._cached_apps
+			return
+		
+		apps_set = set()
+		
+		# Method 1: Scan apps directory (existing behavior)
+		try:
+			apps_from_dir = [
 				x
 				for x in os.listdir(os.path.join(self.bench.name, "apps"))
 				if is_frappe_app(os.path.join(self.bench.name, "apps", x))
 			]
+			apps_set.update(apps_from_dir)
+		except (FileNotFoundError, ValueError):
+			pass
+		
+		# Method 2: Discover from Python environment
+		try:
+			apps_from_env = self._discover_apps_from_env()
+			apps_set.update(apps_from_env)
+		except Exception:
+			pass
+		
+		# Convert to list and sort with frappe first
+		self.apps = list(apps_set)
+		if "frappe" in self.apps:
 			self.apps.remove("frappe")
 			self.apps.insert(0, "frappe")
-		except (FileNotFoundError, ValueError):
-			self.apps = []
+		
+		# Cache the result
+		self._cached_apps = self.apps
 
 	def __getitem__(self, key):
 		"""retrieves an item by its index, key"""
