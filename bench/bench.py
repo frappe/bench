@@ -339,7 +339,7 @@ class BenchApps(MutableSequence):
 		"""
 		# Return cached result if available
 		if self._cached_apps is not None:
-			self.apps = self._cached_apps
+			self.apps = self._cached_apps.copy()
 			return
 		
 		apps_set = set()
@@ -368,8 +368,8 @@ class BenchApps(MutableSequence):
 			self.apps.remove("frappe")
 			self.apps.insert(0, "frappe")
 		
-		# Cache the result
-		self._cached_apps = self.apps
+		# Cache the result as a copy
+		self._cached_apps = self.apps.copy()
 
 	def __getitem__(self, key):
 		"""retrieves an item by its index, key"""
