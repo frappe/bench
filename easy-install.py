@@ -46,13 +46,13 @@ def cprint(*args, level: int = 1):
 def clone_frappe_docker_repo() -> None:
     try:
         urllib.request.urlretrieve(
-            "https://github.com/frappe/frappe_docker/archive/refs/heads/main.zip",
+            "https://github.com/frappe/frappe_docker/archive/refs/tags/v1.0.1.zip",
             "frappe_docker.zip",
         )
         logging.info("Downloaded frappe_docker zip file from GitHub")
         unpack_archive("frappe_docker.zip", ".")
         # Unzipping the frappe_docker.zip creates a folder "frappe_docker-main"
-        move("frappe_docker-main", "frappe_docker")
+        move("frappe_docker-1.0.1", "frappe_docker")
         logging.info("Unzipped and Renamed frappe_docker")
         os.remove("frappe_docker.zip")
         logging.info("Removed the downloaded zip file")
