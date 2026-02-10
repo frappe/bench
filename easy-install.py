@@ -603,8 +603,8 @@ def add_build_parser(subparsers: argparse.ArgumentParser):
     parser.add_argument(
         "-b",
         "--frappe-branch",
-        help="Frappe branch to use, default: version-15",
-        default="version-15",
+        help="Frappe branch to use, default: version-16",
+        default="version-16",
     )
     parser.add_argument(
         "-j",
@@ -628,14 +628,14 @@ def add_build_parser(subparsers: argparse.ArgumentParser):
     parser.add_argument(
         "-y",
         "--python-version",
-        help="Python Version, default: 3.11.6",
-        default="3.11.6",
+        help="Python Version, default: 3.14.2",
+        default="3.14.2",
     )
     parser.add_argument(
         "-d",
         "--node-version",
-        help="NodeJS Version, default: 18.18.2",
-        default="18.18.2",
+        help="NodeJS Version, default: 24.13.0",
+        default="24.13.0",
     )
     parser.add_argument(
         "-x",
