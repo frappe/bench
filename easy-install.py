@@ -5,6 +5,7 @@ import base64
 import logging
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -72,6 +73,63 @@ def get_from_env(dir, file) -> Dict:
     return env_vars
 
 
+def parse_legacy_sites(raw_sites: str) -> List[str]:
+    # Legacy format Traefik v2 was: `site1.local`,`site2.local`
+    if not raw_sites:
+        return []
+
+    return [
+        site.strip().strip("`").strip('"').strip("'")
+        for site in raw_sites.split(",")
+        if site.strip()
+    ]
+
+
+def parse_sites_from_rule(rule: str) -> List[str]:
+    if not rule:
+        return []
+
+    return [host for host in re.findall(r"`([^`]+)`", rule) if host]
+
+
+def normalize_sites(sites: List[str]) -> List[str]:
+    normalized_sites = []
+    seen = set()
+    for site in sites:
+        cleaned = site.strip().strip("`").strip('"').strip("'")
+        if not cleaned or cleaned in seen:
+            continue
+        seen.add(cleaned)
+        normalized_sites.append(cleaned)
+    return normalized_sites
+
+
+def get_sites_from_env_config(env: Dict, env_file_path: str) -> List[str]:
+    env_sites_rule = env.get("SITES_RULE", "").strip().strip('"').strip("'")
+    if env_sites_rule:
+        return parse_sites_from_rule(env_sites_rule)
+
+    legacy_sites = env.get("SITES", "")
+    if legacy_sites:
+        cprint(
+            "WARNING: 'SITES' in your .env is deprecated. Please migrate to 'SITES_RULE' (Traefik v3).",
+            level=3,
+        )
+        logging.warning(
+            "Deprecated env key 'SITES' detected in %s. Please migrate to 'SITES_RULE'.",
+            env_file_path,
+        )
+    return parse_legacy_sites(legacy_sites)
+
+
+def build_sites_rule(sites: List[str]) -> str:
+    sites = normalize_sites(sites)
+    if not sites:
+        return ""
+
+    return "||".join([f"Host(`{site}`)" for site in sites])
+
+
 def write_to_env(
     frappe_docker_dir: str,
     out_file: str,
@@ -85,7 +143,7 @@ def write_to_env(
     custom_image: str = None,
     custom_tag: str = None,
 ) -> None:
-    quoted_sites = ",".join([f"`{site}`" for site in sites]).strip(",")
+    sites_rule = build_sites_rule(sites)
     example_env = get_from_env(frappe_docker_dir, "example.env")
     erpnext_version = erpnext_version or example_env["ERPNEXT_VERSION"]
     env_file_lines = [
@@ -99,7 +157,7 @@ def write_to_env(
         "REDIS_SOCKETIO=redis-socketio:6379\n",
         f"LETSENCRYPT_EMAIL={email}\n",
         f"SITE_ADMIN_PASS={admin_pass}\n",
-        f"SITES={quoted_sites}\n",
+        f"SITES_RULE={sites_rule}\n",
         "PULL_POLICY=missing\n",
         f'BACKUP_CRONSTRING="{cronstring}"\n',
     ]
@@ -206,7 +264,39 @@ def start_prod(
                 en.writelines(f"MARIADB_ROOT_PASSWORD={db_pass}\n")
         else:
             env = get_from_env(env_file_dir, env_file_name)
-            sites = env["SITES"].replace("`", "").split(",") if env["SITES"] else []
+            env_sites = normalize_sites(get_sites_from_env_config(env, env_file_path))
+            if sites:
+                cli_sites = normalize_sites(sites)
+                if env_sites and set(cli_sites) != set(env_sites):
+                    cprint(
+                        "WARNING: --sitename differs from existing .env sites.",
+                        level=3,
+                    )
+                    cprint(f"CLI sites: {', '.join(cli_sites)}", level=3)
+                    cprint(f".env sites: {', '.join(env_sites)}", level=3)
+                    logging.warning(
+                        "CLI sites (%s) differ from .env sites (%s) in %s.",
+                        ",".join(cli_sites),
+                        ",".join(env_sites),
+                        env_file_path,
+                    )
+                    if not confirm_site_mismatch:
+                        cprint(
+                            "ERROR: Refusing to overwrite .env sites. Re-run with --confirm-site-mismatch to proceed.",
+                            level=1,
+                        )
+                        logging.error(
+                            "Site mismatch requires --confirm-site-mismatch to proceed for %s.",
+                            env_file_path,
+                        )
+                        sys.exit(1)
+                    cprint(
+                        "Proceeding with --sitename values because --confirm-site-mismatch was provided.",
+                        level=3,
+                    )
+                sites = cli_sites
+            else:
+                sites = env_sites
             db_pass = env["DB_PASSWORD"]
             admin_pass = env["SITE_ADMIN_PASS"]
             email = env["LETSENCRYPT_EMAIL"]
