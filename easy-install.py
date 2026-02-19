@@ -203,6 +203,7 @@ def start_prod(
     image: str = None,
     is_https: bool = True,
     http_port: str = None,
+    confirm_site_mismatch: bool = False,
 ):
     if not check_repo_exists():
         clone_frappe_docker_repo()
@@ -393,6 +394,7 @@ def setup_prod(
     apps: List[str] = [],
     is_https: bool = False,
     http_port: str = None,
+    confirm_site_mismatch: bool = False,
 ) -> None:
     if len(sites) == 0:
         sites = ["site1.localhost"]
@@ -406,6 +408,7 @@ def setup_prod(
         image=image,
         is_https=is_https,
         http_port=http_port,
+        confirm_site_mismatch=confirm_site_mismatch,
     )
 
     for sitename in sites:
@@ -433,6 +436,7 @@ def update_prod(
     cronstring: str = None,
     is_https: bool = False,
     http_port: str = None,
+    confirm_site_mismatch: bool = False,
 ) -> None:
     start_prod(
         project=project,
@@ -441,6 +445,7 @@ def update_prod(
         cronstring=cronstring,
         is_https=is_https,
         http_port=http_port,
+        confirm_site_mismatch=confirm_site_mismatch,
     )
     migrate_site(project=project)
 
@@ -671,6 +676,11 @@ def add_common_parser(parser: argparse.ArgumentParser):
         action="store_true",
         help="Force pull frappe_docker",
     )
+    parser.add_argument(
+        "--confirm-site-mismatch",
+        action="store_true",
+        help="Allow overwriting existing .env sites when --sitename differs from configured sites inside the .env",
+    )
     return parser
 
 
@@ -891,6 +901,7 @@ if __name__ == "__main__":
                 apps=args.apps,
                 is_https=not args.no_ssl,
                 http_port=args.http_port,
+                confirm_site_mismatch=args.confirm_site_mismatch,
             )
         elif args.upgrade:
             update_prod(
@@ -900,6 +911,7 @@ if __name__ == "__main__":
                 cronstring=args.backup_schedule,
                 is_https=not args.no_ssl,
                 http_port=args.http_port,
+                confirm_site_mismatch=args.confirm_site_mismatch,
             )
 
     elif args.subcommand == "deploy":
@@ -918,6 +930,7 @@ if __name__ == "__main__":
             apps=args.apps,
             is_https=not args.no_ssl,
             http_port=args.http_port,
+            confirm_site_mismatch=args.confirm_site_mismatch,
         )
     elif args.subcommand == "develop":
         cprint("\nSetting Up Development Instance\n", level=2)
@@ -933,6 +946,7 @@ if __name__ == "__main__":
             is_https=not args.no_ssl,
             cronstring=args.backup_schedule,
             http_port=args.http_port,
+            confirm_site_mismatch=args.confirm_site_mismatch,
         )
     elif args.subcommand == "exec":
         cprint(f"\nExec into {args.project} backend\n", level=2)
