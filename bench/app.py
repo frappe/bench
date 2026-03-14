@@ -859,7 +859,18 @@ def install_resolved_deps(
 		app.install_resolved_apps(skip_assets=skip_assets, verbose=verbose)
 
 
-def new_app(app, no_git=None, bench_path="."):
+def new_app(
+	app,
+	no_git=None,
+	bench_path=".",
+	app_title=None,
+	app_description=None,
+	app_publisher=None,
+	app_email=None,
+	app_license=None,
+	create_github_workflow=False,
+	branch_name=None,
+):
 	if bench.FRAPPE_VERSION in (0, None):
 		click.secho(
 			f"{os.path.realpath(bench_path)} is not a valid bench directory.",
@@ -882,6 +893,21 @@ def new_app(app, no_git=None, bench_path="."):
 			click.secho("Frappe v14 or greater is needed for '--no-git' flag", fg="red")
 			return
 		args.append(no_git)
+
+	if app_title is not None:
+		args += ["--app-title", app_title]
+	if app_description is not None:
+		args += ["--app-description", app_description]
+	if app_publisher is not None:
+		args += ["--app-publisher", app_publisher]
+	if app_email is not None:
+		args += ["--app-email", app_email]
+	if app_license is not None:
+		args += ["--app-license", app_license]
+	if create_github_workflow:
+		args.append("--create-github-workflow")
+	if branch_name is not None:
+		args += ["--branch-name", branch_name]
 
 	logger.log(f"creating new app {app}")
 	run_frappe_cmd(*args, bench_path=bench_path)
