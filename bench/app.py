@@ -1033,6 +1033,13 @@ Here are your choices:
 					bench.run(f"git fetch {remote} --unshallow", cwd=app_dir)
 
 			branch = get_current_branch(app, bench_path=bench_path)
+
+			# --- FIX: Skip update if detached HEAD ---
+			if not branch:
+				print(f"App {app} is pinned to a specific version. Skipping update.")
+				continue
+			# -----------------------------------------
+
 			logger.log(f"pulling {app}")
 			if reset:
 				reset_cmd = f"git reset --hard {remote}/{branch}"
