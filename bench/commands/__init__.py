@@ -131,3 +131,7 @@ bench_command.add_command(remote_urls)
 from bench.commands.install import install
 
 bench_command.add_command(install)
+
+from bench.commands.completions import completion
+
+bench_command.add_command(completion)
