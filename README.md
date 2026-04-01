@@ -296,6 +296,35 @@ In case the setup fails, the log file is saved under `$HOME/easy-install.log`. Y
 	$ bench --help
 	```
 
+## Shell Completion
+
+Bench can generate fast shell-native completion scripts for bash and zsh.
+
+Use it in the current shell:
+
+```sh
+source <(bench completion zsh)
+```
+
+```sh
+source <(bench completion bash)
+```
+
+Or install it for your user:
+
+```sh
+bench completion install
+```
+
+You can also pick a shell explicitly:
+
+```sh
+bench completion install zsh
+bench completion install bash
+```
+
+This writes a generated script to a user config path and can append a matching `source ...` line to your shell rc file. Regenerate it if installed apps or custom Frappe commands change.
+
 
 For more in-depth information on commands and their usage, follow [Commands and Usage](https://github.com/frappe/bench/blob/develop/docs/commands_and_usage.md). As for a consolidated list of bench commands, check out [Bench Usage](https://github.com/frappe/bench/blob/develop/docs/bench_usage.md).
 
