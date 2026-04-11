@@ -182,6 +182,10 @@ def _collect_frappe_tree(
 
 	# get_app_groups() isn't available on older frappe versions, so fall back to
 	# spawning one --help subprocess per command, parallelised across each BFS level.
+	_collect_frappe_tree_bfs(bench_path, subcommands, options, value_options, fallback_commands)
+
+
+def _collect_frappe_tree_bfs(bench_path, subcommands, options, value_options, fallback_commands):
 	from concurrent.futures import ThreadPoolExecutor, as_completed
 
 	seen = set()
@@ -210,15 +214,12 @@ def _collect_frappe_tree(
 				key = _path_key((FRAPPE_KEY, *path))
 				parsed = _parse_click_help(future.result())
 
-				command_options = ["--help", *parsed["options"]]
-				command_value_options = parsed["value_options"]
 				children = parsed["commands"]
-
 				if not path and fallback_commands:
 					children = _unique([*children, *fallback_commands])
 
-				options[key] = _unique(command_options)
-				value_options[key] = _unique(command_value_options)
+				options[key] = _unique(["--help", *parsed["options"]])
+				value_options[key] = _unique(parsed["value_options"])
 				subcommands[key] = _unique(children)
 
 				if len(path) < MAX_FRAPPE_DEPTH:
