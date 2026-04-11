@@ -1,3 +1,4 @@
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -43,13 +44,14 @@ class TestBenchCompletionGeneration(unittest.TestCase):
 			)
 
 		with (
+			tempfile.TemporaryDirectory() as bench_dir,
 			patch(
 				"bench.commands.completions.get_env_frappe_commands",
 				return_value=["migrate", "list-apps", "migrate"],
 			),
 			patch(
 				"bench.commands.completions.find_parent_bench",
-				return_value="/tmp/bench",
+				return_value=bench_dir,
 			),
 			patch("bench.commands.completions.get_env_cmd", return_value="python"),
 			patch("bench.commands.completions.get_cmd_output", side_effect=fake_help),
