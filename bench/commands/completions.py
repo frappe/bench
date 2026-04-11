@@ -41,10 +41,16 @@ _FRAPPE_SPEC_COLLECTOR = Path(__file__).parent / "frappe_spec_collector.py"
 	is_flag=True,
 	help="Write the completion file but do not modify shell rc files.",
 )
-def completions(shell, path, rc_file, skip_rc):
+@click.option(
+	"--yes",
+	"-y",
+	is_flag=True,
+	help="Skip the rc-file confirmation (useful in scripts or dotfile setups).",
+)
+def completions(shell, path, rc_file, skip_rc, yes):
 	from bench.commands import bench_command
 
-	interactive = not any([shell, path, rc_file, skip_rc])
+	interactive = not any([shell, path, rc_file, skip_rc, yes])
 
 	shell = shell or _detect_shell()
 	if shell not in {"bash", "zsh"}:
@@ -76,7 +82,7 @@ def completions(shell, path, rc_file, skip_rc):
 		click.echo(f"Source it manually with: source {shlex.quote(str(path))}")
 		return
 
-	if interactive:
+	if not yes:
 		should_update_rc = click.confirm(
 			f"Append a source line to {rc_file}?", default=True
 		)

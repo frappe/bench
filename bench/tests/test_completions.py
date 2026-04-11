@@ -92,6 +92,7 @@ class TestBenchCompletionGeneration(unittest.TestCase):
 					str(completion_path),
 					"--rc-file",
 					str(rc_path),
+					"--yes",
 				],
 			)
 
