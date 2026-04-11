@@ -14,57 +14,46 @@ MAX_FRAPPE_DEPTH = 4
 FORWARDED_FLAGS = ["--verbose", "-v", "--profile", "--force"]
 FORWARDED_VALUE_OPTIONS = ["--site", "-s"]
 
+# Path to the collector script that runs inside the frappe virtualenv.
+# Kept as a separate file so it gets syntax highlighting, linting, and can be
+# run or inspected directly without extracting it from a string constant.
+_FRAPPE_SPEC_COLLECTOR = Path(__file__).parent / "frappe_spec_collector.py"
 
-@click.group(
-	"completion",
-	help="Generate a shell completion script without runtime Python completion calls.",
+
+@click.command(
+	"completions",
+	help="Install shell completion for bench (bash or zsh).",
 )
-def completion():
-	"""Shell completion command group."""
-	pass
-
-
-@completion.command("bash", help="Generate a bash completion script.")
-def completion_bash():
-	from bench.commands import bench_command
-
-	click.echo(generate_completion("bash", bench_command), nl=False)
-
-
-@completion.command("zsh", help="Generate a zsh completion script.")
-def completion_zsh():
-	from bench.commands import bench_command
-
-	click.echo(generate_completion("zsh", bench_command), nl=False)
-
-
-@completion.command(
-	"install", help="Interactively install shell completion for the current user."
-)
-@click.argument("shell", required=False, type=click.Choice(["bash", "zsh"]))
+@click.option("--bash", "shell", flag_value="bash", help="Generate bash completion.")
+@click.option("--zsh", "shell", flag_value="zsh", help="Generate zsh completion.")
 @click.option(
-	"--path", type=click.Path(path_type=Path, dir_okay=False, resolve_path=True)
+	"--path",
+	type=click.Path(path_type=Path, dir_okay=False, resolve_path=True),
+	help="Where to write the completion script.",
 )
 @click.option(
-	"--rc-file", type=click.Path(path_type=Path, dir_okay=False, resolve_path=True)
+	"--rc-file",
+	type=click.Path(path_type=Path, dir_okay=False, resolve_path=True),
+	help="Shell rc file to append the source line to.",
 )
 @click.option(
 	"--skip-rc",
 	is_flag=True,
 	help="Write the completion file but do not modify shell rc files.",
 )
-@click.option("--yes", is_flag=True, help="Accept detected defaults without prompting.")
-def install_completion(shell, path, rc_file, skip_rc, yes):
+def completions(shell, path, rc_file, skip_rc):
 	from bench.commands import bench_command
+
+	interactive = not any([shell, path, rc_file, skip_rc])
 
 	shell = shell or _detect_shell()
 	if shell not in {"bash", "zsh"}:
-		raise click.UsageError("Could not detect shell. Pass 'bash' or 'zsh'.")
+		raise click.UsageError("Could not detect shell. Pass --bash or --zsh.")
 
 	path = path or _default_completion_path(shell)
 	rc_file = rc_file or _default_rc_file(shell)
 
-	if not yes:
+	if interactive:
 		path = Path(
 			click.prompt("Completion file", default=str(path), type=str)
 		).expanduser()
@@ -74,19 +63,26 @@ def install_completion(shell, path, rc_file, skip_rc, yes):
 			rc_file = Path(rc_response).expanduser() if rc_response else None
 
 	path.parent.mkdir(parents=True, exist_ok=True)
-	path.write_text(generate_completion(shell, bench_command), encoding="utf-8")
+	path.write_text(
+		generate_completion(shell, bench_command, verbose=interactive), encoding="utf-8"
+	)
 	click.echo(f"Wrote completion script to {path}")
 
 	if skip_rc:
 		click.echo(f"Source it manually with: source {shlex.quote(str(path))}")
 		return
 
-	should_update_rc = yes or click.confirm(
-		f"Append a source line to {rc_file}?", default=True
-	)
-	if not should_update_rc or rc_file is None:
+	if rc_file is None:
 		click.echo(f"Source it manually with: source {shlex.quote(str(path))}")
 		return
+
+	if interactive:
+		should_update_rc = click.confirm(
+			f"Append a source line to {rc_file}?", default=True
+		)
+		if not should_update_rc:
+			click.echo(f"Source it manually with: source {shlex.quote(str(path))}")
+			return
 
 	loader_line = _loader_line(path)
 	created = _ensure_line(rc_file, loader_line)
@@ -98,8 +94,10 @@ def install_completion(shell, path, rc_file, skip_rc, yes):
 	click.echo("Open a new shell or source your rc file to activate completions.")
 
 
-def generate_completion(shell: str, root_command: click.Command) -> str:
-	spec = build_completion_spec(root_command)
+def generate_completion(
+	shell: str, root_command: click.Command, verbose: bool = True
+) -> str:
+	spec = build_completion_spec(root_command, verbose=verbose)
 
 	if shell == "bash":
 		return render_bash_completion(spec)
@@ -107,7 +105,7 @@ def generate_completion(shell: str, root_command: click.Command) -> str:
 	return render_zsh_completion(spec)
 
 
-def build_completion_spec(root_command: click.Command) -> dict:
+def build_completion_spec(root_command: click.Command, verbose: bool = True) -> dict:
 	subcommands = {}
 	options = {}
 	value_options = {}
@@ -119,7 +117,7 @@ def build_completion_spec(root_command: click.Command) -> dict:
 	if bench_path:
 		frappe_commands = _unique(get_env_frappe_commands(bench_path))
 		_collect_frappe_tree(
-			bench_path, subcommands, options, value_options, frappe_commands
+			bench_path, subcommands, options, value_options, frappe_commands, verbose=verbose
 		)
 
 	return {
@@ -135,50 +133,92 @@ def _find_current_bench_path() -> str | None:
 	return find_parent_bench(current_dir)
 
 
-def _collect_frappe_tree(
-	bench_path, subcommands, options, value_options, fallback_commands
-):
-	seen = set()
-	_walk_frappe_help(
-		bench_path, (), subcommands, options, value_options, seen, fallback_commands
-	)
+def _get_frappe_spec_batch(bench_path, verbose: bool = True) -> dict | None:
+	import json
+	import subprocess
 
+	python = get_env_cmd("python", bench_path=bench_path)
+	sites_path = os.path.join(bench_path, "sites")
 
-def _walk_frappe_help(
-	bench_path, path, subcommands, options, value_options, seen, fallback_commands
-):
-	key = _path_key((FRAPPE_KEY, *path))
-	if key in seen:
-		return
-	seen.add(key)
+	if verbose:
+		click.echo("Collecting frappe completion data...", err=True)
 
-	help_text = _get_frappe_help_text(bench_path, path)
-	parsed = _parse_click_help(help_text)
-
-	command_options = ["--help", *parsed["options"]]
-	command_value_options = parsed["value_options"]
-	children = parsed["commands"]
-
-	if not path and fallback_commands:
-		children = _unique([*children, *fallback_commands])
-
-	options[key] = _unique(command_options)
-	value_options[key] = _unique(command_value_options)
-	subcommands[key] = _unique(children)
-
-	if len(path) >= MAX_FRAPPE_DEPTH:
-		return
-
-	for child in children:
-		_walk_frappe_help(
-			bench_path,
-			(*path, child),
-			subcommands,
-			options,
-			value_options,
-			seen,
-			[],
+	try:
+		proc = subprocess.run(
+			[python, str(_FRAPPE_SPEC_COLLECTOR)],
+			cwd=sites_path,
+			stdout=subprocess.PIPE,
+			stderr=None if verbose else subprocess.DEVNULL,
+			text=True,
 		)
+		if proc.returncode != 0 or not proc.stdout.strip():
+			return None
+		return json.loads(proc.stdout)
+	except Exception:
+		return None
+
+
+def _collect_frappe_tree(
+	bench_path, subcommands, options, value_options, fallback_commands, verbose: bool = True
+):
+	spec = _get_frappe_spec_batch(bench_path, verbose=verbose)
+
+	if spec is not None:
+		if FRAPPE_KEY in spec and fallback_commands:
+			spec[FRAPPE_KEY]["commands"] = _unique(
+				[*spec[FRAPPE_KEY]["commands"], *fallback_commands]
+			)
+		for key, entry in spec.items():
+			subcommands[key] = entry["commands"]
+			options[key] = entry["options"]
+			value_options[key] = entry["value_options"]
+		return
+
+	# get_app_groups() isn't available on older frappe versions, so fall back to
+	# spawning one --help subprocess per command, parallelised across each BFS level.
+	from concurrent.futures import ThreadPoolExecutor, as_completed
+
+	seen = set()
+	pending = [()]
+
+	with ThreadPoolExecutor() as executor:
+		while pending:
+			to_fetch = []
+			for path in pending:
+				key = _path_key((FRAPPE_KEY, *path))
+				if key not in seen:
+					seen.add(key)
+					to_fetch.append(path)
+
+			if not to_fetch:
+				break
+
+			futures = {
+				executor.submit(_get_frappe_help_text, bench_path, path): path
+				for path in to_fetch
+			}
+
+			next_pending = []
+			for future in as_completed(futures):
+				path = futures[future]
+				key = _path_key((FRAPPE_KEY, *path))
+				parsed = _parse_click_help(future.result())
+
+				command_options = ["--help", *parsed["options"]]
+				command_value_options = parsed["value_options"]
+				children = parsed["commands"]
+
+				if not path and fallback_commands:
+					children = _unique([*children, *fallback_commands])
+
+				options[key] = _unique(command_options)
+				value_options[key] = _unique(command_value_options)
+				subcommands[key] = _unique(children)
+
+				if len(path) < MAX_FRAPPE_DEPTH:
+					next_pending.extend((*path, child) for child in children)
+
+			pending = next_pending
 
 
 def _get_frappe_help_text(bench_path, path) -> str:

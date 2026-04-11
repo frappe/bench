@@ -10,13 +10,11 @@ from bench.commands.completions import _loader_line, generate_completion
 
 class TestBenchCompletionGeneration(unittest.TestCase):
 	def test_bash_completion_is_shell_only(self):
-		runner = CliRunner()
-		result = runner.invoke(bench_command, ["completion", "bash"])
+		script = generate_completion("bash", bench_command)
 
-		self.assertEqual(result.exit_code, 0)
-		self.assertIn("_bench_subcommands_for()", result.output)
-		self.assertIn("complete -o nosort -F _bench_completion bench", result.output)
-		self.assertNotIn("_BENCH_COMPLETE", result.output)
+		self.assertIn("_bench_subcommands_for()", script)
+		self.assertIn("complete -o nosort -F _bench_completion bench", script)
+		self.assertNotIn("_BENCH_COMPLETE", script)
 
 	def test_generation_embeds_current_frappe_commands(self):
 		def fake_help(cmd, cwd=".", _raise=True):
@@ -79,7 +77,7 @@ class TestBenchCompletionGeneration(unittest.TestCase):
 		self.assertNotIn("dirname", script)
 		self.assertNotIn("basename", script)
 
-	def test_install_command_writes_script_and_rc_loader(self):
+	def test_non_interactive_writes_script_and_rc_loader(self):
 		runner = CliRunner()
 		with runner.isolated_filesystem():
 			completion_path = Path("completion.zsh").resolve()
@@ -88,14 +86,12 @@ class TestBenchCompletionGeneration(unittest.TestCase):
 			result = runner.invoke(
 				bench_command,
 				[
-					"completion",
-					"install",
-					"zsh",
+					"completions",
+					"--zsh",
 					"--path",
 					str(completion_path),
 					"--rc-file",
 					str(rc_path),
-					"--yes",
 				],
 			)
 
