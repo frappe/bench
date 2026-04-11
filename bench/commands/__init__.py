@@ -132,6 +132,6 @@ from bench.commands.install import install
 
 bench_command.add_command(install)
 
-from bench.commands.completions import completion
+from bench.commands.completions import completions
 
-bench_command.add_command(completion)
+bench_command.add_command(completions)
