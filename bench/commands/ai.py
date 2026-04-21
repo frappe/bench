@@ -16,6 +16,8 @@ MAX_HELP_CHARS = 12000
 MAX_BENCH_PATH_LIST_CHARS = 12000
 MAX_FRAPPE_HELP_CHARS = 20000
 MAX_FRAPPE_NAMES_CHARS = 12000
+# Cap model reply size before fence parsing (avoids pathological input; no ReDoS from backtracking).
+MAX_AI_REPLY_PARSE_CHARS = 200_000
 
 # Prefix for a typical shell suggestion line (Sonar: single definition for the literal).
 BENCH_SHELL_PREFIX = "bench "
@@ -361,12 +363,28 @@ _LINE_BENCH = re.compile(
 )
 
 
+def _strip_opening_fence_language(block: str) -> str:
+	lines = block.lstrip("\n").splitlines()
+	if not lines:
+		return ""
+	first = lines[0].strip().lower()
+	if first in ("bash", "sh"):
+		return "\n".join(lines[1:])
+	return "\n".join(lines)
+
+
+def _iter_fenced_code_bodies(text: str):
+	chunks = text.split("```")
+	for i in range(1, len(chunks), 2):
+		yield _strip_opening_fence_language(chunks[i])
+
+
 def parse_suggested_command(text: str) -> str:
+	if len(text) > MAX_AI_REPLY_PARSE_CHARS:
+		text = text[:MAX_AI_REPLY_PARSE_CHARS]
 	found: List[str] = []
-	for block in re.findall(
-		r"```(?:bash|sh)?\s*\n(.*?)```", text, re.DOTALL | re.IGNORECASE
-	):
-		for raw in block.strip().splitlines():
+	for body in _iter_fenced_code_bodies(text):
+		for raw in body.strip().splitlines():
 			line = raw.strip()
 			if line.startswith(BENCH_SHELL_PREFIX):
 				found.append(line)
