@@ -36,6 +36,7 @@ dynamic = [
 
 [project.scripts]
 bench = "bench.cli:cli"
+bench-ai = "bench.commands.ai:main"
 
 [project.urls]
 Changelog = "https://github.com/frappe/bench/releases"

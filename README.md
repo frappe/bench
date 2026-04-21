@@ -296,6 +296,28 @@ In case the setup fails, the log file is saved under `$HOME/easy-install.log`. Y
 	$ bench --help
 	```
 
+### bench-ai (optional)
+
+`bench-ai` suggests `bench` commands from natural language. It ships with the same package as `bench` and calls an
+[OpenAI-compatible](https://platform.openai.com/docs/api-reference/chat) **Chat Completions** HTTP API using your
+API key. Context is built from this machine’s `bench` CLI help and, when you run it **inside a Frappe bench**, the
+same framework command appendix as `bench --help`.
+
+Setup:
+
+```sh
+export OPENAI_API_KEY=...   # or BENCH_AI_API_KEY
+# optional: BENCH_AI_BASE_URL (default https://api.openai.com/v1), BENCH_AI_MODEL (default gpt-4o-mini)
+bench-ai "how do I back up all sites?"
+bench-ai "what does bench doctor do?" --dry-run
+```
+
+`--dry-run` prints model and context size without calling the API. `--run` asks for confirmation, then executes the
+parsed command without a shell—review every suggestion before using it, especially on production.
+
+For best results on framework commands (`doctor`, `migrate`, …), run `bench-ai` from your bench directory so local
+Frappe command names are included.
+
 
 For more in-depth information on commands and their usage, follow [Commands and Usage](https://github.com/frappe/bench/blob/develop/docs/commands_and_usage.md). As for a consolidated list of bench commands, check out [Bench Usage](https://github.com/frappe/bench/blob/develop/docs/bench_usage.md).
 
