@@ -1,4 +1,3 @@
-import os
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -19,11 +18,10 @@ class TestBenchAiCommand(unittest.TestCase):
 			self.assertIn("dry run", result.output.lower())
 
 	def test_missing_api_key(self):
-		env = os.environ.copy()
-		env.pop("BENCH_AI_API_KEY", None)
-		env.pop("OPENAI_API_KEY", None)
-		runner = CliRunner()
-		result = runner.invoke(bench_ai, ["hello"], env=env)
+		# CliRunner may merge with the parent process env; patch ensures no key is seen.
+		with patch("bench.commands.ai.get_api_key", return_value=None):
+			runner = CliRunner()
+			result = runner.invoke(bench_ai, ["hello"])
 		self.assertNotEqual(result.exit_code, 0)
 		self.assertIn("Missing API key", result.output)
 

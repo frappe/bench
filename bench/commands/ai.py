@@ -17,6 +17,10 @@ MAX_BENCH_PATH_LIST_CHARS = 12000
 MAX_FRAPPE_HELP_CHARS = 20000
 MAX_FRAPPE_NAMES_CHARS = 12000
 
+# Prefix for a typical shell suggestion line (Sonar: single definition for the literal).
+BENCH_SHELL_PREFIX = "bench "
+BENCH_BINARY = "bench"
+
 # Fallback when we can't run bench_helper (e.g. not inside a bench). Tokens align with Frappe docs.
 COMMON_FRAPPE_COMMANDS_CRIB = """Common Frappe framework command names (short crib; same commands are listed in Frappe docs).
 They usually run as `bench <name>` (bench forwards to Frappe) or `bench --site <site> <name>` when a site is required:
@@ -141,55 +145,71 @@ def collect_bench_click_paths(
 	return paths
 
 
-def build_context() -> str:
-	from bench.commands import bench_command
-
-	sections: List[str] = [CHEATSHEET, COMMON_FRAPPE_COMMANDS_CRIB]
-
+def _context_append_native_paths(sections: List[str], bench_command: click.Group) -> None:
 	native = sorted(set(collect_bench_click_paths(bench_command)))
 	block = "Bench native subcommands (from Click; `bench <path>` without `--site`):\n" + "\n".join(native)
 	if len(block) > MAX_BENCH_PATH_LIST_CHARS:
 		block = block[: MAX_BENCH_PATH_LIST_CHARS - 3] + "...\n(list truncated)"
 	sections.append(block)
 
+
+def _context_append_click_help(sections: List[str], bench_command: click.Group) -> None:
 	ctx = click.Context(bench_command)
 	help_text = ctx.get_help()
 	if len(help_text) > MAX_HELP_CHARS:
 		help_text = help_text[: MAX_HELP_CHARS - 3] + "..."
 	sections.append("Bench CLI help (top of `bench --help`):\n" + help_text)
 
-	from bench.utils import get_env_frappe_commands, is_bench_directory
 
+def _context_append_frappe_help(sections: List[str]) -> None:
+	try:
+		from bench.cli import get_frappe_help
+
+		frappe_help = get_frappe_help()
+	except Exception:
+		return
+	if not frappe_help.strip():
+		return
+	text = frappe_help.strip()
+	if len(text) > MAX_FRAPPE_HELP_CHARS:
+		text = text[: MAX_FRAPPE_HELP_CHARS - 3] + "..."
+	sections.append("Framework commands (`bench --help` appendix on this bench):\n" + text)
+
+
+def _context_append_frappe_names(sections: List[str]) -> None:
+	from bench.utils import get_env_frappe_commands
+
+	try:
+		cmds = get_env_frappe_commands()
+	except Exception:
+		return
+	if not cmds:
+		return
+	names = sorted({str(c).strip() for c in cmds if str(c).strip()})
+	line = "Framework command names (`bench --site <site> <name>` …):\n" + ", ".join(names)
+	if len(line) > MAX_FRAPPE_NAMES_CHARS:
+		line = line[: MAX_FRAPPE_NAMES_CHARS - 3] + "... (truncated)"
+	sections.append(line)
+
+
+def _context_append_when_in_bench(sections: List[str]) -> None:
+	_context_append_frappe_help(sections)
+	_context_append_frappe_names(sections)
+
+
+def build_context() -> str:
+	from bench.commands import bench_command
+	from bench.utils import is_bench_directory
+
+	sections: List[str] = [CHEATSHEET, COMMON_FRAPPE_COMMANDS_CRIB]
+	_context_append_native_paths(sections, bench_command)
+	_context_append_click_help(sections, bench_command)
 	if is_bench_directory():
-		try:
-			from bench.cli import get_frappe_help
-
-			frappe_help = get_frappe_help()
-			if frappe_help.strip():
-				if len(frappe_help) > MAX_FRAPPE_HELP_CHARS:
-					frappe_help = frappe_help[: MAX_FRAPPE_HELP_CHARS - 3] + "..."
-				sections.append(
-					"Framework commands (`bench --help` appendix on this bench):\n" + frappe_help.strip()
-				)
-		except Exception:
-			pass
-		try:
-			cmds = get_env_frappe_commands()
-			if cmds:
-				names = sorted({str(c).strip() for c in cmds if str(c).strip()})
-				line = (
-					"Framework command names (`bench --site <site> <name>` …):\n" + ", ".join(names)
-				)
-				if len(line) > MAX_FRAPPE_NAMES_CHARS:
-					line = line[: MAX_FRAPPE_NAMES_CHARS - 3] + "... (truncated)"
-				sections.append(line)
-		except Exception:
-			pass
+		_context_append_when_in_bench(sections)
 	else:
 		sections.append(
 			"Note: not inside a bench — live framework names/help omitted. `cd` to your bench for the full list."
 		)
-
 	return "\n\n".join(sections)
 
 
@@ -254,7 +274,7 @@ def extract_bench_invocation(line: str) -> Optional[Tuple[str, List[str]]]:
 		tokens = shlex.split(line)
 	except ValueError:
 		return None
-	if not tokens or tokens[0] != "bench":
+	if not tokens or tokens[0] != BENCH_BINARY:
 		return None
 	i = _skip_global_bench_flags(tokens, 1)
 	if i < len(tokens) and tokens[i] == "--site":
@@ -336,7 +356,9 @@ def validate_suggested_command_line(
 	return ok, msg
 
 
-_LINE_BENCH = re.compile(r"^\s*(?:[-*]\s+)?(?P<cmd>bench\s+.+)$")
+_LINE_BENCH = re.compile(
+	rf"^\s*(?:[-*]\s+)?(?P<cmd>{re.escape(BENCH_SHELL_PREFIX)}\S.*)$"
+)
 
 
 def parse_suggested_command(text: str) -> str:
@@ -346,7 +368,7 @@ def parse_suggested_command(text: str) -> str:
 	):
 		for raw in block.strip().splitlines():
 			line = raw.strip()
-			if line.startswith("bench "):
+			if line.startswith(BENCH_SHELL_PREFIX):
 				found.append(line)
 	for line in text.splitlines():
 		m = _LINE_BENCH.match(line)
@@ -380,6 +402,154 @@ Structure your answer as:
 
 Keep ### What this command does factual for the commands you named. Be concise; don't paste Context back.
 """
+
+
+def _bench_ai_tip_outside_bench() -> None:
+	from bench.utils import is_bench_directory
+
+	if is_bench_directory():
+		return
+	click.secho(
+		"Tip: not in a Frappe bench — using static framework crib; `cd` to your bench for full `bench --help`.",
+		fg="yellow",
+		dim=True,
+	)
+	click.echo()
+
+
+def _bench_ai_dry_run(model_id: str, base_url: str, context: str, prompt: str) -> None:
+	click.secho("bench-ai — dry run", fg="cyan", bold=True)
+	click.echo()
+	stats = [
+		("Model", model_id),
+		("API base", normalize_base_url(base_url)),
+		("Context size", f"{len(context):,} chars"),
+		("Prompt", f"{len(prompt):,} chars"),
+	]
+	w = max(len(k) for k, _ in stats)
+	for k, v in stats:
+		click.echo(f"  {k.ljust(w)}  {v}")
+	click.echo()
+	click.secho("No API request sent.", dim=True)
+
+
+def _bench_ai_completion_messages(context: str, prompt: str) -> list:
+	return [
+		{"role": "system", "content": SYSTEM_PROMPT},
+		{
+			"role": "user",
+			"content": (
+				"Context is authoritative; only use ```bash for commands that match it.\n\n"
+				f"Context:\n{context}\n\nQuestion:\n{prompt}"
+			),
+		},
+	]
+
+
+def _bench_ai_print_reply(reply: str) -> None:
+	click.echo()
+	click.secho("Guidance", fg="bright_blue", bold=True)
+	click.secho(
+		"(From local bench help; suggested line is checked against this CLI.)",
+		fg="bright_black",
+		dim=True,
+	)
+	click.echo(click.style(_rule_char_line(), fg="bright_black"))
+	click.echo(reply)
+
+
+def _bench_ai_validation_footer(
+	suggested: str,
+	valid: bool,
+	err: str,
+	inv: Optional[Tuple[str, List[str]]],
+	frappe_names: Optional[set],
+) -> None:
+	if _line_has_placeholders(suggested):
+		click.secho("Line has <placeholders> — edit before running.", fg="yellow")
+		return
+	if not valid:
+		click.secho("Local validation failed", fg="red", bold=True)
+		click.secho(err, fg="red")
+		click.secho("Compare with `bench --help` before using this.", fg="yellow")
+		return
+	if inv and inv[0] == "frappe" and frappe_names is None:
+		click.secho(
+			"`--site` line not checked against live Frappe list (run bench-ai from a bench for that).",
+			fg="yellow",
+			dim=True,
+		)
+		return
+	if valid and frappe_names is not None:
+		click.secho("OK — matches this bench's CLI / Frappe commands.", fg="green", dim=True)
+		return
+	if valid:
+		click.secho(
+			"OK — native bench and/or crib (full framework list only on a real bench).",
+			fg="green",
+			dim=True,
+		)
+
+
+def _bench_ai_show_suggestion(
+	reply: str,
+	bench_command: click.Group,
+	frappe_names: Optional[set],
+) -> None:
+	suggested = parse_suggested_command(reply)
+	is_bench_line = suggested.startswith(BENCH_SHELL_PREFIX)
+	valid, err = (
+		validate_suggested_command_line(suggested, bench_command, frappe_names)
+		if is_bench_line
+		else (True, "")
+	)
+	if not is_bench_line:
+		click.echo()
+		click.secho(
+			"No `bench …` line in the reply (add a ```bash block). Running from a bench helps for framework commands.",
+			fg="yellow",
+		)
+		return
+	click.echo()
+	click.secho("Suggested command (for --run)", fg="cyan", bold=True)
+	click.echo(click.style(_rule_char_line(), fg="bright_black"))
+	click.echo(click.style(suggested, fg="green", bold=True))
+	click.echo()
+	_bench_ai_validation_footer(suggested, valid, err, extract_bench_invocation(suggested), frappe_names)
+
+
+def _bench_ai_run_if_requested(
+	run_cmd: bool,
+	reply: str,
+	bench_command: click.Group,
+	frappe_names: Optional[set],
+) -> None:
+	if not run_cmd:
+		return
+	final = parse_suggested_command(reply)
+	if not final.startswith(BENCH_SHELL_PREFIX):
+		raise click.ClickException("Refusing --run: no runnable `bench ...` in the reply.")
+	if _line_has_placeholders(final):
+		raise click.ClickException("Refusing --run: fix <placeholders> first.")
+	ok_run, run_err = validate_suggested_command_line(final, bench_command, frappe_names)
+	if not ok_run:
+		raise click.ClickException(
+			f"Refusing --run: {run_err} Verify with `bench --help` and run manually if needed."
+		)
+	click.echo()
+	if not click.confirm(click.style("Run this command?", fg="yellow") + f"\n  {final}", default=False):
+		click.secho("Cancelled.", dim=True)
+		return
+	try:
+		argv = shlex.split(final)
+	except ValueError as e:
+		raise click.ClickException(f"Could not parse command: {e}") from e
+	click.secho("Running…", fg="bright_black")
+	ret = subprocess.run(argv, check=False).returncode
+	if ret:
+		click.secho(f"Exit code: {ret}", fg="yellow")
+	else:
+		click.secho("Done.", fg="green")
 
 
 @click.command(
@@ -419,36 +589,16 @@ Keep ### What this command does factual for the commands you named. Be concise; 
 def bench_ai(prompt, model, temperature, dry_run, run_cmd):
 	from bench.cli import change_working_directory
 	from bench.commands import bench_command
-	from bench.utils import is_bench_directory
 
 	change_working_directory()
-
-	if not is_bench_directory():
-		click.secho(
-			"Tip: not in a Frappe bench — using static framework crib; `cd` to your bench for full `bench --help`.",
-			fg="yellow",
-			dim=True,
-		)
-		click.echo()
+	_bench_ai_tip_outside_bench()
 
 	context = build_context()
 	model_id = model or os.environ.get("BENCH_AI_MODEL") or DEFAULT_MODEL
 	base_url = os.environ.get("BENCH_AI_BASE_URL", DEFAULT_BASE_URL)
 
 	if dry_run:
-		click.secho("bench-ai — dry run", fg="cyan", bold=True)
-		click.echo()
-		stats = [
-			("Model", model_id),
-			("API base", normalize_base_url(base_url)),
-			("Context size", f"{len(context):,} chars"),
-			("Prompt", f"{len(prompt):,} chars"),
-		]
-		w = max(len(k) for k, _ in stats)
-		for k, v in stats:
-			click.echo(f"  {k.ljust(w)}  {v}")
-		click.echo()
-		click.secho("No API request sent.", dim=True)
+		_bench_ai_dry_run(model_id, base_url, context, prompt)
 		return
 
 	api_key = get_api_key()
@@ -457,100 +607,18 @@ def bench_ai(prompt, model, temperature, dry_run, run_cmd):
 			"Missing API key. Set BENCH_AI_API_KEY or OPENAI_API_KEY, or use --dry-run."
 		)
 
-	messages = [
-		{"role": "system", "content": SYSTEM_PROMPT},
-		{
-			"role": "user",
-			"content": (
-				"Context is authoritative; only use ```bash for commands that match it.\n\n"
-				f"Context:\n{context}\n\nQuestion:\n{prompt}"
-			),
-		},
-	]
 	click.secho("Requesting suggestion…", fg="bright_black")
-	reply = chat_completion(base_url, api_key, model_id, temperature, messages)
-
-	click.echo()
-	click.secho("Guidance", fg="bright_blue", bold=True)
-	click.secho(
-		"(From local bench help; suggested line is checked against this CLI.)",
-		fg="bright_black",
-		dim=True,
+	reply = chat_completion(
+		base_url,
+		api_key,
+		model_id,
+		temperature,
+		_bench_ai_completion_messages(context, prompt),
 	)
-	click.echo(click.style(_rule_char_line(), fg="bright_black"))
-	click.echo(reply)
-
+	_bench_ai_print_reply(reply)
 	frappe_names = load_frappe_command_names()
-	suggested = parse_suggested_command(reply)
-	is_bench_line = suggested.startswith("bench ")
-	valid, err = (
-		validate_suggested_command_line(suggested, bench_command, frappe_names)
-		if is_bench_line
-		else (True, "")
-	)
-
-	if is_bench_line:
-		click.echo()
-		click.secho("Suggested command (for --run)", fg="cyan", bold=True)
-		click.echo(click.style(_rule_char_line(), fg="bright_black"))
-		click.echo(click.style(suggested, fg="green", bold=True))
-		click.echo()
-		inv = extract_bench_invocation(suggested)
-		if _line_has_placeholders(suggested):
-			click.secho(
-				"Line has <placeholders> — edit before running.",
-				fg="yellow",
-			)
-		elif not valid:
-			click.secho("Local validation failed", fg="red", bold=True)
-			click.secho(err, fg="red")
-			click.secho("Compare with `bench --help` before using this.", fg="yellow")
-		elif inv and inv[0] == "frappe" and frappe_names is None:
-			click.secho(
-				"`--site` line not checked against live Frappe list (run bench-ai from a bench for that).",
-				fg="yellow",
-				dim=True,
-			)
-		elif valid and frappe_names is not None:
-			click.secho("OK — matches this bench's CLI / Frappe commands.", fg="green", dim=True)
-		elif valid:
-			click.secho(
-				"OK — native bench and/or crib (full framework list only on a real bench).",
-				fg="green",
-				dim=True,
-			)
-	else:
-		click.echo()
-		click.secho(
-			"No `bench …` line in the reply (add a ```bash block). Running from a bench helps for framework commands.",
-			fg="yellow",
-		)
-
-	if run_cmd:
-		final = parse_suggested_command(reply)
-		if not final.startswith("bench "):
-			raise click.ClickException("Refusing --run: no runnable `bench ...` in the reply.")
-		if _line_has_placeholders(final):
-			raise click.ClickException("Refusing --run: fix <placeholders> first.")
-		ok_run, run_err = validate_suggested_command_line(final, bench_command, frappe_names)
-		if not ok_run:
-			raise click.ClickException(
-				f"Refusing --run: {run_err} Verify with `bench --help` and run manually if needed."
-			)
-		click.echo()
-		if not click.confirm(click.style("Run this command?", fg="yellow") + f"\n  {final}", default=False):
-			click.secho("Cancelled.", dim=True)
-			return
-		try:
-			argv = shlex.split(final)
-		except ValueError as e:
-			raise click.ClickException(f"Could not parse command: {e}") from e
-		click.secho("Running…", fg="bright_black")
-		ret = subprocess.run(argv, check=False).returncode
-		if ret:
-			click.secho(f"Exit code: {ret}", fg="yellow")
-		else:
-			click.secho("Done.", fg="green")
+	_bench_ai_show_suggestion(reply, bench_command, frappe_names)
+	_bench_ai_run_if_requested(run_cmd, reply, bench_command, frappe_names)
 
 
 def main():
