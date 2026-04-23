@@ -88,7 +88,7 @@ def write_to_env(
 ) -> None:
     sites = sites or ["site1.localhost"]
     quoted_sites = ",".join([f"`{site}`" for site in sites]).strip(",")
-    sites_rule = sites_rule or " || ".join([f"Host(`{site}`)" for site in sites]).strip(" || ")
+    sites_rule = sites_rule or " || ".join([f"Host(`{site}`)" for site in sites])
     example_env = get_from_env(frappe_docker_dir, "example.env")
     erpnext_version = erpnext_version or example_env["ERPNEXT_VERSION"]
     env_file_lines = [
