@@ -81,6 +81,9 @@ def generate_systemd_config(
 		"http_timeout": config.get("http_timeout", 120),
 		"redis_server": which("redis-server"),
 		"node": which("node") or which("nodejs"),
+		# socketio runs if backend is python (no node needed) or node is present
+		"socketio_enabled": config.get("socketio_backend", "node") == "python"
+		or bool(which("node") or which("nodejs")),
 		"redis_cache_config": os.path.join(bench_dir, "config", "redis_cache.conf"),
 		"redis_queue_config": os.path.join(bench_dir, "config", "redis_queue.conf"),
 		"webserver_port": config.get("webserver_port", 8000),
