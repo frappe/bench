@@ -1,6 +1,6 @@
 [Unit]
 After=network.target
-Wants={{ bench_name }}-frappe-web.service {{ bench_name }}-node-socketio.service
+Wants={{ bench_name }}-frappe-web.service{% if not use_gunicorn_companion %} {{ bench_name }}-node-socketio.service{% endif %}
 
 [Install]
 WantedBy=multi-user.target

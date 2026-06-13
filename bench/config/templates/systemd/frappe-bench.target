@@ -1,6 +1,6 @@
 [Unit]
 After=network.target
-Requires={{ bench_name }}-web.target {{ bench_name }}-workers.target {{ bench_name }}-redis.target
+Requires={{ bench_name }}-web.target{% if not use_gunicorn_companion %} {{ bench_name }}-workers.target{% endif %} {{ bench_name }}-redis.target
 
 [Install]
 WantedBy=multi-user.target

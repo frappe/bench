@@ -31,6 +31,12 @@ def generate_supervisor_config(bench_path, user=None, yes=False, skip_redis=Fals
 	template = bench.config.env().get_template("supervisor.conf")
 	bench_dir = os.path.abspath(bench_path)
 
+	use_gunicorn_companion = bool(config.get("use_gunicorn_companion"))
+	if use_gunicorn_companion:
+		from bench.config.gunicorn import generate_gunicorn_config
+
+		generate_gunicorn_config(bench_path, user=user, yes=yes)
+
 	web_worker_count = config.get(
 		"gunicorn_workers", get_gunicorn_workers()["gunicorn_workers"]
 	)
@@ -60,6 +66,7 @@ def generate_supervisor_config(bench_path, user=None, yes=False, skip_redis=Fals
 			"workers": config.get("workers", {}),
 			"multi_queue_consumption": can_enable_multi_queue_consumption(bench_path),
 			"supervisor_startretries": 10,
+			"use_gunicorn_companion": use_gunicorn_companion,
 		}
 	)
 

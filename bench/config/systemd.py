@@ -49,6 +49,12 @@ def generate_systemd_config(
 		_delete_symlinks(bench_path)
 		return
 
+	use_gunicorn_companion = bool(config.get("use_gunicorn_companion"))
+	if use_gunicorn_companion:
+		from bench.config.gunicorn import generate_gunicorn_config
+
+		generate_gunicorn_config(bench_path, user=user, yes=yes)
+
 	number_of_workers = config.get("background_workers") or 1
 	background_workers = []
 	for i in range(number_of_workers):
@@ -90,6 +96,7 @@ def generate_systemd_config(
 		"bench_name": get_bench_name(bench_path),
 		"worker_target_wants": " ".join(background_workers),
 		"bench_cmd": which("bench"),
+		"use_gunicorn_companion": use_gunicorn_companion,
 	}
 
 	if not yes:
@@ -100,7 +107,9 @@ def generate_systemd_config(
 
 	setup_systemd_directory(bench_path)
 	setup_main_config(bench_info, bench_path)
-	setup_workers_config(bench_info, bench_path)
+	if not use_gunicorn_companion:
+		# Companion mode runs workers/scheduler inside gunicorn; no worker units.
+		setup_workers_config(bench_info, bench_path)
 	setup_web_config(bench_info, bench_path)
 	setup_redis_config(bench_info, bench_path)
 
@@ -201,25 +210,15 @@ def setup_web_config(bench_info, bench_path):
 	bench_web_service_template = bench.config.env().get_template(
 		"systemd/frappe-bench-frappe-web.service"
 	)
-	bench_node_socketio_template = bench.config.env().get_template(
-		"systemd/frappe-bench-node-socketio.service"
-	)
 
 	bench_web_target_config = bench_web_target_template.render(**bench_info)
 	bench_web_service_config = bench_web_service_template.render(**bench_info)
-	bench_node_socketio_config = bench_node_socketio_template.render(**bench_info)
 
 	bench_web_target_config_path = os.path.join(
 		bench_path, "config", "systemd", bench_info.get("bench_name") + "-web.target"
 	)
 	bench_web_service_config_path = os.path.join(
 		bench_path, "config", "systemd", bench_info.get("bench_name") + "-frappe-web.service"
-	)
-	bench_node_socketio_config_path = os.path.join(
-		bench_path,
-		"config",
-		"systemd",
-		bench_info.get("bench_name") + "-node-socketio.service",
 	)
 
 	with open(bench_web_target_config_path, "w") as f:
@@ -228,8 +227,20 @@ def setup_web_config(bench_info, bench_path):
 	with open(bench_web_service_config_path, "w") as f:
 		f.write(bench_web_service_config)
 
-	with open(bench_node_socketio_config_path, "w") as f:
-		f.write(bench_node_socketio_config)
+	# Companion mode runs socketio inside gunicorn; no node-socketio unit.
+	if not bench_info.get("use_gunicorn_companion"):
+		bench_node_socketio_template = bench.config.env().get_template(
+			"systemd/frappe-bench-node-socketio.service"
+		)
+		bench_node_socketio_config = bench_node_socketio_template.render(**bench_info)
+		bench_node_socketio_config_path = os.path.join(
+			bench_path,
+			"config",
+			"systemd",
+			bench_info.get("bench_name") + "-node-socketio.service",
+		)
+		with open(bench_node_socketio_config_path, "w") as f:
+			f.write(bench_node_socketio_config)
 
 
 def setup_redis_config(bench_info, bench_path):
@@ -292,6 +303,16 @@ def _delete_symlinks(bench_path):
 
 def get_unit_files(bench_path):
 	bench_name = get_bench_name(bench_path)
+	if bool(Bench(bench_path).conf.get("use_gunicorn_companion")):
+		# Companion mode: only gunicorn web + redis units.
+		return [
+			[bench_name, ".target"],
+			[bench_name + "-web", ".target"],
+			[bench_name + "-redis", ".target"],
+			[bench_name + "-frappe-web", ".service"],
+			[bench_name + "-redis-cache", ".service"],
+			[bench_name + "-redis-queue", ".service"],
+		]
 	unit_files = [
 		[bench_name, ".target"],
 		[bench_name + "-workers", ".target"],
