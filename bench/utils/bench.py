@@ -101,14 +101,14 @@ def install_python_dev_dependencies(bench_path=".", apps=None, verbose=False):
 			pyproject_deps = _generate_dev_deps_pattern(pyproject_path)
 			if pyproject_deps:
 				if use_uv():
-					bench.run(f"uv pip install {quiet_flag} --upgrade {pyproject_deps} --python {bench.python}")
+					bench.run(f"uv pip install {quiet_flag} {pyproject_deps} --python {bench.python}")
 				else:
 					bench.run(f"{bench.python} -m pip install {quiet_flag} --upgrade {pyproject_deps}")
 
 		if not pyproject_deps and os.path.exists(dev_requirements_path):
 			if use_uv():
 				bench.run(
-					f"uv pip install {quiet_flag} --upgrade -r {dev_requirements_path} --python {bench.python}"
+					f"uv pip install {quiet_flag} -r {dev_requirements_path} --python {bench.python}"
 				)
 			else:
 				bench.run(
@@ -250,7 +250,7 @@ def migrate_env(python, backup=False):
 	def _install_app(app, pyenv):
 		app_path = f"-e {os.path.join('apps', app)}"
 		if use_uv():
-			exec_cmd(f"uv pip install --upgrade {app_path} --python {pyenv}/bin/python")
+			exec_cmd(f"uv pip install {app_path} --python {pyenv}/bin/python")
 		else:
 			exec_cmd(f"{pyenv}/bin/python -m pip install --upgrade {app_path}")
 
