@@ -934,8 +934,9 @@ def install_app(
 
 	if use_uv():
 		try:
+			# Avoid upgrade flag  on a fresh install; see #1683
 			bench.run(
-				f"uv pip install {quiet_flag} --upgrade -e {app_path} {cache_flag} --python {bench.python}",
+				f"uv pip install {quiet_flag} -e {app_path} {cache_flag} --python {bench.python}",
 				env=env,
 			)
 		except Exception as e:
