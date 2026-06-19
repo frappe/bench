@@ -48,6 +48,7 @@ def setup_production(user, bench_path=".", yes=False):
 		generate_systemd_config(bench_path=bench_path, user=user, yes=yes)
 	else:
 		print("Setting Up supervisor...")
+		conf.update({"restart_supervisor_on_update": True}) # This conf is False the first time, it is set later
 		check_supervisord_config(user=user)
 		generate_supervisor_config(bench_path=bench_path, user=user, yes=yes)
 
