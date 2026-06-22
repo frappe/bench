@@ -14,6 +14,10 @@ MAX_FRAPPE_DEPTH = 4
 FORWARDED_FLAGS = ["--verbose", "-v", "--profile", "--force"]
 FORWARDED_VALUE_OPTIONS = ["--site", "-s"]
 
+# Substrings matched against normalized option/argument names when Click does not
+# declare an explicit click.Path type (common in older frappe command definitions).
+_PATH_NAME_HINTS = ("path", "file", "certificate", "sql", "clone_from")
+
 # Path to the collector script that runs inside the frappe virtualenv.
 # Kept as a separate file so it gets syntax highlighting, linting, and can be
 # run or inspected directly without extracting it from a string constant.
@@ -115,21 +119,34 @@ def build_completion_spec(root_command: click.Command, verbose: bool = True) -> 
 	subcommands = {}
 	options = {}
 	value_options = {}
+	path_options = {}
+	path_positionals = {}
 
-	_collect_command_tree(root_command, (), subcommands, options, value_options)
+	_collect_command_tree(
+		root_command, (), subcommands, options, value_options, path_options, path_positionals
+	)
 
 	bench_path = _find_current_bench_path()
 	frappe_commands = []
 	if bench_path:
 		frappe_commands = _unique(get_env_frappe_commands(bench_path))
 		_collect_frappe_tree(
-			bench_path, subcommands, options, value_options, frappe_commands, verbose=verbose
+			bench_path,
+			subcommands,
+			options,
+			value_options,
+			path_options,
+			path_positionals,
+			frappe_commands,
+			verbose=verbose,
 		)
 
 	return {
 		"subcommands": subcommands,
 		"options": options,
 		"value_options": value_options,
+		"path_options": path_options,
+		"path_positionals": path_positionals,
 		"frappe_commands": frappe_commands,
 	}
 
@@ -165,7 +182,14 @@ def _get_frappe_spec_batch(bench_path, verbose: bool = True) -> dict | None:
 
 
 def _collect_frappe_tree(
-	bench_path, subcommands, options, value_options, fallback_commands, verbose: bool = True
+	bench_path,
+	subcommands,
+	options,
+	value_options,
+	path_options,
+	path_positionals,
+	fallback_commands,
+	verbose: bool = True,
 ):
 	spec = _get_frappe_spec_batch(bench_path, verbose=verbose)
 
@@ -178,14 +202,32 @@ def _collect_frappe_tree(
 			subcommands[key] = entry["commands"]
 			options[key] = entry["options"]
 			value_options[key] = entry["value_options"]
+			path_options[key] = entry.get("path_options", [])
+			path_positionals[key] = entry.get("path_positionals", [])
 		return
 
 	# get_app_groups() isn't available on older frappe versions, so fall back to
 	# spawning one --help subprocess per command, parallelised across each BFS level.
-	_collect_frappe_tree_bfs(bench_path, subcommands, options, value_options, fallback_commands)
+	_collect_frappe_tree_bfs(
+		bench_path,
+		subcommands,
+		options,
+		value_options,
+		path_options,
+		path_positionals,
+		fallback_commands,
+	)
 
 
-def _collect_frappe_tree_bfs(bench_path, subcommands, options, value_options, fallback_commands):
+def _collect_frappe_tree_bfs(
+	bench_path,
+	subcommands,
+	options,
+	value_options,
+	path_options,
+	path_positionals,
+	fallback_commands,
+):
 	from concurrent.futures import ThreadPoolExecutor, as_completed
 
 	seen = set()
@@ -220,6 +262,14 @@ def _collect_frappe_tree_bfs(bench_path, subcommands, options, value_options, fa
 
 				options[key] = _unique(["--help", *parsed["options"]])
 				value_options[key] = _unique(parsed["value_options"])
+				path_options[key] = _unique(
+					[
+						option
+						for option in parsed["value_options"]
+						if _looks_like_path_option(option)
+					]
+				)
+				path_positionals[key] = _unique(parsed["path_positionals"])
 				subcommands[key] = _unique(children)
 
 				if len(path) < MAX_FRAPPE_DEPTH:
@@ -275,10 +325,23 @@ def _parse_click_help(help_text: str) -> dict:
 				if len(parts) > 1:
 					value_options.append(parts[0])
 
+	path_positionals = []
+	for raw_line in help_text.splitlines():
+		stripped = raw_line.strip()
+		if not stripped.startswith("Usage:"):
+			continue
+		path_positionals.extend(
+			str(index)
+			for index, token in enumerate(_usage_positional_tokens(stripped))
+			if _looks_like_path_name(token)
+		)
+		break
+
 	return {
 		"commands": _unique(commands),
 		"options": _unique(options),
 		"value_options": _unique(value_options),
+		"path_positionals": _unique(path_positionals),
 	}
 
 
@@ -318,24 +381,41 @@ def _ensure_line(path: Path, line: str) -> bool:
 
 
 def _collect_command_tree(
-	command: click.Command, path, subcommands, options, value_options
+	command: click.Command,
+	path,
+	subcommands,
+	options,
+	value_options,
+	path_options,
+	path_positionals,
 ):
 	key = _path_key(path)
 	command_options = ["--help"]
 	command_value_options = []
+	command_path_options = []
+	command_path_positionals = []
+	positional_index = 0
 
 	for param in command.params:
-		if not isinstance(param, click.Option):
+		if isinstance(param, click.Option):
+			flags = _unique([*param.opts, *param.secondary_opts])
+			command_options.extend(flags)
+
+			if _option_takes_value(param):
+				command_value_options.extend(flags)
+				if _param_expects_path(param):
+					command_path_options.extend(flags)
 			continue
 
-		flags = _unique([*param.opts, *param.secondary_opts])
-		command_options.extend(flags)
-
-		if _option_takes_value(param):
-			command_value_options.extend(flags)
+		if isinstance(param, click.Argument):
+			if _param_expects_path(param):
+				command_path_positionals.append(str(positional_index))
+			positional_index += 1
 
 	options[key] = _unique(command_options)
 	value_options[key] = _unique(command_value_options)
+	path_options[key] = _unique(command_path_options)
+	path_positionals[key] = _unique(command_path_positionals)
 
 	command_map = getattr(command, "commands", None)
 	if command_map is not None:
@@ -344,7 +424,13 @@ def _collect_command_tree(
 
 		for name, child in command_map.items():
 			_collect_command_tree(
-				child, (*path, name), subcommands, options, value_options
+				child,
+				(*path, name),
+				subcommands,
+				options,
+				value_options,
+				path_options,
+				path_positionals,
 			)
 	else:
 		subcommands[key] = []
@@ -352,6 +438,43 @@ def _collect_command_tree(
 
 def _option_takes_value(option: click.Option) -> bool:
 	return not option.is_flag and option.nargs != 0
+
+
+def _normalize_param_name(name: str) -> str:
+	return name.lower().replace("-", "_")
+
+
+def _looks_like_path_name(name: str) -> bool:
+	normalized = _normalize_param_name(name)
+	return any(hint in normalized for hint in _PATH_NAME_HINTS)
+
+
+def _looks_like_path_option(option: str) -> bool:
+	return _looks_like_path_name(option.lstrip("-"))
+
+
+def _param_expects_path(param) -> bool:
+	if isinstance(param.type, click.Path):
+		return True
+
+	names = []
+	if isinstance(param, click.Option):
+		if param.name:
+			names.append(param.name)
+		names.extend(option.lstrip("-") for option in param.opts)
+	elif isinstance(param, click.Argument) and param.name:
+		names.append(param.name)
+
+	return any(_looks_like_path_name(name) for name in names)
+
+
+def _usage_positional_tokens(usage_line: str) -> list[str]:
+	import re
+
+	usage = usage_line.split(":", 1)[-1].strip()
+	usage = re.sub(r"\[[^\]]*\]", "", usage)
+	tokens = re.findall(r"\b[A-Z][A-Z0-9_-]*\b", usage)
+	return [token for token in tokens if token not in {"OPTIONS", "ARGS", "COMMAND"}]
 
 
 def _path_key(path) -> str:
@@ -397,6 +520,10 @@ def _render_completion_script(spec: dict, shell: str) -> str:
 			_render_case_function("_bench_options_for", spec["options"]),
 			"",
 			_render_case_function("_bench_value_options_for", spec["value_options"]),
+			"",
+			_render_case_function("_bench_path_options_for", spec["path_options"]),
+			"",
+			_render_case_function("_bench_path_positionals_for", spec["path_positionals"]),
 			"",
 			_BASH_RUNTIME,
 			"",
@@ -541,6 +668,60 @@ _bench_collect_context() {
 	printf '%s' "$path"
 }
 
+_bench_collect_completion_state() {
+	local path="$_BENCH_ROOT_KEY"
+	local positional_index=0
+	local skip_next=0
+	local index
+	local token
+	local value_opts
+	local subcommands
+
+	for ((index = 1; index < COMP_CWORD; index++)); do
+		token="${COMP_WORDS[index]}"
+
+		if (( skip_next )); then
+			skip_next=0
+			continue
+		fi
+
+		if [[ "$token" == "--" ]]; then
+			break
+		fi
+
+		value_opts="$(_bench_value_options_for "$path")"
+		if [[ "$path" == "$_BENCH_ROOT_KEY" ]]; then
+			value_opts="$value_opts $_BENCH_FORWARDED_VALUE_OPTIONS"
+		fi
+
+		if _bench_has_word "$token" "$value_opts"; then
+			skip_next=1
+			continue
+		fi
+
+		if [[ "$token" == -* ]]; then
+			continue
+		fi
+
+		subcommands="$(_bench_subcommands_for "$path")"
+		if _bench_has_word "$token" "$subcommands"; then
+			path="$(_bench_join_path "$path" "$token")"
+			positional_index=0
+			continue
+		fi
+
+		if [[ "$path" == "$_BENCH_ROOT_KEY" ]] && _bench_has_word "$token" "$_BENCH_FRAPPE_COMMANDS"; then
+			path="$_BENCH_FRAPPE_KEY"
+			positional_index=0
+			continue
+		fi
+
+		((positional_index++))
+	done
+
+	printf '%s|%s' "$path" "$positional_index"
+}
+
 _bench_complete_words() {
 	local cur="$1"
 	local words="$2"
@@ -554,14 +735,24 @@ _bench_lines_to_words() {
 	printf '%s' "${lines//$'\n'/ }"
 }
 
+_bench_complete_files() {
+	local cur="$1"
+
+	COMPREPLY=( $(compgen -f -- "$cur") )
+}
+
 _bench_completion() {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	local prev=""
 	local path
+	local positional_index=0
 	local words
 	local options
 	local subcommands
 	local dynamic_words
+	local path_options
+	local path_positionals
+	local state
 
 	COMPREPLY=()
 
@@ -584,7 +775,22 @@ _bench_completion() {
 			;;
 	esac
 
-	path="$(_bench_collect_context)"
+	state="$(_bench_collect_completion_state)"
+	path="${state%|*}"
+	positional_index="${state##*|}"
+
+	path_options="$(_bench_path_options_for "$path")"
+	if _bench_has_word "$prev" "$path_options"; then
+		_bench_complete_files "$cur"
+		return 0
+	fi
+
+	path_positionals="$(_bench_path_positionals_for "$path")"
+	if [[ "$cur" != -* ]] && _bench_has_word "$positional_index" "$path_positionals"; then
+		_bench_complete_files "$cur"
+		return 0
+	fi
+
 	options="$(_bench_options_for "$path")"
 	subcommands="$(_bench_subcommands_for "$path")"
 
