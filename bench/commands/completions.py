@@ -525,9 +525,9 @@ def _render_completion_script(spec: dict, shell: str) -> str:
 			"",
 			_render_case_function("_bench_path_positionals_for", spec["path_positionals"]),
 			"",
-			_BASH_RUNTIME,
+			_render_bash_runtime(shell),
 			"",
-			"complete -o nosort -F _bench_completion bench",
+			"complete -o nosort -o nospace -F _bench_completion bench",
 		]
 	)
 
@@ -545,7 +545,21 @@ def _render_case_function(name: str, mapping: dict) -> str:
 	return "\n".join(lines)
 
 
-_BASH_RUNTIME = r"""_bench_find_root() {
+def _render_bash_runtime(shell: str) -> str:
+	complete_files = (
+		_BENCH_COMPLETE_FILES_ZSH if shell == "zsh" else _BENCH_COMPLETE_FILES_BASH
+	)
+	suffix = _BASH_RUNTIME_SUFFIX
+	if shell == "zsh":
+		suffix = suffix.replace(
+			"_bench_completion() {\n\tlocal cur=",
+			"_bench_completion() {\n\temulate -L sh\n\tlocal cur=",
+			1,
+		)
+	return _BASH_RUNTIME_PREFIX + complete_files + suffix
+
+
+_BASH_RUNTIME_PREFIX = r"""_bench_find_root() {
 	local dir="$PWD"
 
 	while [[ -n "$dir" && "$dir" != "/" ]]; do
@@ -621,7 +635,7 @@ _bench_join_path() {
 }
 
 _bench_collect_context() {
-	local path="$_BENCH_ROOT_KEY"
+	local ctx="$_BENCH_ROOT_KEY"
 	local skip_next=0
 	local index
 	local token
@@ -640,8 +654,8 @@ _bench_collect_context() {
 			break
 		fi
 
-		value_opts="$(_bench_value_options_for "$path")"
-		if [[ "$path" == "$_BENCH_ROOT_KEY" ]]; then
+		value_opts="$(_bench_value_options_for "$ctx")"
+		if [[ "$ctx" == "$_BENCH_ROOT_KEY" ]]; then
 			value_opts="$value_opts $_BENCH_FORWARDED_VALUE_OPTIONS"
 		fi
 
@@ -654,22 +668,23 @@ _bench_collect_context() {
 			continue
 		fi
 
-		subcommands="$(_bench_subcommands_for "$path")"
+		subcommands="$(_bench_subcommands_for "$ctx")"
 		if _bench_has_word "$token" "$subcommands"; then
-			path="$(_bench_join_path "$path" "$token")"
+			ctx="$(_bench_join_path "$ctx" "$token")"
 			continue
 		fi
 
-		if [[ "$path" == "$_BENCH_ROOT_KEY" ]] && _bench_has_word "$token" "$_BENCH_FRAPPE_COMMANDS"; then
-			path="$_BENCH_FRAPPE_KEY"
+		if [[ "$ctx" == "$_BENCH_ROOT_KEY" ]] && _bench_has_word "$token" "$_BENCH_FRAPPE_COMMANDS"; then
+			ctx="$(_bench_join_path "$_BENCH_FRAPPE_KEY" "$token")"
+			continue
 		fi
 	done
 
-	printf '%s' "$path"
+	printf '%s' "$ctx"
 }
 
 _bench_collect_completion_state() {
-	local path="$_BENCH_ROOT_KEY"
+	local ctx="$_BENCH_ROOT_KEY"
 	local positional_index=0
 	local skip_next=0
 	local index
@@ -689,8 +704,8 @@ _bench_collect_completion_state() {
 			break
 		fi
 
-		value_opts="$(_bench_value_options_for "$path")"
-		if [[ "$path" == "$_BENCH_ROOT_KEY" ]]; then
+		value_opts="$(_bench_value_options_for "$ctx")"
+		if [[ "$ctx" == "$_BENCH_ROOT_KEY" ]]; then
 			value_opts="$value_opts $_BENCH_FORWARDED_VALUE_OPTIONS"
 		fi
 
@@ -703,15 +718,15 @@ _bench_collect_completion_state() {
 			continue
 		fi
 
-		subcommands="$(_bench_subcommands_for "$path")"
+		subcommands="$(_bench_subcommands_for "$ctx")"
 		if _bench_has_word "$token" "$subcommands"; then
-			path="$(_bench_join_path "$path" "$token")"
+			ctx="$(_bench_join_path "$ctx" "$token")"
 			positional_index=0
 			continue
 		fi
 
-		if [[ "$path" == "$_BENCH_ROOT_KEY" ]] && _bench_has_word "$token" "$_BENCH_FRAPPE_COMMANDS"; then
-			path="$_BENCH_FRAPPE_KEY"
+		if [[ "$ctx" == "$_BENCH_ROOT_KEY" ]] && _bench_has_word "$token" "$_BENCH_FRAPPE_COMMANDS"; then
+			ctx="$(_bench_join_path "$_BENCH_FRAPPE_KEY" "$token")"
 			positional_index=0
 			continue
 		fi
@@ -719,7 +734,7 @@ _bench_collect_completion_state() {
 		((positional_index++))
 	done
 
-	printf '%s|%s' "$path" "$positional_index"
+	printf '%s|%s' "$ctx" "$positional_index"
 }
 
 _bench_complete_words() {
@@ -735,16 +750,112 @@ _bench_lines_to_words() {
 	printf '%s' "${lines//$'\n'/ }"
 }
 
-_bench_complete_files() {
+"""
+
+_BENCH_COMPLETE_FILES_BASH = r"""_bench_expand_tilde() {
 	local cur="$1"
 
-	COMPREPLY=( $(compgen -f -- "$cur") )
+	if [[ "$cur" == "~" || "$cur" == "~/"* ]]; then
+		printf '%s' "${cur/#\~/$HOME}"
+		return 0
+	fi
+
+	printf '%s' "$cur"
 }
 
-_bench_completion() {
+_bench_complete_files() {
+	local cur="$1"
+	local expanded
+	local use_tilde=0
+	local i
+
+	if [[ "$cur" == "~" || "$cur" == "~/"* ]]; then
+		use_tilde=1
+	fi
+
+	expanded="$(_bench_expand_tilde "$cur")"
+
+	compopt -o filenames 2>/dev/null
+	COMPREPLY=( $(compgen -f -- "$expanded") )
+
+	for ((i = 0; i < ${#COMPREPLY[@]}; i++)); do
+		if [[ -d "${COMPREPLY[i]}" && "${COMPREPLY[i]}" != */ ]]; then
+			COMPREPLY[i]+=/
+		fi
+
+		if (( use_tilde )) && [[ "${COMPREPLY[i]}" == "$HOME"/* || "${COMPREPLY[i]}" == "$HOME" ]]; then
+			COMPREPLY[i]="~${COMPREPLY[i]#$HOME}"
+		fi
+	done
+}
+
+"""
+
+_BENCH_COMPLETE_FILES_ZSH = r"""_bench_expand_tilde() {
+	local cur="$1"
+
+	if [[ "$cur" == "~" || "$cur" == "~/"* ]]; then
+		printf '%s' "${cur/#\~/$HOME}"
+		return 0
+	fi
+
+	printf '%s' "$cur"
+}
+
+_bench_path_match_candidates() {
+	local expanded="$1"
+	local dir prefix
+
+	if [[ -d "$expanded" ]]; then
+		find "$expanded" -mindepth 1 -maxdepth 1 -print 2>/dev/null
+		return 0
+	fi
+
+	if [[ "$expanded" == */* ]]; then
+		dir="${expanded%/*}"
+		prefix="${expanded##*/}"
+	else
+		dir="."
+		prefix="$expanded"
+	fi
+
+	find "$dir" -maxdepth 1 -name "${prefix}"'*' -print 2>/dev/null
+}
+
+_bench_complete_files() {
+	local cur="$1"
+	local expanded use_tilde=0
+	local match
+	local i
+
+	if [[ "$cur" == "~" || "$cur" == "~/"* ]]; then
+		use_tilde=1
+	fi
+
+	expanded="$(_bench_expand_tilde "$cur")"
+	COMPREPLY=()
+
+	while IFS= read -r match; do
+		[[ -n "$match" ]] || continue
+
+		if [[ -d "$match" && "$match" != */ ]]; then
+			match="${match}/"
+		fi
+
+		if (( use_tilde )) && [[ "$match" == "$HOME"/* || "$match" == "$HOME" ]]; then
+			match="~${match#$HOME}"
+		fi
+
+		COMPREPLY+=("$match")
+	done < <(_bench_path_match_candidates "$expanded")
+}
+
+"""
+
+_BASH_RUNTIME_SUFFIX = r"""_bench_completion() {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	local prev=""
-	local path
+	local ctx
 	local positional_index=0
 	local words
 	local options
@@ -776,29 +887,29 @@ _bench_completion() {
 	esac
 
 	state="$(_bench_collect_completion_state)"
-	path="${state%|*}"
+	ctx="${state%|*}"
 	positional_index="${state##*|}"
 
-	path_options="$(_bench_path_options_for "$path")"
+	path_options="$(_bench_path_options_for "$ctx")"
 	if _bench_has_word "$prev" "$path_options"; then
 		_bench_complete_files "$cur"
 		return 0
 	fi
 
-	path_positionals="$(_bench_path_positionals_for "$path")"
+	path_positionals="$(_bench_path_positionals_for "$ctx")"
 	if [[ "$cur" != -* ]] && _bench_has_word "$positional_index" "$path_positionals"; then
 		_bench_complete_files "$cur"
 		return 0
 	fi
 
-	options="$(_bench_options_for "$path")"
-	subcommands="$(_bench_subcommands_for "$path")"
+	options="$(_bench_options_for "$ctx")"
+	subcommands="$(_bench_subcommands_for "$ctx")"
 
-	if [[ "$path" == "$_BENCH_ROOT_KEY" ]]; then
+	if [[ "$ctx" == "$_BENCH_ROOT_KEY" ]]; then
 		subcommands="$subcommands $_BENCH_FRAPPE_COMMANDS"
 		options="$options $_BENCH_FORWARDED_FLAGS $_BENCH_FORWARDED_VALUE_OPTIONS"
-	elif [[ "$path" == "$_BENCH_FRAPPE_KEY" ]]; then
-		options="$_BENCH_FORWARDED_FLAGS $_BENCH_FORWARDED_VALUE_OPTIONS"
+	elif [[ "$ctx" == "$_BENCH_FRAPPE_KEY" || "$ctx" == "$_BENCH_FRAPPE_KEY "* ]]; then
+		options="$options $_BENCH_FORWARDED_FLAGS $_BENCH_FORWARDED_VALUE_OPTIONS"
 	fi
 
 	if [[ "$cur" == -* ]]; then
