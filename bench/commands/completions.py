@@ -124,7 +124,13 @@ def build_completion_spec(root_command: click.Command, verbose: bool = True) -> 
 	path_positionals = {}
 
 	_collect_command_tree(
-		root_command, (), subcommands, options, value_options, path_options, path_positionals
+		root_command,
+		(),
+		subcommands,
+		options,
+		value_options,
+		path_options,
+		path_positionals,
 	)
 
 	bench_path = find_parent_bench(os.path.abspath("."))
@@ -443,6 +449,7 @@ def _path_positional_indexes(command: click.Command):
 		)
 		if param_expects_path(param)
 	]
+
 
 def _command_child_names(command: click.Command):
 	return _unique(list(_command_map(command).keys()))

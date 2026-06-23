@@ -19,13 +19,15 @@ from bench.commands.completions import (
 )
 
 
-def _run_zsh_completion(script_path: str, words: list[str], cwd: str | None = None, env=None):
+def _run_zsh_completion(
+	script_path: str, words: list[str], cwd: str | None = None, env=None
+):
 	quoted_words = " ".join(shlex.quote(word) for word in words)
 	command = (
 		f"autoload -Uz compinit; compinit -C; "
 		f"source {shlex.quote(script_path)}; "
-		"_files() { compadd \"$HOME/downloads/backup.sql.gz\"; }; "
-		"compadd() { reply=(\"$@\"); }; "
+		'_files() { compadd "$HOME/downloads/backup.sql.gz"; }; '
+		'compadd() { reply=("$@"); }; '
 		f"words=({quoted_words}); CURRENT={len(words)}; curcontext=:bench:; "
 		"_bench; printf '%s\\n' \"${reply[@]}\""
 	)
@@ -45,8 +47,7 @@ def _frappe_root_help(commands: list[str]) -> str:
 		"Options:\n"
 		"  --site TEXT\n"
 		"  --help      Show this message and exit.\n\n"
-		"Commands:\n"
-		+ "".join(f"  {command}\n" for command in commands)
+		"Commands:\n" + "".join(f"  {command}\n" for command in commands)
 	)
 
 
@@ -59,7 +60,9 @@ def _frappe_command_help(command: str, usage: str = "[OPTIONS]", options=()) -> 
 	)
 
 
-def _fake_frappe_help(commands: list[str], help_by_command: dict[str, str] | None = None):
+def _fake_frappe_help(
+	commands: list[str], help_by_command: dict[str, str] | None = None
+):
 	help_by_command = help_by_command or {}
 
 	def fake_help(cmd, cwd=".", _raise=True):
@@ -72,7 +75,9 @@ def _fake_frappe_help(commands: list[str], help_by_command: dict[str, str] | Non
 
 
 @contextmanager
-def _mock_frappe_completion(commands: list[str], help_by_command: dict[str, str] | None = None):
+def _mock_frappe_completion(
+	commands: list[str], help_by_command: dict[str, str] | None = None
+):
 	with tempfile.TemporaryDirectory() as bench_dir:
 		bench_path = Path(bench_dir)
 		(bench_path / "sites").mkdir()
@@ -87,7 +92,9 @@ def _mock_frappe_completion(commands: list[str], help_by_command: dict[str, str]
 				return_value=bench_dir,
 			),
 			patch("bench.commands.completions.get_env_cmd", return_value="python"),
-			patch("bench.commands.completions._get_frappe_spec_batch", return_value=None),
+			patch(
+				"bench.commands.completions._get_frappe_spec_batch", return_value=None
+			),
 			patch(
 				"bench.commands.completions.get_cmd_output",
 				side_effect=_fake_frappe_help(commands, help_by_command),
