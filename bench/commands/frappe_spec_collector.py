@@ -18,33 +18,14 @@ import sys
 import click
 import frappe.utils.bench_helper as _bh
 
+from completion_utils import param_expects_path
+
 FRAPPE_KEY = "__frappe__"
 MAX_DEPTH = 4
-_PATH_NAME_HINTS = ("path", "file", "certificate", "sql", "clone_from")
-
-
-def _looks_like_path_name(name: str) -> bool:
-    normalized = name.lower().replace("-", "_")
-    return any(hint in normalized for hint in _PATH_NAME_HINTS)
-
-
-def _param_expects_path(param) -> bool:
-    if isinstance(param.type, click.Path):
-        return True
-
-    names = []
-    if isinstance(param, click.Option):
-        if param.name:
-            names.append(param.name)
-        names.extend(option.lstrip("-") for option in param.opts)
-    elif isinstance(param, click.Argument) and param.name:
-        names.append(param.name)
-
-    return any(_looks_like_path_name(name) for name in names)
 
 
 def _walk(cmd, path, depth, result):
-    key = (FRAPPE_KEY + " " + " ".join(path)) if path else FRAPPE_KEY
+    key = f"{FRAPPE_KEY} {' '.join(path)}" if path else FRAPPE_KEY
     opts, vopts, path_opts, path_pos, kids = [], [], [], [], []
     positional_index = 0
 
@@ -54,12 +35,12 @@ def _walk(cmd, path, depth, result):
             opts.extend(flags)
             if not param.is_flag and param.nargs != 0:
                 vopts.extend(flags)
-                if _param_expects_path(param):
+                if param_expects_path(param):
                     path_opts.extend(flags)
             continue
 
         if isinstance(param, click.Argument):
-            if _param_expects_path(param):
+            if param_expects_path(param):
                 path_pos.append(str(positional_index))
             positional_index += 1
 

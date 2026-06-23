@@ -4,6 +4,11 @@ from pathlib import Path
 
 import click
 
+from bench.commands.completion_utils import (
+	looks_like_path_name,
+	looks_like_path_option,
+	param_expects_path,
+)
 from bench.utils import find_parent_bench, get_cmd_output, get_env_frappe_commands
 from bench.utils.bench import get_env_cmd
 
@@ -13,10 +18,6 @@ FRAPPE_KEY = "__frappe__"
 MAX_FRAPPE_DEPTH = 4
 FORWARDED_FLAGS = ["--verbose", "-v", "--profile", "--force"]
 FORWARDED_VALUE_OPTIONS = ["--site", "-s"]
-
-# Substrings matched against normalized option/argument names when Click does not
-# declare an explicit click.Path type (common in older frappe command definitions).
-_PATH_NAME_HINTS = ("path", "file", "certificate", "sql", "clone_from")
 
 # Path to the collector script that runs inside the frappe virtualenv.
 # Kept as a separate file so it gets syntax highlighting, linting, and can be
@@ -261,7 +262,7 @@ def _collect_frappe_tree_bfs(
 					[
 						option
 						for option in parsed["value_options"]
-						if _looks_like_path_option(option)
+						if looks_like_path_option(option)
 					]
 				)
 				path_positionals[key] = _unique(parsed["path_positionals"])
@@ -328,7 +329,7 @@ def _parse_click_help(help_text: str) -> dict:
 		path_positionals.extend(
 			str(index)
 			for index, token in enumerate(_usage_positional_tokens(stripped))
-			if _looks_like_path_name(token)
+			if looks_like_path_name(token)
 		)
 		break
 
@@ -398,12 +399,12 @@ def _collect_command_tree(
 
 			if not param.is_flag and param.nargs != 0:
 				command_value_options.extend(flags)
-				if _param_expects_path(param):
+				if param_expects_path(param):
 					command_path_options.extend(flags)
 			continue
 
 		if isinstance(param, click.Argument):
-			if _param_expects_path(param):
+			if param_expects_path(param):
 				command_path_positionals.append(str(positional_index))
 			positional_index += 1
 
@@ -429,34 +430,6 @@ def _collect_command_tree(
 			)
 	else:
 		subcommands[key] = []
-
-def _normalize_param_name(name: str) -> str:
-	return name.lower().replace("-", "_")
-
-
-def _looks_like_path_name(name: str) -> bool:
-	normalized = _normalize_param_name(name)
-	return any(hint in normalized for hint in _PATH_NAME_HINTS)
-
-
-def _looks_like_path_option(option: str) -> bool:
-	return _looks_like_path_name(option.lstrip("-"))
-
-
-def _param_expects_path(param) -> bool:
-	if isinstance(param.type, click.Path):
-		return True
-
-	names = []
-	if isinstance(param, click.Option):
-		if param.name:
-			names.append(param.name)
-		names.extend(option.lstrip("-") for option in param.opts)
-	elif isinstance(param, click.Argument) and param.name:
-		names.append(param.name)
-
-	return any(_looks_like_path_name(name) for name in names)
-
 
 def _usage_positional_tokens(usage_line: str) -> list[str]:
 	import re

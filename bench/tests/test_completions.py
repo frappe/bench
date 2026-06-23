@@ -12,8 +12,8 @@ from click.testing import CliRunner
 from bench.commands import bench_command
 from bench.commands.completions import (
 	_loader_line,
-	_looks_like_path_name,
-	_looks_like_path_option,
+	looks_like_path_name,
+	looks_like_path_option,
 	_parse_click_help,
 	generate_completion,
 )
@@ -249,15 +249,15 @@ class TestBenchCompletionGeneration(unittest.TestCase):
 			parsed["value_options"],
 			["--with-public-files", "--with-private-files"],
 		)
-		self.assertTrue(_looks_like_path_option("--with-public-files"))
-		self.assertTrue(_looks_like_path_option("--backup-path"))
-		self.assertFalse(_looks_like_path_option("--format"))
+		self.assertTrue(looks_like_path_option("--with-public-files"))
+		self.assertTrue(looks_like_path_option("--backup-path"))
+		self.assertFalse(looks_like_path_option("--format"))
 
 	def test_path_name_heuristics(self):
-		self.assertTrue(_looks_like_path_name("sql-file-path"))
-		self.assertTrue(_looks_like_path_name("ssl-certificate-key"))
-		self.assertTrue(_looks_like_path_name("clone-from"))
-		self.assertFalse(_looks_like_path_name("format"))
+		self.assertTrue(looks_like_path_name("sql-file-path"))
+		self.assertTrue(looks_like_path_name("ssl-certificate-key"))
+		self.assertTrue(looks_like_path_name("clone-from"))
+		self.assertFalse(looks_like_path_name("format"))
 
 	def test_frappe_restore_path_completion_via_help_fallback(self):
 		script = _generate_frappe_completion(
