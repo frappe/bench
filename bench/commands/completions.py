@@ -200,84 +200,118 @@ def _collect_frappe_tree(
 			spec[FRAPPE_KEY]["commands"] = _unique(
 				[*spec[FRAPPE_KEY]["commands"], *fallback_commands]
 			)
-		for key, entry in spec.items():
-			subcommands[key] = entry["commands"]
-			options[key] = entry["options"]
-			value_options[key] = entry["value_options"]
-			path_options[key] = entry.get("path_options", [])
-			path_positionals[key] = entry.get("path_positionals", [])
+		_apply_frappe_completion_spec(
+			spec, subcommands, options, value_options, path_options, path_positionals
+		)
 		return
 
 	# get_app_groups() isn't available on older frappe versions, so fall back to
 	# spawning one --help subprocess per command, parallelised across each BFS level.
-	_collect_frappe_tree_bfs(
-		bench_path,
+	spec = _build_frappe_tree_bfs_spec(bench_path, fallback_commands)
+	_apply_frappe_completion_spec(
+		spec,
 		subcommands,
 		options,
 		value_options,
 		path_options,
 		path_positionals,
-		fallback_commands,
 	)
 
 
-def _collect_frappe_tree_bfs(
-	bench_path,
-	subcommands,
-	options,
-	value_options,
-	path_options,
-	path_positionals,
-	fallback_commands,
+def _apply_frappe_completion_spec(
+	spec, subcommands, options, value_options, path_options, path_positionals
 ):
-	from concurrent.futures import ThreadPoolExecutor, as_completed
+	for key, entry in spec.items():
+		subcommands[key] = entry["commands"]
+		options[key] = entry["options"]
+		value_options[key] = entry["value_options"]
+		path_options[key] = entry.get("path_options", [])
+		path_positionals[key] = entry.get("path_positionals", [])
+
+
+def _build_frappe_tree_bfs_spec(bench_path, fallback_commands):
+	from concurrent.futures import ThreadPoolExecutor
 
 	seen = set()
 	pending = [()]
+	spec = {}
 
 	with ThreadPoolExecutor() as executor:
 		while pending:
-			to_fetch = []
-			for path in pending:
-				key = _path_key((FRAPPE_KEY, *path))
-				if key not in seen:
-					seen.add(key)
-					to_fetch.append(path)
+			pending = _collect_frappe_bfs_level(
+				executor, bench_path, pending, seen, spec, fallback_commands
+			)
 
-			if not to_fetch:
-				break
+	return spec
 
-			futures = {
-				executor.submit(_get_frappe_help_text, bench_path, path): path
-				for path in to_fetch
-			}
 
-			next_pending = []
-			for future in as_completed(futures):
-				path = futures[future]
-				key = _path_key((FRAPPE_KEY, *path))
-				parsed = _parse_click_help(future.result())
+def _collect_frappe_bfs_level(
+	executor, bench_path, pending, seen, spec, fallback_commands
+):
+	paths = _unseen_frappe_paths(pending, seen)
+	if not paths:
+		return []
 
-				children = parsed["commands"]
-				if not path and fallback_commands:
-					children = _unique([*children, *fallback_commands])
+	futures = {
+		executor.submit(_get_frappe_help_text, bench_path, path): path for path in paths
+	}
+	return _consume_frappe_help_futures(futures, spec, fallback_commands)
 
-				options[key] = _unique(["--help", *parsed["options"]])
-				value_options[key] = _unique(parsed["value_options"])
-				path_options[key] = _unique(
-					[
-						option
-						for option in parsed["value_options"]
-						if looks_like_path_option(option)
-					]
-				)
-				path_positionals[key] = _unique(parsed["path_positionals"])
-				subcommands[key] = _unique(children)
 
-				if len(path) < MAX_FRAPPE_DEPTH:
-					next_pending.extend((*path, child) for child in children)
+def _unseen_frappe_paths(pending, seen):
+	paths = []
+	for path in pending:
+		key = _path_key((FRAPPE_KEY, *path))
+		if key in seen:
+			continue
+		seen.add(key)
+		paths.append(path)
+	return paths
 
-			pending = next_pending
+
+def _consume_frappe_help_futures(futures, spec, fallback_commands):
+	from concurrent.futures import as_completed
+
+	next_pending = []
+	for future in as_completed(futures):
+		path = futures[future]
+		next_pending.extend(
+			_record_frappe_spec_entry(path, future.result(), spec, fallback_commands)
+		)
+	return next_pending
+
+
+def _record_frappe_spec_entry(path, help_text, spec, fallback_commands):
+	parsed = _parse_click_help(help_text)
+	children = _frappe_children(path, parsed["commands"], fallback_commands)
+	key = _path_key((FRAPPE_KEY, *path))
+	spec[key] = _frappe_spec_entry(parsed, children)
+	return _child_frappe_paths(path, children)
+
+
+def _frappe_children(path, commands, fallback_commands):
+	if path or not fallback_commands:
+		return commands
+	return _unique([*commands, *fallback_commands])
+
+
+def _frappe_spec_entry(parsed, children):
+	value_options = _unique(parsed["value_options"])
+	return {
+		"commands": _unique(children),
+		"options": _unique(["--help", *parsed["options"]]),
+		"value_options": value_options,
+		"path_options": _unique(
+			[option for option in value_options if looks_like_path_option(option)]
+		),
+		"path_positionals": _unique(parsed["path_positionals"]),
+	}
+
+
+def _child_frappe_paths(path, children):
+	if len(path) >= MAX_FRAPPE_DEPTH:
+		return []
+	return [(*path, child) for child in children]
 
 
 def _get_frappe_help_text(bench_path, path) -> str:
