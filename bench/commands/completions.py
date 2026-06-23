@@ -711,7 +711,10 @@ _bench_complete_files() {
 	expanded="$(_bench_expand_tilde "$cur")"
 
 	compopt -o filenames 2>/dev/null
-	COMPREPLY=( $(compgen -f -- "$expanded") )
+	COMPREPLY=()
+	while IFS= read -r path; do
+		COMPREPLY+=("$path")
+	done < <(compgen -f -- "$expanded")
 
 	for ((i = 0; i < ${#COMPREPLY[@]}; i++)); do
 		if [[ -d "${COMPREPLY[i]}" && "${COMPREPLY[i]}" != */ ]]; then
