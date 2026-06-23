@@ -23,12 +23,8 @@ MAX_DEPTH = 4
 _PATH_NAME_HINTS = ("path", "file", "certificate", "sql", "clone_from")
 
 
-def _normalize_param_name(name: str) -> str:
-    return name.lower().replace("-", "_")
-
-
 def _looks_like_path_name(name: str) -> bool:
-    normalized = _normalize_param_name(name)
+    normalized = name.lower().replace("-", "_")
     return any(hint in normalized for hint in _PATH_NAME_HINTS)
 
 

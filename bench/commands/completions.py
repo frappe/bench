@@ -126,7 +126,7 @@ def build_completion_spec(root_command: click.Command, verbose: bool = True) -> 
 		root_command, (), subcommands, options, value_options, path_options, path_positionals
 	)
 
-	bench_path = _find_current_bench_path()
+	bench_path = find_parent_bench(os.path.abspath("."))
 	frappe_commands = []
 	if bench_path:
 		frappe_commands = _unique(get_env_frappe_commands(bench_path))
@@ -149,11 +149,6 @@ def build_completion_spec(root_command: click.Command, verbose: bool = True) -> 
 		"path_positionals": path_positionals,
 		"frappe_commands": frappe_commands,
 	}
-
-
-def _find_current_bench_path() -> str | None:
-	current_dir = os.path.abspath(".")
-	return find_parent_bench(current_dir)
 
 
 def _get_frappe_spec_batch(bench_path, verbose: bool = True) -> dict | None:
@@ -401,7 +396,7 @@ def _collect_command_tree(
 			flags = _unique([*param.opts, *param.secondary_opts])
 			command_options.extend(flags)
 
-			if _option_takes_value(param):
+			if not param.is_flag and param.nargs != 0:
 				command_value_options.extend(flags)
 				if _param_expects_path(param):
 					command_path_options.extend(flags)
@@ -434,11 +429,6 @@ def _collect_command_tree(
 			)
 	else:
 		subcommands[key] = []
-
-
-def _option_takes_value(option: click.Option) -> bool:
-	return not option.is_flag and option.nargs != 0
-
 
 def _normalize_param_name(name: str) -> str:
 	return name.lower().replace("-", "_")
@@ -626,55 +616,6 @@ _bench_join_path() {
 	fi
 
 	printf '%s %s' "$1" "$2"
-}
-
-_bench_collect_context() {
-	local ctx="$_BENCH_ROOT_KEY"
-	local skip_next=0
-	local index
-	local token
-	local value_opts
-	local subcommands
-
-	for ((index = 1; index < COMP_CWORD; index++)); do
-		token="${COMP_WORDS[index]}"
-
-		if (( skip_next )); then
-			skip_next=0
-			continue
-		fi
-
-		if [[ "$token" == "--" ]]; then
-			break
-		fi
-
-		value_opts="$(_bench_value_options_for "$ctx")"
-		if [[ "$ctx" == "$_BENCH_ROOT_KEY" ]]; then
-			value_opts="$value_opts $_BENCH_FORWARDED_VALUE_OPTIONS"
-		fi
-
-		if _bench_has_word "$token" "$value_opts"; then
-			skip_next=1
-			continue
-		fi
-
-		if [[ "$token" == -* ]]; then
-			continue
-		fi
-
-		subcommands="$(_bench_subcommands_for "$ctx")"
-		if _bench_has_word "$token" "$subcommands"; then
-			ctx="$(_bench_join_path "$ctx" "$token")"
-			continue
-		fi
-
-		if [[ "$ctx" == "$_BENCH_ROOT_KEY" ]] && _bench_has_word "$token" "$_BENCH_FRAPPE_COMMANDS"; then
-			ctx="$(_bench_join_path "$_BENCH_FRAPPE_KEY" "$token")"
-			continue
-		fi
-	done
-
-	printf '%s' "$ctx"
 }
 
 _bench_collect_completion_state() {
