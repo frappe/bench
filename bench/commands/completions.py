@@ -640,7 +640,7 @@ _bench_collect_completion_state() {
 		fi
 
 		value_opts="$(_bench_value_options_for "$ctx")"
-		if [[ "$ctx" == "$_BENCH_ROOT_KEY" ]]; then
+		if [[ "$ctx" == "$_BENCH_ROOT_KEY" || "$ctx" == "$_BENCH_FRAPPE_KEY" || "$ctx" == "$_BENCH_FRAPPE_KEY "* ]]; then
 			value_opts="$value_opts $_BENCH_FORWARDED_VALUE_OPTIONS"
 		fi
 
@@ -814,7 +814,7 @@ _bench_collect_completion_state() {
 		fi
 
 		value_opts=(${(z)"$(_bench_value_options_for "$ctx")"})
-		if [[ $ctx == $_BENCH_ROOT_KEY ]]; then
+		if [[ $ctx == $_BENCH_ROOT_KEY || $ctx == $_BENCH_FRAPPE_KEY || $ctx == $_BENCH_FRAPPE_KEY\ * ]]; then
 			value_opts+=(${(z)_BENCH_FORWARDED_VALUE_OPTIONS})
 		fi
 

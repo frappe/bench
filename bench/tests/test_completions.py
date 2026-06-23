@@ -378,7 +378,7 @@ class TestBenchCompletionGeneration(unittest.TestCase):
 
 		self.assertIn("nested-dir/", result.stdout.splitlines())
 
-	def test_runtime_completes_tilde_paths(self):
+	def test_runtime_completes_tilde_paths_after_forwarded_site(self):
 		def fake_help(cmd, cwd=".", _raise=True):
 			if "frappe restore --help" in cmd:
 				return (
@@ -423,8 +423,7 @@ class TestBenchCompletionGeneration(unittest.TestCase):
 						"bash",
 						"-c",
 						f"source {script_path} >/dev/null 2>&1 || true; "
-						"COMP_WORDS=(bench restore '~/downloads/b'); COMP_CWORD=2; "
-						"COMP_WORDS+=( '' ); COMP_CWORD=2; "
+						"COMP_WORDS=(bench restore --site mysite '~/downloads/b'); COMP_CWORD=4; "
 						"_bench_completion; "
 						'printf "%s\\n" "${COMPREPLY[@]}"',
 					],
@@ -502,7 +501,7 @@ class TestBenchCompletionGeneration(unittest.TestCase):
 		self.assertNotIn("_bench_has_word", result.stderr)
 		self.assertEqual(result.returncode, 0)
 
-	def test_zsh_completion_uses_tilde_paths_end_to_end(self):
+	def test_zsh_completion_uses_tilde_paths_after_forwarded_site(self):
 		def fake_help(cmd, cwd=".", _raise=True):
 			if "frappe restore --help" in cmd:
 				return (
@@ -544,7 +543,7 @@ class TestBenchCompletionGeneration(unittest.TestCase):
 			try:
 				result = _run_zsh_completion(
 					script_path,
-					["bench", "restore", "~/downloads/b"],
+					["bench", "restore", "--site", "mysite", "~/downloads/b"],
 					cwd=bench_dir,
 					env={**os.environ, "HOME": bench_dir},
 				)
