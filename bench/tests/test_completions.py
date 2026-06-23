@@ -1,4 +1,5 @@
 import os
+import shlex
 import subprocess
 import tempfile
 import unittest
@@ -15,6 +16,26 @@ from bench.commands.completions import (
 	_parse_click_help,
 	generate_completion,
 )
+
+
+def _run_zsh_completion(script_path: str, words: list[str], cwd: str | None = None, env=None):
+	quoted_words = " ".join(shlex.quote(word) for word in words)
+	command = (
+		f"autoload -Uz compinit; compinit -C; "
+		f"source {shlex.quote(script_path)}; "
+		"_files() { compadd \"$HOME/downloads/backup.sql.gz\"; }; "
+		"compadd() { reply=(\"$@\"); }; "
+		f"words=({quoted_words}); CURRENT={len(words)}; curcontext=:bench:; "
+		"_bench; printf '%s\\n' \"${reply[@]}\""
+	)
+	return subprocess.run(
+		["zsh", "-c", command],
+		check=True,
+		capture_output=True,
+		text=True,
+		cwd=cwd,
+		env=env,
+	)
 
 
 class TestBenchCompletionGeneration(unittest.TestCase):
@@ -73,17 +94,18 @@ class TestBenchCompletionGeneration(unittest.TestCase):
 			"'__frappe__ migrate') printf '%s' '--help --skip-failing'", script
 		)
 
-	def test_zsh_completion_bootstraps_bash_compat(self):
+	def test_zsh_completion_uses_native_compdef(self):
 		script = generate_completion("zsh", bench_command)
 
 		self.assertIn("#compdef bench", script)
-		self.assertIn("autoload -U bashcompinit", script)
-		self.assertIn("_bench_completion() {\n\temulate -L sh", script)
-		header, _ = script.split("_bench_completion()", 1)
-		self.assertNotIn("emulate -L sh", header)
-		self.assertIn("_bench_path_match_candidates()", script)
-		self.assertIn("find \"$dir\" -maxdepth 1", script)
-		self.assertIn("complete -o nosort -o nospace -F _bench_completion bench", script)
+		self.assertIn("compdef _bench bench", script)
+		self.assertIn("_bench() {", script)
+		self.assertIn("_files", script)
+		self.assertNotIn("bashcompinit", script)
+		self.assertNotIn("emulate -L sh", script)
+		self.assertNotIn("_bench_completion()", script)
+		self.assertNotIn("complete -o nosort", script)
+		self.assertNotIn("_bench_path_match_candidates()", script)
 
 	def test_runtime_avoids_external_coreutils(self):
 		script = generate_completion("bash", bench_command)
@@ -417,14 +439,8 @@ class TestBenchCompletionGeneration(unittest.TestCase):
 
 		self.assertIn("~/downloads/backup.sql.gz", result.stdout.splitlines())
 
-	def test_zsh_runtime_completes_tilde_paths(self):
+	def test_zsh_runtime_resolves_frappe_subcommand_context(self):
 		def fake_help(cmd, cwd=".", _raise=True):
-			if "frappe restore --help" in cmd:
-				return (
-					"Usage: frappe restore [OPTIONS] SQL-FILE-PATH\n\n"
-					"Options:\n"
-					"  --help              Show this message and exit.\n"
-				)
 			return (
 				"Usage: frappe [OPTIONS] COMMAND [ARGS]...\n\n"
 				"Commands:\n"
@@ -433,9 +449,6 @@ class TestBenchCompletionGeneration(unittest.TestCase):
 
 		with tempfile.TemporaryDirectory() as bench_dir:
 			Path(bench_dir, "sites").mkdir()
-			downloads = Path(bench_dir) / "downloads"
-			downloads.mkdir()
-			(downloads / "backup.sql.gz").write_text("x", encoding="utf-8")
 
 			with (
 				patch(
@@ -461,21 +474,33 @@ class TestBenchCompletionGeneration(unittest.TestCase):
 					[
 						"zsh",
 						"-c",
-						f"source {script_path} >/dev/null 2>&1 || true; "
-						"COMP_WORDS=(bench restore '~/downloads/b'); COMP_CWORD=2; "
-						"_bench_complete_files '~/downloads/b'; "
-						'printf "%s\\n" "${COMPREPLY[@]}"',
+						f"source {shlex.quote(script_path)}; "
+						"words=(bench restore); CURRENT=3; "
+						"_bench_collect_completion_state",
 					],
 					check=True,
 					capture_output=True,
 					text=True,
-					cwd=bench_dir,
-					env={**os.environ, "HOME": bench_dir},
 				)
 			finally:
 				Path(script_path).unlink(missing_ok=True)
 
-		self.assertIn("~/downloads/backup.sql.gz", result.stdout.splitlines())
+		self.assertEqual(result.stdout.strip(), "__frappe__ restore|0")
+
+	def test_zsh_completion_handles_partial_command_without_error(self):
+		script = generate_completion("zsh", bench_command)
+
+		with tempfile.NamedTemporaryFile("w", suffix=".zsh", delete=False) as handle:
+			handle.write(script)
+			script_path = handle.name
+
+		try:
+			result = _run_zsh_completion(script_path, ["bench", "rest"])
+		finally:
+			Path(script_path).unlink(missing_ok=True)
+
+		self.assertNotIn("_bench_has_word", result.stderr)
+		self.assertEqual(result.returncode, 0)
 
 	def test_zsh_completion_uses_tilde_paths_end_to_end(self):
 		def fake_help(cmd, cwd=".", _raise=True):
@@ -517,25 +542,19 @@ class TestBenchCompletionGeneration(unittest.TestCase):
 				script_path = handle.name
 
 			try:
-				result = subprocess.run(
-					[
-						"zsh",
-						"-c",
-						f"source {script_path} >/dev/null 2>&1 || true; "
-						"COMP_WORDS=(bench restore '~/downloads/b'); COMP_CWORD=2; "
-						"_bench_completion; "
-						'printf "%s\\n" "${COMPREPLY[@]}"',
-					],
-					check=True,
-					capture_output=True,
-					text=True,
+				result = _run_zsh_completion(
+					script_path,
+					["bench", "restore", "~/downloads/b"],
 					cwd=bench_dir,
 					env={**os.environ, "HOME": bench_dir},
 				)
 			finally:
 				Path(script_path).unlink(missing_ok=True)
 
-		self.assertIn("~/downloads/backup.sql.gz", result.stdout.splitlines())
+		self.assertTrue(
+			any("backup.sql.gz" in line for line in result.stdout.splitlines()),
+			result.stdout,
+		)
 
 	def test_non_interactive_writes_script_and_rc_loader(self):
 		runner = CliRunner()

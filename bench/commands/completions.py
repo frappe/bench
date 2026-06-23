@@ -486,52 +486,56 @@ def _unique(values):
 
 
 def render_bash_completion(spec: dict) -> str:
-	return _render_completion_script(spec, shell="bash")
+	parts = [
+		"# shellcheck shell=bash",
+		*_render_spec_constants(spec),
+		"",
+		_render_case_function("_bench_subcommands_for", spec["subcommands"]),
+		"",
+		_render_case_function("_bench_options_for", spec["options"]),
+		"",
+		_render_case_function("_bench_value_options_for", spec["value_options"]),
+		"",
+		_render_case_function("_bench_path_options_for", spec["path_options"]),
+		"",
+		_render_case_function("_bench_path_positionals_for", spec["path_positionals"]),
+		"",
+		_render_bash_runtime(),
+		"",
+		"complete -o nosort -o nospace -F _bench_completion bench",
+	]
+	return "\n".join(parts) + "\n"
 
 
 def render_zsh_completion(spec: dict) -> str:
-	return _render_completion_script(spec, shell="zsh")
-
-
-def _render_completion_script(spec: dict, shell: str) -> str:
-	parts = []
-
-	if shell == "zsh":
-		parts.extend(
-			[
-				"#compdef bench",
-				"autoload -U bashcompinit",
-				"bashcompinit",
-				"",
-			]
-		)
-
-	parts.extend(
-		[
-			"# shellcheck shell=bash",
-			f"_BENCH_ROOT_KEY={shlex.quote(ROOT_KEY)}",
-			f"_BENCH_FRAPPE_KEY={shlex.quote(FRAPPE_KEY)}",
-			f"_BENCH_FRAPPE_COMMANDS={shlex.quote(' '.join(spec['frappe_commands']))}",
-			f"_BENCH_FORWARDED_FLAGS={shlex.quote(' '.join(FORWARDED_FLAGS))}",
-			f"_BENCH_FORWARDED_VALUE_OPTIONS={shlex.quote(' '.join(FORWARDED_VALUE_OPTIONS))}",
-			"",
-			_render_case_function("_bench_subcommands_for", spec["subcommands"]),
-			"",
-			_render_case_function("_bench_options_for", spec["options"]),
-			"",
-			_render_case_function("_bench_value_options_for", spec["value_options"]),
-			"",
-			_render_case_function("_bench_path_options_for", spec["path_options"]),
-			"",
-			_render_case_function("_bench_path_positionals_for", spec["path_positionals"]),
-			"",
-			_render_bash_runtime(shell),
-			"",
-			"complete -o nosort -o nospace -F _bench_completion bench",
-		]
-	)
-
+	parts = [
+		"#compdef bench",
+		"",
+		*_render_spec_constants(spec),
+		"",
+		_render_case_function("_bench_subcommands_for", spec["subcommands"]),
+		"",
+		_render_case_function("_bench_options_for", spec["options"]),
+		"",
+		_render_case_function("_bench_value_options_for", spec["value_options"]),
+		"",
+		_render_case_function("_bench_path_options_for", spec["path_options"]),
+		"",
+		_render_case_function("_bench_path_positionals_for", spec["path_positionals"]),
+		"",
+		_ZSH_RUNTIME,
+	]
 	return "\n".join(parts) + "\n"
+
+
+def _render_spec_constants(spec: dict) -> list[str]:
+	return [
+		f"_BENCH_ROOT_KEY={shlex.quote(ROOT_KEY)}",
+		f"_BENCH_FRAPPE_KEY={shlex.quote(FRAPPE_KEY)}",
+		f"_BENCH_FRAPPE_COMMANDS={shlex.quote(' '.join(spec['frappe_commands']))}",
+		f"_BENCH_FORWARDED_FLAGS={shlex.quote(' '.join(FORWARDED_FLAGS))}",
+		f"_BENCH_FORWARDED_VALUE_OPTIONS={shlex.quote(' '.join(FORWARDED_VALUE_OPTIONS))}",
+	]
 
 
 def _render_case_function(name: str, mapping: dict) -> str:
@@ -545,18 +549,8 @@ def _render_case_function(name: str, mapping: dict) -> str:
 	return "\n".join(lines)
 
 
-def _render_bash_runtime(shell: str) -> str:
-	complete_files = (
-		_BENCH_COMPLETE_FILES_ZSH if shell == "zsh" else _BENCH_COMPLETE_FILES_BASH
-	)
-	suffix = _BASH_RUNTIME_SUFFIX
-	if shell == "zsh":
-		suffix = suffix.replace(
-			"_bench_completion() {\n\tlocal cur=",
-			"_bench_completion() {\n\temulate -L sh\n\tlocal cur=",
-			1,
-		)
-	return _BASH_RUNTIME_PREFIX + complete_files + suffix
+def _render_bash_runtime() -> str:
+	return _BASH_RUNTIME_PREFIX + _BENCH_COMPLETE_FILES_BASH + _BASH_RUNTIME_SUFFIX
 
 
 _BASH_RUNTIME_PREFIX = r"""_bench_find_root() {
@@ -791,65 +785,181 @@ _bench_complete_files() {
 
 """
 
-_BENCH_COMPLETE_FILES_ZSH = r"""_bench_expand_tilde() {
-	local cur="$1"
+_ZSH_RUNTIME = r"""_bench_find_root() {
+	local dir=$PWD
 
-	if [[ "$cur" == "~" || "$cur" == "~/"* ]]; then
-		printf '%s' "${cur/#\~/$HOME}"
+	while [[ -n $dir && $dir != / ]]; do
+		if [[ -d $dir/apps && -d $dir/sites && -d $dir/config && -d $dir/logs ]]; then
+			print -r -- $dir
+			return 0
+		fi
+		dir=${dir:h}
+	done
+
+	return 1
+}
+
+_bench_list_sites() {
+	local root site_config site
+
+	root=$(_bench_find_root) || return 0
+
+	for site_config in $root/sites/*/site_config.json(N); do
+		site=${site_config:h:t}
+		print -r -- $site
+	done
+}
+
+_bench_list_apps() {
+	local root app line
+
+	root=$(_bench_find_root) || return 0
+
+	if [[ -f $root/sites/apps.txt ]]; then
+		while IFS= read -r line; do
+			[[ -n $line ]] || continue
+			print -r -- $line
+		done < $root/sites/apps.txt
 		return 0
 	fi
 
-	printf '%s' "$cur"
+	for app in $root/apps/*(N/); do
+		print -r -- ${app:t}
+	done
 }
 
-_bench_path_match_candidates() {
-	local expanded="$1"
-	local dir prefix
+_bench_has_word() {
+	(( $# )) || return 1
+	local needle=$1
+	shift
+	local word
 
-	if [[ -d "$expanded" ]]; then
-		find "$expanded" -mindepth 1 -maxdepth 1 -print 2>/dev/null
+	for word in "$@"; do
+		[[ $word == $needle ]] && return 0
+	done
+
+	return 1
+}
+
+_bench_join_path() {
+	if [[ $1 == $_BENCH_ROOT_KEY ]]; then
+		print -r -- $2
 		return 0
 	fi
 
-	if [[ "$expanded" == */* ]]; then
-		dir="${expanded%/*}"
-		prefix="${expanded##*/}"
-	else
-		dir="."
-		prefix="$expanded"
-	fi
-
-	find "$dir" -maxdepth 1 -name "${prefix}"'*' -print 2>/dev/null
+	print -r -- $1 $2
 }
 
-_bench_complete_files() {
-	local cur="$1"
-	local expanded use_tilde=0
-	local match
-	local i
+_bench_collect_completion_state() {
+	local ctx=$_BENCH_ROOT_KEY
+	local positional_index=0
+	local skip_next=0
+	local i token value_opts subcommands
 
-	if [[ "$cur" == "~" || "$cur" == "~/"* ]]; then
-		use_tilde=1
-	fi
+	for (( i = 2; i < CURRENT; i++ )); do
+		token=$words[i]
 
-	expanded="$(_bench_expand_tilde "$cur")"
-	COMPREPLY=()
-
-	while IFS= read -r match; do
-		[[ -n "$match" ]] || continue
-
-		if [[ -d "$match" && "$match" != */ ]]; then
-			match="${match}/"
+		if (( skip_next )); then
+			skip_next=0
+			continue
 		fi
 
-		if (( use_tilde )) && [[ "$match" == "$HOME"/* || "$match" == "$HOME" ]]; then
-			match="~${match#$HOME}"
+		if [[ $token == -- ]]; then
+			break
 		fi
 
-		COMPREPLY+=("$match")
-	done < <(_bench_path_match_candidates "$expanded")
+		value_opts=(${(z)"$(_bench_value_options_for "$ctx")"})
+		if [[ $ctx == $_BENCH_ROOT_KEY ]]; then
+			value_opts+=(${(z)_BENCH_FORWARDED_VALUE_OPTIONS})
+		fi
+
+		if _bench_has_word $token $value_opts; then
+			skip_next=1
+			continue
+		fi
+
+		if [[ $token == -* ]]; then
+			continue
+		fi
+
+		subcommands=(${(z)"$(_bench_subcommands_for "$ctx")"})
+		if _bench_has_word $token $subcommands; then
+			ctx=$(_bench_join_path "$ctx" "$token")
+			positional_index=0
+			continue
+		fi
+
+		if [[ $ctx == $_BENCH_ROOT_KEY ]] && _bench_has_word $token ${(z)_BENCH_FRAPPE_COMMANDS}; then
+			ctx=$(_bench_join_path "$_BENCH_FRAPPE_KEY" "$token")
+			positional_index=0
+			continue
+		fi
+
+		(( positional_index++ ))
+	done
+
+	print -r -- $ctx\|$positional_index
 }
 
+_bench() {
+	local curcontext=$curcontext state
+	local cur prev ctx positional_index
+	local -a state_parts options subcommands path_options path_positionals words_list lines
+
+	cur=$words[CURRENT]
+	(( CURRENT > 2 )) && prev=$words[CURRENT-1]
+
+	case $prev in
+		(--site|-s)
+			lines=(${(@f)"$(_bench_list_sites)"})
+			[[ ${#lines[@]} -gt 0 ]] && _describe -t sites site lines
+			return $?
+			;;
+		(--app)
+			lines=(${(@f)"$(_bench_list_apps)"})
+			[[ ${#lines[@]} -gt 0 ]] && _describe -t apps app lines
+			return $?
+			;;
+	esac
+
+	state_parts=("${(@s:|:)$(_bench_collect_completion_state)}")
+	ctx=$state_parts[1]
+	positional_index=$state_parts[2]
+
+	path_options=(${(z)"$(_bench_path_options_for "$ctx")"})
+	if _bench_has_word $prev $path_options; then
+		_files
+		return $?
+	fi
+
+	path_positionals=(${(z)"$(_bench_path_positionals_for "$ctx")"})
+	if [[ $cur != -* ]] && _bench_has_word $positional_index $path_positionals; then
+		_files
+		return $?
+	fi
+
+	options=(${(z)"$(_bench_options_for "$ctx")"})
+	subcommands=(${(z)"$(_bench_subcommands_for "$ctx")"})
+
+	if [[ $ctx == $_BENCH_ROOT_KEY ]]; then
+		subcommands+=(${(z)_BENCH_FRAPPE_COMMANDS})
+		options+=(${(z)_BENCH_FORWARDED_FLAGS})
+		options+=(${(z)_BENCH_FORWARDED_VALUE_OPTIONS})
+	elif [[ $ctx == $_BENCH_FRAPPE_KEY || $ctx == $_BENCH_FRAPPE_KEY\ * ]]; then
+		options+=(${(z)_BENCH_FORWARDED_FLAGS})
+		options+=(${(z)_BENCH_FORWARDED_VALUE_OPTIONS})
+	fi
+
+	if [[ $cur == -* ]]; then
+		[[ ${#options[@]} -gt 0 ]] && _describe -t options option options
+		return $?
+	fi
+
+	words_list=($subcommands $options)
+	[[ ${#words_list[@]} -gt 0 ]] && _describe -t commands command words_list
+}
+
+compdef _bench bench
 """
 
 _BASH_RUNTIME_SUFFIX = r"""_bench_completion() {
