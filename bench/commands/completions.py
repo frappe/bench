@@ -386,50 +386,71 @@ def _collect_command_tree(
 	path_positionals,
 ):
 	key = _path_key(path)
+	(
+		options[key],
+		value_options[key],
+		path_options[key],
+		path_positionals[key],
+	) = _command_completion_metadata(command)
+
+	subcommands[key] = _command_child_names(command)
+	for name, child in _command_map(command).items():
+		_collect_command_tree(
+			child,
+			(*path, name),
+			subcommands,
+			options,
+			value_options,
+			path_options,
+			path_positionals,
+		)
+
+
+def _command_completion_metadata(command: click.Command):
 	command_options = ["--help"]
 	command_value_options = []
 	command_path_options = []
-	command_path_positionals = []
-	positional_index = 0
 
-	for param in command.params:
-		if isinstance(param, click.Option):
-			flags = _unique([*param.opts, *param.secondary_opts])
-			command_options.extend(flags)
+	for option in _command_options(command):
+		flags = _unique([*option.opts, *option.secondary_opts])
+		command_options.extend(flags)
+		command_value_options.extend(flags if _option_takes_value(option) else [])
+		command_path_options.extend(
+			flags if _option_takes_value(option) and param_expects_path(option) else []
+		)
 
-			if not param.is_flag and param.nargs != 0:
-				command_value_options.extend(flags)
-				if param_expects_path(param):
-					command_path_options.extend(flags)
-			continue
+	return (
+		_unique(command_options),
+		_unique(command_value_options),
+		_unique(command_path_options),
+		_path_positional_indexes(command),
+	)
 
-		if isinstance(param, click.Argument):
-			if param_expects_path(param):
-				command_path_positionals.append(str(positional_index))
-			positional_index += 1
 
-	options[key] = _unique(command_options)
-	value_options[key] = _unique(command_value_options)
-	path_options[key] = _unique(command_path_options)
-	path_positionals[key] = _unique(command_path_positionals)
+def _command_options(command: click.Command):
+	return (param for param in command.params if isinstance(param, click.Option))
 
-	command_map = getattr(command, "commands", None)
-	if command_map is not None:
-		children = _unique(list(command_map.keys()))
-		subcommands[key] = children
 
-		for name, child in command_map.items():
-			_collect_command_tree(
-				child,
-				(*path, name),
-				subcommands,
-				options,
-				value_options,
-				path_options,
-				path_positionals,
-			)
-	else:
-		subcommands[key] = []
+def _option_takes_value(option: click.Option) -> bool:
+	return not option.is_flag and option.nargs != 0
+
+
+def _path_positional_indexes(command: click.Command):
+	return [
+		str(index)
+		for index, param in enumerate(
+			param for param in command.params if isinstance(param, click.Argument)
+		)
+		if param_expects_path(param)
+	]
+
+def _command_child_names(command: click.Command):
+	return _unique(list(_command_map(command).keys()))
+
+
+def _command_map(command: click.Command):
+	return getattr(command, "commands", None) or {}
+
 
 def _usage_positional_tokens(usage_line: str) -> list[str]:
 	import re
