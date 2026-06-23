@@ -24,39 +24,80 @@ FRAPPE_KEY = "__frappe__"
 MAX_DEPTH = 4
 
 
-def _walk(cmd, path, depth, result):
-	key = f"{FRAPPE_KEY} {' '.join(path)}" if path else FRAPPE_KEY
-	opts, vopts, path_opts, path_pos, kids = [], [], [], [], []
-	positional_index = 0
+def _dedupe(values):
+	return list(dict.fromkeys(values))
 
-	for param in cmd.params:
-		if isinstance(param, click.Option):
-			flags = list(dict.fromkeys([*param.opts, *(param.secondary_opts or [])]))
-			opts.extend(flags)
-			if not param.is_flag and param.nargs != 0:
-				vopts.extend(flags)
-				if param_expects_path(param):
-					path_opts.extend(flags)
+
+def _option_flags(param):
+	return _dedupe([*param.opts, *(param.secondary_opts or [])])
+
+
+def _scan_option(param):
+	flags = _option_flags(param)
+	if param.is_flag or param.nargs == 0:
+		return flags, [], []
+
+	path_flags = flags if param_expects_path(param) else []
+	return flags, flags, path_flags
+
+
+def _scan_options(params):
+	options = []
+	value_options = []
+	path_options = []
+
+	for param in params:
+		if not isinstance(param, click.Option):
 			continue
 
-		if isinstance(param, click.Argument):
-			if param_expects_path(param):
-				path_pos.append(str(positional_index))
-			positional_index += 1
+		flags, value_flags, path_flags = _scan_option(param)
+		options.extend(flags)
+		value_options.extend(value_flags)
+		path_options.extend(path_flags)
 
-	if hasattr(cmd, "commands") and depth < MAX_DEPTH:
-		for name, child in cmd.commands.items():
-			kids.append(name)
-			_walk(child, path + [name], depth + 1, result)
+	return options, value_options, path_options
 
-	result[key] = {
-		"options": list(dict.fromkeys(["--help", *opts])),
-		"value_options": list(dict.fromkeys(vopts)),
-		"path_options": list(dict.fromkeys(path_opts)),
-		"path_positionals": list(dict.fromkeys(path_pos)),
-		"commands": kids,
+
+def _path_positionals(params):
+	path_positionals = []
+	positional_index = 0
+
+	for param in params:
+		if not isinstance(param, click.Argument):
+			continue
+		if param_expects_path(param):
+			path_positionals.append(str(positional_index))
+		positional_index += 1
+
+	return path_positionals
+
+
+def _walk_children(cmd, path, depth, result):
+	commands = getattr(cmd, "commands", None)
+	if not commands or depth >= MAX_DEPTH:
+		return []
+
+	for name, child in commands.items():
+		_walk(child, path + [name], depth + 1, result)
+	return list(commands)
+
+
+def _completion_spec(cmd, path, depth, result):
+	options, value_options, path_options = _scan_options(cmd.params)
+	child_commands = _walk_children(cmd, path, depth, result)
+
+	return {
+		"options": _dedupe(["--help", *options]),
+		"value_options": _dedupe(value_options),
+		"path_options": _dedupe(path_options),
+		"path_positionals": _dedupe(_path_positionals(cmd.params)),
+		"commands": child_commands,
 	}
 
+
+def _walk(cmd, path, depth, result):
+	key = f"{FRAPPE_KEY} {' '.join(path)}" if path else FRAPPE_KEY
+	result[key] = _completion_spec(cmd, path, depth, result)
 	label = " ".join(["frappe", *path]) if path else "frappe"
 	print(f"  {label}", file=sys.stderr, flush=True)
 
