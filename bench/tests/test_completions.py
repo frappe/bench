@@ -3,6 +3,7 @@ import shlex
 import subprocess
 import tempfile
 import unittest
+from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import patch
 
@@ -38,54 +39,143 @@ def _run_zsh_completion(script_path: str, words: list[str], cwd: str | None = No
 	)
 
 
-class TestBenchCompletionGeneration(unittest.TestCase):
-	def test_bash_completion_is_shell_only(self):
-		script = generate_completion("bash", bench_command)
+def _frappe_root_help(commands: list[str]) -> str:
+	return (
+		"Usage: frappe [OPTIONS] COMMAND [ARGS]...\n\n"
+		"Options:\n"
+		"  --site TEXT\n"
+		"  --help      Show this message and exit.\n\n"
+		"Commands:\n"
+		+ "".join(f"  {command}\n" for command in commands)
+	)
 
-		self.assertIn("_bench_subcommands_for()", script)
-		self.assertIn("complete -o nosort -o nospace -F _bench_completion bench", script)
-		self.assertNotIn("_BENCH_COMPLETE", script)
 
-	def test_generation_embeds_current_frappe_commands(self):
-		def fake_help(cmd, cwd=".", _raise=True):
-			if "frappe migrate --help" in cmd:
-				return (
-					"Usage: frappe migrate [OPTIONS]\n\n"
-					"Options:\n"
-					"  --skip-failing TEXT\n"
-					"  --help              Show this message and exit.\n"
-				)
-			if "frappe list-apps --help" in cmd:
-				return (
-					"Usage: frappe list-apps [OPTIONS]\n\n"
-					"Options:\n"
-					"  --format TEXT\n"
-					"  --help         Show this message and exit.\n"
-				)
-			return (
-				"Usage: frappe [OPTIONS] COMMAND [ARGS]...\n\n"
-				"Options:\n"
-				"  --site TEXT\n"
-				"  --help      Show this message and exit.\n\n"
-				"Commands:\n"
-				"  migrate\n"
-				"  list-apps\n"
-			)
+def _frappe_command_help(command: str, usage: str = "[OPTIONS]", options=()) -> str:
+	return (
+		f"Usage: frappe {command} {usage}\n\n"
+		"Options:\n"
+		+ "".join(f"  {option}\n" for option in options)
+		+ "  --help              Show this message and exit.\n"
+	)
+
+
+def _fake_frappe_help(commands: list[str], help_by_command: dict[str, str] | None = None):
+	help_by_command = help_by_command or {}
+
+	def fake_help(cmd, cwd=".", _raise=True):
+		for command, help_text in help_by_command.items():
+			if f"frappe {command} --help" in cmd:
+				return help_text
+		return _frappe_root_help(commands)
+
+	return fake_help
+
+
+@contextmanager
+def _mock_frappe_completion(commands: list[str], help_by_command: dict[str, str] | None = None):
+	with tempfile.TemporaryDirectory() as bench_dir:
+		bench_path = Path(bench_dir)
+		(bench_path / "sites").mkdir()
 
 		with (
-			tempfile.TemporaryDirectory() as bench_dir,
 			patch(
 				"bench.commands.completions.get_env_frappe_commands",
-				return_value=["migrate", "list-apps", "migrate"],
+				return_value=commands,
 			),
 			patch(
 				"bench.commands.completions.find_parent_bench",
 				return_value=bench_dir,
 			),
 			patch("bench.commands.completions.get_env_cmd", return_value="python"),
-			patch("bench.commands.completions.get_cmd_output", side_effect=fake_help),
+			patch("bench.commands.completions._get_frappe_spec_batch", return_value=None),
+			patch(
+				"bench.commands.completions.get_cmd_output",
+				side_effect=_fake_frappe_help(commands, help_by_command),
+			),
 		):
-			script = generate_completion("bash", bench_command)
+			yield bench_path
+
+
+def _generate_frappe_completion(
+	shell: str,
+	commands: list[str],
+	help_by_command: dict[str, str] | None = None,
+) -> str:
+	with _mock_frappe_completion(commands, help_by_command):
+		return generate_completion(shell, bench_command)
+
+
+@contextmanager
+def _temporary_completion_script(script: str, suffix: str):
+	with tempfile.NamedTemporaryFile("w", suffix=suffix, delete=False) as handle:
+		handle.write(script)
+		script_path = handle.name
+
+	try:
+		yield script_path
+	finally:
+		Path(script_path).unlink(missing_ok=True)
+
+
+def _run_bash_completion_script(
+	script: str,
+	command: str,
+	cwd: str | Path | None = None,
+	env=None,
+):
+	with _temporary_completion_script(script, ".sh") as script_path:
+		return subprocess.run(
+			[
+				"bash",
+				"-c",
+				f"source {shlex.quote(script_path)} >/dev/null 2>&1 || true; {command}",
+			],
+			check=True,
+			capture_output=True,
+			text=True,
+			cwd=cwd,
+			env=env,
+		)
+
+
+class TestBenchCompletionGeneration(unittest.TestCase):
+	def assertContainsAll(self, script: str, snippets):
+		for snippet in snippets:
+			with self.subTest(snippet=snippet):
+				self.assertIn(snippet, script)
+
+	def assertContainsNone(self, script: str, snippets):
+		for snippet in snippets:
+			with self.subTest(snippet=snippet):
+				self.assertNotIn(snippet, script)
+
+	def test_bash_completion_is_shell_only(self):
+		script = generate_completion("bash", bench_command)
+
+		self.assertContainsAll(
+			script,
+			[
+				"_bench_subcommands_for()",
+				"complete -o nosort -o nospace -F _bench_completion bench",
+			],
+		)
+		self.assertContainsNone(script, ["_BENCH_COMPLETE"])
+
+	def test_generation_embeds_current_frappe_commands(self):
+		script = _generate_frappe_completion(
+			"bash",
+			["migrate", "list-apps", "migrate"],
+			{
+				"migrate": _frappe_command_help(
+					"migrate",
+					options=["--skip-failing TEXT"],
+				),
+				"list-apps": _frappe_command_help(
+					"list-apps",
+					options=["--format TEXT"],
+				),
+			},
+		)
 
 		self.assertIn("_BENCH_FRAPPE_COMMANDS='migrate list-apps'", script)
 		self.assertIn("__frappe__) printf '%s' 'migrate list-apps'", script)
@@ -97,42 +187,53 @@ class TestBenchCompletionGeneration(unittest.TestCase):
 	def test_zsh_completion_uses_native_compdef(self):
 		script = generate_completion("zsh", bench_command)
 
-		self.assertIn("#compdef bench", script)
-		self.assertIn("compdef _bench bench", script)
-		self.assertIn("_bench() {", script)
-		self.assertIn("_files", script)
-		self.assertNotIn("bashcompinit", script)
-		self.assertNotIn("emulate -L sh", script)
-		self.assertNotIn("_bench_completion()", script)
-		self.assertNotIn("complete -o nosort", script)
-		self.assertNotIn("_bench_path_match_candidates()", script)
+		self.assertContainsAll(
+			script,
+			["#compdef bench", "compdef _bench bench", "_bench() {", "_files"],
+		)
+		self.assertContainsNone(
+			script,
+			[
+				"bashcompinit",
+				"emulate -L sh",
+				"_bench_completion()",
+				"complete -o nosort",
+				"_bench_path_match_candidates()",
+			],
+		)
 
 	def test_runtime_avoids_external_coreutils(self):
 		script = generate_completion("bash", bench_command)
 
-		self.assertNotIn("tr '\\n' ' '", script)
-		self.assertNotIn("dirname", script)
-		self.assertNotIn("basename", script)
+		self.assertContainsNone(script, ["tr '\\n' ' '", "dirname", "basename"])
 
 	def test_bash_completion_includes_file_path_helpers(self):
 		script = generate_completion("bash", bench_command)
 
-		self.assertIn("_bench_path_options_for()", script)
-		self.assertIn("_bench_path_positionals_for()", script)
-		self.assertIn("_bench_complete_files()", script)
-		self.assertIn("compgen -f", script)
-		self.assertNotIn('matches=("$dir"/${base}*(N))', script)
-		self.assertNotIn("_bench_path_match_candidates()", script)
-		self.assertIn("complete -o nosort -o nospace -F _bench_completion bench", script)
-		self.assertIn("_bench_expand_tilde()", script)
-		self.assertIn('COMPREPLY[i]="~${COMPREPLY[i]#$HOME}"', script)
+		self.assertContainsAll(
+			script,
+			[
+				"_bench_path_options_for()",
+				"_bench_path_positionals_for()",
+				"_bench_complete_files()",
+				"compgen -f",
+				"complete -o nosort -o nospace -F _bench_completion bench",
+				"_bench_expand_tilde()",
+				'COMPREPLY[i]="~${COMPREPLY[i]#$HOME}"',
+			],
+		)
+		self.assertContainsNone(
+			script,
+			['matches=("$dir"/${base}*(N))', "_bench_path_match_candidates()"],
+		)
 
 	def test_bench_init_registers_path_completion(self):
 		script = generate_completion("bash", bench_command)
 
-		self.assertIn("init) printf '%s' 0", script)
-		self.assertIn("--frappe-path", script)
-		self.assertIn("--clone-from", script)
+		self.assertContainsAll(
+			script,
+			["init) printf '%s' 0", "--frappe-path", "--clone-from"],
+		)
 
 	def test_help_fallback_detects_path_options_and_positionals(self):
 		parsed = _parse_click_help(
@@ -159,47 +260,21 @@ class TestBenchCompletionGeneration(unittest.TestCase):
 		self.assertFalse(_looks_like_path_name("format"))
 
 	def test_frappe_restore_path_completion_via_help_fallback(self):
-		def fake_help(cmd, cwd=".", _raise=True):
-			if "frappe restore --help" in cmd:
-				return (
-					"Usage: frappe restore [OPTIONS] SQL-FILE-PATH\n\n"
-					"Options:\n"
-					"  --with-public-files PATH\n"
-					"  --with-private-files PATH\n"
-					"  --help              Show this message and exit.\n"
-				)
-			if "frappe backup --help" in cmd:
-				return (
-					"Usage: frappe backup [OPTIONS]\n\n"
-					"Options:\n"
-					"  --backup-path PATH\n"
-					"  --help           Show this message and exit.\n"
-				)
-			return (
-				"Usage: frappe [OPTIONS] COMMAND [ARGS]...\n\n"
-				"Options:\n"
-				"  --site TEXT\n"
-				"  --help      Show this message and exit.\n\n"
-				"Commands:\n"
-				"  restore\n"
-				"  backup\n"
-			)
-
-		with (
-			tempfile.TemporaryDirectory() as bench_dir,
-			patch(
-				"bench.commands.completions.get_env_frappe_commands",
-				return_value=["restore", "backup"],
-			),
-			patch(
-				"bench.commands.completions.find_parent_bench",
-				return_value=bench_dir,
-			),
-			patch("bench.commands.completions.get_env_cmd", return_value="python"),
-			patch("bench.commands.completions._get_frappe_spec_batch", return_value=None),
-			patch("bench.commands.completions.get_cmd_output", side_effect=fake_help),
-		):
-			script = generate_completion("bash", bench_command)
+		script = _generate_frappe_completion(
+			"bash",
+			["restore", "backup"],
+			{
+				"restore": _frappe_command_help(
+					"restore",
+					"[OPTIONS] SQL-FILE-PATH",
+					["--with-public-files PATH", "--with-private-files PATH"],
+				),
+				"backup": _frappe_command_help(
+					"backup",
+					options=["--backup-path PATH"],
+				),
+			},
+		)
 
 		self.assertIn("'__frappe__ restore') printf '%s' 0", script)
 		self.assertIn("--with-public-files", script)
@@ -207,348 +282,131 @@ class TestBenchCompletionGeneration(unittest.TestCase):
 		self.assertIn("--backup-path", script)
 
 	def test_runtime_resolves_frappe_subcommand_context(self):
-		def fake_help(cmd, cwd=".", _raise=True):
-			return (
-				"Usage: frappe [OPTIONS] COMMAND [ARGS]...\n\n"
-				"Commands:\n"
-				"  restore\n"
-			)
-
-		with tempfile.TemporaryDirectory() as bench_dir:
-			Path(bench_dir, "sites").mkdir()
-
-			with (
-				patch(
-					"bench.commands.completions.get_env_frappe_commands",
-					return_value=["restore"],
-				),
-				patch(
-					"bench.commands.completions.find_parent_bench",
-					return_value=bench_dir,
-				),
-				patch("bench.commands.completions.get_env_cmd", return_value="python"),
-				patch("bench.commands.completions._get_frappe_spec_batch", return_value=None),
-				patch("bench.commands.completions.get_cmd_output", side_effect=fake_help),
-			):
-				script = generate_completion("bash", bench_command)
+		with _mock_frappe_completion(["restore"]):
+			script = generate_completion("bash", bench_command)
 
 			self.assertIn(
 				'ctx="$(_bench_join_path "$_BENCH_FRAPPE_KEY" "$token")"',
 				script,
 			)
 
-			with tempfile.NamedTemporaryFile("w", suffix=".sh", delete=False) as handle:
-				handle.write(script)
-				script_path = handle.name
-
-			try:
-				result = subprocess.run(
-					[
-						"bash",
-						"-c",
-						f"source {script_path} >/dev/null 2>&1 || true; "
-						"COMP_WORDS=(bench restore ''); COMP_CWORD=2; "
-						"_bench_collect_completion_state",
-					],
-					check=True,
-					capture_output=True,
-					text=True,
-				)
-			finally:
-				Path(script_path).unlink(missing_ok=True)
+			result = _run_bash_completion_script(
+				script,
+				"COMP_WORDS=(bench restore ''); COMP_CWORD=2; "
+				"_bench_collect_completion_state",
+			)
 
 		self.assertEqual(result.stdout.strip(), "__frappe__ restore|0")
 
 	def test_runtime_completes_files_for_restore(self):
-		def fake_help(cmd, cwd=".", _raise=True):
-			if "frappe restore --help" in cmd:
-				return (
-					"Usage: frappe restore [OPTIONS] SQL-FILE-PATH\n\n"
-					"Options:\n"
-					"  --with-public-files PATH\n"
-					"  --help              Show this message and exit.\n"
-				)
-			return (
-				"Usage: frappe [OPTIONS] COMMAND [ARGS]...\n\n"
-				"Options:\n"
-				"  --site TEXT\n"
-				"  --help      Show this message and exit.\n\n"
-				"Commands:\n"
-				"  restore\n"
+		with _mock_frappe_completion(
+			["restore"],
+			{
+				"restore": _frappe_command_help(
+					"restore",
+					"[OPTIONS] SQL-FILE-PATH",
+					["--with-public-files PATH"],
+				),
+			},
+		) as bench_dir:
+			script = generate_completion("bash", bench_command)
+
+			result = _run_bash_completion_script(
+				script,
+				"touch marker-restore-test; "
+				"COMP_WORDS=(bench restore ''); COMP_CWORD=2; "
+				"_bench_completion; "
+				'printf "%s\\n" "${COMPREPLY[@]}"',
+				cwd=bench_dir,
 			)
-
-		with tempfile.TemporaryDirectory() as bench_dir:
-			Path(bench_dir, "sites").mkdir()
-
-			with (
-				patch(
-					"bench.commands.completions.get_env_frappe_commands",
-					return_value=["restore"],
-				),
-				patch(
-					"bench.commands.completions.find_parent_bench",
-					return_value=bench_dir,
-				),
-				patch("bench.commands.completions.get_env_cmd", return_value="python"),
-				patch("bench.commands.completions._get_frappe_spec_batch", return_value=None),
-				patch("bench.commands.completions.get_cmd_output", side_effect=fake_help),
-			):
-				script = generate_completion("bash", bench_command)
-
-			with tempfile.NamedTemporaryFile("w", suffix=".sh", delete=False) as handle:
-				handle.write(script)
-				script_path = handle.name
-
-			try:
-				result = subprocess.run(
-					[
-						"bash",
-						"-c",
-						f"source {script_path} >/dev/null 2>&1 || true; "
-						"touch marker-restore-test; "
-						"COMP_WORDS=(bench restore ''); COMP_CWORD=2; "
-						"_bench_completion; "
-						'printf "%s\\n" "${COMPREPLY[@]}"',
-					],
-					check=True,
-					capture_output=True,
-					text=True,
-					cwd=bench_dir,
-				)
-			finally:
-				Path(script_path).unlink(missing_ok=True)
 
 		self.assertIn("marker-restore-test", result.stdout.splitlines())
 
 	def test_runtime_appends_slash_to_completed_directories(self):
-		def fake_help(cmd, cwd=".", _raise=True):
-			if "frappe restore --help" in cmd:
-				return (
-					"Usage: frappe restore [OPTIONS] SQL-FILE-PATH\n\n"
-					"Options:\n"
-					"  --help              Show this message and exit.\n"
-				)
-			return (
-				"Usage: frappe [OPTIONS] COMMAND [ARGS]...\n\n"
-				"Commands:\n"
-				"  restore\n"
+		with _mock_frappe_completion(
+			["restore"],
+			{"restore": _frappe_command_help("restore", "[OPTIONS] SQL-FILE-PATH")},
+		) as bench_dir:
+			(bench_dir / "nested-dir").mkdir()
+			script = generate_completion("bash", bench_command)
+
+			result = _run_bash_completion_script(
+				script,
+				"COMP_WORDS=(bench restore nested); COMP_CWORD=2; "
+				"COMP_WORDS+=( '' ); COMP_CWORD=2; "
+				"_bench_completion; "
+				'printf "%s\\n" "${COMPREPLY[@]}"',
+				cwd=bench_dir,
 			)
-
-		with tempfile.TemporaryDirectory() as bench_dir:
-			Path(bench_dir, "sites").mkdir()
-			Path(bench_dir, "nested-dir").mkdir()
-
-			with (
-				patch(
-					"bench.commands.completions.get_env_frappe_commands",
-					return_value=["restore"],
-				),
-				patch(
-					"bench.commands.completions.find_parent_bench",
-					return_value=bench_dir,
-				),
-				patch("bench.commands.completions.get_env_cmd", return_value="python"),
-				patch("bench.commands.completions._get_frappe_spec_batch", return_value=None),
-				patch("bench.commands.completions.get_cmd_output", side_effect=fake_help),
-			):
-				script = generate_completion("bash", bench_command)
-
-			with tempfile.NamedTemporaryFile("w", suffix=".sh", delete=False) as handle:
-				handle.write(script)
-				script_path = handle.name
-
-			try:
-				result = subprocess.run(
-					[
-						"bash",
-						"-c",
-						f"source {script_path} >/dev/null 2>&1 || true; "
-						"COMP_WORDS=(bench restore nested); COMP_CWORD=2; "
-						"COMP_WORDS+=( '' ); COMP_CWORD=2; "
-						"_bench_completion; "
-						'printf "%s\\n" "${COMPREPLY[@]}"',
-					],
-					check=True,
-					capture_output=True,
-					text=True,
-					cwd=bench_dir,
-				)
-			finally:
-				Path(script_path).unlink(missing_ok=True)
 
 		self.assertIn("nested-dir/", result.stdout.splitlines())
 
 	def test_runtime_completes_tilde_paths_after_forwarded_site(self):
-		def fake_help(cmd, cwd=".", _raise=True):
-			if "frappe restore --help" in cmd:
-				return (
-					"Usage: frappe restore [OPTIONS] SQL-FILE-PATH\n\n"
-					"Options:\n"
-					"  --help              Show this message and exit.\n"
-				)
-			return (
-				"Usage: frappe [OPTIONS] COMMAND [ARGS]...\n\n"
-				"Commands:\n"
-				"  restore\n"
-			)
-
-		with tempfile.TemporaryDirectory() as bench_dir:
-			Path(bench_dir, "sites").mkdir()
-			downloads = Path(bench_dir) / "downloads"
+		with _mock_frappe_completion(
+			["restore"],
+			{"restore": _frappe_command_help("restore", "[OPTIONS] SQL-FILE-PATH")},
+		) as bench_dir:
+			downloads = bench_dir / "downloads"
 			downloads.mkdir()
 			(downloads / "backup.sql.gz").write_text("x", encoding="utf-8")
+			script = generate_completion("bash", bench_command)
 
-			with (
-				patch(
-					"bench.commands.completions.get_env_frappe_commands",
-					return_value=["restore"],
-				),
-				patch(
-					"bench.commands.completions.find_parent_bench",
-					return_value=bench_dir,
-				),
-				patch("bench.commands.completions.get_env_cmd", return_value="python"),
-				patch("bench.commands.completions._get_frappe_spec_batch", return_value=None),
-				patch("bench.commands.completions.get_cmd_output", side_effect=fake_help),
-			):
-				script = generate_completion("bash", bench_command)
-
-			with tempfile.NamedTemporaryFile("w", suffix=".sh", delete=False) as handle:
-				handle.write(script)
-				script_path = handle.name
-
-			try:
-				result = subprocess.run(
-					[
-						"bash",
-						"-c",
-						f"source {script_path} >/dev/null 2>&1 || true; "
-						"COMP_WORDS=(bench restore --site mysite '~/downloads/b'); COMP_CWORD=4; "
-						"_bench_completion; "
-						'printf "%s\\n" "${COMPREPLY[@]}"',
-					],
-					check=True,
-					capture_output=True,
-					text=True,
-					cwd=bench_dir,
-					env={**os.environ, "HOME": bench_dir},
-				)
-			finally:
-				Path(script_path).unlink(missing_ok=True)
+			result = _run_bash_completion_script(
+				script,
+				"COMP_WORDS=(bench restore --site mysite '~/downloads/b'); COMP_CWORD=4; "
+				"_bench_completion; "
+				'printf "%s\\n" "${COMPREPLY[@]}"',
+				cwd=bench_dir,
+				env={**os.environ, "HOME": str(bench_dir)},
+			)
 
 		self.assertIn("~/downloads/backup.sql.gz", result.stdout.splitlines())
 
 	def test_zsh_runtime_resolves_frappe_subcommand_context(self):
-		def fake_help(cmd, cwd=".", _raise=True):
-			return (
-				"Usage: frappe [OPTIONS] COMMAND [ARGS]...\n\n"
-				"Commands:\n"
-				"  restore\n"
+		script = _generate_frappe_completion("zsh", ["restore"])
+
+		with _temporary_completion_script(script, ".zsh") as script_path:
+			result = subprocess.run(
+				[
+					"zsh",
+					"-c",
+					f"source {shlex.quote(script_path)}; "
+					"words=(bench restore); CURRENT=3; "
+					"_bench_collect_completion_state",
+				],
+				check=True,
+				capture_output=True,
+				text=True,
 			)
-
-		with tempfile.TemporaryDirectory() as bench_dir:
-			Path(bench_dir, "sites").mkdir()
-
-			with (
-				patch(
-					"bench.commands.completions.get_env_frappe_commands",
-					return_value=["restore"],
-				),
-				patch(
-					"bench.commands.completions.find_parent_bench",
-					return_value=bench_dir,
-				),
-				patch("bench.commands.completions.get_env_cmd", return_value="python"),
-				patch("bench.commands.completions._get_frappe_spec_batch", return_value=None),
-				patch("bench.commands.completions.get_cmd_output", side_effect=fake_help),
-			):
-				script = generate_completion("zsh", bench_command)
-
-			with tempfile.NamedTemporaryFile("w", suffix=".zsh", delete=False) as handle:
-				handle.write(script)
-				script_path = handle.name
-
-			try:
-				result = subprocess.run(
-					[
-						"zsh",
-						"-c",
-						f"source {shlex.quote(script_path)}; "
-						"words=(bench restore); CURRENT=3; "
-						"_bench_collect_completion_state",
-					],
-					check=True,
-					capture_output=True,
-					text=True,
-				)
-			finally:
-				Path(script_path).unlink(missing_ok=True)
 
 		self.assertEqual(result.stdout.strip(), "__frappe__ restore|0")
 
 	def test_zsh_completion_handles_partial_command_without_error(self):
 		script = generate_completion("zsh", bench_command)
 
-		with tempfile.NamedTemporaryFile("w", suffix=".zsh", delete=False) as handle:
-			handle.write(script)
-			script_path = handle.name
-
-		try:
+		with _temporary_completion_script(script, ".zsh") as script_path:
 			result = _run_zsh_completion(script_path, ["bench", "rest"])
-		finally:
-			Path(script_path).unlink(missing_ok=True)
 
 		self.assertNotIn("_bench_has_word", result.stderr)
 		self.assertEqual(result.returncode, 0)
 
 	def test_zsh_completion_uses_tilde_paths_after_forwarded_site(self):
-		def fake_help(cmd, cwd=".", _raise=True):
-			if "frappe restore --help" in cmd:
-				return (
-					"Usage: frappe restore [OPTIONS] SQL-FILE-PATH\n\n"
-					"Options:\n"
-					"  --help              Show this message and exit.\n"
-				)
-			return (
-				"Usage: frappe [OPTIONS] COMMAND [ARGS]...\n\n"
-				"Commands:\n"
-				"  restore\n"
-			)
-
-		with tempfile.TemporaryDirectory() as bench_dir:
-			Path(bench_dir, "sites").mkdir()
-			downloads = Path(bench_dir) / "downloads"
+		with _mock_frappe_completion(
+			["restore"],
+			{"restore": _frappe_command_help("restore", "[OPTIONS] SQL-FILE-PATH")},
+		) as bench_dir:
+			downloads = bench_dir / "downloads"
 			downloads.mkdir()
 			(downloads / "backup.sql.gz").write_text("x", encoding="utf-8")
+			script = generate_completion("zsh", bench_command)
 
-			with (
-				patch(
-					"bench.commands.completions.get_env_frappe_commands",
-					return_value=["restore"],
-				),
-				patch(
-					"bench.commands.completions.find_parent_bench",
-					return_value=bench_dir,
-				),
-				patch("bench.commands.completions.get_env_cmd", return_value="python"),
-				patch("bench.commands.completions._get_frappe_spec_batch", return_value=None),
-				patch("bench.commands.completions.get_cmd_output", side_effect=fake_help),
-			):
-				script = generate_completion("zsh", bench_command)
-
-			with tempfile.NamedTemporaryFile("w", suffix=".zsh", delete=False) as handle:
-				handle.write(script)
-				script_path = handle.name
-
-			try:
+			with _temporary_completion_script(script, ".zsh") as script_path:
 				result = _run_zsh_completion(
 					script_path,
 					["bench", "restore", "--site", "mysite", "~/downloads/b"],
 					cwd=bench_dir,
-					env={**os.environ, "HOME": bench_dir},
+					env={**os.environ, "HOME": str(bench_dir)},
 				)
-			finally:
-				Path(script_path).unlink(missing_ok=True)
 
 		self.assertTrue(
 			any("backup.sql.gz" in line for line in result.stdout.splitlines()),
