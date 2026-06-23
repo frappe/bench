@@ -676,6 +676,7 @@ _bench_complete_words() {
 	local cur="$1"
 	local words="$2"
 
+	compopt +o nospace 2>/dev/null
 	COMPREPLY=( $(compgen -W "$words" -- "$cur") )
 }
 
