@@ -605,8 +605,8 @@ def add_build_parser(subparsers: argparse.ArgumentParser):
     parser.add_argument(
         "-b",
         "--frappe-branch",
-        help="Frappe branch to use, default: version-15",
-        default="version-15",
+        help="Frappe branch to use, default: version-16",
+        default="version-16",
     )
     parser.add_argument(
         "-j",
@@ -741,6 +741,7 @@ def build_image(
     except Exception as e:
         logging.error("Image build failed", exc_info=True)
         cprint("\nImage build failed\n\n", "[ERROR]: ", e, level=1)
+        sys.exit(1)
 
     if push:
         try:
@@ -752,6 +753,7 @@ def build_image(
         except Exception as e:
             logging.error("Image push failed", exc_info=True)
             cprint("\nImage push failed\n\n", "[ERROR]: ", e, level=1)
+            sys.exit(1)
 
 
 def get_args_parser():
