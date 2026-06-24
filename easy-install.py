@@ -630,14 +630,14 @@ def add_build_parser(subparsers: argparse.ArgumentParser):
     parser.add_argument(
         "-y",
         "--python-version",
-        help="Python Version, default: 3.11.6",
-        default="3.11.6",
+        help="Python Version, default: 3.14",
+        default="3.14",
     )
     parser.add_argument(
         "-d",
         "--node-version",
-        help="NodeJS Version, default: 18.18.2",
-        default="18.18.2",
+        help="NodeJS Version, default: 24.14.0",
+        default="24.14.0",
     )
     parser.add_argument(
         "-x",
