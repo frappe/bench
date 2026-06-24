@@ -693,10 +693,7 @@ def build_image(
     if not tags:
         tags = ["custom-apps:latest"]
 
-    apps_json_base64 = None
-    apps_json_path_abs = None
     try:
-        apps_json_path_abs = os.path.abspath(apps_json_path)
         with open(apps_json_path, "rb") as file_text:
             file_read = file_text.read()
             apps_json_base64 = (
@@ -705,6 +702,9 @@ def build_image(
     except Exception as e:
         logging.error("Unable to base64 encode apps.json", exc_info=True)
         cprint("\nUnable to base64 encode apps.json\n\n", "[ERROR]: ", e, level=1)
+        sys.exit(1)
+
+    apps_json_path_abs = os.path.abspath(apps_json_path)
 
     command = [
         which("docker"),
@@ -724,11 +724,10 @@ def build_image(
         f"--build-arg=APPS_JSON_BASE64={apps_json_base64}",
     ]
 
-    if apps_json_path_abs:
-        command += [
-            "--secret",
-            f"id=apps_json,src={apps_json_path_abs}",
-        ]
+    command += [
+        "--secret",
+        f"id=apps_json,src={apps_json_path_abs}",
+    ]
 
     command.append(".")
 
