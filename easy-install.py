@@ -694,7 +694,9 @@ def build_image(
         tags = ["custom-apps:latest"]
 
     apps_json_base64 = None
+    apps_json_path_abs = None
     try:
+        apps_json_path_abs = os.path.abspath(apps_json_path)
         with open(apps_json_path, "rb") as file_text:
             file_read = file_text.read()
             apps_json_base64 = (
@@ -720,8 +722,15 @@ def build_image(
         f"--build-arg=PYTHON_VERSION={python_version}",
         f"--build-arg=NODE_VERSION={node_version}",
         f"--build-arg=APPS_JSON_BASE64={apps_json_base64}",
-        ".",
     ]
+
+    if apps_json_path_abs:
+        command += [
+            "--secret",
+            f"id=apps_json,src={apps_json_path_abs}",
+        ]
+
+    command.append(".")
 
     try:
         subprocess.run(
