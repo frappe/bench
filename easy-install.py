@@ -86,6 +86,7 @@ def write_to_env(
     custom_tag: str = None,
 ) -> None:
     quoted_sites = ",".join([f"`{site}`" for site in sites]).strip(",")
+    sites_rule = " || ".join([f"Host(`{site}`)" for site in sites])
     example_env = get_from_env(frappe_docker_dir, "example.env")
     erpnext_version = erpnext_version or example_env["ERPNEXT_VERSION"]
     env_file_lines = [
@@ -100,6 +101,7 @@ def write_to_env(
         f"LETSENCRYPT_EMAIL={email}\n",
         f"SITE_ADMIN_PASS={admin_pass}\n",
         f"SITES={quoted_sites}\n",
+        f"SITES_RULE={sites_rule}\n",
         "PULL_POLICY=missing\n",
         f'BACKUP_CRONSTRING="{cronstring}"\n',
     ]
