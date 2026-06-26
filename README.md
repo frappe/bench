@@ -5,12 +5,13 @@
 ## Bench
 **CLI to manage Frappe applications**
 
-
 [![Python version](https://img.shields.io/badge/python-%3E=_3.10-green.svg)](https://www.python.org/downloads/)
 [![PyPI Version](https://badge.fury.io/py/frappe-bench.svg)](https://pypi.org/project/frappe-bench)
 ![Platform Compatibility](https://img.shields.io/badge/platform-linux%20%7C%20macos-blue)
 
 </div>
+
+#### Update: We are working on a new simplified bench. Check it out at https://github.com/frappe/bench-cli
 
 ## Bench
 
@@ -303,6 +304,27 @@ In case the setup fails, the log file is saved under `$HOME/easy-install.log`. Y
 	```sh
 	$ bench --help
 	```
+
+## Shell Completion
+
+Bench supports tab completion for bash and zsh.
+
+Run interactively to pick a shell and install location:
+
+```sh
+bench completions
+```
+
+Or pass flags to skip the prompts:
+
+```sh
+bench completions --zsh
+bench completions --bash
+```
+
+> **Note:** Run this from your frappe-bench directory. The command detects the bench root from the current working directory to include your installed apps' commands in the completion script.
+
+This writes a completion script to `~/.config/bench/` and appends a `source` line to your shell rc file. Re-run it after installing new apps or upgrading bench, since the script is generated from the current command tree.
 
 
 For more in-depth information on commands and their usage, follow [Commands and Usage](https://github.com/frappe/bench/blob/develop/docs/commands_and_usage.md). As for a consolidated list of bench commands, check out [Bench Usage](https://github.com/frappe/bench/blob/develop/docs/bench_usage.md).

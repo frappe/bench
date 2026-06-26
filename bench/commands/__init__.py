@@ -49,6 +49,9 @@ from bench.commands.make import (
 	validate_dependencies,
 )
 
+from bench.commands.socketio import socketio
+
+bench_command.add_command(socketio)
 bench_command.add_command(init)
 bench_command.add_command(drop)
 bench_command.add_command(get_app)
@@ -131,3 +134,7 @@ bench_command.add_command(remote_urls)
 from bench.commands.install import install
 
 bench_command.add_command(install)
+
+from bench.commands.completions import completions
+
+bench_command.add_command(completions)
