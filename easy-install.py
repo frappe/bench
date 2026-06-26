@@ -693,17 +693,6 @@ def build_image(
     if not tags:
         tags = ["custom-apps:latest"]
 
-    try:
-        with open(apps_json_path, "rb") as file_text:
-            file_read = file_text.read()
-            apps_json_base64 = (
-                base64.encodebytes(file_read).decode("utf-8").replace("\n", "")
-            )
-    except Exception as e:
-        logging.error("Unable to base64 encode apps.json", exc_info=True)
-        cprint("\nUnable to base64 encode apps.json\n\n", "[ERROR]: ", e, level=1)
-        sys.exit(1)
-
     apps_json_path_abs = os.path.abspath(apps_json_path)
 
     command = [
@@ -721,15 +710,10 @@ def build_image(
         f"--build-arg=FRAPPE_BRANCH={frappe_branch}",
         f"--build-arg=PYTHON_VERSION={python_version}",
         f"--build-arg=NODE_VERSION={node_version}",
-        f"--build-arg=APPS_JSON_BASE64={apps_json_base64}",
-    ]
-
-    command += [
         "--secret",
         f"id=apps_json,src={apps_json_path_abs}",
+        "."
     ]
-
-    command.append(".")
 
     try:
         subprocess.run(
