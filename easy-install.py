@@ -239,9 +239,11 @@ def start_prod(
 
     sites_from_cli = sites is not None
     if sites is None:
-        sites = ["site1.localhost"]
+        sites = []
 
     if not os.path.exists(env_file_path):
+        if not sites:
+            sites = ["site1.localhost"]
         admin_pass = generate_pass()
         db_pass = generate_pass(9)
         write_to_env(
@@ -334,6 +336,8 @@ def start_prod(
             sites = cli_sites
         elif env_sites:
             sites = env_sites
+        else:
+            sites = []
         db_pass = env["DB_PASSWORD"]
         admin_pass = env["SITE_ADMIN_PASS"]
         email = env["LETSENCRYPT_EMAIL"]
@@ -436,7 +440,8 @@ def setup_prod(
 ) -> None:
     if len(sites) == 0:
         start_sites = None
-        sites = ["site1.localhost"]
+        if not os.path.exists(os.path.join(os.path.expanduser("~"), f"{project}.env")):
+            sites = ["site1.localhost"]
     else:
         start_sites = sites
 
