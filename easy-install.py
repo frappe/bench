@@ -84,8 +84,11 @@ def write_to_env(
     http_port: str = None,
     custom_image: str = None,
     custom_tag: str = None,
+    sites_rule: str = None,
 ) -> None:
+    sites = sites or ["site1.localhost"]
     quoted_sites = ",".join([f"`{site}`" for site in sites]).strip(",")
+    sites_rule = sites_rule or " || ".join([f"Host(`{site}`)" for site in sites])
     example_env = get_from_env(frappe_docker_dir, "example.env")
     erpnext_version = erpnext_version or example_env["ERPNEXT_VERSION"]
     env_file_lines = [
@@ -100,6 +103,7 @@ def write_to_env(
         f"LETSENCRYPT_EMAIL={email}\n",
         f"SITE_ADMIN_PASS={admin_pass}\n",
         f"SITES={quoted_sites}\n",
+        f"SITES_RULE={sites_rule}\n",
         "PULL_POLICY=missing\n",
         f'BACKUP_CRONSTRING="{cronstring}"\n',
     ]
@@ -212,6 +216,7 @@ def start_prod(
             email = env["LETSENCRYPT_EMAIL"]
             custom_image = env.get("CUSTOM_IMAGE")
             custom_tag = env.get("CUSTOM_TAG")
+            sites_rule = env.get("SITES_RULE")
 
             version = env.get("ERPNEXT_VERSION", version)
             write_to_env(
@@ -226,6 +231,7 @@ def start_prod(
                 http_port=http_port if not is_https and http_port else None,
                 custom_image=custom_image,
                 custom_tag=custom_tag,
+                sites_rule=sites_rule,
             )
 
         try:
