@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 
 import argparse
-import base64
 import logging
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
 import time
 import urllib.request
 from shutil import move, unpack_archive, which
-from typing import Dict, List
+from typing import Dict, List, Optional, Tuple
 
 logging.basicConfig(
     filename="easy-install.log",
@@ -72,6 +72,63 @@ def get_from_env(dir, file) -> Dict:
     return env_vars
 
 
+def parse_legacy_sites(raw_sites: str) -> List[str]:
+    # Legacy format Traefik v2 was: `site1.local`,`site2.local`
+    if not raw_sites:
+        return []
+
+    return [
+        site.strip().strip("`").strip('"').strip("'")
+        for site in raw_sites.split(",")
+        if site.strip()
+    ]
+
+
+def parse_sites_from_rule(rule: str) -> List[str]:
+    if not rule:
+        return []
+
+    return [host for host in re.findall(r"`([^`]+)`", rule) if host]
+
+
+def normalize_sites(sites: List[str]) -> List[str]:
+    normalized_sites = []
+    seen = set()
+    for site in sites:
+        cleaned = site.strip().strip("`").strip('"').strip("'")
+        if not cleaned or cleaned in seen:
+            continue
+        seen.add(cleaned)
+        normalized_sites.append(cleaned)
+    return normalized_sites
+
+
+def get_sites_from_env_config(env: Dict, env_file_path: str) -> Tuple[List[str], bool]:
+    env_sites_rule = env.get("SITES_RULE", "").strip().strip('"').strip("'")
+    if env_sites_rule:
+        return parse_sites_from_rule(env_sites_rule), True
+
+    legacy_sites = env.get("SITES", "").strip()
+    if legacy_sites:
+        cprint(
+            "WARNING: 'SITES' in your .env is deprecated. Please migrate to 'SITES_RULE' (Traefik v3).",
+            level=3,
+        )
+        logging.warning(
+            "Deprecated env key 'SITES' detected in %s. Please migrate to 'SITES_RULE'.",
+            env_file_path,
+        )
+    return parse_legacy_sites(legacy_sites), bool(legacy_sites)
+
+
+def build_sites_rule(sites: List[str]) -> str:
+    sites = normalize_sites(sites)
+    if not sites:
+        return ""
+
+    return "||".join([f"Host(`{site}`)" for site in sites])
+
+
 def write_to_env(
     frappe_docker_dir: str,
     out_file: str,
@@ -80,13 +137,13 @@ def write_to_env(
     admin_pass: str,
     email: str,
     cronstring: str,
+    sites_rule: Optional[str] = None,
     erpnext_version: str = None,
     http_port: str = None,
     custom_image: str = None,
     custom_tag: str = None,
 ) -> None:
-    quoted_sites = ",".join([f"`{site}`" for site in sites]).strip(",")
-    sites_rule = " || ".join([f"Host(`{site}`)" for site in sites])
+    sites_rule = sites_rule if sites_rule is not None else build_sites_rule(sites)
     example_env = get_from_env(frappe_docker_dir, "example.env")
     erpnext_version = erpnext_version or example_env["ERPNEXT_VERSION"]
     env_file_lines = [
@@ -100,7 +157,6 @@ def write_to_env(
         "REDIS_SOCKETIO=redis-socketio:6379\n",
         f"LETSENCRYPT_EMAIL={email}\n",
         f"SITE_ADMIN_PASS={admin_pass}\n",
-        f"SITES={quoted_sites}\n",
         f"SITES_RULE={sites_rule}\n",
         "PULL_POLICY=missing\n",
         f'BACKUP_CRONSTRING="{cronstring}"\n',
@@ -140,13 +196,14 @@ def check_repo_exists() -> bool:
 
 def start_prod(
     project: str,
-    sites: List[str] = [],
+    sites: Optional[List[str]] = None,
     email: str = None,
     cronstring: str = None,
     version: str = None,
     image: str = None,
     is_https: bool = True,
     http_port: str = None,
+    confirm_site_mismatch: bool = False,
 ):
     if not check_repo_exists():
         clone_frappe_docker_repo()
@@ -179,57 +236,149 @@ def start_prod(
         custom_image = image
         custom_tag = version
 
-    with open(compose_file_name, "w") as f:
-        # Writing to compose file
-        if not os.path.exists(env_file_path):
-            admin_pass = generate_pass()
-            db_pass = generate_pass(9)
-            write_to_env(
-                frappe_docker_dir=frappe_docker_dir,
-                out_file=env_file_path,
-                sites=sites,
-                db_pass=db_pass,
-                admin_pass=admin_pass,
-                email=email,
-                cronstring=cronstring,
-                erpnext_version=version,
-                http_port=http_port if not is_https and http_port else None,
-                custom_image=custom_image,
-                custom_tag=custom_tag,
-            )
+    sites = normalize_sites(sites or [])
+    sites_from_cli = bool(sites)
+
+    if not os.path.exists(env_file_path):
+        if not sites:
+            sites = ["site1.localhost"]
+        admin_pass = generate_pass()
+        db_pass = generate_pass(9)
+        write_to_env(
+            frappe_docker_dir=frappe_docker_dir,
+            out_file=env_file_path,
+            sites=sites,
+            db_pass=db_pass,
+            admin_pass=admin_pass,
+            email=email,
+            cronstring=cronstring,
+            erpnext_version=version,
+            http_port=http_port if not is_https and http_port else None,
+            custom_image=custom_image,
+            custom_tag=custom_tag,
+        )
+        cprint(
+            "\nA .env file is generated with basic configs. Please edit it to fit to your needs \n",
+            level=3,
+        )
+        with open(
+            os.path.join(os.path.expanduser("~"), f"{project}-passwords.txt"), "w"
+        ) as en:
+            en.writelines(f"ADMINISTRATOR_PASSWORD={admin_pass}\n")
+            en.writelines(f"MARIADB_ROOT_PASSWORD={db_pass}\n")
+    else:
+        env = get_from_env(env_file_dir, env_file_name)
+        env_sites, env_has_site_config = get_sites_from_env_config(env, env_file_path)
+        env_sites = normalize_sites(env_sites)
+        existing_sites_rule = env.get("SITES_RULE", "").strip().strip('"').strip("'")
+        sites_rule = None
+        if env_has_site_config and not env_sites:
             cprint(
-                "\nA .env file is generated with basic configs. Please edit it to fit to your needs \n",
+                "WARNING: Existing .env site configuration could not be parsed.",
                 level=3,
             )
-            with open(
-                os.path.join(os.path.expanduser("~"), f"{project}-passwords.txt"), "w"
-            ) as en:
-                en.writelines(f"ADMINISTRATOR_PASSWORD={admin_pass}\n")
-                en.writelines(f"MARIADB_ROOT_PASSWORD={db_pass}\n")
-        else:
-            env = get_from_env(env_file_dir, env_file_name)
-            sites = env["SITES"].replace("`", "").split(",") if env["SITES"] else []
-            db_pass = env["DB_PASSWORD"]
-            admin_pass = env["SITE_ADMIN_PASS"]
-            email = env["LETSENCRYPT_EMAIL"]
-            custom_image = env.get("CUSTOM_IMAGE")
-            custom_tag = env.get("CUSTOM_TAG")
-
-            version = env.get("ERPNEXT_VERSION", version)
-            write_to_env(
-                frappe_docker_dir=frappe_docker_dir,
-                out_file=env_file_path,
-                sites=sites,
-                db_pass=db_pass,
-                admin_pass=admin_pass,
-                email=email,
-                cronstring=cronstring,
-                erpnext_version=version,
-                http_port=http_port if not is_https and http_port else None,
-                custom_image=custom_image,
-                custom_tag=custom_tag,
+            logging.warning(
+                "Existing site configuration in %s could not be parsed.",
+                env_file_path,
             )
+            if not sites_from_cli and existing_sites_rule:
+                sites_rule = existing_sites_rule
+                cprint(
+                    "Preserving existing .env SITES_RULE because --sitename was not provided.",
+                    level=3,
+                )
+            elif not confirm_site_mismatch or not sites_from_cli:
+                cprint(
+                    "ERROR: Refusing to overwrite existing .env sites. Re-run with --sitename and --confirm-site-mismatch to proceed.",
+                    level=1,
+                )
+                logging.error(
+                    "Unparseable site configuration requires --sitename and --confirm-site-mismatch for %s.",
+                    env_file_path,
+                )
+                sys.exit(1)
+            else:
+                cprint(
+                    "Proceeding with --sitename values because --confirm-site-mismatch was provided.",
+                    level=3,
+                )
+        if sites_from_cli:
+            if not env_has_site_config and not confirm_site_mismatch:
+                cprint(
+                    "ERROR: Refusing to add SITES_RULE to an existing .env without site configuration. Re-run with --confirm-site-mismatch to proceed.",
+                    level=1,
+                )
+                logging.error(
+                    "Missing site configuration requires --confirm-site-mismatch to write SITES_RULE for %s.",
+                    env_file_path,
+                )
+                sys.exit(1)
+            cli_sites = sites
+            if env_sites and set(cli_sites) != set(env_sites):
+                cprint(
+                    "WARNING: --sitename differs from existing .env sites.",
+                    level=3,
+                )
+                cprint(f"CLI sites: {', '.join(cli_sites)}", level=3)
+                cprint(f".env sites: {', '.join(env_sites)}", level=3)
+                logging.warning(
+                    "CLI sites (%s) differ from .env sites (%s) in %s.",
+                    ",".join(cli_sites),
+                    ",".join(env_sites),
+                    env_file_path,
+                )
+                if not confirm_site_mismatch:
+                    cprint(
+                        "ERROR: Refusing to overwrite .env sites. Re-run with --confirm-site-mismatch to proceed.",
+                        level=1,
+                    )
+                    logging.error(
+                        "Site mismatch requires --confirm-site-mismatch to proceed for %s.",
+                        env_file_path,
+                    )
+                    sys.exit(1)
+                cprint(
+                    "Proceeding with --sitename values because --confirm-site-mismatch was provided.",
+                    level=3,
+                )
+            sites = cli_sites
+        elif env_sites:
+            sites = env_sites
+        elif sites_rule:
+            sites = []
+        else:
+            cprint(
+                "ERROR: Refusing to write an empty SITES_RULE. Re-run with --sitename and --confirm-site-mismatch to proceed.",
+                level=1,
+            )
+            logging.error(
+                "Missing site configuration requires --sitename and --confirm-site-mismatch for %s.",
+                env_file_path,
+            )
+            sys.exit(1)
+        db_pass = env["DB_PASSWORD"]
+        admin_pass = env["SITE_ADMIN_PASS"]
+        email = env["LETSENCRYPT_EMAIL"]
+        custom_image = env.get("CUSTOM_IMAGE")
+        custom_tag = env.get("CUSTOM_TAG")
 
+        version = env.get("ERPNEXT_VERSION", version)
+        write_to_env(
+            frappe_docker_dir=frappe_docker_dir,
+            out_file=env_file_path,
+            sites=sites,
+            sites_rule=sites_rule,
+            db_pass=db_pass,
+            admin_pass=admin_pass,
+            email=email,
+            cronstring=cronstring,
+            erpnext_version=version,
+            http_port=http_port if not is_https and http_port else None,
+            custom_image=custom_image,
+            custom_tag=custom_tag,
+        )
+
+    with open(compose_file_name, "w") as f:
         try:
             command = [
                 "docker",
@@ -305,19 +454,25 @@ def setup_prod(
     apps: List[str] = [],
     is_https: bool = False,
     http_port: str = None,
+    confirm_site_mismatch: bool = False,
 ) -> None:
     if len(sites) == 0:
-        sites = ["site1.localhost"]
+        start_sites = None
+        if not os.path.exists(os.path.join(os.path.expanduser("~"), f"{project}.env")):
+            sites = ["site1.localhost"]
+    else:
+        start_sites = sites
 
     db_pass, admin_pass = start_prod(
         project=project,
-        sites=sites,
+        sites=start_sites,
         email=email,
         cronstring=cronstring,
         version=version,
         image=image,
         is_https=is_https,
         http_port=http_port,
+        confirm_site_mismatch=confirm_site_mismatch,
     )
 
     for sitename in sites:
@@ -345,6 +500,7 @@ def update_prod(
     cronstring: str = None,
     is_https: bool = False,
     http_port: str = None,
+    confirm_site_mismatch: bool = False,
 ) -> None:
     start_prod(
         project=project,
@@ -353,6 +509,7 @@ def update_prod(
         cronstring=cronstring,
         is_https=is_https,
         http_port=http_port,
+        confirm_site_mismatch=confirm_site_mismatch,
     )
     migrate_site(project=project)
 
@@ -583,6 +740,11 @@ def add_common_parser(parser: argparse.ArgumentParser):
         action="store_true",
         help="Force pull frappe_docker",
     )
+    parser.add_argument(
+        "--confirm-site-mismatch",
+        action="store_true",
+        help="Allow overwriting existing .env sites when --sitename differs from configured sites inside the .env",
+    )
     return parser
 
 
@@ -797,6 +959,7 @@ if __name__ == "__main__":
                 apps=args.apps,
                 is_https=not args.no_ssl,
                 http_port=args.http_port,
+                confirm_site_mismatch=args.confirm_site_mismatch,
             )
         elif args.upgrade:
             update_prod(
@@ -806,6 +969,7 @@ if __name__ == "__main__":
                 cronstring=args.backup_schedule,
                 is_https=not args.no_ssl,
                 http_port=args.http_port,
+                confirm_site_mismatch=args.confirm_site_mismatch,
             )
 
     elif args.subcommand == "deploy":
@@ -824,6 +988,7 @@ if __name__ == "__main__":
             apps=args.apps,
             is_https=not args.no_ssl,
             http_port=args.http_port,
+            confirm_site_mismatch=args.confirm_site_mismatch,
         )
     elif args.subcommand == "develop":
         cprint("\nSetting Up Development Instance\n", level=2)
@@ -839,6 +1004,7 @@ if __name__ == "__main__":
             is_https=not args.no_ssl,
             cronstring=args.backup_schedule,
             http_port=args.http_port,
+            confirm_site_mismatch=args.confirm_site_mismatch,
         )
     elif args.subcommand == "exec":
         cprint(f"\nExec into {args.project} backend\n", level=2)
