@@ -237,9 +237,8 @@ def start_prod(
         custom_image = image
         custom_tag = version
 
-    sites_from_cli = sites is not None
-    if sites is None:
-        sites = []
+    sites = normalize_sites(sites or [])
+    sites_from_cli = bool(sites)
 
     if not os.path.exists(env_file_path):
         if not sites:
@@ -289,7 +288,7 @@ def start_prod(
                     "Preserving existing .env SITES_RULE because --sitename was not provided.",
                     level=3,
                 )
-            elif not confirm_site_mismatch:
+            elif not confirm_site_mismatch or not sites_from_cli:
                 cprint(
                     "ERROR: Refusing to overwrite existing .env sites. Re-run with --sitename and --confirm-site-mismatch to proceed.",
                     level=1,
@@ -305,7 +304,17 @@ def start_prod(
                     level=3,
                 )
         if sites_from_cli:
-            cli_sites = normalize_sites(sites)
+            if not env_has_site_config and not confirm_site_mismatch:
+                cprint(
+                    "ERROR: Refusing to add SITES_RULE to an existing .env without site configuration. Re-run with --confirm-site-mismatch to proceed.",
+                    level=1,
+                )
+                logging.error(
+                    "Missing site configuration requires --confirm-site-mismatch to write SITES_RULE for %s.",
+                    env_file_path,
+                )
+                sys.exit(1)
+            cli_sites = sites
             if env_sites and set(cli_sites) != set(env_sites):
                 cprint(
                     "WARNING: --sitename differs from existing .env sites.",
@@ -336,8 +345,18 @@ def start_prod(
             sites = cli_sites
         elif env_sites:
             sites = env_sites
-        else:
+        elif sites_rule:
             sites = []
+        else:
+            cprint(
+                "ERROR: Refusing to write an empty SITES_RULE. Re-run with --sitename and --confirm-site-mismatch to proceed.",
+                level=1,
+            )
+            logging.error(
+                "Missing site configuration requires --sitename and --confirm-site-mismatch for %s.",
+                env_file_path,
+            )
+            sys.exit(1)
         db_pass = env["DB_PASSWORD"]
         admin_pass = env["SITE_ADMIN_PASS"]
         email = env["LETSENCRYPT_EMAIL"]
