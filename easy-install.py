@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import argparse
-import base64
 import logging
 import os
 import platform
@@ -768,8 +767,8 @@ def add_build_parser(subparsers: argparse.ArgumentParser):
     parser.add_argument(
         "-b",
         "--frappe-branch",
-        help="Frappe branch to use, default: version-15",
-        default="version-15",
+        help="Frappe branch to use, default: version-16",
+        default="version-16",
     )
     parser.add_argument(
         "-j",
@@ -793,14 +792,14 @@ def add_build_parser(subparsers: argparse.ArgumentParser):
     parser.add_argument(
         "-y",
         "--python-version",
-        help="Python Version, default: 3.11.6",
-        default="3.11.6",
+        help="Python Version, default: 3.14",
+        default="3.14",
     )
     parser.add_argument(
         "-d",
         "--node-version",
-        help="NodeJS Version, default: 18.18.2",
-        default="18.18.2",
+        help="NodeJS Version, default: 24.14.0",
+        default="24.14.0",
     )
     parser.add_argument(
         "-x",
@@ -856,16 +855,7 @@ def build_image(
     if not tags:
         tags = ["custom-apps:latest"]
 
-    apps_json_base64 = None
-    try:
-        with open(apps_json_path, "rb") as file_text:
-            file_read = file_text.read()
-            apps_json_base64 = (
-                base64.encodebytes(file_read).decode("utf-8").replace("\n", "")
-            )
-    except Exception as e:
-        logging.error("Unable to base64 encode apps.json", exc_info=True)
-        cprint("\nUnable to base64 encode apps.json\n\n", "[ERROR]: ", e, level=1)
+    apps_json_path_abs = os.path.abspath(apps_json_path)
 
     command = [
         which("docker"),
@@ -882,8 +872,9 @@ def build_image(
         f"--build-arg=FRAPPE_BRANCH={frappe_branch}",
         f"--build-arg=PYTHON_VERSION={python_version}",
         f"--build-arg=NODE_VERSION={node_version}",
-        f"--build-arg=APPS_JSON_BASE64={apps_json_base64}",
-        ".",
+        "--secret",
+        f"id=apps_json,src={apps_json_path_abs}",
+        "."
     ]
 
     try:
@@ -895,6 +886,7 @@ def build_image(
     except Exception as e:
         logging.error("Image build failed", exc_info=True)
         cprint("\nImage build failed\n\n", "[ERROR]: ", e, level=1)
+        sys.exit(1)
 
     if push:
         try:
@@ -906,6 +898,7 @@ def build_image(
         except Exception as e:
             logging.error("Image push failed", exc_info=True)
             cprint("\nImage push failed\n\n", "[ERROR]: ", e, level=1)
+            sys.exit(1)
 
 
 def get_args_parser():
