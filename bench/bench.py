@@ -284,7 +284,8 @@ class BenchApps(MutableSequence):
 			self.apps = [
 				x
 				for x in os.listdir(os.path.join(self.bench.name, "apps"))
-				if is_frappe_app(os.path.join(self.bench.name, "apps", x))
+				# Directories with "." in name are usually git worktrees, not apps
+				if "." not in x and is_frappe_app(os.path.join(self.bench.name, "apps", x))
 			]
 			self.apps.remove("frappe")
 			self.apps.insert(0, "frappe")
