@@ -5,12 +5,13 @@
 ## Bench
 **CLI to manage Frappe applications**
 
-
 [![Python version](https://img.shields.io/badge/python-%3E=_3.10-green.svg)](https://www.python.org/downloads/)
 [![PyPI Version](https://badge.fury.io/py/frappe-bench.svg)](https://pypi.org/project/frappe-bench)
 ![Platform Compatibility](https://img.shields.io/badge/platform-linux%20%7C%20macos-blue)
 
 </div>
+
+#### Update: We are working on a new simplified bench. Check it out at https://github.com/frappe/bench-cli
 
 ## Bench
 
@@ -89,7 +90,7 @@ Here are the arguments for the easy-install script
 <summary><b>Build custom images</b></summary>
 
 ```txt
-usage: easy-install.py build [-h] [-n PROJECT] [-i IMAGE] [-q] [-m HTTP_PORT] [-v VERSION] [-a APPS] [-s SITES] [-e EMAIL]
+usage: easy-install.py build [-h] [-n PROJECT] [-i IMAGE] [-q] [-m HTTP_PORT] [-v VERSION] [-a APPS] [-s SITES] [-e EMAIL] [--confirm-site-mismatch]
                              [-p] [-r FRAPPE_PATH] [-b FRAPPE_BRANCH] [-j APPS_JSON] [-t TAGS] [-c CONTAINERFILE]
                              [-y PYTHON_VERSION] [-d NODE_VERSION] [-x] [-u]
 
@@ -111,6 +112,8 @@ options:
                         Site Name(s) for your production bench
   -e EMAIL, --email EMAIL
                         Add email for the SSL.
+  --confirm-site-mismatch
+                        Allow overwriting existing .env sites when --sitename differs from configured sites inside the .env
   -p, --push            Push the built image to registry
   -r FRAPPE_PATH, --frappe-path FRAPPE_PATH
                         Frappe Repository to use, default: https://github.com/frappe/frappe
@@ -134,7 +137,7 @@ options:
 <summary><b>Deploy using compose</b></summary>
 
 ```txt
-usage: easy-install.py deploy [-h] [-n PROJECT] [-i IMAGE] [-q] [-m HTTP_PORT] [-v VERSION] [-a APPS] [-s SITES] [-e EMAIL]
+usage: easy-install.py deploy [-h] [-n PROJECT] [-i IMAGE] [-q] [-m HTTP_PORT] [-v VERSION] [-a APPS] [-s SITES] [-e EMAIL] [--confirm-site-mismatch]
 
 options:
   -h, --help            show this help message and exit
@@ -154,6 +157,8 @@ options:
                         Site Name(s) for your production bench
   -e EMAIL, --email EMAIL
                         Add email for the SSL.
+  --confirm-site-mismatch
+                        Allow overwriting existing .env sites when --sitename differs from configured sites inside the .env
 ```
 </details>
 
@@ -161,7 +166,7 @@ options:
 <summary><b>Upgrade existing project</b></summary>
 
 ```txt
-usage: easy-install.py upgrade [-h] [-n PROJECT] [-i IMAGE] [-q] [-m HTTP_PORT] [-v VERSION]
+usage: easy-install.py upgrade [-h] [-n PROJECT] [-i IMAGE] [-q] [-m HTTP_PORT] [-v VERSION] [--confirm-site-mismatch]
 
 options:
   -h, --help            show this help message and exit
@@ -176,6 +181,8 @@ options:
                         Http port in case of no-ssl
   -v VERSION, --version VERSION
                         ERPNext or image version to install, defaults to latest stable
+  --confirm-site-mismatch
+                        Allow overwriting existing .env sites when --sitename differs from configured sites inside the .env
 ```
 </details>
 
@@ -244,6 +251,8 @@ Note:
 - `--project=actions_test`, name of the project, compose file with project name will be stored in user home directory.
 - `--email=test@frappe.io`, valid email for letsencrypt certificate expiry notification.
 - `--apps-json`, path to json file with list of apps to be added to bench.
+- `SITES_RULE` is used for site routing rules (Traefik v3). Legacy `SITES` values are still read for backward compatibility, but are deprecated.
+- If `--sitename` differs from existing sites in `<project>.env`, setup aborts unless `--confirm-site-mismatch` is provided.
 
 #### Troubleshooting
 
