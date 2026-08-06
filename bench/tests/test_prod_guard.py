@@ -7,7 +7,7 @@ from bench.utils.prod_guard import (
 	MANAGED_ENV_VAR,
 	SKIP_ENV_VAR,
 	confirm_if_managed,
-	get_guard_reason,
+	get_guard,
 	is_managed_bench,
 )
 
@@ -37,19 +37,47 @@ class TestGuardReason(unittest.TestCase):
 	def test_guarded_commands(self):
 		for command in ("install-app", "drop-site", "set-config", "get-app", "update"):
 			with self.subTest(command=command):
-				self.assertIsNotNone(get_guard_reason(command))
+				self.assertIsNotNone(get_guard(command))
 
 	def test_unguarded_commands(self):
 		for command in ("backup", "clear-cache", "console", "mariadb", "doctor", "build"):
 			with self.subTest(command=command):
-				self.assertIsNone(get_guard_reason(command))
+				self.assertIsNone(get_guard(command))
+
+	def test_aliases_of_guarded_commands_are_guarded(self):
+		"""`bench get` and `bench rm` must not slip past `get-app`/`remove-app`."""
+		for alias in ("get", "remove", "rm"):
+			with self.subTest(alias=alias):
+				self.assertIsNotNone(get_guard(alias))
+
+	def test_no_alias_of_a_guarded_command_is_unguarded(self):
+		"""Catches a future alias added to a guarded command without a table entry."""
+		from collections import defaultdict
+
+		from bench.commands import bench_command
+
+		names_by_command = defaultdict(list)
+		for name, command in bench_command.commands.items():
+			names_by_command[id(command)].append(name)
+
+		for names in names_by_command.values():
+			if any(name in prod_guard.GUARDED_COMMANDS for name in names):
+				for name in names:
+					with self.subTest(name=name):
+						self.assertIsNotNone(get_guard(name))
+
+	def test_aliases_of_unguarded_commands_stay_unguarded(self):
+		self.assertIsNone(get_guard("src"))
+		self.assertIsNone(get_guard("find"))
 
 	def test_every_command_explains_its_desync(self):
-		for command, reason in prod_guard.GUARDED_COMMANDS.items():
+		for command, (reason, docs_url) in prod_guard.GUARDED_COMMANDS.items():
 			with self.subTest(command=command):
 				self.assertIsInstance(reason, str)
 				# implicit concatenation across wrapped lines drops spaces easily
 				self.assertEqual(reason, " ".join(reason.split()))
+				if docs_url is not None:
+					self.assertTrue(docs_url.startswith(f"{prod_guard.DOCS}/"))
 
 
 class TestConfirmIfManaged(unittest.TestCase):
