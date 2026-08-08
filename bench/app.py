@@ -668,6 +668,7 @@ def get_app(
 	resolve_deps=False,
 	cache_key=None,
 	compress_artifacts=False,
+	app_name=None,
 ):
 	"""bench get-app clones a Frappe App from remote (GitHub or any other git server),
 	and installs it on the current bench. This also resolves dependencies based on the
@@ -778,6 +779,14 @@ def get_app(
 
 	if to_clone:
 		app.get()
+		# rename folder if app_name override provided
+		if app_name and app_name != app.repo:
+			os.rename(
+				os.path.join(bench_path, "apps", app.repo),
+				os.path.join(bench_path, "apps", app_name),
+			)
+			app.app_name = app_name
+			app.repo = app_name
 
 	if (
 		to_clone
@@ -1034,6 +1043,13 @@ Here are your choices:
 					bench.run(f"git fetch {remote} --unshallow", cwd=app_dir)
 
 			branch = get_current_branch(app, bench_path=bench_path)
+
+			# --- FIX: Skip update if detached HEAD ---
+			if not branch:
+				print(f"App {app} is pinned to a specific version. Skipping update.")
+				continue
+			# -----------------------------------------
+
 			logger.log(f"pulling {app}")
 			if reset:
 				reset_cmd = f"git reset --hard {remote}/{branch}"
