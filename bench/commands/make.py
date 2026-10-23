@@ -26,6 +26,7 @@ import click
 	"--clone-without-update", is_flag=True, help="copy repos from path without update"
 )
 @click.option("--no-procfile", is_flag=True, help="Do not create a Procfile")
+@click.option("--use-mprocs", is_flag=True, help="Use mprocs instead of honcho")
 @click.option(
 	"--no-backups",
 	is_flag=True,
@@ -38,6 +39,7 @@ import click
 )
 @click.option("--skip-assets", is_flag=True, default=False, help="Do not build assets")
 @click.option("--install-app", help="Install particular app after initialization")
+@click.option("--default-app", help="Select particular app for frontend development.")
 @click.option("--verbose", is_flag=True, help="Verbose output during install")
 @click.option(
 	"--dev",
@@ -61,6 +63,8 @@ def init(
 	python="python3",
 	install_app=None,
 	dev=False,
+	use_mprocs=False,
+	default_app=None,
 ):
 	import os
 
@@ -76,6 +80,7 @@ def init(
 			path,
 			apps_path=apps_path,  # can be used from --config flag? Maybe config file could have more info?
 			no_procfile=no_procfile,
+			use_mprocs=use_mprocs,
 			no_backups=no_backups,
 			frappe_path=frappe_path,
 			frappe_branch=frappe_branch,
@@ -87,6 +92,7 @@ def init(
 			python=python,
 			verbose=verbose,
 			dev=dev,
+			default_app=default_app,
 		)
 		log(f"Bench {path} initialized", level=1)
 	except SystemExit:

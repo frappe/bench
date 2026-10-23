@@ -1,0 +1,24 @@
+procs:
+  backend:
+    shell: bench serve {% if with_coverage -%} --with-coverage  {%- endif %} {% if webserver_port -%} --port {{ webserver_port }} {%- endif %}
+  {% if default_app %}
+  frontend:
+    shell: cd apps/{{default_app}}/ && npm run dev
+  {% endif %}{% if not skip_redis %}
+  redis_cache:
+    shell: redis-server config/redis_cache.conf
+  redis_queue:
+    shell: redis-server config/redis_queue.conf
+  {% endif %}{% if not skip_socketio %}
+  socketio:
+    shell:  {{ node }} apps/frappe/socketio.js
+  {% endif %}{% if not skip_watch %}
+  watch:
+    shell: bench watch
+  {% endif %}{% if not skip_schedule %}
+  schedule:
+    shell: bench schedule
+  {% endif %}
+  worker:
+    shell: {{ 'OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES NO_PROXY=*' if is_mac else '' }} bench worker 1>> logs/worker.log 2>> logs/worker.error.log
+    
