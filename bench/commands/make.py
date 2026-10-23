@@ -163,6 +163,7 @@ def drop(path):
 	default=False,
 	help="Whether to gzip get-app artifacts that are to be cached",
 )
+@click.option("--app-name", default=None, help="Override folder name on disk")
 def get_app(
 	git_url,
 	branch,
@@ -174,6 +175,7 @@ def get_app(
 	resolve_deps=False,
 	cache_key=None,
 	compress_artifacts=False,
+	app_name=None,
 ):
 	"clone an app from the internet and set it up in your bench"
 	from bench.app import get_app
@@ -188,9 +190,8 @@ def get_app(
 		resolve_deps=resolve_deps,
 		cache_key=cache_key,
 		compress_artifacts=compress_artifacts,
+		app_name=app_name,
 	)
-
-
 @click.command("new-app", help="Create a new Frappe application under apps folder")
 @click.option(
 	"--no-git",

@@ -177,7 +177,11 @@ def get_current_branch(app, bench_path="."):
 	from bench.utils import get_cmd_output
 
 	repo_dir = get_repo_dir(app, bench_path=bench_path)
-	return get_cmd_output("git symbolic-ref -q --short HEAD", cwd=repo_dir)
+	try:
+		return get_cmd_output("git symbolic-ref -q --short HEAD", cwd=repo_dir)
+	except Exception:
+		# If we are in Detached HEAD state (e.g. pinned tag), this returns None
+		return None
 
 
 @lru_cache(maxsize=5)
@@ -273,8 +277,8 @@ def get_app_name(bench_path: str, folder_name: str) -> str:
 
 	if not app_name:
 		raise AppInstallationError(
-            "Could not determine the package name. Checked pyproject.toml, setup.cfg, and setup.py."
-        )
+			"Could not determine the package name. Checked pyproject.toml, setup.cfg, and setup.py."
+		)
 
 
 	if app_name and folder_name != app_name:
