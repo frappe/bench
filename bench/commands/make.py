@@ -198,11 +198,58 @@ def get_app(
 	flag_value="--no-git",
 	help="Do not initialize git repository for the app (available in Frappe v14+)",
 )
+@click.option("--title", default=None, help="App Title")
+@click.option("--description", default=None, help="App Description")
+@click.option("--publisher", default=None, help="App Publisher")
+@click.option("--email", default=None, help="App Publisher's Email")
+@click.option(
+	"--license",
+	default=None,
+	help="App License",
+)
+@click.option(
+	"--github-workflow/--no-github-workflow",
+	"github_workflow",
+	default=None,
+	help="Create GitHub Workflow action for unittests",
+)
+@click.option(
+	"--frontend/--no-frontend",
+	"frontend",
+	default=None,
+	help="Create frappe-ui frontend",
+)
+@click.option("--route", default=None, help="Frontend route for SPA when creating a frontend")
+@click.option("--branch", default=None, help="Git branch name for the new app")
 @click.argument("app-name")
-def new_app(app_name, no_git=None):
-	from bench.app import new_app
+def new_app(
+	app_name,
+	no_git=None,
+	title=None,
+	description=None,
+	publisher=None,
+	email=None,
+	license=None,
+	github_workflow=None,
+	frontend=None,
+	route=None,
+	branch=None,
+):
+	from bench.app import new_app as create_new_app
 
-	new_app(app_name, no_git)
+	create_new_app(
+		app_name,
+		no_git,
+		title=title,
+		description=description,
+		publisher=publisher,
+		email=email,
+		license=license,
+		github_workflow=github_workflow,
+		frontend=frontend,
+		route=route,
+		branch=branch,
+	)
 
 
 @click.command(
