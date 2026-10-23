@@ -28,6 +28,7 @@ from bench.utils import (
 	get_cmd_from_sysargv,
 )
 from bench.utils.bench import get_env_cmd
+from bench.utils.prod_guard import confirm_if_managed
 from importlib.util import find_spec
 
 
@@ -117,6 +118,11 @@ def cli():
 		if in_bench:
 			print(get_frappe_help())
 		return
+
+	# must run before both dispatch paths below: commands not registered with
+	# bench are handed to frappe via execv, after which there's nothing to ask
+	if is_cli_command:
+		confirm_if_managed(cmd_from_sys, bench_config)
 
 	_opts = [x.opts + x.secondary_opts for x in bench_command.params]
 	opts = {item for sublist in _opts for item in sublist}
