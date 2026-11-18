@@ -511,6 +511,7 @@ class BenchSetup(Base):
 	def python(self, apps=None):
 		"""Install and upgrade Python dependencies for specified / all installed apps on given Bench"""
 		import bench.cli
+		from bench.utils.app import get_current_frappe_version
 
 		apps = apps or self.bench.apps
 
@@ -518,26 +519,50 @@ class BenchSetup(Base):
 
 		self.pip()
 
-		for app in apps:
-			app_path = os.path.join(self.bench.name, "apps", app)
-			log(f"\nInstalling python dependencies for {app}", level=3, no_log=True)
-			env = None
+		env = None
+		if "frappe" in apps:
 			# macOS needs a custom PKG_CONFIG_DIR for frappe v16+
-			from bench.utils.app import get_current_frappe_version
-			if app == "frappe":
-				if get_current_frappe_version(self.bench.name) >= 16:
-					check_pkg_config()
-				if sys.platform == "darwin":
-					env = {
-						"PKG_CONFIG_PATH": get_mariadb_pkgconfig_path(),
-					}
+			if get_current_frappe_version(self.bench.name) >= 16:
+				check_pkg_config()
+			if sys.platform == "darwin":
+				env = {
+					"PKG_CONFIG_PATH": get_mariadb_pkgconfig_path(),
+				}
 
+		app_paths = [os.path.join(self.bench.name, "apps", app) for app in apps]
+
+		if use_uv():
+			# Install all apps in one call, so that uv resolves their requirements
+			# together and can build them in parallel.
+			# Scope the upgrade to the apps themselves so uv doesn't eagerly bump shared
+			# transitive deps that already satisfy other installed apps' constraints.
+			# `uv pip install --upgrade` upgrades everything (eager), unlike pip's
+			# default only-if-needed strategy. See frappe/bench#1683.
+			log(f"\nInstalling python dependencies for {', '.join(apps)}", level=3, no_log=True)
+			all_upgrade_flags = " ".join(
+				f"--upgrade-package {get_app_name(self.bench.name, app)}" for app in apps
+			)
+			all_editable_flags = " ".join(f"-e {app_path}" for app_path in app_paths)
+			return_code = self.run(
+				f"uv pip install {quiet_flag} {all_upgrade_flags} {all_editable_flags} --python {self.bench.python}",
+				env=env,
+				_raise=False,
+			)
+			if not return_code:
+				return
+
+			# Requirements of different apps can conflict. Installing the apps one by
+			# one still works in that case: the app installed last wins.
+			log(
+				"Could not install the python dependencies of all apps together."
+				" Installing them one by one instead.",
+				level=3,
+			)
+
+		for app, app_path in zip(apps, app_paths):
+			log(f"\nInstalling python dependencies for {app}", level=3, no_log=True)
 			if use_uv():
 				upgrade_package = get_app_name(self.bench.name, app)
-				# Scope the upgrade to the app itself so uv doesn't eagerly bump shared
-				# transitive deps that already satisfy other installed apps' constraints.
-				# `uv pip install --upgrade` upgrades everything (eager), unlike pip's
-				# default only-if-needed strategy. See frappe/bench#1683.
 				self.run(
 					f"uv pip install {quiet_flag} --upgrade-package {upgrade_package} -e {app_path} --python {self.bench.python}",
 					env=env,
